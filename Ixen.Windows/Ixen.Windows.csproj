@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <ShouldIncludeNativeSkiaSharp>True</ShouldIncludeNativeSkiaSharp>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<Nullable>disable</Nullable>
+		<Copyright>©2021 by kipy</Copyright>
+		<AssemblyVersion>0.0.1</AssemblyVersion>
+		<FileVersion>0.0.1</FileVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="SkiaSharp" Version="2.80.3" />
+        <PackageReference Include="WinApi" Version="4.0.0" />
+        <PackageReference Include="WinApi.Desktop" Version="4.0.0" />
+        <PackageReference Include="WinApi.Utils" Version="4.0.0" />
+    </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ixen\Ixen.csproj" />
+  </ItemGroup>
+
+</Project>
