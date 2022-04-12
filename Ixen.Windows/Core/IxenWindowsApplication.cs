@@ -1,5 +1,4 @@
 ﻿using Ixen.Core;
-using Ixen.Visual;
 using System;
 using WinApi.Desktop;
 using WinApi.Windows;
@@ -7,9 +6,9 @@ using WinApi.Windows.Helpers;
 
 namespace Ixen.Windows.Core
 {
-    public class IxenWindowsApplication : IxenApplication
+    public static class IxenWindowsApplication
     {
-        public int Init(IxenSurface surface)
+        public static int CreateWindow(IxenSurface surface)
         {
             try
             {

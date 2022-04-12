@@ -17,8 +17,7 @@ namespace Ixen.DemoApp
 
             var surface = new IxenSurface(ve);
 
-            var app = new IxenWindowsApplication();
-            return app.Init(surface);
+            return IxenWindowsApplication.CreateWindow(surface);
         }
     }
 }
