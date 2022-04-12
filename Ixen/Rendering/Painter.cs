@@ -1,8 +1,8 @@
 ﻿using SkiaSharp;
 
-namespace Ixen.Core
+namespace Ixen.Rendering
 {
-    internal abstract class Painter
+    public abstract class Painter
     {
         internal SKPaint SKPaint { get; set; }
 

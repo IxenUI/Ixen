@@ -3,10 +3,9 @@ using SkiaSharp;
 
 namespace Ixen.Rendering
 {
-    internal sealed class RendererContext
+    public sealed class RendererContext
     {
         internal SKCanvas SKCanvas { get; set; }
-        internal SKRect SKClientRect { get; set; }
 
         public void Clear(Color color)
         {

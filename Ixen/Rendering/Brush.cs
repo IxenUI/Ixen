@@ -1,8 +1,9 @@
-﻿using SkiaSharp;
+﻿using Ixen.Core;
+using SkiaSharp;
 
-namespace Ixen.Core
+namespace Ixen.Rendering
 {
-    internal sealed class Brush : Painter
+    public sealed class Brush : Painter
     {
         public Brush(Color color, bool antialias = false)
         {

@@ -1,0 +1,42 @@
+﻿using Ixen.Rendering;
+using Ixen.Visual;
+using SkiaSharp;
+
+namespace Ixen.Core
+{
+    public class IxenSurface
+    {
+        private static Color _clearColor = Color.White;
+
+        private ViewPort _viewPort = new();
+        private RendererContext _rendererContext = new();
+
+        public VisualElement Root;
+
+        public IxenSurfaceInitOptions InitOptions { get; private set; }
+        public string Title { get; set; }
+
+        public IxenSurface (VisualElement root = null, IxenSurfaceInitOptions initOptions = null)
+        {
+            InitOptions = initOptions ?? new();
+            Root = root ?? new();
+            Title = InitOptions.Title;
+        }
+
+        public void Compute(float width, float height)
+        {
+            _viewPort.Width = width;
+            _viewPort.Height = height;
+
+            Root?.Compute(0, 0, width, height);
+        }
+
+        public void Render(SKCanvas canvas)
+        {
+            _rendererContext.SKCanvas = canvas;
+            _rendererContext.Clear(_clearColor);
+
+            Root.Render(_rendererContext, _viewPort);
+        }
+    }
+}

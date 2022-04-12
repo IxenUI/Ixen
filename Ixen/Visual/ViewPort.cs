@@ -1,6 +1,6 @@
-﻿namespace Ixen.Rendering
+﻿namespace Ixen.Visual
 {
-    internal sealed class ViewPort : DimensionalElement
+    public sealed class ViewPort : DimensionalElement
     {
         private float _x;
         internal override float X

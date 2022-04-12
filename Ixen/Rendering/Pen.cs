@@ -1,8 +1,9 @@
-﻿using SkiaSharp;
+﻿using Ixen.Core;
+using SkiaSharp;
 
-namespace Ixen.Core
+namespace Ixen.Rendering
 {
-    internal sealed class Pen : Painter
+    public sealed class Pen : Painter
     {
         public Pen(Color color, float width, bool antialias = false)
         {

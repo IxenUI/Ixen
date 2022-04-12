@@ -1,6 +1,6 @@
-﻿namespace Ixen.Rendering
+﻿namespace Ixen.Visual
 {
-    internal abstract class DimensionalElement
+    public abstract class DimensionalElement
     {
         internal virtual float X { get; set; }
         internal virtual float Y { get; set; }
@@ -12,7 +12,7 @@
             set => _width = value < 0 ? 0 : value;
         }
 
-        internal float _height;
+        private float _height;
         internal float Height
         {
             get => _height;
