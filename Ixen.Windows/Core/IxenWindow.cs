@@ -43,7 +43,7 @@ namespace Ixen.Windows
             {
                 using(_skSurface = SKSurface.Create(_skImageInfo, _pixelBuffer.Handle, _pixelBuffer.Stride))
                 {
-                    if (_ixenSurface != null)
+                    if (_skSurface != null)
                     {
                         _ixenSurface.Render(_skSurface.Canvas);
                         _painted = true;
