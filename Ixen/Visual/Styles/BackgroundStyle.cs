@@ -1,4 +1,5 @@
 ﻿using Ixen.Core;
+using Ixen.Rendering;
 
 namespace Ixen.Visual.Styles
 {
@@ -17,8 +18,14 @@ namespace Ixen.Visual.Styles
         {}
 
         public override void Parse()
+        {}
+
+        public override void Compute(VisualElement element, float x, float y, float width, float height)
+        {}
+
+        public override void Render(VisualElement element, RendererContext context, ViewPort viewPort)
         {
-            
+            context.FillRectangle(element.X, element.Y, element.Width, element.Height, new Brush(Color));
         }
     }
 }

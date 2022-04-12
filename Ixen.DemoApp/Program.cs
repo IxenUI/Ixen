@@ -10,8 +10,8 @@ namespace Ixen.DemoApp
         static int Main(string[] args)
         {
             var ve = new VisualElement();
-            ve.Styles.Width = new SizeStyle("100px");
-            ve.Styles.Height = new SizeStyle("200px");
+            ve.Styles.Width = new WidthStyle("100%");
+            ve.Styles.Height = new HeightStyle("50%");
             ve.Styles.Background = new BackgroundStyle { Color = Color.DarkGray };
             ve.Styles.Border = new BorderStyle() { Color = Color.Black, Thickness = 2, Type = BorderType.Inner };
 

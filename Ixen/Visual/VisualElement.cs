@@ -1,4 +1,5 @@
 ﻿using Ixen.Rendering;
+using Ixen.Visual.Styles;
 using System.Collections.Generic;
 
 namespace Ixen.Visual
@@ -18,18 +19,7 @@ namespace Ixen.Visual
             Width = width;
             Height = height;
 
-            if (Styles != null)
-            {
-                if(Styles.Width != null)
-                {
-                    Width = Styles.Width.Value;
-                }
-
-                if (Styles.Height != null)
-                {
-                    Height = Styles.Width.Value;
-                }
-            }
+            Styles.Compute(this, x, y, width, height);
 
             foreach (VisualElement element in _contents)
             {
@@ -39,29 +29,7 @@ namespace Ixen.Visual
 
         public override void Render(RendererContext context, ViewPort viewPort)
         {
-            if (Styles != null)
-            {
-                if (Styles.Background != null)
-                {
-                    context.FillRectangle(X, Y, Width, Height, new Brush(Styles.Background.Color));
-                }
-
-                if (Styles.Border != null)
-                {
-                    switch (Styles.Border.Type)
-                    {
-                        case Visual.Styles.BorderType.Center:
-                            context.DrawRectangle(X, Y, Width, Height, new Pen(Styles.Border.Color, Styles.Border.Thickness));
-                            break;
-                        case Visual.Styles.BorderType.Inner:
-                            context.DrawInnerRectangle(X, Y, Width, Height, new Pen(Styles.Border.Color, Styles.Border.Thickness));
-                            break;
-                        case Visual.Styles.BorderType.Outer:
-                            context.DrawOuterRectangle(X, Y, Width, Height, new Pen(Styles.Border.Color, Styles.Border.Thickness));
-                            break;
-                    }
-                }
-            }
+            Styles.Render(this, context, viewPort);
 
             foreach (VisualElement element in _contents)
             {

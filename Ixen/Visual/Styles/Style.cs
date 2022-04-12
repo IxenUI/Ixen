@@ -1,9 +1,10 @@
-﻿namespace Ixen.Visual.Styles
+﻿using Ixen.Rendering;
+
+namespace Ixen.Visual.Styles
 {
     public abstract class Style
     {
         protected string _content;
-        public abstract void Parse();
 
         public Style()
         {}
@@ -13,5 +14,9 @@
             _content = content;
             Parse();
         }
+
+        public abstract void Parse();
+        public abstract void Compute(VisualElement element, float x, float y, float width, float height);
+        public abstract void Render(VisualElement element, RendererContext context, ViewPort viewPort);
     }
 }

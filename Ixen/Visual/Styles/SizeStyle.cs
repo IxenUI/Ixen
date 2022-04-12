@@ -8,7 +8,7 @@ namespace Ixen.Visual.Styles
         Percents
     }
 
-    public class SizeStyle : Style
+    public abstract class SizeStyle : Style
     {
         private Regex _regex = new Regex(@"([0-9]+(?:\.[0-9]+)?)(px|%)");
         public SizeUnit Unit { get; set; } = SizeUnit.Pixels;
@@ -19,7 +19,7 @@ namespace Ixen.Visual.Styles
 
         public SizeStyle(string content)
             : base(content)
-        { }
+        {}
 
         public override void Parse()
         {
