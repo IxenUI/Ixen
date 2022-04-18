@@ -1,6 +1,4 @@
-﻿using Ixen.Rendering;
-
-namespace Ixen.Visual.Styles
+﻿namespace Ixen.Visual.Styles
 {
     public class WidthStyle : SizeStyle
     {
@@ -11,7 +9,7 @@ namespace Ixen.Visual.Styles
             : base(content)
         {}
 
-        public override void Compute(VisualElement element, float x, float y, float width, float height)
+        public void Compute(VisualElement element, VisualElement container, DimensionalElement targetZone)
         {
             switch (Unit)
             {
@@ -19,12 +17,9 @@ namespace Ixen.Visual.Styles
                     element.Width = Value;
                     break;
                 case SizeUnit.Percents:
-                    element.Width = (width / 100) * Value;
+                    element.Width = (container.Width / 100) * Value;
                     break;
             }
         }
-
-        public override void Render(VisualElement element, RendererContext context, ViewPort viewPort)
-        {}
     }
 }

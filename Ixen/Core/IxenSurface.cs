@@ -20,15 +20,25 @@ namespace Ixen.Core
         {
             InitOptions = initOptions ?? new();
             Root = root ?? new();
+            Root.SetPosition(0, 0);
             Title = InitOptions.Title;
         }
 
         public void Compute(float width, float height)
         {
+            if (_viewPort.Width == width && _viewPort.Height == height)
+            {
+                return;
+            }
+
             _viewPort.Width = width;
             _viewPort.Height = height;
-
-            Root?.Compute(0, 0, width, height);
+           
+            if (Root != null)
+            {
+                Root.SetSize(width, height);
+                Root.Compute(Root, Root);
+            }
         }
 
         public void Render(SKCanvas canvas)

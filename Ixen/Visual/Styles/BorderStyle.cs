@@ -24,12 +24,11 @@ namespace Ixen.Visual.Styles
         {}
 
         public override void Parse()
-        {}
+        {
+            throw new System.NotImplementedException();
+        }
 
-        public override void Compute(VisualElement element, float x, float y, float width, float height)
-        {}
-
-        public override void Render(VisualElement element, RendererContext context, ViewPort viewPort)
+        public void Render(VisualElement element, RendererContext context)
         {
             switch (Type)
             {

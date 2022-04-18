@@ -11,7 +11,7 @@ namespace Ixen.Visual
 
         public VisualElementStyles Styles { get; set; } = new();
 
-        public abstract void Compute(float x, float y, float width, float height);
+        public abstract void Compute(VisualElement container, DimensionalElement targetZone);
         public abstract void Render(RendererContext context, ViewPort viewPort);
     }
 }

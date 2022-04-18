@@ -1,5 +1,4 @@
 ﻿using Ixen.Rendering;
-using Ixen.Visual.Styles;
 using System.Collections.Generic;
 
 namespace Ixen.Visual
@@ -12,18 +11,13 @@ namespace Ixen.Visual
         public string Id { get; set; }
         public string Name { get; set; }
 
-        public override void Compute(float x, float y, float width, float height)
+        public override void Compute(VisualElement container, DimensionalElement targetZone)
         {
-            X = x;
-            Y = y;
-            Width = width;
-            Height = height;
-
-            Styles.Compute(this, x, y, width, height);
+            Styles.Compute(this, container, targetZone);
 
             foreach (VisualElement element in _contents)
             {
-                element.Compute(X, Y, Width, Height);
+                element.Compute(this, element);
             }
         }
 

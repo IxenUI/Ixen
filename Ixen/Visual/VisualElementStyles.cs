@@ -10,20 +10,16 @@ namespace Ixen.Visual
         public BackgroundStyle Background { get; set; }
         public BorderStyle Border { get; set; }
 
-        public void Compute(VisualElement element, float x, float y, float width, float height)
+        public void Compute(VisualElement element, VisualElement container, DimensionalElement targetZone)
         {
-            Width?.Compute(element, x, y, width, height);
-            Height?.Compute(element, x, y, width, height);
-            Background?.Compute(element, x, y, width, height);
-            Border?.Compute(element, x, y, width, height);
+            Width?.Compute(element, container, targetZone);
+            Height?.Compute(element, container, targetZone);
         }
 
         public void Render(VisualElement element, RendererContext context, ViewPort viewPort)
         {
-            Width?.Render(element, context, viewPort);
-            Height?.Render(element, context, viewPort);
-            Background?.Render(element, context, viewPort);
-            Border?.Render(element, context, viewPort);
+            Background?.Render(element, context);
+            Border?.Render(element, context);
         }
     }
 }
