@@ -18,5 +18,17 @@
             get => _height;
             set => _height = value < 0 ? 0 : value;
         }
+
+        internal void SetSize(float width, float height)
+        {
+            Width = width;
+            Height = height;
+        }
+
+        internal void SetPosition(float x, float y)
+        {
+            X = x;
+            Y = y;
+        }
     }
 }
