@@ -44,8 +44,8 @@ namespace Ixen.DemoApp
             sel2.Styles.Height = new SizeStyle("1*");
             sel2.Styles.Background = new BackgroundStyle { Color = Color.GreenYellow };
 
-            el2.AddContent(sel1, sel2);
-            parent.AddContent(el1, el2, el3, el4);
+            el2.AddChildren(sel1, sel2);
+            parent.AddChildren(el1, el2, el3, el4);
 
             var options = new IxenSurfaceInitOptions
             {

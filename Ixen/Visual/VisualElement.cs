@@ -7,7 +7,7 @@ namespace Ixen.Visual
 {
     public class VisualElement : AbstractVisualElement
     {
-        private List<VisualElement> _contents = new();
+        private List<VisualElement> _children = new();
 
         private float _totalWidthWeight;
         private float _totalHeightWeight;
@@ -22,7 +22,7 @@ namespace Ixen.Visual
             _totalWidthWeight = 0;
             _totalHeightWeight = 0;
 
-            foreach (VisualElement element in _contents)
+            foreach (VisualElement element in _children)
             {
                 if (element.Styles.Width?.Unit == SizeUnit.Weight)
                 {
@@ -48,7 +48,7 @@ namespace Ixen.Visual
                 GetTotalWeight();
             }
 
-            foreach (VisualElement element in _contents)
+            foreach (VisualElement element in _children)
             {
                 usedWidth  += ComputeWidth(element, container, element.Styles.Width);
                 usedHeight += ComputeHeight(element, container, element.Styles.Height);
@@ -56,7 +56,7 @@ namespace Ixen.Visual
 
             if (_totalWidthWeight == 0 && _totalHeightWeight == 0)
             {
-                foreach (VisualElement element in _contents)
+                foreach (VisualElement element in _children)
                 {
                     element.ComputeSizes(this);
                 }
@@ -67,7 +67,7 @@ namespace Ixen.Visual
             float remainingWidth = Math.Max(0, Width - usedWidth);
             float remainingHeight = Math.Max(0, Height - usedHeight);
 
-            foreach (VisualElement element in _contents)
+            foreach (VisualElement element in _children)
             {
                 if (_totalWidthWeight > 0)
                 {
@@ -156,7 +156,7 @@ namespace Ixen.Visual
                     break;
             }
 
-            foreach (var element in _contents)
+            foreach (var element in _children)
             {
                 element.ComputeLayout(this);
             }
@@ -167,7 +167,7 @@ namespace Ixen.Visual
             float x = X;
             float y = Y;
 
-            foreach (VisualElement element in _contents)
+            foreach (VisualElement element in _children)
             {
                 element.SetPosition(x, y);
                 y += element.Height;
@@ -179,7 +179,7 @@ namespace Ixen.Visual
             float x = X;
             float y = Y;
 
-            foreach (VisualElement element in _contents)
+            foreach (VisualElement element in _children)
             {
                 element.SetPosition(x, y);
                 x += element.Width;
@@ -190,37 +190,37 @@ namespace Ixen.Visual
         {
             Styles.Render(this, context);
 
-            foreach (VisualElement element in _contents)
+            foreach (VisualElement element in _children)
             {
                 element.Render(context, viewPort);
             }
         }
 
-        public void AddContent(VisualElement element)
+        public void AddChild(VisualElement element)
         {
             element.Parent = this;
-            _contents.Add(element);
+            _children.Add(element);
         }
 
-        public void AddContent(params VisualElement[] elements)
+        public void AddChildren(params VisualElement[] elements)
         {
             foreach (VisualElement element in elements)
             {
-                AddContent(element);
+                AddChild(element);
             }
         }
 
-        public void RemoveContent(VisualElement element)
+        public void RemoveChild(VisualElement element)
         {
-            if (_contents.Remove(element))
+            if (_children.Remove(element))
             {
                 element.Parent = null;
             }
         }
 
-        public IEnumerable<VisualElement> GetElements()
+        public IEnumerable<VisualElement> GetChildren()
         {
-            foreach (VisualElement element in _contents)
+            foreach (VisualElement element in _children)
             {
                 yield return element;
             }
