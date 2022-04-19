@@ -4,14 +4,16 @@ namespace Ixen.Visual.Styles
 {
     public enum SizeUnit
     {
+        Undefined,
         Pixels,
-        Percents
+        Percents,
+        Weight
     }
 
-    public abstract class SizeStyle : Style
+    public class SizeStyle : Style
     {
-        private Regex _regex = new Regex(@"([0-9]+(?:\.[0-9]+)?)(px|%)");
-        public SizeUnit Unit { get; set; } = SizeUnit.Pixels;
+        private Regex _regex = new Regex(@"([0-9]+(?:\.[0-9]+)?)(px|%|\*)");
+        public SizeUnit Unit { get; set; } = SizeUnit.Undefined;
         public float Value { get; set; } = 1;
 
         public SizeStyle()
@@ -30,7 +32,7 @@ namespace Ixen.Visual.Styles
                 return;
             }
 
-            if(float.TryParse(m.Groups[1].Value, out float floatValue))
+            if (float.TryParse(m.Groups[1].Value, out float floatValue))
             {
                 Value = floatValue;
                 switch(m.Groups[2].Value)
@@ -40,6 +42,9 @@ namespace Ixen.Visual.Styles
                         break;
                     case "%":
                         Unit = SizeUnit.Percents;
+                        break;
+                    case "*":
+                        Unit = SizeUnit.Weight;
                         break;
                 }
             }

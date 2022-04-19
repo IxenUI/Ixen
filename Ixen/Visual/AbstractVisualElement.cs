@@ -14,9 +14,7 @@ namespace Ixen.Visual
         private float _contentX;
         private float _contentY;
 
-        private bool _isPositioned;
-        private bool _isDimensioned;
-        private bool _isRendered;
+        private bool _rendered;
 
         protected ViewPort _viewPort = new();
 
@@ -73,29 +71,11 @@ namespace Ixen.Visual
             set => _contentY = value;
         }
 
-        internal bool IsPositioned
-        {
-            get => _isPositioned;
-            set => _isPositioned = value;
-        }
-
-        internal bool IsDimensioned
-        {
-            get => _isDimensioned;
-            set => _isDimensioned = value;
-        }
-
-        internal bool IsRendered
-        {
-            get => _isRendered;
-            set => _isRendered = value;
-        }
+        internal bool IsRendered => _rendered;
 
         internal void Invalidate()
         {
-            IsPositioned = false;
-            IsDimensioned = false;
-            IsRendered = false;
+            _rendered = false;
         }
     }
 }

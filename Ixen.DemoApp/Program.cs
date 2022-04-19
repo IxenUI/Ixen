@@ -14,23 +14,23 @@ namespace Ixen.DemoApp
             parent.Styles.Background = new BackgroundStyle { Color = Color.Aqua };
 
             var el1 = new VisualElement();
-            el1.Styles.Width = new WidthStyle("200px");
-            el1.Styles.Height = new HeightStyle("200px");
+            el1.Styles.Width = new SizeStyle("200px");
+            el1.Styles.Height = new SizeStyle("200px");
             el1.Styles.Background = new BackgroundStyle { Color = Color.Red };
 
             var el2 = new VisualElement();
-            el2.Styles.Width = new WidthStyle("400px");
-            el2.Styles.Height = new HeightStyle("300px");
+            el2.Styles.Width = new SizeStyle("1*");
+            el2.Styles.Height = new SizeStyle("300px");
             el2.Styles.Background = new BackgroundStyle { Color = Color.Blue };
 
             var el3 = new VisualElement();
-            el3.Styles.Width = new WidthStyle("100px");
-            el3.Styles.Height = new HeightStyle("200px");
+            el3.Styles.Width = new SizeStyle("1*");
+            el3.Styles.Height = new SizeStyle("200px");
             el3.Styles.Background = new BackgroundStyle { Color = Color.Green };
 
             var el4 = new VisualElement();
-            el4.Styles.Width = new WidthStyle("100px");
-            el4.Styles.Height = new HeightStyle("200px");
+            el4.Styles.Width = new SizeStyle("100px");
+            el4.Styles.Height = new SizeStyle("200px");
             el4.Styles.Background = new BackgroundStyle { Color = Color.Black };
 
             parent.AddContent(el1, el2, el3, el4);

@@ -6,8 +6,8 @@ namespace Ixen.Visual
     public class VisualElementStyles
     {
         public LayoutStyle Layout { get; set; } = new();
-        public WidthStyle Width { get; set; }
-        public HeightStyle Height { get; set; }
+        public SizeStyle Width { get; set; } = new();
+        public SizeStyle Height { get; set; } = new();
 
         public BackgroundStyle Background { get; set; }
         public BorderStyle Border { get; set; }
