@@ -2,17 +2,29 @@
 {
     public abstract class DimensionalElement
     {
-        internal virtual float X { get; set; }
-        internal virtual float Y { get; set; }
-
+        private float _x;
+        private float _y;
         private float _width;
+        private float _height;
+
+        internal virtual float X
+        {
+            get => _x;
+            set => _x = value;
+        }
+
+        internal virtual float Y
+        {
+            get => _y;
+            set => _y = value;
+        }
+
         internal float Width
         {
             get => _width;
             set => _width = value < 0 ? 0 : value;
         }
 
-        private float _height;
         internal float Height
         {
             get => _height;

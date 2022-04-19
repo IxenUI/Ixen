@@ -11,7 +11,7 @@ namespace Ixen.Visual
         public string Id { get; set; }
         public string Name { get; set; }
 
-        public override void Compute(VisualElement container, DimensionalElement targetZone)
+        internal override void Compute(VisualElement container, DimensionalElement targetZone)
         {
             Styles.Compute(this, container, targetZone);
 
@@ -21,7 +21,7 @@ namespace Ixen.Visual
             }
         }
 
-        public override void Render(RendererContext context, ViewPort viewPort)
+        internal override void Render(RendererContext context, ViewPort viewPort)
         {
             Styles.Render(this, context, viewPort);
 
@@ -35,6 +35,14 @@ namespace Ixen.Visual
         {
             element.Parent = this;
             _contents.Add(element);
+        }
+
+        public void AddContent(params VisualElement[] elements)
+        {
+            foreach (VisualElement element in elements)
+            {
+                AddContent(element);
+            }
         }
 
         public void RemoveContent(VisualElement element)
