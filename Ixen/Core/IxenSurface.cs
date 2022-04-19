@@ -37,7 +37,8 @@ namespace Ixen.Core
             if (Root != null)
             {
                 Root.SetSize(width, height);
-                Root.Compute(Root);
+                Root.ComputeSizes(Root);
+                Root.ComputeLayout(Root);
             }
         }
 

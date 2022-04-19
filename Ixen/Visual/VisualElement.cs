@@ -17,34 +17,6 @@ namespace Ixen.Visual
         public string Id { get; set; }
         public string Name { get; set; }
 
-        internal override void Compute(VisualElement container)
-        {
-            ComputeSizes(container);
-
-            switch (Styles.Layout.Type)
-            {
-                case LayoutType.Column:
-                    ComputeColumnLayout();
-                    break;
-
-                case LayoutType.Row:
-                    ComputeRowLayout();
-                    break;
-
-                case LayoutType.Grid:
-                    break;
-
-                case LayoutType.Absolute:
-                    break;
-
-                case LayoutType.Fixed:
-                    break;
-
-                case LayoutType.Dock:
-                    break;
-            }
-        }
-
         private void GetTotalWeight()
         {
             _totalWidthWeight = 0;
@@ -66,7 +38,7 @@ namespace Ixen.Visual
             _totalWeightSet = true;
         }
 
-        private void ComputeSizes(VisualElement container)
+        internal override void ComputeSizes(VisualElement container)
         {
             float usedWidth = 0;
             float usedHeight = 0;
@@ -78,13 +50,17 @@ namespace Ixen.Visual
 
             foreach (VisualElement element in _contents)
             {
-                element.Compute(this);
                 usedWidth  += ComputeWidth(element, container, element.Styles.Width);
                 usedHeight += ComputeHeight(element, container, element.Styles.Height);
             }
 
             if (_totalWidthWeight == 0 && _totalHeightWeight == 0)
             {
+                foreach (VisualElement element in _contents)
+                {
+                    element.ComputeSizes(this);
+                }
+
                 return;
             }
 
@@ -102,6 +78,8 @@ namespace Ixen.Visual
                 {
                     ComputeFilledHeight(element, remainingHeight, element.Styles.Height);
                 }
+
+                element.ComputeSizes(this);
             }
         }
 
@@ -150,6 +128,37 @@ namespace Ixen.Visual
                     return element.Height = (remainingHeight / _totalHeightWeight) * heightStyle.Value;
                 default:
                     return 0;
+            }
+        }
+
+        internal override void ComputeLayout(VisualElement container)
+        {
+            switch (Styles.Layout?.Type)
+            {
+                case LayoutType.Column:
+                    ComputeColumnLayout();
+                    break;
+
+                case LayoutType.Row:
+                    ComputeRowLayout();
+                    break;
+
+                case LayoutType.Grid:
+                    break;
+
+                case LayoutType.Absolute:
+                    break;
+
+                case LayoutType.Fixed:
+                    break;
+
+                case LayoutType.Dock:
+                    break;
+            }
+
+            foreach (var element in _contents)
+            {
+                element.ComputeLayout(this);
             }
         }
 

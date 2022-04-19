@@ -18,7 +18,8 @@ namespace Ixen.Visual
 
         protected ViewPort _viewPort = new();
 
-        internal abstract void Compute(VisualElement container);
+        internal abstract void ComputeSizes(VisualElement container);
+        internal abstract void ComputeLayout(VisualElement container);
         internal abstract void Render(RendererContext context, ViewPort viewPort);
 
         public VisualElementStyles Styles { get; set; } = new();
