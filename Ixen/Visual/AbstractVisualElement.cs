@@ -20,7 +20,7 @@ namespace Ixen.Visual
 
         protected ViewPort _viewPort = new();
 
-        internal abstract void Compute(VisualElement container, DimensionalElement targetZone);
+        internal abstract void Compute(VisualElement container);
         internal abstract void Render(RendererContext context, ViewPort viewPort);
 
         public VisualElementStyles Styles { get; set; } = new();

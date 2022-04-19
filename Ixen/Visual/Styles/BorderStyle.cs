@@ -3,14 +3,7 @@ using Ixen.Rendering;
 
 namespace Ixen.Visual.Styles
 {
-    public enum BorderType
-    {
-        Outer,
-        Inner,
-        Center
-    }
-
-    public class BorderStyle : Style
+    public class BorderStyle : RenderedStyle
     {
         public Color Color { get; set; } = Color.Transparent;
         public float Thickness { get; set; } = 1;
@@ -28,17 +21,17 @@ namespace Ixen.Visual.Styles
             throw new System.NotImplementedException();
         }
 
-        public void Render(VisualElement element, RendererContext context)
+        public override void Render(VisualElement element, RendererContext context)
         {
             switch (Type)
             {
-                case Visual.Styles.BorderType.Center:
+                case BorderType.Center:
                     context.DrawRectangle(element.X, element.Y, element.Width, element.Height, new Pen(Color, Thickness));
                     break;
-                case Visual.Styles.BorderType.Inner:
+                case BorderType.Inner:
                     context.DrawInnerRectangle(element.X, element.Y, element.Width, element.Height, new Pen(Color, Thickness));
                     break;
-                case Visual.Styles.BorderType.Outer:
+                case BorderType.Outer:
                     context.DrawOuterRectangle(element.X, element.Y, element.Width, element.Height, new Pen(Color, Thickness));
                     break;
             }

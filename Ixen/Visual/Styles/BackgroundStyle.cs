@@ -3,7 +3,7 @@ using Ixen.Rendering;
 
 namespace Ixen.Visual.Styles
 {
-    public class BackgroundStyle : Style
+    public class BackgroundStyle : RenderedStyle
     {
         public Color Color { get; set; } = Color.Transparent;
         public string ImageUrl { get; set; }
@@ -20,7 +20,7 @@ namespace Ixen.Visual.Styles
         public override void Parse()
         {}
 
-        public void Render(VisualElement element, RendererContext context)
+        public override void Render(VisualElement element, RendererContext context)
         {
             context.FillRectangle(element.X, element.Y, element.Width, element.Height, new Brush(Color));
         }
