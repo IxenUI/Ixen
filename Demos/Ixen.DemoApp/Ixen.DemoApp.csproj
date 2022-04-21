@@ -16,6 +16,11 @@
 		<ProjectReference Include="..\..\Ixen.Core\Ixen.Core.csproj" />
 		<ProjectReference Include="..\..\Ixen.Platform\Ixen.Platform.csproj" />
 		<ProjectReference Include="..\..\Ixen.Platform.Windows\Ixen.Platform.Windows.csproj" />
+		<ProjectReference Include="..\..\Ixen.Platform.Windows.Native\Ixen.Platform.Windows.Native.vcxproj">
+			<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+			<OutputItemType>Content</OutputItemType>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</ProjectReference>
 	</ItemGroup>
 
 </Project>

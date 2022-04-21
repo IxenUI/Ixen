@@ -1,7 +1,7 @@
 ﻿using Ixen.Core;
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Styles;
-using Ixen.Windows.Core;
+using Ixen.Platform.Windows;
 
 namespace Ixen.DemoApp
 {
