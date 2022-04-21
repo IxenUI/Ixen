@@ -3,17 +3,21 @@
 #include <windows.h>
 #include <iostream>
 #include <map>
+#include <string>
 
 using namespace std;
 using namespace IxenWindowsNative;
 
+int NativeWindow::_windowNum = 0;
 map<HWND, NativeWindow*> NativeWindow::_windowsByHandle;
 
 NativeWindow::NativeWindow(LPCWSTR title, int width, int height)
 {
+    string className = "IxenWindow#" + to_string(++_windowNum);
+
     WNDCLASSEX wc = { 0 };
     wc.hInstance = nullptr;
-    wc.lpszClassName = L"MainWindow";
+    wc.lpszClassName = (LPWSTR)(className.c_str());
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);

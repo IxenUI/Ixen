@@ -11,6 +11,7 @@ namespace IxenWindowsNative
     class NativeWindow
     {
     private:
+        static int _windowNum;
         static map<HWND, NativeWindow*> _windowsByHandle;
         static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam);
 
