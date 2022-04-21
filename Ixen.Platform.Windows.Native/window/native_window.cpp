@@ -9,7 +9,7 @@ using namespace IxenWindowsNative;
 
 map<HWND, NativeWindow*> NativeWindow::_windowsByHandle;
 
-NativeWindow::NativeWindow()
+NativeWindow::NativeWindow(LPCWSTR title, int width, int height)
 {
     WNDCLASSEX wc = { 0 };
     wc.hInstance = nullptr;
@@ -25,7 +25,7 @@ NativeWindow::NativeWindow()
         return;
     }
 
-    _handle = CreateWindowEx(WS_EX_WINDOWEDGE, wc.lpszClassName, L"Hello", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, nullptr, this);
+    _handle = CreateWindowEx(WS_EX_WINDOWEDGE, wc.lpszClassName, title, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, nullptr, nullptr, nullptr, this);
 
     if (_handle)
     {

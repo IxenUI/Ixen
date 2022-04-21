@@ -18,7 +18,7 @@ namespace Ixen.Platform.Windows
 
         public IxenWindow(IxenSurface ixenSurface)
         {
-            _windowPtr = WindowApi.CreateWindow();
+            _windowPtr = WindowApi.CreateWindow(ixenSurface.InitOptions.Title, ixenSurface.InitOptions.Width, ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
             {

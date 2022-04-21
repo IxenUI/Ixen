@@ -10,7 +10,7 @@ namespace Ixen.Platform.Windows.NativeApi
         public delegate void OnPaintCallBack(int width, int height);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateWindow", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr CreateWindow();
+        public static extern IntPtr CreateWindow([MarshalAs(UnmanagedType.LPWStr)] string title, int width, int height);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_ShowWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern int ShowWindow(IntPtr windowPtr);

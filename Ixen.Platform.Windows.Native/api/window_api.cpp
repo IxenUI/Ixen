@@ -6,9 +6,9 @@
 
 using namespace IxenWindowsNative;
 
-NativeWindow* WA_CreateWindow()
+NativeWindow* WA_CreateWindow(LPCWSTR title, int width, int height)
 {
-    return new NativeWindow();
+    return new NativeWindow(title, width, height);
 }
 
 int WA_ShowWindow(NativeWindow* window)

@@ -26,7 +26,7 @@ namespace IxenWindowsNative
         LRESULT HandlePaint();
 
     public:
-        NativeWindow();
+        NativeWindow(LPCWSTR title, int width, int height);
 
         static NativeWindow* GetFromHandle(HWND handle);
 
