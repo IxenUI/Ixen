@@ -8,55 +8,55 @@ using namespace IxenWindowsNative;
 
 NativeWindow* WA_CreateWindow()
 {
-	return new NativeWindow();
+    return new NativeWindow();
 }
 
 int WA_ShowWindow(NativeWindow* window)
 {
-	if (!window)
-	{
-		return false;
-	}
+    if (!window)
+    {
+        return false;
+    }
 
-	return window->Show();
+    return window->Show();
 }
 
 LPWSTR WA_GetWindowTitle(NativeWindow* window)
 {
-	if (!window)
-	{
-		return nullptr;
-	}
+    if (!window)
+    {
+        return nullptr;
+    }
 
-	return PreMarshalString(window->GetTitle());
+    return PreMarshalString(window->GetTitle());
 }
 
 void WA_SetWindowTitle(NativeWindow* window, LPCWSTR value)
 {
-	if (!window)
-	{
-		return;
-	}
+    if (!window)
+    {
+        return;
+    }
 
-	window->SetTitle(value);
+    window->SetTitle(value);
 }
 
 void WA_SetWindowPixelsBuffer(NativeWindow* window, void* buffer)
 {
-	if (!window)
-	{
-		return;
-	}
+    if (!window)
+    {
+        return;
+    }
 
-	window->SetPixelsBuffer(buffer);
+    window->SetPixelsBuffer(buffer);
 }
 
 void WA_RegisterPaintCallBack(NativeWindow* window, void __stdcall callBack(int, int))
 {
-	if (!window)
-	{
-		return;
-	}
+    if (!window)
+    {
+        return;
+    }
 
-	window->SetOnPaintCallBack(callBack);
+    window->SetOnPaintCallBack(callBack);
 }
