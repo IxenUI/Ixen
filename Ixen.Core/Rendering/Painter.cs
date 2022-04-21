@@ -1,6 +1,6 @@
 ﻿using SkiaSharp;
 
-namespace Ixen.Rendering
+namespace Ixen.Core.Rendering
 {
     public abstract class Painter
     {

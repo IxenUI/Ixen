@@ -1,7 +1,6 @@
-﻿using Ixen.Core;
-using Ixen.Rendering;
+﻿using Ixen.Core.Rendering;
 
-namespace Ixen.Visual.Styles
+namespace Ixen.Core.Visual.Styles
 {
     public class BackgroundStyle : RenderedStyle
     {

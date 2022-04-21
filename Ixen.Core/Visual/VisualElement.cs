@@ -1,9 +1,9 @@
-﻿using Ixen.Rendering;
-using Ixen.Visual.Styles;
+﻿using Ixen.Core.Rendering;
+using Ixen.Core.Visual.Styles;
 using System;
 using System.Collections.Generic;
 
-namespace Ixen.Visual
+namespace Ixen.Core.Visual
 {
     public class VisualElement : AbstractVisualElement
     {

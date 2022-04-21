@@ -1,5 +1,5 @@
-﻿using Ixen.Rendering;
-using Ixen.Visual;
+﻿using Ixen.Core.Rendering;
+using Ixen.Core.Visual;
 using SkiaSharp;
 
 namespace Ixen.Core

@@ -1,6 +1,6 @@
-﻿using Ixen.Rendering;
+﻿using Ixen.Core.Rendering;
 
-namespace Ixen.Visual.Styles
+namespace Ixen.Core.Visual.Styles
 {
     public abstract class RenderedStyle : Style
     {

@@ -1,4 +1,4 @@
-﻿namespace Ixen.Visual.Styles
+﻿namespace Ixen.Core.Visual.Styles
 {
     public enum LayoutType
     {

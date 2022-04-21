@@ -13,8 +13,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Ixen.Windows\Ixen.Windows.csproj" />
-		<ProjectReference Include="..\Ixen\Ixen.csproj" />
+		<ProjectReference Include="..\..\Ixen.Core\Ixen.Core.csproj" />
+		<ProjectReference Include="..\..\Ixen.Platform\Ixen.Platform.csproj" />
+		<ProjectReference Include="..\..\Ixen.Platform.Windows\Ixen.Platform.Windows.csproj" />
 	</ItemGroup>
 
 </Project>

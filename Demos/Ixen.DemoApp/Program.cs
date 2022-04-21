@@ -1,6 +1,6 @@
 ﻿using Ixen.Core;
-using Ixen.Visual;
-using Ixen.Visual.Styles;
+using Ixen.Core.Visual;
+using Ixen.Core.Visual.Styles;
 using Ixen.Windows.Core;
 
 namespace Ixen.DemoApp

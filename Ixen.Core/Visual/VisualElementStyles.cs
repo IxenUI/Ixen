@@ -1,7 +1,7 @@
-﻿using Ixen.Rendering;
-using Ixen.Visual.Styles;
+﻿using Ixen.Core.Rendering;
+using Ixen.Core.Visual.Styles;
 
-namespace Ixen.Visual
+namespace Ixen.Core.Visual
 {
     public class VisualElementStyles
     {

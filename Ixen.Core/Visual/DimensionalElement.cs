@@ -1,4 +1,4 @@
-﻿namespace Ixen.Visual
+﻿namespace Ixen.Core.Visual
 {
     public abstract class DimensionalElement
     {

@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace Ixen.Visual.Styles
+namespace Ixen.Core.Visual.Styles
 {
     public enum SizeUnit
     {

@@ -1,6 +1,6 @@
-﻿using Ixen.Rendering;
+﻿using Ixen.Core.Rendering;
 
-namespace Ixen.Visual
+namespace Ixen.Core.Visual
 {
     public abstract class AbstractVisualElement : DimensionalElement
     {
