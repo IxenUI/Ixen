@@ -17,14 +17,16 @@
 
 	<ItemGroup>
 		<PackageReference Include="SkiaSharp" Version="2.80.3" />
-		<PackageReference Include="WinApi" Version="4.0.0" />
-		<PackageReference Include="WinApi.Desktop" Version="4.0.0" />
-		<PackageReference Include="WinApi.Utils" Version="4.0.0" />
 	</ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Ixen.Core\Ixen.Core.csproj" />
 		<ProjectReference Include="..\Ixen.Platform\Ixen.Platform.csproj" />
+		<ProjectReference Include="..\Ixen.Platform.Windows.Native\Ixen.Platform.Windows.Native.vcxproj">
+			<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+			<OutputItemType>Content</OutputItemType>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</ProjectReference>
     </ItemGroup>
 
 </Project>

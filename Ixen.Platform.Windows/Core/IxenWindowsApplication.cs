@@ -1,10 +1,7 @@
 ﻿using Ixen.Core;
 using System;
-using WinApi.Desktop;
-using WinApi.Windows;
-using WinApi.Windows.Helpers;
 
-namespace Ixen.Windows.Core
+namespace Ixen.Platform.Windows
 {
     public static class IxenWindowsApplication
     {
@@ -12,26 +9,11 @@ namespace Ixen.Windows.Core
         {
             try
             {
-                ApplicationHelpers.SetupDefaultExceptionHandlers();
-                var factory = WindowFactory.Create(hBgBrush: IntPtr.Zero);
-                using
-                (
-                    var window = factory.CreateWindow
-                    (
-                        () => new IxenWindow(surface),
-                        surface.Title,
-                        width: surface.InitOptions.Width,
-                        height: surface.InitOptions.Height,
-                        constructionParams: new FrameWindowConstructionParams())
-                    )
-                {
-                    window.Show();
-                    return new EventLoop().Run(window);
-                }
+                var window = new IxenWindow(surface);
+                return window.Show();
             }
-            catch (Exception ex)
+            catch
             {
-                MessageBoxHelpers.ShowError(ex);
                 return 1;
             }
         }

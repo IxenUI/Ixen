@@ -1,47 +1,56 @@
 ﻿using Ixen.Core;
-using NetCoreEx.Geometry;
+using Ixen.Platform.Windows.NativeApi;
 using SkiaSharp;
 using System;
-using WinApi.Gdi32;
-using WinApi.User32;
-using WinApi.Utils;
-using WinApi.Windows;
 
-namespace Ixen.Windows
+namespace Ixen.Platform.Windows
 {
-    internal class IxenWindow : EventedWindowCore
+    internal class IxenWindow : IDisposable
     {
-        private readonly NativePixelBuffer _pixelBuffer;
+        private IntPtr _windowPtr;
+
+        private readonly PixelBuffer _pixelBuffer;
         private bool _painted;
-        private IntPtr _hdc;
+        
         private SKImageInfo _skImageInfo;
         private SKSurface _skSurface;
         private IxenSurface _ixenSurface;
 
         public IxenWindow(IxenSurface ixenSurface)
         {
-            _pixelBuffer = new NativePixelBuffer();
+            _windowPtr = WindowApi.CreateWindow();
+
+            if (_windowPtr == IntPtr.Zero)
+            {
+                throw new Exception("Could not initialize WIN32 Window");
+            }
+
+            _pixelBuffer = new PixelBuffer();
             _ixenSurface = ixenSurface;
+
+            RegisterCallbacks();
         }
 
-        protected override void OnCreate(ref CreateWindowPacket packet)
+        private void RegisterCallbacks()
         {
-            base.OnCreate(ref packet);
+            WindowApi.RegisterPaintCallBack(_windowPtr, OnPaint);
         }
 
-        protected override void OnPaint(ref PaintPacket packet)
+        public int Show()
         {
-            User32Methods.GetClientRect(packet.Hwnd, out Rectangle clientRect);
-            
-            _pixelBuffer.EnsureSize(clientRect.Width, clientRect.Height);
-            _ixenSurface.Compute(clientRect.Width, clientRect.Height);
-            _hdc = User32Methods.BeginPaint(packet.Hwnd, out PaintStruct ps);
-            _skImageInfo = new SKImageInfo(clientRect.Width, clientRect.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
+            return WindowApi.ShowWindow(_windowPtr);
+        }
+
+        private void OnPaint(int width, int height)
+        {
+            _pixelBuffer.EnsureAlloc(width, height);
+            _ixenSurface.Compute(width, height);
+            _skImageInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
             _painted = false;
 
             try
             {
-                using(_skSurface = SKSurface.Create(_skImageInfo, _pixelBuffer.Handle, _pixelBuffer.Stride))
+                using(_skSurface = SKSurface.Create(_skImageInfo, _pixelBuffer.Ptr, _pixelBuffer.RowBytes))
                 {
                     if (_skSurface != null)
                     {
@@ -54,17 +63,14 @@ namespace Ixen.Windows
             {
                 if (_painted)
                 {
-                    Gdi32Helpers.SetRgbBitsToDevice(_hdc, clientRect.Width, clientRect.Height, _pixelBuffer.Handle);
+                    WindowApi.SetWindowPixelsBuffer(_windowPtr, _pixelBuffer.Ptr);
                 }
-
-                User32Methods.EndPaint(packet.Hwnd, ref ps);
             }
         }
 
-        protected override void Dispose(bool disposing)
+        public void Dispose()
         {
             _pixelBuffer.Dispose();
-            base.Dispose(disposing);
         }
     }
 }
