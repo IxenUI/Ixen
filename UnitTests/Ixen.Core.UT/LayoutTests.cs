@@ -7,16 +7,12 @@ namespace Ixen.Core.UT
     [TestClass]
     public class LayoutTests : BaseTests
     {
-        private IxenSurface _testSurface = new();
-        private const int _surfaceWidth = 1920;
-        private const int _surfaceHeight = 1080;
-
         [TestMethod]
-        public void RowLayoutTest()
+        public void TestRowLayout()
         {
-            var parent = new VisualElement();
-            parent.Styles.Layout = new LayoutStyle { Type = LayoutType.Row };
-            parent.Styles.Background = new BackgroundStyle { Color = Color.Aqua };
+            var root = new VisualElement();
+            root.Styles.Layout = new LayoutStyle { Type = LayoutType.Row };
+            root.Styles.Background = new BackgroundStyle { Color = Color.Aqua };
 
             var el1 = new VisualElement();
             el1.Styles.Width = new SizeStyle("200px");
@@ -50,12 +46,9 @@ namespace Ixen.Core.UT
             sel2.Styles.Background = new BackgroundStyle { Color = Color.GreenYellow };
 
             el2.AddChildren(sel1, sel2);
-            parent.AddChildren(el1, el2, el3, el4);
+            root.AddChildren(el1, el2, el3, el4);
 
-            _testSurface.Root = parent;
-            
-            string hash = _testSurface.ComputeRenderHash(_surfaceWidth, _surfaceHeight);
-            Assert.AreEqual("781d03724ac9caab1c140b3729ffccd6", hash);
+            Assert.AreEqual("781d03724ac9caab1c140b3729ffccd6", GetHash(root));
         }
     }
 }
