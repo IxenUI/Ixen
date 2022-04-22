@@ -1,10 +1,12 @@
 ﻿using Ixen.Core.Rendering;
 using Ixen.Core.Visual;
 using SkiaSharp;
+using System;
+using System.Security.Cryptography;
 
 namespace Ixen.Core
 {
-    public class IxenSurface
+    public sealed class IxenSurface
     {
         private static Color _clearColor = Color.White;
 
@@ -24,7 +26,7 @@ namespace Ixen.Core
             Title = InitOptions.Title;
         }
 
-        public void Compute(float width, float height)
+        internal void Compute(int width, int height)
         {
             if (_viewPort.Width == width && _viewPort.Height == height)
             {
@@ -42,12 +44,38 @@ namespace Ixen.Core
             }
         }
 
-        public void Render(SKCanvas canvas)
+        internal void Render(SKCanvas canvas)
         {
             _rendererContext.SKCanvas = canvas;
             _rendererContext.Clear(_clearColor);
 
             Root.Render(_rendererContext, _viewPort);
+        }
+
+        internal string ComputeRenderHash(int width, int height)
+        {
+            string res = null;
+
+            try
+            {
+                Compute(width, height);
+
+                SKBitmap bitmap = new SKBitmap(width, height);
+                using (var canvas = new SKCanvas(bitmap))
+                {
+                    Render(canvas);
+                }
+
+                using (var md5 = MD5.Create())
+                {
+                    byte[] md5hash = md5.ComputeHash(bitmap.Bytes);
+                    res = Convert.ToHexString(md5hash).ToLower();
+                }
+            }
+            catch
+            {}
+
+            return res;
         }
     }
 }
