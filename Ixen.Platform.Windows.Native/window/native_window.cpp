@@ -43,6 +43,19 @@ NativeWindow::NativeWindow(LPCWSTR title, int width, int height)
     _bitmapInfoHeader.biPlanes = 1;
 }
 
+LRESULT NativeWindow::StartEventLoop()
+{
+    MSG msg = {};
+
+    while (GetMessage(&msg, nullptr, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    return 0;
+}
+
 NativeWindow* NativeWindow::GetFromHandle(HWND handle)
 {
     std::map<HWND, NativeWindow*>::iterator nwIt = _windowsByHandle.find(handle);
@@ -55,18 +68,10 @@ NativeWindow* NativeWindow::GetFromHandle(HWND handle)
     return nullptr;
 }
 
-int NativeWindow::Show()
+LRESULT NativeWindow::Show()
 {
     ShowWindow(_handle, SW_SHOWNORMAL);
-
-    MSG msg = {};
-    while (GetMessage(&msg, nullptr, 0, 0))
-    {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-
-    return 0;
+    return StartEventLoop();
 }
 
 LPWSTR NativeWindow::GetTitle()
@@ -106,7 +111,7 @@ LRESULT NativeWindow::HandlePaint()
     {
         _bitmapInfoHeader.biWidth = _clientRect.right;
         _bitmapInfoHeader.biHeight = -_clientRect.bottom;
-        
+
         SetDIBitsToDevice(hdc, 0, 0, _clientRect.right, _clientRect.bottom, 0, 0, 0, _clientRect.bottom, _pixelsBuffer, (BITMAPINFO*)&_bitmapInfoHeader, 0);
     }
 
@@ -131,7 +136,7 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
 
 LRESULT CALLBACK NativeWindow::WindowProc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    NativeWindow *window = GetFromHandle(handle);
+    NativeWindow* window = GetFromHandle(handle);
 
     if (window)
     {

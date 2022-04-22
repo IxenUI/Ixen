@@ -11,11 +11,11 @@ NativeWindow* WA_CreateWindow(LPCWSTR title, int width, int height)
     return new NativeWindow(title, width, height);
 }
 
-int WA_ShowWindow(NativeWindow* window)
+LRESULT WA_ShowWindow(NativeWindow* window)
 {
     if (!window)
     {
-        return false;
+        return 1;
     }
 
     return window->Show();

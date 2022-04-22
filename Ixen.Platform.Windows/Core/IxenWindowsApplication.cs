@@ -7,15 +7,8 @@ namespace Ixen.Platform.Windows
     {
         public static int CreateWindow(IxenSurface surface)
         {
-            try
-            {
-                var window = new IxenWindow(surface);
-                return window.Show();
-            }
-            catch
-            {
-                return 1;
-            }
+            var window = new IxenWindow(surface);
+            return window.Show();
         }
     }
 }

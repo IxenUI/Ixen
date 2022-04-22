@@ -18,26 +18,20 @@ namespace Ixen.Platform.Windows
 
         public IxenWindow(IxenSurface ixenSurface)
         {
-            _windowPtr = WindowApi.CreateWindow(ixenSurface.InitOptions.Title, ixenSurface.InitOptions.Width, ixenSurface.InitOptions.Height);
+            _pixelBuffer = new PixelBuffer();
+            _ixenSurface = ixenSurface;
+            _windowPtr = WindowApi.CreateWindow(_ixenSurface.InitOptions.Title, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
             {
                 throw new Exception("Could not initialize WIN32 Window");
             }
-
-            _pixelBuffer = new PixelBuffer();
-            _ixenSurface = ixenSurface;
-
-            RegisterCallbacks();
-        }
-
-        private void RegisterCallbacks()
-        {
-            WindowApi.RegisterPaintCallBack(_windowPtr, OnPaint);
         }
 
         public int Show()
         {
+            WindowApi.RegisterPaintCallBack(_windowPtr, OnPaint);
+
             return WindowApi.ShowWindow(_windowPtr);
         }
 

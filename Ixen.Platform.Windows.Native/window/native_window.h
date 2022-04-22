@@ -22,6 +22,7 @@ namespace IxenWindowsNative
         RECT _clientRect = {};
         BITMAPINFOHEADER _bitmapInfoHeader = {};
     
+        LRESULT StartEventLoop();
         LRESULT CALLBACK Proc(UINT msg, WPARAM wParam, LPARAM lParam);
         LRESULT HandleDestroy();
         LRESULT HandlePaint();
@@ -31,7 +32,7 @@ namespace IxenWindowsNative
 
         static NativeWindow* GetFromHandle(HWND handle);
 
-        int Show();
+        LRESULT Show();
         LPWSTR GetTitle();
         void SetTitle(LPCWSTR value);
 
