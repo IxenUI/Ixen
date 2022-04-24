@@ -2,13 +2,13 @@ using Ixen.Core.Visual;
 using Ixen.Core.Visual.Styles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Ixen.Core.UT
+namespace Ixen.Core.UT.Layout
 {
     [TestClass]
-    public class LayoutTests : BaseTests
+    public class RowLayoutTests : BaseTests
     {
         [TestMethod]
-        public void TestRowLayout()
+        public void TestRow()
         {
             var root = new VisualElement();
             root.Styles.Layout = new LayoutStyle { Type = LayoutType.Row };

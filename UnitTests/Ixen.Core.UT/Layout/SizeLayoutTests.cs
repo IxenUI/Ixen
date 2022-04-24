@@ -2,10 +2,10 @@ using Ixen.Core.Visual;
 using Ixen.Core.Visual.Styles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Ixen.Core.UT
+namespace Ixen.Core.UT.Layout
 {
     [TestClass]
-    public class SizeTests : BaseTests
+    public class SizeLayoutTests : BaseTests
     {
         private VisualElement GetTestLayout(SizeStyle width, SizeStyle height)
         {

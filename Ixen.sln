@@ -17,7 +17,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ixen.Platform.Windows.Nativ
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnitTests", "UnitTests", "{7217EBAA-6731-4F4C-AA8B-FD2892EE04DA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ixen.Core.UT", "UnitTests\Ixen.Core.UT\Ixen.Core.UT.csproj", "{962BF660-0B37-434A-9D48-DB60844C1966}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ixen.Core.UT", "UnitTests\Ixen.Core.UT\Ixen.Core.UT.csproj", "{962BF660-0B37-434A-9D48-DB60844C1966}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
