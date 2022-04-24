@@ -23,7 +23,7 @@ namespace Ixen.Core.Visual.Styles
             : base(content)
         {}
 
-        public override void Parse()
+        protected override void Parse()
         {
             Match m = _regex.Match(_content);
 

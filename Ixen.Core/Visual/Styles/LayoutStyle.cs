@@ -11,7 +11,7 @@
             : base(content)
         {}
 
-        public override void Parse()
+        protected override void Parse()
         {}
     }
 }

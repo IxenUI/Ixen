@@ -13,6 +13,6 @@
             Parse();
         }
 
-        public abstract void Parse();
+        protected abstract void Parse();
     }
 }

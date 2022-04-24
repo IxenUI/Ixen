@@ -10,6 +10,6 @@ namespace Ixen.Core.Visual.Styles
         public RenderedStyle(string content) : base(content)
         {}
 
-        public abstract void Render(VisualElement element, RendererContext context);
+        internal abstract void Render(VisualElement element, RendererContext context);
     }
 }

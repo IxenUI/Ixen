@@ -16,10 +16,10 @@ namespace Ixen.Core.Visual.Styles
             : base(content)
         {}
 
-        public override void Parse()
+        protected override void Parse()
         {}
 
-        public override void Render(VisualElement element, RendererContext context)
+        internal override void Render(VisualElement element, RendererContext context)
         {
             context.FillRectangle(element.X, element.Y, element.Width, element.Height, new Brush(Color));
         }

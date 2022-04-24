@@ -15,12 +15,12 @@ namespace Ixen.Core.Visual.Styles
             : base(content)
         {}
 
-        public override void Parse()
+        protected override void Parse()
         {
             throw new System.NotImplementedException();
         }
 
-        public override void Render(VisualElement element, RendererContext context)
+        internal override void Render(VisualElement element, RendererContext context)
         {
             switch (Type)
             {
