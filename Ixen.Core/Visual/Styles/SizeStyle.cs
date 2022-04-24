@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using Ixen.Core.Visual.Styles.Exceptions;
+using System.Text.RegularExpressions;
 
 namespace Ixen.Core.Visual.Styles
 {
@@ -12,7 +13,7 @@ namespace Ixen.Core.Visual.Styles
 
     public class SizeStyle : Style
     {
-        private static Regex _regex = new Regex(@"([0-9]+(?:\.[0-9]+)?)(px|%|\*)");
+        private static Regex _regex = new Regex(@"([0-9]+(?:\.[0-9]+)?)(px|%|\*|)");
         public SizeUnit Unit { get; set; } = SizeUnit.Undefined;
         public float Value { get; set; } = 1;
 
@@ -23,13 +24,13 @@ namespace Ixen.Core.Visual.Styles
             : base(content)
         {}
 
-        protected override void Parse()
+        protected override bool Parse()
         {
             Match m = _regex.Match(_content);
 
             if (!m.Success || m.Groups.Count < 2)
             {
-                return;
+                return false;
             }
 
             if (float.TryParse(m.Groups[1].Value, out float floatValue))
@@ -38,6 +39,7 @@ namespace Ixen.Core.Visual.Styles
                 switch(m.Groups[2].Value)
                 {
                     case "px":
+                    case "":
                         Unit = SizeUnit.Pixels;
                         break;
                     case "%":
@@ -46,8 +48,12 @@ namespace Ixen.Core.Visual.Styles
                     case "*":
                         Unit = SizeUnit.Weight;
                         break;
+                    default:
+                        return false;
                 }
             }
+
+            return true;
         }
     }
 }

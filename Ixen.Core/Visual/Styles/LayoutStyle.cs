@@ -11,7 +11,6 @@
             : base(content)
         {}
 
-        protected override void Parse()
-        {}
+        protected override bool Parse() => true;
     }
 }

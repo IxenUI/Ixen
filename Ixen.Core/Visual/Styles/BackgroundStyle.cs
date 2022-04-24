@@ -16,8 +16,7 @@ namespace Ixen.Core.Visual.Styles
             : base(content)
         {}
 
-        protected override void Parse()
-        {}
+        protected override bool Parse() => true;
 
         internal override void Render(VisualElement element, RendererContext context)
         {

@@ -4,15 +4,17 @@
     {
         protected string _content;
 
+        public bool IsValid { get; protected set; } = true;
+
         public Style()
         {}
 
         public Style(string content)
         {
             _content = content;
-            Parse();
+            IsValid = Parse();
         }
 
-        protected abstract void Parse();
+        protected abstract bool Parse();
     }
 }

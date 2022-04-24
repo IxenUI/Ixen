@@ -13,6 +13,10 @@ namespace Ixen.Core.UT.Style
             Assert.AreEqual(50, pixelSize.Value);
             Assert.AreEqual(SizeUnit.Pixels, pixelSize.Unit);
 
+            var noUnitSize = new SizeStyle("50");
+            Assert.AreEqual(50, noUnitSize.Value);
+            Assert.AreEqual(SizeUnit.Pixels, noUnitSize.Unit);
+
             var percentSize = new SizeStyle("40%");
             Assert.AreEqual(40, percentSize.Value);
             Assert.AreEqual(SizeUnit.Percents, percentSize.Unit);
