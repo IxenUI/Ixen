@@ -7,10 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ixen.Core", "Ixen.Core\Ixen
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ixen.Platform.Windows", "Ixen.Platform.Windows\Ixen.Platform.Windows.csproj", "{13F23B55-A623-4908-A493-D122855F2FB5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ixen.DemoApp", "Demos\Ixen.DemoApp\Ixen.DemoApp.csproj", "{156FAE2E-57FC-41E2-8E9C-383B09E1DE78}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Demos", "Demos", "{A31283A3-7F1E-498E-BC7A-2F79D6280117}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ixen.Platform", "Ixen.Platform\Ixen.Platform.csproj", "{338FD86A-FE2E-4D71-96E0-09F047FA3E94}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ixen.Platform.Windows.Native", "Ixen.Platform.Windows.Native\Ixen.Platform.Windows.Native.vcxproj", "{5BE95337-29D8-4E1D-8692-0AAF1FEDCFCE}"
@@ -53,18 +49,6 @@ Global
 		{13F23B55-A623-4908-A493-D122855F2FB5}.Release|x64.Build.0 = Release|Any CPU
 		{13F23B55-A623-4908-A493-D122855F2FB5}.Release|x86.ActiveCfg = Release|Any CPU
 		{13F23B55-A623-4908-A493-D122855F2FB5}.Release|x86.Build.0 = Release|Any CPU
-		{156FAE2E-57FC-41E2-8E9C-383B09E1DE78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{156FAE2E-57FC-41E2-8E9C-383B09E1DE78}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{156FAE2E-57FC-41E2-8E9C-383B09E1DE78}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{156FAE2E-57FC-41E2-8E9C-383B09E1DE78}.Debug|x64.Build.0 = Debug|Any CPU
-		{156FAE2E-57FC-41E2-8E9C-383B09E1DE78}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{156FAE2E-57FC-41E2-8E9C-383B09E1DE78}.Debug|x86.Build.0 = Debug|Any CPU
-		{156FAE2E-57FC-41E2-8E9C-383B09E1DE78}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{156FAE2E-57FC-41E2-8E9C-383B09E1DE78}.Release|Any CPU.Build.0 = Release|Any CPU
-		{156FAE2E-57FC-41E2-8E9C-383B09E1DE78}.Release|x64.ActiveCfg = Release|Any CPU
-		{156FAE2E-57FC-41E2-8E9C-383B09E1DE78}.Release|x64.Build.0 = Release|Any CPU
-		{156FAE2E-57FC-41E2-8E9C-383B09E1DE78}.Release|x86.ActiveCfg = Release|Any CPU
-		{156FAE2E-57FC-41E2-8E9C-383B09E1DE78}.Release|x86.Build.0 = Release|Any CPU
 		{338FD86A-FE2E-4D71-96E0-09F047FA3E94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{338FD86A-FE2E-4D71-96E0-09F047FA3E94}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{338FD86A-FE2E-4D71-96E0-09F047FA3E94}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -106,7 +90,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{156FAE2E-57FC-41E2-8E9C-383B09E1DE78} = {A31283A3-7F1E-498E-BC7A-2F79D6280117}
 		{962BF660-0B37-434A-9D48-DB60844C1966} = {7217EBAA-6731-4F4C-AA8B-FD2892EE04DA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
