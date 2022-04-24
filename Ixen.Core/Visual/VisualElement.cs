@@ -5,17 +5,20 @@ using System.Collections.Generic;
 
 namespace Ixen.Core.Visual
 {
-    public class VisualElement : AbstractVisualElement
+    public sealed class VisualElement : BoxedElement
     {
         private List<VisualElement> _children = new();
-
+        private ViewPort _viewPort = new();
         private float _totalWidthWeight;
         private float _totalHeightWeight;
         private bool _totalWeightSet = false;
 
         internal VisualElement Parent { get; private set; }
+        internal bool IsRendered { get; private set; }
+
         public string Id { get; set; }
         public string Name { get; set; }
+        public VisualElementStyles Styles { get; set; } = new();
 
         private void GetTotalWeight()
         {
@@ -38,7 +41,7 @@ namespace Ixen.Core.Visual
             _totalWeightSet = true;
         }
 
-        internal override void ComputeSizes(VisualElement container)
+        internal void ComputeSizes(VisualElement container)
         {
             float usedWidth = 0;
             float usedHeight = 0;
@@ -50,8 +53,8 @@ namespace Ixen.Core.Visual
 
             foreach (VisualElement element in _children)
             {
-                usedWidth  += ComputeWidth(element, container, element.Styles.Width);
-                usedHeight += ComputeHeight(element, container, element.Styles.Height);
+                usedWidth  += ComputeWidth(element, container);
+                usedHeight += ComputeHeight(element, container);
             }
 
             if (_totalWidthWeight == 0 && _totalHeightWeight == 0)
@@ -71,67 +74,157 @@ namespace Ixen.Core.Visual
             {
                 if (_totalWidthWeight > 0)
                 {
-                    ComputeFilledWidth(element, remainingWidth, element.Styles.Width);
+                    ComputeFilledWidth(element, container, remainingWidth);
                 }
 
                 if (_totalHeightWeight > 0)
                 {
-                    ComputeFilledHeight(element, remainingHeight, element.Styles.Height);
+                    ComputeFilledHeight(element, container, remainingHeight);
                 }
 
                 element.ComputeSizes(this);
             }
         }
 
-        private float ComputeWidth(VisualElement element, VisualElement container, SizeStyle widthStyle)
+        private float ComputeWidth(VisualElement element, VisualElement container)
         {
-            switch (widthStyle?.Unit)
+            SizeStyle widthStyle = element.Styles.Width;
+            if (widthStyle != null)
             {
-                case SizeUnit.Pixels:
-                    return element.Width = widthStyle.Value;
-                case SizeUnit.Percents:
-                    return element.Width = (container.Width / 100) * widthStyle.Value;
-                default:
-                    return 0;
+                switch (widthStyle?.Unit)
+                {
+                    case SizeUnit.Pixels:
+                        ComputeHorizontalMargin(element, container);
+                        element.Width = widthStyle.Value;
+                        return element.BoxWidth;
+
+                    case SizeUnit.Percents:
+                        ComputeHorizontalMargin(element, container);
+                        element.Width = (container.Width / 100) * widthStyle.Value;
+                        return element.BoxWidth;
+                }
             }
+
+            return 0;
         }
 
-        private float ComputeHeight(VisualElement element, VisualElement container, SizeStyle heightStyle)
+        private float ComputeFilledWidth(VisualElement element, VisualElement container, float remainingWidth)
         {
-            switch (heightStyle?.Unit)
+            SizeStyle widthStyle = element.Styles.Width;
+            float margin;
+            if (widthStyle != null)
             {
-                case SizeUnit.Pixels:
-                    return element.Height = heightStyle.Value;
-                case SizeUnit.Percents:
-                    return element.Height = (container.Height / 100) * heightStyle.Value;
-                default:
-                    return 0;
+                switch (widthStyle.Unit)
+                {
+                    case SizeUnit.Weight:
+                        margin = ComputeHorizontalMargin(element, container);
+                        element.Width = ((remainingWidth - margin) / _totalWidthWeight) * widthStyle.Value;
+                        return element.BoxWidth;
+                }
             }
+
+            return 0;
         }
 
-        private float ComputeFilledWidth(VisualElement element, float remainingWidth, SizeStyle widthStyle)
+        private float ComputeHorizontalMargin(VisualElement element, VisualElement container)
         {
-            switch (widthStyle?.Unit)
+            MarginStyle marginStyle = element.Styles.Margin;
+            if (marginStyle != null)
             {
-                case SizeUnit.Weight:
-                    return element.Width = (remainingWidth / _totalWidthWeight) * widthStyle.Value;
-                default:
-                    return 0;
+                switch (marginStyle.Left.Unit)
+                {
+                    case SizeUnit.Pixels:
+                        element.MarginLeft = marginStyle.Left.Value;
+                        break;
+                    case SizeUnit.Percents:
+                        element.MarginLeft = (container.Width / 100) * marginStyle.Left.Value;
+                        break;
+                }
+
+                switch (marginStyle.Right.Unit)
+                {
+                    case SizeUnit.Pixels:
+                        element.MarginRight = marginStyle.Right.Value;
+                        break;
+                    case SizeUnit.Percents:
+                        element.MarginRight = (container.Width / 100) * marginStyle.Right.Value;
+                        break;
+                }
             }
+
+            return element.HorizontalMargin;
         }
 
-        private float ComputeFilledHeight(VisualElement element, float remainingHeight, SizeStyle heightStyle)
+        private float ComputeHeight(VisualElement element, VisualElement container)
         {
-            switch (heightStyle?.Unit)
+            SizeStyle heightStyle = element.Styles.Height;
+            if (heightStyle != null)
             {
-                case SizeUnit.Weight:
-                    return element.Height = (remainingHeight / _totalHeightWeight) * heightStyle.Value;
-                default:
-                    return 0;
+                switch (heightStyle.Unit)
+                {
+                    case SizeUnit.Pixels:
+                        ComputeVerticalMargin(element, container);
+                        element.Height = heightStyle.Value;
+                        return element.BoxHeight;
+
+                    case SizeUnit.Percents:
+                        ComputeVerticalMargin(element, container);
+                        element.Height = (container.Height / 100) * heightStyle.Value;
+                        return element.BoxHeight;
+                }
             }
+
+            return 0;
         }
 
-        internal override void ComputeLayout(VisualElement container)
+        private float ComputeFilledHeight(VisualElement element, VisualElement container, float remainingHeight)
+        {
+            SizeStyle heightStyle = element.Styles.Height;
+            float margin;
+            if (heightStyle != null)
+            {
+                switch (heightStyle.Unit)
+                {
+                    case SizeUnit.Weight:
+                        margin = ComputeVerticalMargin(element, container);
+                        element.Height = ((remainingHeight - margin) / _totalHeightWeight) * heightStyle.Value;
+                        return element.BoxHeight;
+                }
+            }
+
+            return 0;
+        }
+
+        private float ComputeVerticalMargin(VisualElement element, VisualElement container)
+        {
+            MarginStyle marginStyle = element.Styles.Margin;
+            if (marginStyle != null)
+            {
+                switch (marginStyle.Top.Unit)
+                {
+                    case SizeUnit.Pixels:
+                        element.MarginTop = marginStyle.Top.Value;
+                        break;
+                    case SizeUnit.Percents:
+                        element.MarginTop = (container.Height / 100) * marginStyle.Top.Value;
+                        break;
+                }
+
+                switch (marginStyle.Bottom.Unit)
+                {
+                    case SizeUnit.Pixels:
+                        element.MarginBottom = marginStyle.Bottom.Value;
+                        break;
+                    case SizeUnit.Percents:
+                        element.MarginBottom = (container.Height / 100) * marginStyle.Bottom.Value;
+                        break;
+                }
+            }
+
+            return element.VerticalMargin;
+        }
+
+        internal void ComputeLayout(VisualElement container)
         {
             switch (Styles.Layout?.Type)
             {
@@ -170,7 +263,7 @@ namespace Ixen.Core.Visual
             foreach (VisualElement element in _children)
             {
                 element.SetPosition(x, y);
-                y += element.Height;
+                y += element.BoxHeight;
             }
         }
 
@@ -182,11 +275,11 @@ namespace Ixen.Core.Visual
             foreach (VisualElement element in _children)
             {
                 element.SetPosition(x, y);
-                x += element.Width;
+                x += element.BoxWidth;
             }
         }
 
-        internal override void Render(RendererContext context, ViewPort viewPort)
+        internal void Render(RendererContext context, ViewPort viewPort)
         {
             Styles.Render(this, context);
 
@@ -224,6 +317,11 @@ namespace Ixen.Core.Visual
             {
                 yield return element;
             }
+        }
+
+        internal void Invalidate()
+        {
+            IsRendered = false;
         }
     }
 }

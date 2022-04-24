@@ -1,6 +1,6 @@
 ﻿namespace Ixen.Core.Visual
 {
-    public abstract class DimensionalElement
+    public class DimensionalElement
     {
         private float _x;
         private float _y;
@@ -31,13 +31,13 @@
             set => _height = value < 0 ? 0 : value;
         }
 
-        internal void SetSize(float width, float height)
+        internal virtual void SetSize(float width, float height)
         {
             Width = width;
             Height = height;
         }
 
-        internal void SetPosition(float x, float y)
+        internal virtual void SetPosition(float x, float y)
         {
             X = x;
             Y = y;
