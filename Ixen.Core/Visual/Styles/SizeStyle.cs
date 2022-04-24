@@ -45,7 +45,6 @@ namespace Ixen.Core.Visual.Styles
             switch(m.Groups[2].Value)
             {
                 case "px":
-                case "":
                     Unit = SizeUnit.Pixels;
                     return true;
 
@@ -56,6 +55,14 @@ namespace Ixen.Core.Visual.Styles
                 case "*":
                     Unit = SizeUnit.Weight;
                     return true;
+
+                case "":
+                    if (Value == 0)
+                    {
+                        Unit = SizeUnit.Pixels;
+                        return true;
+                    }
+                    return false;
 
                 default:
                     return false;
