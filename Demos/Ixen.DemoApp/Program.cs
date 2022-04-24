@@ -9,9 +9,26 @@ namespace Ixen.DemoApp
     {
         static int Main(string[] args)
         {
+            var options = new IxenSurfaceInitOptions
+            {
+                Title = "Ixen Demo App",
+                Width = 1280,
+                Height = 800
+            };
+
+            var layout = GetTestLayout2();
+            var surface = new IxenSurface(layout, options);
+
+            string hash = surface.ComputeRenderHash(1920, 1080);
+
+            return IxenWindowsApplication.CreateWindow(surface);
+        }
+
+        static VisualElement GetTestLayout1()
+        {
             var parent = new VisualElement();
             parent.Styles.Layout = new LayoutStyle { Type = LayoutType.Row };
-            parent.Styles.Background = new BackgroundStyle { Color = Color.Aqua };
+            parent.Styles.Background = new BackgroundStyle { Color = Color.WhiteSmoke };
 
             var el1 = new VisualElement();
             el1.Styles.Width = new SizeStyle("200px");
@@ -47,15 +64,23 @@ namespace Ixen.DemoApp
             el2.AddChildren(sel1, sel2);
             parent.AddChildren(el1, el2, el3, el4);
 
-            var options = new IxenSurfaceInitOptions
-            {
-                Title = "Ixen Demo App",
-                Width = 1280,
-                Height = 800
-            };
-            var surface = new IxenSurface(parent, options);
+            return parent;
+        }
 
-            return IxenWindowsApplication.CreateWindow(surface);
+        static VisualElement GetTestLayout2()
+        {
+            var parent = new VisualElement();
+            parent.Styles.Layout = new LayoutStyle { Type = LayoutType.Row };
+            parent.Styles.Background = new BackgroundStyle { Color = Color.WhiteSmoke };
+
+            var el1 = new VisualElement();
+            el1.Styles.Width = new SizeStyle("200px");
+            el1.Styles.Height = new SizeStyle("100px");
+            el1.Styles.Background = new BackgroundStyle { Color = Color.Red };
+
+            parent.AddChildren(el1);
+
+            return parent;
         }
     }
 }
