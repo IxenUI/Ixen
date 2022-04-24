@@ -1,5 +1,4 @@
-﻿using Ixen.Core.Visual.Styles.Exceptions;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace Ixen.Core.Visual.Styles
 {
@@ -15,10 +14,13 @@ namespace Ixen.Core.Visual.Styles
     {
         private static Regex _regex = new Regex(@"([0-9]+(?:\.[0-9]+)?)(px|%|\*|)");
         public SizeUnit Unit { get; set; } = SizeUnit.Undefined;
-        public float Value { get; set; } = 1;
+        public float Value { get; set; } = 0;
 
-        public SizeStyle()
-        {}
+        public SizeStyle() : base()
+        {
+            Value = 0;
+            Unit = SizeUnit.Pixels;
+        }
 
         public SizeStyle(string content)
             : base(content)
@@ -33,27 +35,31 @@ namespace Ixen.Core.Visual.Styles
                 return false;
             }
 
-            if (float.TryParse(m.Groups[1].Value, out float floatValue))
+            float floatValue;
+            if (!float.TryParse(m.Groups[1].Value, out floatValue))
             {
-                Value = floatValue;
-                switch(m.Groups[2].Value)
-                {
-                    case "px":
-                    case "":
-                        Unit = SizeUnit.Pixels;
-                        break;
-                    case "%":
-                        Unit = SizeUnit.Percents;
-                        break;
-                    case "*":
-                        Unit = SizeUnit.Weight;
-                        break;
-                    default:
-                        return false;
-                }
+                return false;
             }
 
-            return true;
+            Value = floatValue;
+            switch(m.Groups[2].Value)
+            {
+                case "px":
+                case "":
+                    Unit = SizeUnit.Pixels;
+                    return true;
+
+                case "%":
+                    Unit = SizeUnit.Percents;
+                    return true;
+
+                case "*":
+                    Unit = SizeUnit.Weight;
+                    return true;
+
+                default:
+                    return false;
+            }
         }
     }
 }
