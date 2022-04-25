@@ -6,6 +6,8 @@ namespace Ixen.Core.Rendering
     {
         public Pen(Color color, float width, bool antialias = false)
         {
+            _color = color;
+
             SKPaint = new SKPaint()
             {
                 IsStroke = true,

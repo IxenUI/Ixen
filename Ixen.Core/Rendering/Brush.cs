@@ -6,6 +6,8 @@ namespace Ixen.Core.Rendering
     {
         public Brush(Color color, bool antialias = false)
         {
+            _color = color;
+
             SKPaint = new SKPaint()
             {
                 IsAntialias = antialias,
