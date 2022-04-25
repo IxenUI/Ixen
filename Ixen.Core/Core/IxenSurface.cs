@@ -1,5 +1,7 @@
 ﻿using Ixen.Core.Rendering;
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Computers;
+using Ixen.Core.Visual.Styles;
 using SkiaSharp;
 using System;
 using System.Security.Cryptography;
@@ -11,12 +13,14 @@ namespace Ixen.Core
         private static Color _clearColor = Color.White;
 
         private ViewPort _viewPort = new();
+        private SizeComputer _sizeComputer = new();
+        private LayoutComputer _layoutComputer = new();
         private RendererContext _rendererContext = new();
-
-        public VisualElement Root;
+        private StyleRenderer _styleRenderer = new();
 
         public IxenSurfaceInitOptions InitOptions { get; private set; }
         public string Title { get; set; }
+        public VisualElement Root { get; set; }
 
         public IxenSurface (VisualElement root = null, IxenSurfaceInitOptions initOptions = null)
         {
@@ -26,7 +30,7 @@ namespace Ixen.Core
             Title = InitOptions.Title;
         }
 
-        internal void Compute(int width, int height)
+        internal void ComputeLayout(int width, int height)
         {
             if (_viewPort.Width == width && _viewPort.Height == height)
             {
@@ -39,8 +43,8 @@ namespace Ixen.Core
             if (Root != null)
             {
                 Root.SetSize(width, height);
-                Root.ComputeSizes(Root);
-                Root.ComputeLayout(Root);
+                _sizeComputer.Compute(Root, Root);
+                _layoutComputer.Compute(Root);
             }
         }
 
@@ -49,7 +53,10 @@ namespace Ixen.Core
             _rendererContext.SKCanvas = canvas;
             _rendererContext.Clear(_clearColor);
 
-            Root.Render(_rendererContext, _viewPort);
+            if (Root != null)
+            {
+                _styleRenderer.Render(Root, _rendererContext, _viewPort);
+            }
         }
 
         internal string ComputeRenderHash(int width, int height)
@@ -58,7 +65,7 @@ namespace Ixen.Core
 
             try
             {
-                Compute(width, height);
+                ComputeLayout(width, height);
 
                 SKBitmap bitmap = new SKBitmap(width, height);
                 using (var canvas = new SKCanvas(bitmap))

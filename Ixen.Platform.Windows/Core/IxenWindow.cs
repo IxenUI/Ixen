@@ -38,7 +38,7 @@ namespace Ixen.Platform.Windows
         private void OnPaint(int width, int height)
         {
             _pixelBuffer.EnsureAlloc(width, height);
-            _ixenSurface.Compute(width, height);
+            _ixenSurface.ComputeLayout(width, height);
             _skImageInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
             _painted = false;
 

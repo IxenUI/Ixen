@@ -13,11 +13,5 @@ namespace Ixen.Core.Visual
 
         public BackgroundStyle Background { get; set; }
         public BorderStyle Border { get; set; }
-
-        internal void Render(VisualElement element, RendererContext context)
-        {
-            Background?.Render(element, context);
-            Border?.Render(element, context);
-        }
     }
 }
