@@ -32,7 +32,7 @@ namespace Ixen.Core.UT.Layout
                 new SizeStyle("100px")
             );
 
-            Assert.AreEqual("f7b977140df8619151e5640ac960cdf3", GetHash(root));
+            AssertVisual("f7b977140df8619151e5640ac960cdf3", root);
         }
 
         [TestMethod]
@@ -44,7 +44,7 @@ namespace Ixen.Core.UT.Layout
                 new SizeStyle("1*")
             );
 
-            Assert.AreEqual("2d5c8e54fa6cf76e94e98a520fecccf6", GetHash(root));
+            AssertVisual("2d5c8e54fa6cf76e94e98a520fecccf6", root);
         }
     }
 }

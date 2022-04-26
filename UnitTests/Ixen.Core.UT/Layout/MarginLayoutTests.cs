@@ -28,7 +28,7 @@ namespace Ixen.Core.UT.Layout
 
             root.AddChildren(el1, el2);
 
-            Assert.AreEqual("844d7bbaa2fb7e684aeeb9e4fa8dd7b8", GetHash(root));
+            AssertVisual("844d7bbaa2fb7e684aeeb9e4fa8dd7b8", root);
         }
 
         [TestMethod]
@@ -46,7 +46,7 @@ namespace Ixen.Core.UT.Layout
 
             root.AddChildren(el1);
 
-            Assert.AreEqual("427eb920da121a828eb5e506f1eb45c2", GetHash(root));
+            AssertVisual("427eb920da121a828eb5e506f1eb45c2", root);
         }
     }
 }

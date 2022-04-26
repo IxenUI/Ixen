@@ -3,8 +3,6 @@ using Ixen.Core.Visual;
 using Ixen.Core.Visual.Computers;
 using Ixen.Core.Visual.Styles;
 using SkiaSharp;
-using System;
-using System.Security.Cryptography;
 
 namespace Ixen.Core
 {
@@ -59,30 +57,22 @@ namespace Ixen.Core
             }
         }
 
-        internal string ComputeRenderHash(int width, int height)
+        internal SKBitmap RenderToBitmap()
         {
-            string res = null;
-
             try
             {
-                ComputeLayout(width, height);
-
-                SKBitmap bitmap = new SKBitmap(width, height);
+                SKBitmap bitmap = new SKBitmap((int)_viewPort.Width, (int)_viewPort.Height);
                 using (var canvas = new SKCanvas(bitmap))
                 {
                     Render(canvas);
                 }
 
-                using (var md5 = MD5.Create())
-                {
-                    byte[] md5hash = md5.ComputeHash(bitmap.Bytes);
-                    res = Convert.ToHexString(md5hash).ToLower();
-                }
+                return bitmap;
             }
             catch
-            {}
-
-            return res;
+            {
+                return null;
+            }
         }
     }
 }

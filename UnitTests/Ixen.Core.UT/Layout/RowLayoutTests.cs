@@ -48,7 +48,7 @@ namespace Ixen.Core.UT.Layout
             el2.AddChildren(sel1, sel2);
             root.AddChildren(el1, el2, el3, el4);
 
-            Assert.AreEqual("781d03724ac9caab1c140b3729ffccd6", GetHash(root));
+            AssertVisual("781d03724ac9caab1c140b3729ffccd6", root);
         }
     }
 }
