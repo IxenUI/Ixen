@@ -8,7 +8,7 @@ namespace Ixen.Core
 {
     public sealed class IxenSurface
     {
-        private static Color _clearColor = Color.White;
+        private static Color _clearColor = Color.Transparent;
 
         private ViewPort _viewPort = new();
         private SizeComputer _sizeComputer = new();
