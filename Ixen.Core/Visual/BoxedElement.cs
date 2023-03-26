@@ -92,18 +92,34 @@
         internal float BoxWidth
             => Width
                 + MarginLeft + MarginRight
+                + PaddingLeft + PaddingRight
                 + BorderLeft + BorderRight;
 
         internal float BoxHeight
             => Height
                 + MarginTop + MarginBottom
+                + PaddingTop + PaddingBottom
                 + BorderTop + BorderBottom;
+
+        internal float ActualWidth
+            => Width
+                + PaddingLeft + PaddingRight;
+
+        internal float ActualHeight
+            => Height
+                + PaddingTop + PaddingBottom;
 
         internal float HorizontalMargin
             => MarginLeft + MarginRight;
 
         internal float VerticalMargin
             => MarginTop + MarginBottom;
+
+        internal float HorizontalPadding
+            => PaddingRight + PaddingLeft;
+
+        internal float VerticalPadding
+            => PaddingTop + PaddingBottom;
 
         internal override void SetPosition(float x, float y)
         {

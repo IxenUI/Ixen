@@ -53,13 +53,13 @@ namespace Ixen.Core.Visual.Styles
             switch (Type)
             {
                 case BorderType.Center:
-                    context.DrawRectangle(element.X, element.Y, element.Width, element.Height, _pen);
+                    context.DrawRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, _pen);
                     break;
                 case BorderType.Inner:
-                    context.DrawInnerRectangle(element.X, element.Y, element.Width, element.Height, _pen);
+                    context.DrawInnerRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, _pen);
                     break;
                 case BorderType.Outer:
-                    context.DrawOuterRectangle(element.X, element.Y, element.Width, element.Height, _pen);
+                    context.DrawOuterRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, _pen);
                     break;
             }
         }

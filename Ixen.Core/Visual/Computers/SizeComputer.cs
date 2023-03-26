@@ -80,11 +80,13 @@ namespace Ixen.Core.Visual.Computers
                 {
                     case SizeUnit.Pixels:
                         ComputeHorizontalMargin(element, child, container);
+                        ComputeHorizontalPadding(element, child, container);
                         child.Width = widthStyle.Value;
                         return child.BoxWidth;
 
                     case SizeUnit.Percents:
                         ComputeHorizontalMargin(element, child, container);
+                        ComputeHorizontalPadding(element, child, container);
                         child.Width = (container.Width / 100) * widthStyle.Value;
                         return child.BoxWidth;
                 }
@@ -140,6 +142,35 @@ namespace Ixen.Core.Visual.Computers
             return child.HorizontalMargin;
         }
 
+        private float ComputeHorizontalPadding(VisualElement element, VisualElement child, DimensionalElement container)
+        {
+            MarginStyle paddingStyle = child.Styles.Padding;
+            if (paddingStyle != null)
+            {
+                switch (paddingStyle.Left.Unit)
+                {
+                    case SizeUnit.Pixels:
+                        child.PaddingLeft = paddingStyle.Left.Value;
+                        break;
+                    case SizeUnit.Percents:
+                        child.PaddingLeft = (container.Width / 100) * paddingStyle.Left.Value;
+                        break;
+                }
+
+                switch (paddingStyle.Right.Unit)
+                {
+                    case SizeUnit.Pixels:
+                        child.PaddingRight = paddingStyle.Right.Value;
+                        break;
+                    case SizeUnit.Percents:
+                        child.PaddingRight = (container.Width / 100) * paddingStyle.Right.Value;
+                        break;
+                }
+            }
+
+            return child.HorizontalPadding;
+        }
+
         private float ComputeHeight(VisualElement element, VisualElement child, DimensionalElement container)
         {
             SizeStyle heightStyle = child.Styles.Height;
@@ -149,11 +180,13 @@ namespace Ixen.Core.Visual.Computers
                 {
                     case SizeUnit.Pixels:
                         ComputeVerticalMargin(element, child, container);
+                        ComputeVerticalPadding(element, child, container);
                         child.Height = heightStyle.Value;
                         return child.BoxHeight;
 
                     case SizeUnit.Percents:
                         ComputeVerticalMargin(element, child, container);
+                        ComputeVerticalPadding(element, child, container);
                         child.Height = (container.Height / 100) * heightStyle.Value;
                         return child.BoxHeight;
                 }
@@ -207,6 +240,35 @@ namespace Ixen.Core.Visual.Computers
             }
 
             return child.VerticalMargin;
+        }
+
+        private float ComputeVerticalPadding(VisualElement element, VisualElement child, DimensionalElement container)
+        {
+            MarginStyle paddingStyle = child.Styles.Padding;
+            if (paddingStyle != null)
+            {
+                switch (paddingStyle.Top.Unit)
+                {
+                    case SizeUnit.Pixels:
+                        child.PaddingTop = paddingStyle.Top.Value;
+                        break;
+                    case SizeUnit.Percents:
+                        child.PaddingTop = (container.Height / 100) * paddingStyle.Top.Value;
+                        break;
+                }
+
+                switch (paddingStyle.Bottom.Unit)
+                {
+                    case SizeUnit.Pixels:
+                        child.PaddingBottom = paddingStyle.Bottom.Value;
+                        break;
+                    case SizeUnit.Percents:
+                        child.PaddingBottom = (container.Height / 100) * paddingStyle.Bottom.Value;
+                        break;
+                }
+            }
+
+            return child.VerticalPadding;
         }
     }
 }

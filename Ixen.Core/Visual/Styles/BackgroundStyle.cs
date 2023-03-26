@@ -41,7 +41,7 @@ namespace Ixen.Core.Visual.Styles
 
         internal override void Render(VisualElement element, RendererContext context)
         {
-            context.FillRectangle(element.X, element.Y, element.Width, element.Height, _brush);
+            context.FillRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, _brush);
         }
     }
 }
