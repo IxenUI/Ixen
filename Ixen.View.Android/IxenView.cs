@@ -1,16 +1,15 @@
 ﻿using Android.Content;
 using Android.Runtime;
 using Android.Util;
-using Android.Widget;
 using Ixen.Core;
 using Ixen.Core.Visual;
-using SkiaSharp;
 using SkiaSharp.Views.Android;
 
 namespace Ixen.View.Android
 {
-    public class IxenView : SKCanvasView
+    public class IxenView : FrameLayout
     {
+        private SKCanvasView _skCanvasView;
         private IxenSurface _ixenSurface = new IxenSurface();
 
         public IxenView(Context context)
@@ -39,7 +38,9 @@ namespace Ixen.View.Android
 
         private void Init()
         {
-            PaintSurface += OnPaintSurface;
+            _skCanvasView = new SKCanvasView(Context);
+            _skCanvasView.PaintSurface += OnPaintSurface;
+            this.AddView(_skCanvasView);
         }
 
         private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
