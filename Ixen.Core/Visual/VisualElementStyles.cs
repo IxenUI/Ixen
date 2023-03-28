@@ -6,6 +6,7 @@ namespace Ixen.Core.Visual
     public class VisualElementStyles
     {
         public LayoutStyle Layout { get; set; } = new();
+        public MaskStyle Mask { get; set; } = new();
         public SizeStyle Width { get; set; } = new();
         public SizeStyle Height { get; set; } = new();
         public MarginStyle Margin { get; set; } = new();
