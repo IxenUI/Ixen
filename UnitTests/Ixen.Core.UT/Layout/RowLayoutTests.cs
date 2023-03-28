@@ -8,7 +8,7 @@ namespace Ixen.Core.UT.Layout
     public class RowLayoutTests : BaseTests
     {
         [TestMethod]
-        public void TestRow()
+        public void TestRow1()
         {
             var root = new VisualElement();
             root.Styles.Layout = new LayoutStyle { Type = LayoutType.Row };
@@ -49,6 +49,41 @@ namespace Ixen.Core.UT.Layout
             root.AddChildren(el1, el2, el3, el4);
 
             AssertVisual("781d03724ac9caab1c140b3729ffccd6", root);
+        }
+
+        [TestMethod]
+        public void TestRow2()
+        {
+            var root = new VisualElement();
+            root.Styles.Background = new BackgroundStyle { Color = Color.White };
+
+            var layout = new VisualElement();
+            layout.Styles.Width = new SizeStyle("400px");
+            layout.Styles.Height = new SizeStyle("1*");
+            layout.Styles.Layout = new LayoutStyle { Type = LayoutType.Row };
+            layout.Styles.Mask = new MaskStyle { Right = true };
+            layout.Styles.Background = new BackgroundStyle { Color = Color.LightGray };
+
+            var el1 = new VisualElement();
+            el1.Styles.Width = new SizeStyle("250px");
+            el1.Styles.Height = new SizeStyle("100px");
+            el1.Styles.Background = new BackgroundStyle { Color = Color.DarkOrange };
+
+            var el2 = new VisualElement();
+            el2.Styles.Width = new SizeStyle("250px");
+            el2.Styles.Height = new SizeStyle("100px");
+            el2.Styles.Background = new BackgroundStyle { Color = Color.DarkRed };
+
+            var el3 = new VisualElement();
+            el3.Styles.Width = new SizeStyle("250px");
+            el3.Styles.Height = new SizeStyle("100px");
+            el3.Styles.Background = new BackgroundStyle { Color = Color.DarkSalmon };
+
+            layout.AddChildren(el1, el2, el3);
+
+            root.AddChild(layout);
+
+            AssertVisual("0192c2d99d732698e53cd8a116817e3d", root);
         }
     }
 }
