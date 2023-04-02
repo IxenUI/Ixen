@@ -8,12 +8,12 @@ using System.Security.Cryptography;
 
 namespace Ixen.Core.UT
 {
-    public abstract class BaseTests
+    public abstract class BaseVisualTests
     {
         private string _outputRendersDir = Path.Combine(Environment.CurrentDirectory, "RenderResults");
         private static MD5 _md5 = MD5.Create();
 
-        public BaseTests()
+        public BaseVisualTests()
         {
             Directory.CreateDirectory(_outputRendersDir);
         }

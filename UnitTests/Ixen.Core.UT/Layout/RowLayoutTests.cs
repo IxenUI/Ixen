@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Ixen.Core.UT.Layout
 {
     [TestClass]
-    public class RowLayoutTests : BaseTests
+    public class RowLayoutTests : BaseVisualTests
     {
         [TestMethod]
         public void TestRow1()

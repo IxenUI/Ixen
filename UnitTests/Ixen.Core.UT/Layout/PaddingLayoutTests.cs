@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Ixen.Core.UT.Layout
 {
     [TestClass]
-    public class PaddingLayoutTests : BaseTests
+    public class PaddingLayoutTests : BaseVisualTests
     {
         [TestMethod]
         public void TestPaddingLayout1()

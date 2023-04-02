@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Ixen.Core.UT.Layout
 {
     [TestClass]
-    public class MarginLayoutTests : BaseTests
+    public class MarginLayoutTests : BaseVisualTests
     {
         [TestMethod]
         public void TestMarginLayout1()

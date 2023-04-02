@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Ixen.Core.UT.Layout
 {
     [TestClass]
-    public class SizeLayoutTests : BaseTests
+    public class SizeLayoutTests : BaseVisualTests
     {
         private VisualElement GetTestLayout(SizeStyle width, SizeStyle height)
         {
