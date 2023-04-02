@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Ixen.Core\Ixen.Core.csproj" />
+    <ProjectReference Include="..\..\Ixen.Language\Ixen.Language.csproj" />
   </ItemGroup>
 
 </Project>
