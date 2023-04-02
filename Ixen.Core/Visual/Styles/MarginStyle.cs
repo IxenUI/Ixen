@@ -29,7 +29,7 @@ namespace Ixen.Core.Visual.Styles
         {
             MatchCollection mc = _regex.Matches(_content);
 
-            if (mc.Count < 1 || mc.Count > 4 || mc.Any(m => m.Success == false))
+            if (mc.Count < 1 || mc.Count > 4 || mc.Cast<Match>().Any(m => m.Success == false))
             {
                 return false;
             }
