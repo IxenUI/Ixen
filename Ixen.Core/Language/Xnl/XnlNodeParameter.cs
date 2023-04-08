@@ -1,6 +1,6 @@
-﻿namespace Ixen.Language.Xnl.Parser
+﻿namespace Ixen.Core.Language.Xnl
 {
-    internal class XnlNodeParameter
+    internal class XnxNodeParameter
     {
         public string Name { get; set; }
         public string Value { get; set; }

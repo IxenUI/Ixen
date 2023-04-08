@@ -24,6 +24,10 @@
 		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\Ixen.Core\Ixen.Core.csproj" />
+	</ItemGroup>
+
 	<!--<Target Name="RemoveSourceGeneratedFiles" BeforeTargets="CoreCompile">
 		<ItemGroup>
 			<Compile Remove="**/*.SourceGenerated.cs" />

@@ -1,4 +1,4 @@
-﻿using Ixen.Language.Xnl.Parser;
+﻿using Ixen.Core.Language.Xnl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -33,7 +33,9 @@ namespace Ixen.Core.UT.Xln
     }
 }";
 
-            var root = XnlParser.Parse(source);
+            var xnlSource = XnlSource.FromSource(source);
+            xnlSource.Parse();
+            var content = xnlSource.GetContent();
         }
     }
 }

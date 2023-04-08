@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Ixen.Language.Xnl.Parser
+namespace Ixen.Core.Language.Xnl
 {
     internal class XnlNode
     {
@@ -8,7 +8,7 @@ namespace Ixen.Language.Xnl.Parser
         public int Index { get; set; }
         public string Name { get; set; }
         public string Type { get; set; }
-        public List<XnlNodeParameter> Parameters { get; set; } = new();
+        public List<XnxNodeParameter> Parameters { get; set; } = new();
         public XnlNode Parent { get; set; }
         public List<XnlNode> Children { get; set; } = new();
     }

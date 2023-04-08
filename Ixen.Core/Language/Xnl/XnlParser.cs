@@ -1,20 +1,13 @@
-﻿using Ixen.Core.Visual;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Ixen.Core.Language.Base;
 
-namespace Ixen.Language.Xnl.Parser
+namespace Ixen.Core.Language.Xnl
 {
-    internal class XnlParser
+    internal class XnlParser : BaseParser
     {
-        private string[] _inputLines;
-
-        private int _lineNum = 0;
-        private int _nextLineNum = 0;
-        private int _lineIndex = 0;
-        private int _nextLineIndex = 0;
-
         private bool _expectElementName = false;
 
         private bool _expectElementType = false;
@@ -33,24 +26,11 @@ namespace Ixen.Language.Xnl.Parser
         private bool _identifier;
         private bool _content;
 
-        private XnlParser(string[] lines)
-        {
-            _inputLines = lines;
-        }
+        public XnlParser(string[] lines)
+            : base(lines)
+        { }
 
-        public static XnlNode ParseFile(string filePath)
-        {
-            string[] lines = File.ReadAllLines(filePath);
-            return new XnlParser(lines).Parse();
-        }
-
-        public static XnlNode Parse(string source)
-        {
-            string[] lines = source.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
-            return new XnlParser(lines).Parse();
-        }
-
-        private XnlNode Parse()
+        public XnlNode Parse()
         {
             try
             {
@@ -71,7 +51,7 @@ namespace Ixen.Language.Xnl.Parser
         {
             char c;
             StringBuilder sb;
-            XnlNodeParameter nodeParameter = null;
+            XnxNodeParameter nodeParameter = null;
 
             XnlNode node = new XnlNode();
             var root = new XnlNode();
@@ -123,7 +103,7 @@ namespace Ixen.Language.Xnl.Parser
                         {
                             ResetStatesFlags();
                             _expectParamEqual = true;
-                            nodeParameter = new XnlNodeParameter
+                            nodeParameter = new XnxNodeParameter
                             {
                                 Name = sb.ToString()
                             };
@@ -289,30 +269,6 @@ namespace Ixen.Language.Xnl.Parser
 
             _identifier = false;
             _content = false;
-        }
-
-        private char PeekChar()
-        {
-            _nextLineNum = _lineNum;
-            _nextLineIndex = _lineIndex + 1;
-
-            while (_nextLineIndex >= _inputLines[_nextLineNum].Length)
-            {
-                _nextLineIndex = 0;
-                _nextLineNum++;
-                if (_nextLineNum >= _inputLines.Length)
-                {
-                    return '\0';
-                }
-            }
-
-            return _inputLines[_nextLineNum][_nextLineIndex];
-        }
-
-        private void MoveCursor()
-        {
-            _lineNum = _nextLineNum;
-            _lineIndex = _nextLineIndex;
         }
     }
 }
