@@ -12,9 +12,10 @@ namespace Ixen.Core.Visual.Computers
             if (element.MustRefreshStyles)
             {
                 //element.Styles = new();
-                if (element.Name != null)
+
+                foreach (var c in element.Classes)
                 {
-                    sc = StyleSheet.GetElementClass(element.Name);
+                    sc = StyleSheet.GetClass(c);
 
                     if (sc != null)
                     {
@@ -24,10 +25,10 @@ namespace Ixen.Core.Visual.Computers
                         }
                     }
                 }
-                
-                foreach (var c in element.Classes)
+
+                if (element.Name != null)
                 {
-                    sc = StyleSheet.GetClass(c);
+                    sc = StyleSheet.GetElementClass(element.Name);
 
                     if (sc != null)
                     {
