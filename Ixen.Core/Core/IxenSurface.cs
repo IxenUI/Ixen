@@ -11,6 +11,7 @@ namespace Ixen.Core
         private static Color _clearColor = Color.Transparent;
 
         private ViewPort _viewPort = new();
+        private StyleComputer _styleComputer = new();
         private SizeComputer _sizeComputer = new();
         private LayoutComputer _layoutComputer = new();
         private RendererContext _rendererContext = new();
@@ -41,6 +42,7 @@ namespace Ixen.Core
             if (Root != null)
             {
                 Root.SetSize(width, height);
+                _styleComputer.Compute(Root);
                 _sizeComputer.Compute(Root, Root);
                 _layoutComputer.Compute(Root);
             }

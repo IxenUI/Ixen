@@ -13,10 +13,12 @@ namespace Ixen.Core.Visual
 
         internal VisualElement Parent { get; private set; }
         internal bool IsRendered { get; private set; }
+        internal bool MustRefreshStyles { get; set; } = true;
 
         public string Id { get; set; }
         public string Name { get; set; }
         public VisualElementStyles Styles { get; set; } = new();
+        public List<string> Classes { get; set; } = new ();
 
         public void AddChild(VisualElement element)
         {
