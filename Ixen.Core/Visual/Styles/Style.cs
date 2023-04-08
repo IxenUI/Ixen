@@ -2,6 +2,8 @@
 {
     public abstract class Style
     {
+        internal abstract string Identifier { get; }
+
         protected string _content;
 
         public bool IsValid { get; protected set; } = true;

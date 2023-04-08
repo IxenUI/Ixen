@@ -2,8 +2,17 @@
 
 namespace Ixen.Core.Visual.Styles
 {
+    public enum BorderType
+    {
+        Outer,
+        Inner,
+        Center
+    }
+
     public class BorderStyle : RenderedStyle
     {
+        internal override string Identifier => StyleIdentifier.Border;
+
         private Pen _pen;
         private Color _color = Color.Black;
         private float _thickness = 1;

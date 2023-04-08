@@ -5,6 +5,8 @@ namespace Ixen.Core.Visual.Styles
 {
     public class BackgroundStyle : RenderedStyle
     {
+        internal override string Identifier => StyleIdentifier.Background;
+
         private Brush _brush;
         private Color _color = Color.Transparent;
         public string ImageUrl { get; set; }

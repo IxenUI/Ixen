@@ -12,6 +12,8 @@ namespace Ixen.Core.Visual.Styles
 
     public class SizeStyle : Style
     {
+        internal override string Identifier => StyleIdentifier.Size;
+
         private static Regex _regex = new Regex(@"([0-9]+(?:\.[0-9]+)?)(px|%|\*|)");
         public SizeUnit Unit { get; set; } = SizeUnit.Undefined;
         public float Value { get; set; } = 0;

@@ -2,6 +2,8 @@
 {
     public class MaskStyle : Style
     {
+        internal override string Identifier => StyleIdentifier.Mask;
+
         public bool Top { get; set; } = false;
         public bool Bottom { get; set; } = false;
         public bool Right { get; set; } = false;
