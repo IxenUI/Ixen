@@ -3,6 +3,7 @@ using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles;
 using System.Collections.Generic;
 using System;
+using System.Text;
 
 namespace Ixen.Core.Language.Xns
 {
@@ -42,6 +43,44 @@ namespace Ixen.Core.Language.Xns
 
         public XnsNode GetContent() => _content;
 
+        private string GetScope(XnsNode node)
+        {
+            var sb = new StringBuilder();
+
+            while (node.Parent != null)
+            {
+                if (!string.IsNullOrEmpty(node.Parent.Name))
+                {
+                    sb.Insert(0, node.Parent.Name);
+                }
+                
+                node = node.Parent;
+            }
+
+            return sb.Length > 0
+                ? sb.ToString()
+                : null;
+        }
+
+        private StyleClass GetClass(XnsNode node)
+        {
+            string name = node.Name;
+            var target = StyleClassTarget.Any;
+
+            if (name.StartsWith("."))
+            {
+                target = StyleClassTarget.ElementName;
+                name = name.Substring(1);
+            }
+            else if (name.StartsWith("#"))
+            {
+                target = StyleClassTarget.ElementType;
+                name = name.Substring(1);
+            }
+
+            return new StyleClass(target, GetScope(node), name, ToStyles(node));
+        }
+
         public StyleSheet ToStyleSheet()
         {
             if (!IsLoaded || !IsParsed)
@@ -64,7 +103,7 @@ namespace Ixen.Core.Language.Xns
 
             if (styles.Count > 0)
             {
-                list.Add(new StyleClass(node.Name, ToStyles(node)));
+                list.Add(GetClass(node));
             }
 
             foreach (var child in node.Children)
