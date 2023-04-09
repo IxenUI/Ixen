@@ -1,4 +1,5 @@
 ﻿using SkiaSharp;
+using System;
 
 namespace Ixen.Core
 {
@@ -21,6 +22,17 @@ namespace Ixen.Core
             {
                 SKColor = SKColor.Empty;
             }
+        }
+
+
+        public string ToRGBHexColor()
+        {
+            return $"#{SKColor.Red.ToString("X2")}{SKColor.Green.ToString("X2")}{SKColor.Blue.ToString("X2")}";
+        }
+
+        public string ToRGBAHexColor()
+        {
+            return $"#{SKColor.Red.ToString("X2")}{SKColor.Green.ToString("X2")}{SKColor.Blue.ToString("X2")}{SKColor.Alpha.ToString("X2")}";
         }
 
         public static Color Transparent          => new Color(0x00, 0x00, 0x00, 0x00);
