@@ -1,5 +1,9 @@
 ﻿using Ixen.Core.Visual.Classes;
+using Ixen.Core.Visual.Styles.Descriptors;
+using Ixen.Core.Visual.Styles.Handlers;
+using Ixen.Core.Visual.Styles;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Ixen.Core.Visual.Computers
 {
@@ -21,7 +25,7 @@ namespace Ixen.Core.Visual.Computers
                     {
                         foreach (var style in sc.Styles)
                         {
-                            element.Styles.ApplyStyle(style);
+                            ApplyStyle(element.Styles, style);
                         }
                     }
                 }
@@ -34,7 +38,7 @@ namespace Ixen.Core.Visual.Computers
                     {
                         foreach (var style in sc.Styles)
                         {
-                            element.Styles.ApplyStyle(style);
+                            ApplyStyle(element.Styles, style);
                         }
                     }
                 }
@@ -45,6 +49,47 @@ namespace Ixen.Core.Visual.Computers
             foreach (VisualElement child in element.Children)
             {
                 Compute(child);
+            }
+        }
+
+        private void ApplyStyle(VisualElementStyles styles, StyleDescriptor style)
+        {
+            switch (style.Identifier)
+            {
+                case StyleIdentifier.Background:
+                    styles.Background = new BackgroundStyleHandler((BackgroundStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.Border:
+                    styles.Border = new BorderStyleHandler((BorderStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.Height:
+                    styles.Height = new HeightStyleHandler((HeightStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.Layout:
+                    styles.Layout = new LayoutStyleHandler((LayoutStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.Margin:
+                    styles.Margin = new MarginStyleHandler((MarginStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.Mask:
+                    styles.Mask = new MaskStyleHandler((MaskStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.Padding:
+                    styles.Padding = new PaddingStyleHandler((PaddingStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.Width:
+                    styles.Width = new WidthStyleHandler((WidthStyleDescriptor)style);
+                    break;
+
+                default:
+                    break;
             }
         }
 

@@ -27,8 +27,9 @@ namespace Ixen.Core.Visual.Classes
         private static void ScanForClasses()
         {
             var type = typeof(StyleSheet);
-            var asms = AppDomain.CurrentDomain.GetAssemblies().ToList();
-            var sheets = asms
+            var sheets = AppDomain.CurrentDomain
+                .GetAssemblies()
+                .ToList()
                 .SelectMany(x => x.GetTypes())
                 .Where(t => type.IsAssignableFrom(t) && t.IsClass && t != type)
                 .ToList();
