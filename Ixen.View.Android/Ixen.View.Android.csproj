@@ -1,15 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net7.0-android</TargetFramework>
-    <SupportedOSPlatformVersion>21</SupportedOSPlatformVersion>
-    <Nullable>disable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="SkiaSharp" Version="2.88.3" />
-    <PackageReference Include="SkiaSharp.Views" Version="2.88.3" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Ixen.Core\Ixen.Core.csproj" />
-  </ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>net7.0-android</TargetFramework>
+		<SupportedOSPlatformVersion>21</SupportedOSPlatformVersion>
+		<Nullable>disable</Nullable>
+		<ImplicitUsings>disable</ImplicitUsings>
+	</PropertyGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="SkiaSharp" Version="2.88.0" />
+		<PackageReference Include="SkiaSharp.Views" Version="2.88.0" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<ProjectReference Include="..\Ixen.Core\Ixen.Core.csproj" />
+	</ItemGroup>
 </Project>

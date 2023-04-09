@@ -1,6 +1,7 @@
 ﻿using Android.Content;
 using Android.Runtime;
 using Android.Util;
+using Android.Widget;
 using Ixen.Core;
 using Ixen.Core.Visual;
 using SkiaSharp.Views.Android;
