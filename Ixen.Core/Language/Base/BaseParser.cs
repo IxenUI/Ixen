@@ -6,7 +6,7 @@
 
         protected int _lineNum = 0;
         protected int _nextLineNum = 0;
-        protected int _lineIndex = 0;
+        protected int _lineIndex = -1;
         protected int _nextLineIndex = 0;
 
         protected bool _isNewLine = false;
