@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual
 {
-    public class VisualElementStyles
+    public class VisualElementStylesHandlers
     {
         public BackgroundStyleHandler Background { get; set; }
         public BorderStyleHandler Border { get; set; }

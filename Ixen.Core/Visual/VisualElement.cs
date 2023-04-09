@@ -17,7 +17,8 @@ namespace Ixen.Core.Visual
 
         public string Id { get; set; }
         public string Name { get; set; }
-        public VisualElementStyles Styles { get; set; } = new();
+        public VisualElementStylesDescriptors Styles { get; set; } = new();
+        internal VisualElementStylesHandlers StylesHandlers { get; set; } = new();
         public List<string> Classes { get; set; } = new ();
 
         public void AddChild(VisualElement element)

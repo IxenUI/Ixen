@@ -9,7 +9,7 @@ namespace Ixen.Core.Visual.Computers
 
         internal void Compute(VisualElement element)
         {
-            var layoutStyle = element.Styles.Layout?.Descriptor;
+            var layoutStyle = element.StylesHandlers.Layout?.Descriptor;
             if (layoutStyle != null)
             {
                 switch (layoutStyle.Type)

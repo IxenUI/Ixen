@@ -16,7 +16,7 @@ namespace Ixen.Core.Visual.Styles
 
         private void RenderElement(VisualElement element, RendererContext context)
         {
-            VisualElementStyles styles = element.Styles;
+            VisualElementStylesHandlers styles = element.StylesHandlers;
             if (styles == null)
             {
                 return;

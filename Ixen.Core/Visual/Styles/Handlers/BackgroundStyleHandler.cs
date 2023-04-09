@@ -1,4 +1,5 @@
 ﻿using Ixen.Core.Rendering;
+using Ixen.Core.Visual.Styles.Descriptors;
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {

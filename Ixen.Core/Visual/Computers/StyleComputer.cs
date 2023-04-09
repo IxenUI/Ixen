@@ -15,7 +15,7 @@ namespace Ixen.Core.Visual.Computers
 
             if (element.MustRefreshStyles)
             {
-                //element.Styles = new();
+                ApplyBaseStyle(element);
 
                 foreach (var c in element.Classes)
                 {
@@ -25,7 +25,7 @@ namespace Ixen.Core.Visual.Computers
                     {
                         foreach (var style in sc.Styles)
                         {
-                            ApplyStyle(element.Styles, style);
+                            ApplyStyle(element.StylesHandlers, style);
                         }
                     }
                 }
@@ -38,7 +38,7 @@ namespace Ixen.Core.Visual.Computers
                     {
                         foreach (var style in sc.Styles)
                         {
-                            ApplyStyle(element.Styles, style);
+                            ApplyStyle(element.StylesHandlers, style);
                         }
                     }
                 }
@@ -52,40 +52,62 @@ namespace Ixen.Core.Visual.Computers
             }
         }
 
-        private void ApplyStyle(VisualElementStyles styles, StyleDescriptor style)
+        private void ApplyBaseStyle(VisualElement element)
+        {
+            element.StylesHandlers = new();
+
+            if (element.Styles.Background != null)
+            {
+                element.StylesHandlers.Background = new BackgroundStyleHandler(element.Styles.Background);
+            }
+            
+            if (element.Styles.Border != null)
+            {
+                element.StylesHandlers.Border = new BorderStyleHandler(element.Styles.Border);
+            }
+
+            element.StylesHandlers.Height = new HeightStyleHandler(element.Styles.Height);
+            element.StylesHandlers.Layout = new LayoutStyleHandler(element.Styles.Layout);
+            element.StylesHandlers.Margin = new MarginStyleHandler(element.Styles.Margin);
+            element.StylesHandlers.Mask = new MaskStyleHandler(element.Styles.Mask);
+            element.StylesHandlers.Padding = new PaddingStyleHandler(element.Styles.Padding);
+            element.StylesHandlers.Width = new WidthStyleHandler(element.Styles.Width);
+        }
+
+        private void ApplyStyle(VisualElementStylesHandlers handlers, StyleDescriptor style)
         {
             switch (style.Identifier)
             {
                 case StyleIdentifier.Background:
-                    styles.Background = new BackgroundStyleHandler((BackgroundStyleDescriptor)style);
+                    handlers.Background = new BackgroundStyleHandler((BackgroundStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Border:
-                    styles.Border = new BorderStyleHandler((BorderStyleDescriptor)style);
+                    handlers.Border = new BorderStyleHandler((BorderStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Height:
-                    styles.Height = new HeightStyleHandler((HeightStyleDescriptor)style);
+                    handlers.Height = new HeightStyleHandler((HeightStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Layout:
-                    styles.Layout = new LayoutStyleHandler((LayoutStyleDescriptor)style);
+                    handlers.Layout = new LayoutStyleHandler((LayoutStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Margin:
-                    styles.Margin = new MarginStyleHandler((MarginStyleDescriptor)style);
+                    handlers.Margin = new MarginStyleHandler((MarginStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Mask:
-                    styles.Mask = new MaskStyleHandler((MaskStyleDescriptor)style);
+                    handlers.Mask = new MaskStyleHandler((MaskStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Padding:
-                    styles.Padding = new PaddingStyleHandler((PaddingStyleDescriptor)style);
+                    handlers.Padding = new PaddingStyleHandler((PaddingStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Width:
-                    styles.Width = new WidthStyleHandler((WidthStyleDescriptor)style);
+                    handlers.Width = new WidthStyleHandler((WidthStyleDescriptor)style);
                     break;
 
                 default:

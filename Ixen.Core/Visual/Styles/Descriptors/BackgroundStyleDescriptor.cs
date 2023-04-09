@@ -1,6 +1,4 @@
-﻿using Ixen.Core.Visual.Styles.Descriptors;
-
-namespace Ixen.Core.Visual.Styles
+﻿namespace Ixen.Core.Visual.Styles.Descriptors
 {
     public class BackgroundStyleDescriptor : StyleDescriptor
     {
