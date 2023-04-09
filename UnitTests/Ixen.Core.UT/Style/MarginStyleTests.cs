@@ -1,4 +1,5 @@
 ﻿using Ixen.Core.Visual.Styles;
+using Ixen.Core.Visual.Styles.Descriptors;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Ixen.Core.UT.Style

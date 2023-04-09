@@ -1,14 +1,8 @@
 ﻿using Ixen.Core.Rendering;
+using Ixen.Core.Visual.Styles.Descriptors;
 
 namespace Ixen.Core.Visual.Styles
 {
-    public enum BorderType
-    {
-        Outer,
-        Inner,
-        Center
-    }
-
     public class BorderStyle : RenderedStyle
     {
         internal override string Identifier => StyleIdentifier.Border;

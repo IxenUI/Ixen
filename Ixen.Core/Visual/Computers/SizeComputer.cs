@@ -1,4 +1,5 @@
 ﻿using Ixen.Core.Visual.Styles;
+using Ixen.Core.Visual.Styles.Descriptors;
 using System;
 
 namespace Ixen.Core.Visual.Computers

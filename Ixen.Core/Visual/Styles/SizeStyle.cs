@@ -1,15 +1,8 @@
-﻿using System.Text.RegularExpressions;
+﻿using Ixen.Core.Visual.Styles.Descriptors;
+using System.Text.RegularExpressions;
 
 namespace Ixen.Core.Visual.Styles
 {
-    public enum SizeUnit
-    {
-        Undefined,
-        Pixels,
-        Percents,
-        Weight
-    }
-
     public class SizeStyle : Style
     {
         internal override string Identifier => StyleIdentifier.Size;
@@ -30,7 +23,7 @@ namespace Ixen.Core.Visual.Styles
 
         protected override bool Parse()
         {
-            Match m = _regex.Match(_content);
+            Match m = _regex.Match(Content);
 
             if (!m.Success || m.Groups.Count < 2)
             {

@@ -3,8 +3,7 @@
     public abstract class Style
     {
         internal abstract string Identifier { get; }
-
-        protected string _content;
+        internal string Content { get; set; }
 
         public bool IsValid { get; protected set; } = true;
 
@@ -13,7 +12,7 @@
 
         public Style(string content)
         {
-            _content = content;
+            Content = content;
             IsValid = Parse();
         }
 

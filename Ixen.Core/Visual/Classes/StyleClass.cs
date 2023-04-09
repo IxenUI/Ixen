@@ -3,14 +3,14 @@ using System.Collections.Generic;
 
 namespace Ixen.Core.Visual.Classes
 {
-    internal enum StyleClassTarget
+    public enum StyleClassTarget
     {
         Any,
         ElementName,
         ElementType
     }
 
-    internal class StyleClass
+    public class StyleClass
     {
         public StyleClassTarget Target { get; set; }
         public string Scope { get; set; }

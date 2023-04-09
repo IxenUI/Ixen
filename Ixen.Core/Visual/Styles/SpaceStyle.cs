@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using Ixen.Core.Visual.Styles.Descriptors;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Ixen.Core.Visual.Styles
@@ -29,7 +30,7 @@ namespace Ixen.Core.Visual.Styles
 
         protected override bool Parse()
         {
-            MatchCollection mc = _regex.Matches(_content);
+            MatchCollection mc = _regex.Matches(Content);
 
             if (mc.Count < 1 || mc.Count > 4 || mc.Cast<Match>().Any(m => m.Success == false))
             {
