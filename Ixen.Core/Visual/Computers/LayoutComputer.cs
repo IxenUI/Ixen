@@ -1,4 +1,4 @@
-﻿using Ixen.Core.Visual.Styles;
+﻿using Ixen.Core.Visual.Styles.Descriptors;
 
 namespace Ixen.Core.Visual.Computers
 {
@@ -9,10 +9,10 @@ namespace Ixen.Core.Visual.Computers
 
         internal void Compute(VisualElement element)
         {
-            LayoutStyle layoutStyle = element.Styles.Layout;
+            var layoutStyle = element.Styles.Layout?.Descriptor;
             if (layoutStyle != null)
             {
-                switch (element.Styles.Layout.Type)
+                switch (layoutStyle.Type)
                 {
                     case LayoutType.Column:
                         _columnComputer.Compute(element);

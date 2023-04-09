@@ -1,52 +1,54 @@
 ﻿using Ixen.Core.Visual.Styles;
+using Ixen.Core.Visual.Styles.Descriptors;
+using Ixen.Core.Visual.Styles.Handlers;
 
 namespace Ixen.Core.Visual
 {
     public class VisualElementStyles
     {
-        public BackgroundStyle Background { get; set; }
-        public BorderStyle Border { get; set; }
-        public SizeStyle Height { get; set; } = new();
-        public LayoutStyle Layout { get; set; } = new();
-        public MarginStyle Margin { get; set; } = new();
-        public MaskStyle Mask { get; set; } = new();
-        public MarginStyle Padding { get; set; } = new();
-        public SizeStyle Width { get; set; } = new();
+        public BackgroundStyleHandler Background { get; set; }
+        public BorderStyleHandler Border { get; set; }
+        public HeightStyleHandler Height { get; set; } = new();
+        public LayoutStyleHandler Layout { get; set; } = new();
+        public MarginStyleHandler Margin { get; set; } = new();
+        public MaskStyleHandler Mask { get; set; } = new();
+        public PaddingStyleHandler Padding { get; set; } = new();
+        public WidthStyleHandler Width { get; set; } = new();
 
-        public void ApplyStyle (Style style)
+        public void ApplyStyle (StyleDescriptor style)
         {
             switch (style.Identifier)
             {
                 case StyleIdentifier.Background:
-                    Background = (BackgroundStyle)style;
+                    Background = new BackgroundStyleHandler((BackgroundStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Border:
-                    Border = (BorderStyle)style;
+                    Border = new BorderStyleHandler((BorderStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Height:
-                    Height = (HeightStyle)style;
+                    Height = new HeightStyleHandler((HeightStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Layout:
-                    Layout = (LayoutStyle)style;
+                    Layout = new LayoutStyleHandler((LayoutStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Margin:
-                    Margin = (MarginStyle)style;
+                    Margin = new MarginStyleHandler((MarginStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Mask:
-                    Mask = (MaskStyle)style;
+                    Mask = new MaskStyleHandler((MaskStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Padding:
-                    Padding = (PaddingStyle)style;
+                    Padding = new PaddingStyleHandler((PaddingStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Width:
-                    Width = (WidthStyle)style;
+                    Width = new WidthStyleHandler((WidthStyleDescriptor)style);
                     break;
 
                 default:

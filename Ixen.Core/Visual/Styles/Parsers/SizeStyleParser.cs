@@ -1,23 +1,14 @@
 ﻿using Ixen.Core.Visual.Styles.Descriptors;
 using System.Text.RegularExpressions;
 
-namespace Ixen.Core.Visual.Styles
+namespace Ixen.Core.Visual.Styles.Parsers
 {
-    public class SizeStyle : Style
+    public class SizeStyleParser : StyleParser
     {
-        internal override string Identifier => StyleIdentifier.Size;
-
         private static Regex _regex = new Regex(@"([0-9]+(?:\.[0-9]+)?)(px|%|\*|)");
-        public SizeUnit Unit { get; set; } = SizeUnit.Undefined;
-        public float Value { get; set; } = 0;
+        public SizeStyleDescriptor Descriptor { get; } = new SizeStyleDescriptor();
 
-        public SizeStyle() : base()
-        {
-            Value = 0;
-            Unit = SizeUnit.Pixels;
-        }
-
-        public SizeStyle(string content)
+        public SizeStyleParser(string content)
             : base(content)
         {}
 
@@ -36,25 +27,26 @@ namespace Ixen.Core.Visual.Styles
                 return false;
             }
 
-            Value = floatValue;
+            
+            Descriptor.Value = floatValue;
             switch(m.Groups[2].Value)
             {
                 case "px":
-                    Unit = SizeUnit.Pixels;
+                    Descriptor.Unit = SizeUnit.Pixels;
                     return true;
 
                 case "%":
-                    Unit = SizeUnit.Percents;
+                    Descriptor.Unit = SizeUnit.Percents;
                     return true;
 
                 case "*":
-                    Unit = SizeUnit.Weight;
+                    Descriptor.Unit = SizeUnit.Weight;
                     return true;
 
                 case "":
-                    if (Value == 0)
+                    if (Descriptor.Value == 0)
                     {
-                        Unit = SizeUnit.Pixels;
+                        Descriptor.Unit = SizeUnit.Pixels;
                         return true;
                     }
                     return false;

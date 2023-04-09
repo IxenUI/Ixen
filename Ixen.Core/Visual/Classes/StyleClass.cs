@@ -1,4 +1,4 @@
-﻿using Ixen.Core.Visual.Styles;
+﻿using Ixen.Core.Visual.Styles.Descriptors;
 using System.Collections.Generic;
 
 namespace Ixen.Core.Visual.Classes
@@ -15,9 +15,9 @@ namespace Ixen.Core.Visual.Classes
         public StyleClassTarget Target { get; set; }
         public string Scope { get; set; }
         public string Name { get; set; }
-        public List<Style> Styles { get; set; }
+        public List<StyleDescriptor> Styles { get; set; }
 
-        public StyleClass(StyleClassTarget target, string scope, string name, List<Style> styles)
+        public StyleClass(StyleClassTarget target, string scope, string name, List<StyleDescriptor> styles)
         {
             Target = target;
             Scope = scope;
@@ -33,7 +33,7 @@ namespace Ixen.Core.Visual.Classes
             : this(StyleClassTarget.Any, scope, name, new())
         { }
 
-        public StyleClass(string scope, string name, List<Style> styles)
+        public StyleClass(string scope, string name, List<StyleDescriptor> styles)
             : this(StyleClassTarget.Any, scope, name, styles)
         { }
 
@@ -41,7 +41,7 @@ namespace Ixen.Core.Visual.Classes
             : this(StyleClassTarget.Any, null, name, new())
         { }
 
-        public StyleClass(string name, List<Style> styles)
+        public StyleClass(string name, List<StyleDescriptor> styles)
             : this(StyleClassTarget.Any, null, name, styles)
         { }
     }

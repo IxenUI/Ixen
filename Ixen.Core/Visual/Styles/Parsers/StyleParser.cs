@@ -1,16 +1,12 @@
-﻿namespace Ixen.Core.Visual.Styles
+﻿namespace Ixen.Core.Visual.Styles.Parsers
 {
-    public abstract class Style
+    public abstract class StyleParser
     {
-        internal abstract string Identifier { get; }
         internal string Content { get; set; }
 
         public bool IsValid { get; protected set; } = true;
 
-        public Style()
-        {}
-
-        public Style(string content)
+        public StyleParser(string content)
         {
             Content = content;
             IsValid = Parse();

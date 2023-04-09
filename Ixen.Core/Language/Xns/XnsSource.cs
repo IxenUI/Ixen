@@ -1,6 +1,8 @@
 ﻿using Ixen.Core.Language.Base;
 using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles;
+using Ixen.Core.Visual.Styles.Descriptors;
+using Ixen.Core.Visual.Styles.Parsers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -98,7 +100,7 @@ namespace Ixen.Core.Language.Xns
 
         private void AddClass(XnsNode node, List<StyleClass> list)
         {
-            List<Style> styles = ToStyles(node);
+            List<StyleDescriptor> styles = ToStyles(node);
 
 
             if (styles.Count > 0)
@@ -112,45 +114,45 @@ namespace Ixen.Core.Language.Xns
             }
         }
 
-        private List<Style> ToStyles(XnsNode xnsNode)
+        private List<StyleDescriptor> ToStyles(XnsNode xnsNode)
         {
-            var styles = new List<Style>();
+            var styles = new List<StyleDescriptor>();
 
             foreach (var xnsStyle in xnsNode.Styles)
             {
-                styles.Add(ToStyle(xnsStyle));
+                styles.Add(ToStyleDescriptor(xnsStyle));
             }
 
             return styles;
         }
 
-        private Style ToStyle(XnsStyle xnsStyle)
+        private StyleDescriptor ToStyleDescriptor(XnsStyle xnsStyle)
         {
             switch (xnsStyle.Name.ToLower())
             {
                 case StyleIdentifier.Background:
-                    return new BackgroundStyle(xnsStyle.Value);
+                    return new BackgroundStyleParser(xnsStyle.Value).Descriptor;
 
                 case StyleIdentifier.Border:
-                    return new BorderStyle(xnsStyle.Value);
+                    return new BorderStyleParser(xnsStyle.Value).Descriptor;
 
                 case StyleIdentifier.Height:
-                    return new HeightStyle(xnsStyle.Value);
+                    return new SizeStyleParser(xnsStyle.Value).Descriptor;
 
                 case StyleIdentifier.Layout:
-                    return new LayoutStyle(xnsStyle.Value);
+                    return new LayoutStyleParser(xnsStyle.Value).Descriptor;
 
                 case StyleIdentifier.Margin:
-                    return new MarginStyle(xnsStyle.Value);
+                    return new MarginStyleParser(xnsStyle.Value).Descriptor;
 
                 case StyleIdentifier.Mask:
-                    return new MaskStyle(xnsStyle.Value);
+                    return new MaskStyleParser(xnsStyle.Value).Descriptor;
 
                 case StyleIdentifier.Padding:
-                    return new PaddingStyle(xnsStyle.Value);
+                    return new PaddingStyleParser(xnsStyle.Value).Descriptor;
 
                 case StyleIdentifier.Width:
-                    return new WidthStyle(xnsStyle.Value);
+                    return new WidthStyleParser(xnsStyle.Value).Descriptor;
 
                 default:
                     throw new NotSupportedException();

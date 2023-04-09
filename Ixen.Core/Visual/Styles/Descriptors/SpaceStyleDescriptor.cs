@@ -4,9 +4,9 @@
     {
         internal override string Identifier => StyleIdentifier.Space;
 
-        public SizeStyleDescriptor Top { get; set; }
-        public SizeStyleDescriptor Right { get; set; }
-        public SizeStyleDescriptor Bottom { get; set; }
-        public SizeStyleDescriptor Left { get; set; }
+        public SizeStyleDescriptor Top { get; set; } = new();
+        public SizeStyleDescriptor Right { get; set; } = new();
+        public SizeStyleDescriptor Bottom { get; set; } = new();
+        public SizeStyleDescriptor Left { get; set; } = new();
     }
 }

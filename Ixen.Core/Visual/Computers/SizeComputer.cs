@@ -1,5 +1,4 @@
-﻿using Ixen.Core.Visual.Styles;
-using Ixen.Core.Visual.Styles.Descriptors;
+﻿using Ixen.Core.Visual.Styles.Descriptors;
 using System;
 
 namespace Ixen.Core.Visual.Computers
@@ -64,14 +63,14 @@ namespace Ixen.Core.Visual.Computers
 
             foreach (VisualElement child in element.Children)
             {
-                if (child.Styles.Width?.Unit == SizeUnit.Weight)
+                if (child.Styles.Width?.Descriptor.Unit == SizeUnit.Weight)
                 {
-                    element.TotalWidthWeight += child.Styles.Width.Value;
+                    element.TotalWidthWeight += child.Styles.Width.Descriptor.Value;
                 }
 
-                if (child.Styles.Height?.Unit == SizeUnit.Weight)
+                if (child.Styles.Height?.Descriptor.Unit == SizeUnit.Weight)
                 {
-                    element.TotalHeightWeight += child.Styles.Height.Value;
+                    element.TotalHeightWeight += child.Styles.Height.Descriptor.Value;
                 }
             }
 
@@ -80,8 +79,8 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeWidth(VisualElement element, VisualElement child, DimensionalElement container, float remainingWidth)
         {
-            SizeStyle widthStyle = child.Styles.Width;
-            MaskStyle maskStyle = element.Styles.Mask;
+            SizeStyleDescriptor widthStyle = child.Styles.Width?.Descriptor;
+            MaskStyleDescriptor maskStyle = element.Styles.Mask?.Descriptor;
             float width = 0;
 
             if (widthStyle != null)
@@ -110,8 +109,9 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeFilledWidth(VisualElement element, VisualElement child, DimensionalElement container, float remainingWidth)
         {
-            SizeStyle widthStyle = child.Styles.Width;
+            SizeStyleDescriptor widthStyle = child.Styles.Width?.Descriptor;
             float margin;
+
             if (widthStyle != null)
             {
                 switch (widthStyle.Unit)
@@ -128,7 +128,8 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeHorizontalMargin(VisualElement element, VisualElement child, DimensionalElement container)
         {
-            MarginStyle marginStyle = child.Styles.Margin;
+            MarginStyleDescriptor marginStyle = child.Styles.Margin?.Descriptor;
+
             if (marginStyle != null)
             {
                 switch (marginStyle.Left.Unit)
@@ -157,7 +158,8 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeHorizontalPadding(VisualElement element, VisualElement child, DimensionalElement container)
         {
-            MarginStyle paddingStyle = child.Styles.Padding;
+            MarginStyleDescriptor paddingStyle = child.Styles.Padding?.Descriptor;
+
             if (paddingStyle != null)
             {
                 switch (paddingStyle.Left.Unit)
@@ -186,8 +188,8 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeHeight(VisualElement element, VisualElement child, DimensionalElement container, float remainingHeight)
         {
-            SizeStyle heightStyle = child.Styles.Height;
-            MaskStyle maskStyle = element.Styles.Mask;
+            SizeStyleDescriptor heightStyle = child.Styles.Height?.Descriptor;
+            MaskStyleDescriptor maskStyle = element.Styles.Mask?.Descriptor;
             float height = 0;
 
             if (heightStyle != null)
@@ -216,8 +218,9 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeFilledHeight(VisualElement element, VisualElement child, DimensionalElement container, float remainingHeight)
         {
-            SizeStyle heightStyle = child.Styles.Height;
+            SizeStyleDescriptor heightStyle = child.Styles.Height?.Descriptor;
             float margin;
+
             if (heightStyle != null)
             {
                 switch (heightStyle.Unit)
@@ -234,7 +237,8 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeVerticalMargin(VisualElement element, VisualElement child, DimensionalElement container)
         {
-            MarginStyle marginStyle = child.Styles.Margin;
+            MarginStyleDescriptor marginStyle = child.Styles.Margin?.Descriptor;
+
             if (marginStyle != null)
             {
                 switch (marginStyle.Top.Unit)
@@ -263,7 +267,8 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeVerticalPadding(VisualElement element, VisualElement child, DimensionalElement container)
         {
-            MarginStyle paddingStyle = child.Styles.Padding;
+            MarginStyleDescriptor paddingStyle = child.Styles.Padding?.Descriptor;
+
             if (paddingStyle != null)
             {
                 switch (paddingStyle.Top.Unit)
