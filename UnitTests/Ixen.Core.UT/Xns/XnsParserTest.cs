@@ -9,8 +9,7 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void TestParse()
         {
-            string source = @"
- container {
+            string source = @"container {
     layout: row
     width: 100%
     
