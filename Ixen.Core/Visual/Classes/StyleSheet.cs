@@ -4,7 +4,13 @@ using System.Linq;
 
 namespace Ixen.Core.Visual.Classes
 {
-    internal class StyleSheet
+    public class ClassesSet
+    {
+        public string Scope { get; set; }
+        public List<StyleClass> Classes { get; set; }
+    }
+
+    public class StyleSheet : ClassesSet
     {
         private static Dictionary<string, StyleClass> _globalClassesByName = new();
         private static Dictionary<string, StyleClass> _globalElementClassesByName = new();
@@ -14,11 +20,23 @@ namespace Ixen.Core.Visual.Classes
         private static Dictionary<string, Dictionary<string, StyleClass>> _elementClassesByScopeAndName = new();
         private static Dictionary<string, Dictionary<string, StyleClass>> _typeClassesByScopeAndName = new();
 
-        public string Scope { get; set; }
-        public List<StyleClass> Classes { get; set; }
-
         static StyleSheet() {
             ScanForClasses();
+        }
+
+        private static void ScanForClasses()
+        {
+            var type = typeof(StyleSheet);
+            var asms = AppDomain.CurrentDomain.GetAssemblies().ToList();
+            var sheets = asms
+                .SelectMany(x => x.GetTypes())
+                .Where(t => type.IsAssignableFrom(t) && t.IsClass && t != type)
+                .ToList();
+
+            foreach (var sheet in sheets)
+            {
+                Activator.CreateInstance(sheet);
+            }
         }
 
         private static StyleClass GetGlobalClass(string name)
@@ -115,21 +133,6 @@ namespace Ixen.Core.Visual.Classes
             }
 
             return GetGlobalElementClass(name);
-        }
-
-        private static void ScanForClasses()
-        {
-            var type = typeof(StyleSheet);
-
-            var sheets = AppDomain.CurrentDomain.GetAssemblies()
-                .ToList()
-                .SelectMany(x => x.GetTypes())
-                .Where(t => type.IsAssignableFrom(t) && t.IsClass && t != type).ToList();
-
-            foreach (var sheet in sheets)
-            {
-                Activator.CreateInstance(sheet);
-            }
         }
 
         private void AddClass(Dictionary<string, StyleClass> dic, StyleClass styleClass)

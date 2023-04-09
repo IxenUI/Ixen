@@ -40,7 +40,7 @@ namespace Ixen.Core.UT.Xns
 
             var xnsSource = XnsSource.FromSource(source);
             xnsSource.Parse();
-            var classes = xnsSource.ToStyleSheet();
+            var classes = xnsSource.ToClassesSet();
         }
     }
 }

@@ -1,8 +1,8 @@
 ﻿using Ixen.Core.Language.Base;
 using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Ixen.Core.Language.Xns
@@ -11,7 +11,7 @@ namespace Ixen.Core.Language.Xns
     {
         private XnsParser _parser;
         private XnsNode _content;
-        private StyleSheet _sheet;
+        private ClassesSet _set;
 
         private XnsSource(string filePath, string source)
             : base (filePath, source)
@@ -81,19 +81,19 @@ namespace Ixen.Core.Language.Xns
             return new StyleClass(target, GetScope(node), name, ToStyles(node));
         }
 
-        public StyleSheet ToStyleSheet()
+        public ClassesSet ToClassesSet()
         {
             if (!IsLoaded || !IsParsed)
             {
                 return null;
             }
 
-            _sheet = new StyleSheet();
-            _sheet.Classes = new List<StyleClass>();
+            _set = new ClassesSet();
+            _set.Classes = new List<StyleClass>();
 
-            AddClass(_content, _sheet.Classes);
+            AddClass(_content, _set.Classes);
 
-            return _sheet;
+            return _set;
         }
 
         private void AddClass(XnsNode node, List<StyleClass> list)
