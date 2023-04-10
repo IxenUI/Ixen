@@ -3,7 +3,7 @@ using Ixen.Core.Visual.Styles.Descriptors;
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
-    public class BorderStyleHandler : RenderedStyleHandler
+    internal class BorderStyleHandler : RenderedStyleHandler
     {
         public BorderStyleDescriptor Descriptor { get; private set; }
 

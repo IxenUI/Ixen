@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
-    public class WidthStyleHandler : StyleHandler
+    internal class WidthStyleHandler : StyleHandler
     {
         public WidthStyleDescriptor Descriptor { get; private set; }
 

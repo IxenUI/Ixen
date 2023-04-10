@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
-    public class BackgroundStyleParser : StyleParser
+    internal class BackgroundStyleParser : StyleParser
     {
         public BackgroundStyleDescriptor Descriptor { get; } = new BackgroundStyleDescriptor();
 
@@ -12,8 +12,8 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
         protected override bool Parse()
         {
-            var colorParser = new ColorStyleParser(Content);
-            Descriptor.Color = new ColorStyleParser(Content).Descriptor.Value;
+            var colorParser = new ColorStyleParser(_content);
+            Descriptor.Color = new ColorStyleParser(_content).Descriptor.Value;
 
             return colorParser.IsValid;
         }

@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
-    public class MarginStyleParser : SpaceStyleParser
+    internal class MarginStyleParser : SpaceStyleParser
     {
         public new MarginStyleDescriptor Descriptor { get; } = new MarginStyleDescriptor();
 

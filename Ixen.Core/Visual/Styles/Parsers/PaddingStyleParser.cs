@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
-    public class PaddingStyleParser : SpaceStyleParser
+    internal class PaddingStyleParser : SpaceStyleParser
     {
         public new PaddingStyleDescriptor Descriptor { get; } = new PaddingStyleDescriptor();
 

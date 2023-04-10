@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
-    public class MarginStyleHandler : StyleHandler
+    internal class MarginStyleHandler : StyleHandler
     {
         public MarginStyleDescriptor Descriptor { get; private set; }
 

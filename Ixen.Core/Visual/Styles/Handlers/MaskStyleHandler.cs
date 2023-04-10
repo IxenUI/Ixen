@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
-    public class MaskStyleHandler : StyleHandler
+    internal class MaskStyleHandler : StyleHandler
     {
         public MaskStyleDescriptor Descriptor { get; private set; }
 

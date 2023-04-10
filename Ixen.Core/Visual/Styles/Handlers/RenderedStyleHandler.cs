@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
-    public abstract class RenderedStyleHandler : StyleHandler
+    internal abstract class RenderedStyleHandler : StyleHandler
     {
         public RenderedStyleHandler() : base()
         { }

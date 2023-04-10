@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
-    public class HeightStyleHandler : StyleHandler
+    internal class HeightStyleHandler : StyleHandler
     {
         public HeightStyleDescriptor Descriptor { get; private set; }
 

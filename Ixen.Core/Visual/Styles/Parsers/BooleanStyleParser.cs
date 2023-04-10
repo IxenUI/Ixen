@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
-    public class BooleanStyleParser : StyleParser
+    internal class BooleanStyleParser : StyleParser
     {
         public BooleanStyleDescriptor Descriptor { get; } = new BooleanStyleDescriptor();
 
@@ -12,7 +12,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
         protected override bool Parse()
         {
-            string content = Content.Trim();
+            string content = _content.Trim();
 
             switch (content)
             {

@@ -3,7 +3,7 @@ using Ixen.Core.Visual.Styles.Descriptors;
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
-    public class BackgroundStyleHandler : RenderedStyleHandler
+    internal class BackgroundStyleHandler : RenderedStyleHandler
     {
         public BackgroundStyleDescriptor Descriptor { get; private set; }
 

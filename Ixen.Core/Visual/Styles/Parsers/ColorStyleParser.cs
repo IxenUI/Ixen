@@ -1,10 +1,9 @@
 ﻿using Ixen.Core.Visual.Styles.Descriptors;
-using System;
 using System.Text.RegularExpressions;
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
-    public class ColorStyleParser : StyleParser
+    internal class ColorStyleParser : StyleParser
     {
         private static Regex _regex = new Regex(@"(#(?:[0-9A-F]{6}|[0-9A-F]{8}))");
         public ColorStyleDescriptor Descriptor { get; } = new ColorStyleDescriptor();
@@ -15,7 +14,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
         protected override bool Parse()
         {
-            Match m = _regex.Match(Content);
+            Match m = _regex.Match(_content);
 
             if (!m.Success)
             {

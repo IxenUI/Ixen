@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
-    public class LayoutStyleParser : StyleParser
+    internal class LayoutStyleParser : StyleParser
     {
         public LayoutStyleDescriptor Descriptor { get; } = new LayoutStyleDescriptor();
 
@@ -12,7 +12,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
         protected override bool Parse()
         {
-            switch (Content.ToLower())
+            switch (_content.ToLower())
             {
                 case "row":
                     Descriptor.Type = LayoutType.Row;

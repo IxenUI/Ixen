@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
-    public class LayoutStyleHandler : StyleHandler
+    internal class LayoutStyleHandler : StyleHandler
     {
         public LayoutStyleDescriptor Descriptor { get; private set; }
 

@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
-    public class WidthStyleParser : SizeStyleParser
+    internal class WidthStyleParser : SizeStyleParser
     {
         public new WidthStyleDescriptor Descriptor { get; } = new WidthStyleDescriptor();
 

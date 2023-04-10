@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
-    public class BorderStyleParser : StyleParser
+    internal class BorderStyleParser : StyleParser
     {
         public BorderStyleDescriptor Descriptor { get; } = new BorderStyleDescriptor();
 

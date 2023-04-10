@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
-    public class PaddingStyleHandler : StyleHandler
+    internal class PaddingStyleHandler : StyleHandler
     {
         public PaddingStyleDescriptor Descriptor { get; private set; }
 

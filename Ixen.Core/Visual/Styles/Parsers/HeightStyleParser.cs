@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
-    public class HeightStyleParser : SizeStyleParser
+    internal class HeightStyleParser : SizeStyleParser
     {
         public new HeightStyleDescriptor Descriptor { get; } = new HeightStyleDescriptor();
 

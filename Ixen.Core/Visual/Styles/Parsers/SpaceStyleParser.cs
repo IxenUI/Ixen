@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
-    public class SpaceStyleParser : StyleParser
+    internal class SpaceStyleParser : StyleParser
     {
         private static Regex _regex = new Regex(@"([^ \t]+){1,4}");
         public SpaceStyleDescriptor Descriptor { get; } = new SpaceStyleDescriptor();
@@ -15,7 +15,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
         protected override bool Parse()
         {
-            MatchCollection mc = _regex.Matches(Content);
+            MatchCollection mc = _regex.Matches(_content);
 
             if (mc.Count < 1 || mc.Count > 4 || mc.Cast<Match>().Any(m => m.Success == false))
             {

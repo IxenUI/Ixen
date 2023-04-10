@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
-    public class SizeStyleParser : StyleParser
+    internal class SizeStyleParser : StyleParser
     {
         private static Regex _regex = new Regex(@"([0-9]+(?:\.[0-9]+)?)(px|%|\*|)");
         public SizeStyleDescriptor Descriptor { get; } = new SizeStyleDescriptor();
@@ -14,7 +14,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
         protected override bool Parse()
         {
-            Match m = _regex.Match(Content);
+            Match m = _regex.Match(_content);
 
             if (!m.Success || m.Groups.Count < 2)
             {
