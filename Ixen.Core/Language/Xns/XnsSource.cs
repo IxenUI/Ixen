@@ -137,7 +137,7 @@ namespace Ixen.Core.Language.Xns
                     return new BorderStyleParser(xnsStyle.Value).Descriptor;
 
                 case StyleIdentifier.Height:
-                    return new SizeStyleParser(xnsStyle.Value).Descriptor;
+                    return new HeightStyleParser(xnsStyle.Value).Descriptor;
 
                 case StyleIdentifier.Layout:
                     return new LayoutStyleParser(xnsStyle.Value).Descriptor;
