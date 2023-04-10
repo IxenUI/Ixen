@@ -3,7 +3,9 @@
     public static class StyleIdentifier
     {
         public const string Background = "background";
+        public const string Boolean    = "bool";
         public const string Border     = "border";
+        public const string Color      = "color";
         public const string Height     = "height";
         public const string Layout     = "layout";
         public const string Margin     = "margin";

@@ -10,6 +10,28 @@ namespace Ixen.Core.Visual.Styles.Parsers
             : base(content)
         { }
 
-        protected override bool Parse() => true;
+        protected override bool Parse()
+        {
+            switch (Content.ToLower())
+            {
+                case "row":
+                    Descriptor.Type = LayoutType.Row;
+                    break;
+                case "column":
+                    Descriptor.Type = LayoutType.Column;
+                    break;
+                case "grid":
+                    Descriptor.Type = LayoutType.Grid;
+                    break;
+                case "absolute":
+                    Descriptor.Type = LayoutType.Absolute;
+                    break;
+                case "fixed":
+                    Descriptor.Type = LayoutType.Fixed;
+                    break;
+            }
+
+            return true;
+        }
     }
 }

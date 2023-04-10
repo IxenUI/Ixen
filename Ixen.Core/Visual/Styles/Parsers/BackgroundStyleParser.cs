@@ -10,6 +10,12 @@ namespace Ixen.Core.Visual.Styles.Parsers
             : base(content)
         { }
 
-        protected override bool Parse() => true;
+        protected override bool Parse()
+        {
+            var colorParser = new ColorStyleParser(Content);
+            Descriptor.Color = new ColorStyleParser(Content).Descriptor.Value;
+
+            return colorParser.IsValid;
+        }
     }
 }

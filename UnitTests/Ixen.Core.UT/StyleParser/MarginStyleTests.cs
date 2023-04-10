@@ -5,15 +5,15 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Ixen.Core.UT.StyleParser
 {
     [TestClass]
-    public class MarginStyleTests
+    public class SpacingStyleTests
     {
         [TestMethod]
         public void TestParse()
         {
-            MarginStyleParser parser;
-            MarginStyleDescriptor descriptor;
+            SpaceStyleParser parser;
+            SpaceStyleDescriptor descriptor;
 
-            parser = new MarginStyleParser("20px");
+            parser = new SpaceStyleParser("20px");
             descriptor = parser.Descriptor;
             Assert.IsTrue(parser.IsValid);
             Assert.AreEqual(20, descriptor.Top.Value);
@@ -25,7 +25,7 @@ namespace Ixen.Core.UT.StyleParser
             Assert.AreEqual(20, descriptor.Left.Value);
             Assert.AreEqual(SizeUnit.Pixels, descriptor.Left.Unit);
 
-            parser = new MarginStyleParser("40px 0");
+            parser = new SpaceStyleParser("40px 0");
             descriptor = parser.Descriptor;
             Assert.IsTrue(parser.IsValid);
             Assert.AreEqual(40, descriptor.Top.Value);
@@ -37,7 +37,7 @@ namespace Ixen.Core.UT.StyleParser
             Assert.AreEqual(0, descriptor.Left.Value);
             Assert.AreEqual(SizeUnit.Pixels, descriptor.Left.Unit);
 
-            parser = new MarginStyleParser("50px 10% 0");
+            parser = new SpaceStyleParser("50px 10% 0");
             descriptor = parser.Descriptor;
             Assert.IsTrue(parser.IsValid);
             Assert.AreEqual(50, descriptor.Top.Value);
@@ -49,7 +49,7 @@ namespace Ixen.Core.UT.StyleParser
             Assert.AreEqual(10, descriptor.Left.Value);
             Assert.AreEqual(SizeUnit.Percents, descriptor.Left.Unit);
 
-            parser = new MarginStyleParser("10px 0 5px 50%");
+            parser = new SpaceStyleParser("10px 0 5px 50%");
             descriptor = parser.Descriptor;
             Assert.IsTrue(parser.IsValid);
             Assert.AreEqual(10, descriptor.Top.Value);
