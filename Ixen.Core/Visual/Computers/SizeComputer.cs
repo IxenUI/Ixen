@@ -7,16 +7,16 @@ namespace Ixen.Core.Visual.Computers
     {
         internal void Compute(VisualElement element, DimensionalElement container)
         {
-            float usedWidth = 0;
-            float usedHeight = 0;
             float computedWidth;
             float computedHeight;
             float remainingWidth = element.Width;
             float remainingHeight = element.Height;
 
+            var layoutStyle = element.StylesHandlers.Layout?.Descriptor;
+
             if (!element.TotalWeightSet)
             {
-                GetTotalWeight(element);
+                ComputeTotalWeight(element, layoutStyle);
             }
 
             foreach (VisualElement child in element.Children)
@@ -24,10 +24,20 @@ namespace Ixen.Core.Visual.Computers
                 computedWidth = ComputeWidth(element, child, container, remainingWidth);
                 computedHeight = ComputeHeight(element, child, container, remainingHeight);
 
-                usedWidth += computedWidth;
-                usedHeight += computedHeight;
-                remainingWidth -= computedWidth;
-                remainingHeight -= computedHeight;
+                if (layoutStyle != null)
+                {
+                    if (layoutStyle != null)
+                    {
+                        if (layoutStyle.Type == LayoutType.Column)
+                        {
+                            remainingHeight -= computedHeight;
+                        }
+                        else if (layoutStyle.Type == LayoutType.Row)
+                        {
+                            remainingWidth -= computedWidth;
+                        }
+                    }
+                }
             }
 
             if (element.TotalWidthWeight == 0 && element.TotalHeightWeight == 0)
@@ -56,25 +66,53 @@ namespace Ixen.Core.Visual.Computers
             }
         }
 
-        private void GetTotalWeight(VisualElement element)
+        private void ComputeTotalWeight(VisualElement element, LayoutStyleDescriptor layout)
         {
             element.TotalWidthWeight = 0;
             element.TotalHeightWeight = 0;
 
+            if (layout != null)
+            {
+                if (layout.Type == LayoutType.Column)
+                {
+                    ComputeTotalHeightWeight(element);
+                    element.TotalWidthWeight = 1;
+                }
+                else if (layout.Type == LayoutType.Row)
+                {
+                    ComputeTotalWidthWeight(element);
+                    element.TotalHeightWeight = 1;
+                }
+            }
+            else
+            {
+                ComputeTotalWidthWeight(element);
+                ComputeTotalHeightWeight(element);
+            }
+            
+            element.TotalWeightSet = true;
+        }
+
+        private void ComputeTotalWidthWeight(VisualElement element)
+        {
             foreach (VisualElement child in element.Children)
             {
                 if (child.StylesHandlers.Width?.Descriptor.Unit == SizeUnit.Weight)
                 {
                     element.TotalWidthWeight += child.StylesHandlers.Width.Descriptor.Value;
                 }
+            }
+        }
 
+        private void ComputeTotalHeightWeight(VisualElement element)
+        {
+            foreach (VisualElement child in element.Children)
+            {
                 if (child.StylesHandlers.Height?.Descriptor.Unit == SizeUnit.Weight)
                 {
                     element.TotalHeightWeight += child.StylesHandlers.Height.Descriptor.Value;
                 }
             }
-
-            element.TotalWeightSet = true;
         }
 
         private float ComputeWidth(VisualElement element, VisualElement child, DimensionalElement container, float remainingWidth)
