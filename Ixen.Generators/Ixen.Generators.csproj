@@ -25,13 +25,17 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Ixen.Core\Ixen.Core.csproj" />
+	  <ProjectReference Include="..\Ixen.Core\Ixen.Core.csproj" GeneratePathProperty="true" PrivateAssets="all" />
 	</ItemGroup>
 
-	<!--<Target Name="RemoveSourceGeneratedFiles" BeforeTargets="CoreCompile">
+	<PropertyGroup>
+		<GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
+	</PropertyGroup>
+
+	<Target Name="GetDependencyTargetPaths">
 		<ItemGroup>
-			<Compile Remove="**/*.SourceGenerated.cs" />
+			<TargetPathWithTargetPlatformMoniker Include="$(ProjectDir)\..\Ixen.Core\$(OutputPath)\Ixen.Core.dll" IncludeRuntimeDependency="false" />
 		</ItemGroup>
-	</Target>-->
+	</Target>
 
 </Project>
