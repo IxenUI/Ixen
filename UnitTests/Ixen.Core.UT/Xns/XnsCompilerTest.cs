@@ -4,7 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Ixen.Core.UT.Xns
 {
     [TestClass]
-    public class XnsParserTest
+    public class XnsCompilerTest
     {
         [TestMethod]
         public void TestParse()
@@ -38,8 +38,7 @@ namespace Ixen.Core.UT.Xns
 }";
 
             var xnsSource = XnsSource.FromSource(source);
-            xnsSource.Parse();
-            var classes = xnsSource.ToClassesSet();
+            var classes = xnsSource.Compile();
         }
     }
 }

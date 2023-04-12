@@ -1,24 +1,29 @@
 ﻿using Ixen.Core.Language.Base;
 using Ixen.Core.Visual.Classes;
-using Ixen.Core.Visual.Styles;
-using Ixen.Core.Visual.Styles.Descriptors;
-using Ixen.Core.Visual.Styles.Parsers;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Ixen.Core.Language.Xns
 {
     internal class XnsSource : BaseSource
     {
-        private XnsParser _parser;
-        private XnsNode _content;
-        private ClassesSet _set;
+        private XnsTokenizer _tokenizer;
+        private XnsNodifier _nodifier = new();
+        private XnsCompiler _compiler = new();
+
+        private List<XnsToken> _tokens;
+        private XnsNode _node;
+        private ClassesSet _classesSet;       
+
+        private XnsSource(string[] sourceLines)
+            : base(sourceLines)
+        {
+            _tokenizer = new XnsTokenizer(_inputLines);
+        }
 
         private XnsSource(string filePath, string source)
             : base (filePath, source)
         {
-            _parser = new XnsParser(_inputLines);
+            _tokenizer = new XnsTokenizer(_inputLines);
         }
 
         public static XnsSource FromFile(string filePath)
@@ -31,132 +36,55 @@ namespace Ixen.Core.Language.Xns
             return new XnsSource(null, source);
         }
 
-        public void Parse()
+        public static XnsSource FromSourceLines(string[] lines)
         {
-            if (IsParsed)
-            {
-                return;
-            }
-
-            _content = _parser.Parse();
-
-            IsParsed = true;
+            return new XnsSource(lines);
         }
 
-        public XnsNode GetContent() => _content;
-
-        private string GetScope(XnsNode node)
+        public List<XnsToken> Tokenize()
         {
-            var sb = new StringBuilder();
+            _tokens = _tokenizer.Tokenize();
 
-            while (node.Parent != null)
+            if (!_tokenizer.IsSuccess)
             {
-                if (!string.IsNullOrEmpty(node.Parent.Name))
-                {
-                    sb.Insert(0, node.Parent.Name);
-                }
-                
-                node = node.Parent;
+                HasErrors = true;
             }
 
-            return sb.Length > 0
-                ? sb.ToString()
-                : null;
+            return _tokens;
         }
 
-        private StyleClass GetClass(XnsNode node)
+        public XnsNode Nodify()
         {
-            string name = node.Name;
-            var target = StyleClassTarget.Any;
-
-            if (name.StartsWith("."))
+            if (_tokens == null)
             {
-                target = StyleClassTarget.ElementName;
-                name = name.Substring(1);
-            }
-            else if (name.StartsWith("#"))
-            {
-                target = StyleClassTarget.ElementType;
-                name = name.Substring(1);
+                Tokenize();
             }
 
-            return new StyleClass(target, GetScope(node), name, ToStyles(node));
-        }
-
-        public ClassesSet ToClassesSet()
-        {
-            if (!IsLoaded || !IsParsed)
+            if (HasErrors)
             {
                 return null;
             }
 
-            _set = new ClassesSet();
-            _set.Classes = new List<StyleClass>();
+            _node = _nodifier.Nodify(_tokens);
 
-            AddClass(_content, _set.Classes);
-
-            return _set;
+            return _node;
         }
 
-        private void AddClass(XnsNode node, List<StyleClass> list)
+        public ClassesSet Compile()
         {
-            List<StyleDescriptor> styles = ToStyles(node);
-
-
-            if (styles.Count > 0)
+            if (_node == null)
             {
-                list.Add(GetClass(node));
+                Nodify();
             }
 
-            foreach (var child in node.Children)
+            if (HasErrors)
             {
-                AddClass(child, list);
-            }
-        }
-
-        private List<StyleDescriptor> ToStyles(XnsNode xnsNode)
-        {
-            var styles = new List<StyleDescriptor>();
-
-            foreach (var xnsStyle in xnsNode.Styles)
-            {
-                styles.Add(ToStyleDescriptor(xnsStyle));
+                return null;
             }
 
-            return styles;
-        }
+            _classesSet = _compiler.Compile(_node);
 
-        private StyleDescriptor ToStyleDescriptor(XnsStyle xnsStyle)
-        {
-            switch (xnsStyle.Name.ToLower())
-            {
-                case StyleIdentifier.Background:
-                    return new BackgroundStyleParser(xnsStyle.Value).Descriptor;
-
-                case StyleIdentifier.Border:
-                    return new BorderStyleParser(xnsStyle.Value).Descriptor;
-
-                case StyleIdentifier.Height:
-                    return new HeightStyleParser(xnsStyle.Value).Descriptor;
-
-                case StyleIdentifier.Layout:
-                    return new LayoutStyleParser(xnsStyle.Value).Descriptor;
-
-                case StyleIdentifier.Margin:
-                    return new MarginStyleParser(xnsStyle.Value).Descriptor;
-
-                case StyleIdentifier.Mask:
-                    return new MaskStyleParser(xnsStyle.Value).Descriptor;
-
-                case StyleIdentifier.Padding:
-                    return new PaddingStyleParser(xnsStyle.Value).Descriptor;
-
-                case StyleIdentifier.Width:
-                    return new WidthStyleParser(xnsStyle.Value).Descriptor;
-
-                default:
-                    throw new NotSupportedException();
-            }
+            return _classesSet;
         }
     }
 }

@@ -40,8 +40,7 @@ namespace Ixen.Generators.Xnl
             foreach ((string name, string content) in texts)
             {
                 var xnsSource = XnsSource.FromSource(content);
-                xnsSource.Parse();
-                var sheet = xnsSource.ToClassesSet();
+                var sheet = xnsSource.Compile();
 
                 var sb = new StringBuilder();
 

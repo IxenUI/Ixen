@@ -6,6 +6,11 @@ namespace Ixen.Core.Language.Xnl
     {
         private XnlParser _parser;
         private XnlNode _content;
+        private XnlSource(string[] sourceLines)
+            : base(sourceLines)
+        {
+            _parser = new XnlParser(_inputLines);
+        }
 
         private XnlSource(string filePath, string source)
             : base(filePath, source)
@@ -23,16 +28,14 @@ namespace Ixen.Core.Language.Xnl
             return new XnlSource(null, source);
         }
 
+        public static XnlSource FromSourceLines(string[] lines)
+        {
+            return new XnlSource(lines);
+        }
+
         public void Parse()
         {
-            if (IsParsed)
-            {
-                return;
-            }
-
             _content = _parser.Parse();
-
-            IsParsed = true;
         }
 
         public XnlNode GetContent() => _content;
