@@ -22,8 +22,6 @@ namespace Ixen.Core.Language.Xns
         private bool _identifier;
         private bool _content;
 
-        
-
         public XnsTokenizer(string[] lines)
             : base(lines)
         { }
@@ -50,19 +48,19 @@ namespace Ixen.Core.Language.Xns
         {
             _tokens.Add(token);
 
-            if (!_tokensByLines.ContainsKey(_nextLineNum))
+            if (!_tokensByLines.ContainsKey(_lineNum))
             {
-                _tokensByLines.Add(_nextLineNum, new());
+                _tokensByLines.Add(_lineNum, new());
             }
 
-            _tokensByLines[_nextLineNum].Add(token);
+            _tokensByLines[_lineNum].Add(token);
         }
 
         private void AddToken(XnsTokenType type, string content)
             => AddToken(new XnsToken
             {
-                LineNum = _nextLineNum,
-                Index = _nextLineIndex,
+                LineNum = _lineNum,
+                LineIndex = _lineIndex - content.Length + 1,
                 Content = content,
                 Type = type,
                 ErrorType = XnsTokenErrorType.None
@@ -71,8 +69,8 @@ namespace Ixen.Core.Language.Xns
         private void AddErrorToken(XnsTokenErrorType type, string content, string message = null)
             => AddToken(new XnsToken
             {
-                LineNum = _nextLineNum,
-                Index = _nextLineIndex,
+                LineNum = _lineNum,
+                LineIndex = _lineIndex - content.Length + 1,
                 Content = content,
                 Message = message,
                 Type = XnsTokenType.Error,
@@ -154,7 +152,7 @@ namespace Ixen.Core.Language.Xns
                             break;
                         }
 
-                        AddToken(XnsTokenType.StyleEquals, null);
+                        AddToken(XnsTokenType.StyleEquals, "=");
                         ResetStatesFlags(XnsTokenType.StyleEquals);
                         MoveCursor();
                         break;
@@ -167,7 +165,7 @@ namespace Ixen.Core.Language.Xns
                             break;
                         }
 
-                        AddToken(XnsTokenType.BeginClassContent, null);
+                        AddToken(XnsTokenType.BeginClassContent, "{");
                         ResetStatesFlags(XnsTokenType.BeginClassContent);
                         MoveCursor();
                         break;
@@ -180,7 +178,7 @@ namespace Ixen.Core.Language.Xns
                             break;
                         }
 
-                        AddToken(XnsTokenType.EndClassContent, null);
+                        AddToken(XnsTokenType.EndClassContent, "}");
                         ResetStatesFlags(XnsTokenType.EndClassContent);
                         MoveCursor();
                         break;
@@ -246,6 +244,17 @@ namespace Ixen.Core.Language.Xns
                     _expectContentEnd = true;
                     break;
             }
+        }
+
+        public List<XnsToken> GetTokens() => _tokens;
+        public List<XnsToken> GetTokensOfLine(int lineNum)
+        {
+            if (!_tokensByLines.ContainsKey(lineNum))
+            {
+                return new List<XnsToken>();
+            }
+
+            return _tokensByLines[lineNum];
         }
     }
 }

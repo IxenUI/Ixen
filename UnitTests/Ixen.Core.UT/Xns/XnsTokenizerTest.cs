@@ -39,6 +39,13 @@ namespace Ixen.Core.UT.Xns
 
             var xnsSource = XnsSource.FromSource(source);
             var tokens = xnsSource.Tokenize();
+
+            Assert.AreEqual(tokens.Count, 44);
+
+            Assert.AreEqual(tokens[0].LineNum, 0);
+            Assert.AreEqual(tokens[0].LineIndex, 0);
+            Assert.AreEqual(tokens[0].Content, "container");
+            Assert.AreEqual(tokens[0].Type, XnsTokenType.ClassIdentifier);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("Ixen.VSExtension")]
 [assembly: InternalsVisibleTo("Ixen.Core.UT")]
 [assembly: InternalsVisibleTo("Ixen.Generators")]
 [assembly: InternalsVisibleTo("Ixen.Platform")]

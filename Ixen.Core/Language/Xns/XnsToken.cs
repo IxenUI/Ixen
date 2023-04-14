@@ -3,7 +3,7 @@
     internal class XnsToken
     {
         public int LineNum { get; set; }
-        public int Index { get; set; }
+        public int LineIndex { get; set; }
         public XnsTokenType Type { get; set; }
         public bool IsError => Type == XnsTokenType.Error;
         public string Content { get; set; }

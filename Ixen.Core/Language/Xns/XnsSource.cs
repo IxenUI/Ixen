@@ -86,5 +86,8 @@ namespace Ixen.Core.Language.Xns
 
             return _classesSet;
         }
+
+        public List<XnsToken> GetTokens() => _tokens;
+        public List<XnsToken> GetTokensOfLine(int lineNum) => _tokenizer.GetTokensOfLine(lineNum);
     }
 }
