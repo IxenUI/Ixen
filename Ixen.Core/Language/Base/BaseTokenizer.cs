@@ -1,78 +1,59 @@
-﻿using System.Collections.Generic;
-
-namespace Ixen.Core.Language.Base
+﻿namespace Ixen.Core.Language.Base
 {
     internal abstract class BaseTokenizer
     {
-        protected List<string> _inputLines;
+        protected string _source;
 
-        protected int _lineNum = 0;
-        protected int _nextLineNum = 0;
-        protected int _lineIndex = -1;
-        protected int _nextLineIndex = 0;
+        protected int _index = -1;
+        protected int _nextIndex = 0;
 
-        protected bool _isNewLine = false;
         protected bool _errorOccured = false;
 
         public bool HasErrors { get; protected set; }
 
-        protected BaseTokenizer(List<string> lines)
+        protected BaseTokenizer(string source)
         {
-            _inputLines = lines;
+            _source = source;
         }
 
-        public abstract void UpdateLine(int lineNum);
+        protected BaseTokenizer(ref string source)
+        {
+            _source = source;
+        }
 
         protected char PeekChar()
         {
-            _nextLineNum = _lineNum;
-            _nextLineIndex = _lineIndex + 1;
-            _isNewLine = false;
+            _nextIndex = _index + 1;
 
-            while (_nextLineIndex >= _inputLines[_nextLineNum].Length)
+            if (_nextIndex >= _source.Length)
             {
-                _nextLineIndex = 0;
-                _nextLineNum++;
-                _isNewLine = true;
-
-                if (_nextLineNum >= _inputLines.Count)
-                {
-                    return '\0';
-                }
+                return '\0';
             }
 
-            return _inputLines[_nextLineNum][_nextLineIndex];
+            return _source[_nextIndex];
         }
 
         protected char PeekNonSpaceChar()
         {
-            int nextLineNum = _lineNum;
-            int nextLineIndex = _lineIndex;
+            int nextIndex = _index;
             char c = '\0';
 
             do
             {
-                while (++nextLineIndex >= _inputLines[nextLineNum].Length)
+                if (++nextIndex >= _source.Length)
                 {
-                    nextLineIndex = 0;
-                    nextLineNum++;
-
-                    if (nextLineNum >= _inputLines.Count)
-                    {
-                        return '\0';
-                    }
+                    return '\0';
                 }
 
-                c = _inputLines[nextLineNum][nextLineIndex];
-            } while (c == ' ' || c == '\t');
+                c = _source[nextIndex];
+            } while (char.IsWhiteSpace(c));
 
             return c;
         }
 
         protected void MoveCursor()
         {
-            _lineNum = _nextLineNum;
-            _lineIndex = _nextLineIndex;
+            _index = _nextIndex;
         }
     }
 }

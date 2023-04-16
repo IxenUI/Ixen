@@ -33,7 +33,7 @@ namespace Ixen.Core.UT.Xln
     }
 }";
 
-            var xnlSource = XnlSource.FromSource(source);
+            var xnlSource = new XnlSource(source);
             xnlSource.Parse();
             var content = xnlSource.GetContent();
         }

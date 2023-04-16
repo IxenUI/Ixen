@@ -1,13 +1,14 @@
 ﻿using Ixen.Core.Language.Base;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace Ixen.Core.Language.Xns
 {
     internal class XnsTokenizer : BaseTokenizer
     {
-        private Dictionary<int, List<XnsToken>> _tokensByLines;
+        private List<XnsToken> _tokens;
 
         private bool _expectElementName = false;
 
@@ -21,13 +22,17 @@ namespace Ixen.Core.Language.Xns
         private bool _identifier;
         private bool _content;
 
-        public XnsTokenizer(List<string> lines)
-            : base(lines)
+        public XnsTokenizer(string source)
+            : base(source)
+        { }
+
+        public XnsTokenizer(ref string source)
+            : base(ref source)
         { }
 
         public List<XnsToken> Tokenize()
         {
-            _tokensByLines = new();
+            _tokens = new();
 
             ResetStatesFlags(XnsTokenType.None);
             HasErrors = false;
@@ -41,34 +46,22 @@ namespace Ixen.Core.Language.Xns
                 HasErrors = true;
             }
 
-            return GetTokens();
-        }
-
-        private void AddToken(XnsToken token)
-        {
-            if (!_tokensByLines.ContainsKey(_lineNum))
-            {
-                _tokensByLines.Add(_lineNum, new());
-            }
-
-            _tokensByLines[_lineNum].Add(token);
+            return _tokens;
         }
 
         private void AddToken(XnsTokenType type, string content)
-            => AddToken(new XnsToken
+            => _tokens.Add(new XnsToken
             {
-                LineNum = _lineNum,
-                LineIndex = _lineIndex - content.Length + 1,
+                Index = _index - content.Length + 1,
                 Content = content,
                 Type = type,
                 ErrorType = XnsTokenErrorType.None
             });
 
         private void AddErrorToken(XnsTokenErrorType type, string content, string message = null)
-            => AddToken(new XnsToken
+            => _tokens.Add(new XnsToken
             {
-                LineNum = _lineNum,
-                LineIndex = _lineIndex - content.Length + 1,
+                Index = _index - content.Length + 1,
                 Content = content,
                 Message = message,
                 Type = XnsTokenType.Error,
@@ -118,7 +111,7 @@ namespace Ixen.Core.Language.Xns
 
                 if (_content)
                 {
-                    if (!_isNewLine)
+                    if (c != '\r' && c != '\n')
                     {
                         sb.Append(c);
                         MoveCursor();
@@ -143,6 +136,8 @@ namespace Ixen.Core.Language.Xns
                 {
                     case ' ':
                     case '\t':
+                    case '\r':
+                    case '\n':
                         MoveCursor();
                         break;
 
@@ -268,91 +263,6 @@ namespace Ixen.Core.Language.Xns
                     _expectContentEnd = true;
                     break;
             }
-        }
-
-        public List<XnsToken> GetTokens()
-        {
-            var list = new List<XnsToken>();
-
-            foreach(var kvp in _tokensByLines)
-            {
-                foreach (var token in kvp.Value)
-                {
-                    list.Add(token);
-                }
-            }
-
-            return list;
-        }
-
-        public List<XnsToken> GetTokensOfLine(int lineNum)
-        {
-            if (!_tokensByLines.ContainsKey(lineNum))
-            {
-                return new List<XnsToken>();
-            }
-
-            return _tokensByLines[lineNum];
-        }
-
-        public override void UpdateLine(int lineNum)
-        {
-            if (lineNum < 0)
-            {
-                return;
-            }
-            else if (lineNum == 0)
-            {
-                UpdateTokensOfLine(lineNum, null);
-                return;
-            }
-
-            int checkLine = lineNum - 1;
-            List<XnsToken> previousTokens;
-            XnsToken lastToken = null;
-            while (true)
-            {
-                previousTokens = GetTokensOfLine(checkLine);
-
-                if (previousTokens.Count > 0)
-                {
-                    lastToken = previousTokens[previousTokens.Count - 1];
-                    break;
-                }
-
-                if (--checkLine <= 0)
-                {
-                    break;
-                }
-            }
-
-            UpdateTokensOfLine(lineNum, lastToken);
-        }
-
-        private void UpdateTokensOfLine(int lineNum, XnsToken lastToken)
-        {
-            if (lastToken == null)
-            {
-                ResetStatesFlags(XnsTokenType.None);
-            }
-            else
-            {
-                ResetStatesFlags(lastToken.Type);
-            }
-
-            for (int i = lineNum; i < _inputLines.Count; i++)
-            {
-                if (_tokensByLines.ContainsKey(i))
-                {
-                    _tokensByLines[i].Clear();
-                }
-            }
-
-            _lineNum = lineNum;
-            _lineIndex = -1;
-            _isNewLine = false;
-
-            ReadTokens();
         }
     }
 }

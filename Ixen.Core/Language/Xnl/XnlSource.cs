@@ -1,5 +1,5 @@
 ﻿using Ixen.Core.Language.Base;
-using System.Collections.Generic;
+using System;
 using System.Linq;
 
 namespace Ixen.Core.Language.Xnl
@@ -8,31 +8,11 @@ namespace Ixen.Core.Language.Xnl
     {
         private XnlParser _parser;
         private XnlNode _content;
-        private XnlSource(List<string> sourceLines)
-            : base(sourceLines)
-        {
-            _parser = new XnlParser(_inputLines);
-        }
 
-        private XnlSource(string filePath, string source)
-            : base(filePath, source)
+        public XnlSource(string source)
+            : base(source)
         {
-            _parser = new XnlParser(_inputLines);
-        }
-
-        public static XnlSource FromFile(string filePath)
-        {
-            return new XnlSource(filePath, null);
-        }
-
-        public static XnlSource FromSource(string source)
-        {
-            return new XnlSource(null, source);
-        }
-
-        public static XnlSource FromSourceLines(IEnumerable<string> lines)
-        {
-            return new XnlSource(lines.ToList());
+            _parser = new XnlParser(source.Split(new string[] { Environment.NewLine }, StringSplitOptions.None).ToList());
         }
 
         public void Parse()

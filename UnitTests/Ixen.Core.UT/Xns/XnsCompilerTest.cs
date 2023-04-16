@@ -37,7 +37,7 @@ namespace Ixen.Core.UT.Xns
     background: #FF2222
 }";
 
-            var xnsSource = XnsSource.FromSource(source);
+            var xnsSource = new XnsSource(source);
             var classes = xnsSource.Compile();
         }
     }

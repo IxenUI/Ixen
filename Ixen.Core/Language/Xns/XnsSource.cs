@@ -1,7 +1,6 @@
 ﻿using Ixen.Core.Language.Base;
 using Ixen.Core.Visual.Classes;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Ixen.Core.Language.Xns
 {
@@ -15,43 +14,10 @@ namespace Ixen.Core.Language.Xns
         private XnsNode _node;
         private ClassesSet _classesSet;       
 
-        private XnsSource(List<string> sourceLines)
-            : base(sourceLines)
+        public XnsSource(string source)
+            : base(ref source)
         {
-            _tokenizer = new XnsTokenizer(_inputLines);
-        }
-
-        private XnsSource(string filePath, string source)
-            : base (filePath, source)
-        {
-            _tokenizer = new XnsTokenizer(_inputLines);
-        }
-
-        public static XnsSource FromFile(string filePath)
-        {
-            return new XnsSource(filePath, null);
-        }
-
-        public static XnsSource FromSource(string source)
-        {
-            return new XnsSource(null, source);
-        }
-
-        public static XnsSource FromSourceLines(IEnumerable<string> lines)
-        {
-            return new XnsSource(lines.ToList());
-        }
-
-        public override bool UpdateLine(int lineNum, string line, int totalLines)
-        {
-            if (base.UpdateLine(lineNum, line, totalLines))
-            {
-                _tokenizer.UpdateLine(lineNum);
-
-                return true;
-            }
-
-            return false;
+            _tokenizer = new XnsTokenizer(ref source);
         }
 
         public List<XnsToken> Tokenize()
@@ -99,8 +65,5 @@ namespace Ixen.Core.Language.Xns
 
             return _classesSet;
         }
-
-        public List<XnsToken> GetTokens() => _tokens;
-        public List<XnsToken> GetTokensOfLine(int lineNum) => _tokenizer.GetTokensOfLine(lineNum);
     }
 }
