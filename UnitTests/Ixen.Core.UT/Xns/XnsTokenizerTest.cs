@@ -40,7 +40,7 @@ namespace Ixen.Core.UT.Xns
             var xnsSource = XnsSource.FromSource(source);
             var tokens = xnsSource.Tokenize();
 
-            Assert.AreEqual(tokens.Count, 44);
+            Assert.AreEqual(tokens.Count, 45);
 
             Assert.AreEqual(tokens[0].LineNum, 0);
             Assert.AreEqual(tokens[0].LineIndex, 0);

@@ -26,7 +26,7 @@ namespace Ixen.Core.Language.Xnl
         private bool _identifier;
         private bool _content;
 
-        public XnlParser(string[] lines)
+        public XnlParser(List<string> lines)
             : base(lines)
         { }
 

@@ -1,6 +1,7 @@
 ﻿using Ixen.Core.Language.Base;
 using Ixen.Core.Visual.Classes;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ixen.Core.Language.Xns
 {
@@ -14,7 +15,7 @@ namespace Ixen.Core.Language.Xns
         private XnsNode _node;
         private ClassesSet _classesSet;       
 
-        private XnsSource(string[] sourceLines)
+        private XnsSource(List<string> sourceLines)
             : base(sourceLines)
         {
             _tokenizer = new XnsTokenizer(_inputLines);
@@ -36,16 +37,28 @@ namespace Ixen.Core.Language.Xns
             return new XnsSource(null, source);
         }
 
-        public static XnsSource FromSourceLines(string[] lines)
+        public static XnsSource FromSourceLines(IEnumerable<string> lines)
         {
-            return new XnsSource(lines);
+            return new XnsSource(lines.ToList());
+        }
+
+        public override bool UpdateLine(int lineNum, string line, int totalLines)
+        {
+            if (base.UpdateLine(lineNum, line, totalLines))
+            {
+                _tokenizer.UpdateLine(lineNum);
+
+                return true;
+            }
+
+            return false;
         }
 
         public List<XnsToken> Tokenize()
         {
             _tokens = _tokenizer.Tokenize();
 
-            if (!_tokenizer.IsSuccess)
+            if (_tokenizer.HasErrors)
             {
                 HasErrors = true;
             }

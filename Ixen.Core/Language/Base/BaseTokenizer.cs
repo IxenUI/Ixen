@@ -1,8 +1,10 @@
-﻿namespace Ixen.Core.Language.Base
+﻿using System.Collections.Generic;
+
+namespace Ixen.Core.Language.Base
 {
     internal abstract class BaseTokenizer
     {
-        private string[] _inputLines;
+        protected List<string> _inputLines;
 
         protected int _lineNum = 0;
         protected int _nextLineNum = 0;
@@ -10,13 +12,16 @@
         protected int _nextLineIndex = 0;
 
         protected bool _isNewLine = false;
+        protected bool _errorOccured = false;
 
-        public bool IsSuccess { get; protected set; }
+        public bool HasErrors { get; protected set; }
 
-        protected BaseTokenizer(string[] lines)
+        protected BaseTokenizer(List<string> lines)
         {
             _inputLines = lines;
         }
+
+        public abstract void UpdateLine(int lineNum);
 
         protected char PeekChar()
         {
@@ -30,7 +35,7 @@
                 _nextLineNum++;
                 _isNewLine = true;
 
-                if (_nextLineNum >= _inputLines.Length)
+                if (_nextLineNum >= _inputLines.Count)
                 {
                     return '\0';
                 }
@@ -52,7 +57,7 @@
                     nextLineIndex = 0;
                     nextLineNum++;
 
-                    if (nextLineNum >= _inputLines.Length)
+                    if (nextLineNum >= _inputLines.Count)
                     {
                         return '\0';
                     }

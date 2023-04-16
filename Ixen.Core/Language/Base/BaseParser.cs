@@ -1,8 +1,10 @@
-﻿namespace Ixen.Core.Language.Base
+﻿using System.Collections.Generic;
+
+namespace Ixen.Core.Language.Base
 {
     internal abstract class BaseParser
     {
-        private string[] _inputLines;
+        private List<string> _inputLines;
 
         protected int _lineNum = 0;
         protected int _nextLineNum = 0;
@@ -11,7 +13,7 @@
 
         protected bool _isNewLine = false;
 
-        protected BaseParser(string[] lines)
+        protected BaseParser(List<string> lines)
         {
             _inputLines = lines;
         }
@@ -28,7 +30,7 @@
                 _nextLineNum++;
                 _isNewLine = true;
 
-                if (_nextLineNum >= _inputLines.Length)
+                if (_nextLineNum >= _inputLines.Count)
                 {
                     return '\0';
                 }
@@ -50,7 +52,7 @@
                     nextLineIndex = 0;
                     nextLineNum++;
 
-                    if (nextLineNum >= _inputLines.Length)
+                    if (nextLineNum >= _inputLines.Count)
                     {
                         return '\0';
                     }

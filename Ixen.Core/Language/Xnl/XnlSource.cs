@@ -1,4 +1,6 @@
 ﻿using Ixen.Core.Language.Base;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Ixen.Core.Language.Xnl
 {
@@ -6,7 +8,7 @@ namespace Ixen.Core.Language.Xnl
     {
         private XnlParser _parser;
         private XnlNode _content;
-        private XnlSource(string[] sourceLines)
+        private XnlSource(List<string> sourceLines)
             : base(sourceLines)
         {
             _parser = new XnlParser(_inputLines);
@@ -28,9 +30,9 @@ namespace Ixen.Core.Language.Xnl
             return new XnlSource(null, source);
         }
 
-        public static XnlSource FromSourceLines(string[] lines)
+        public static XnlSource FromSourceLines(IEnumerable<string> lines)
         {
-            return new XnlSource(lines);
+            return new XnlSource(lines.ToList());
         }
 
         public void Parse()

@@ -7,7 +7,6 @@ namespace Ixen.Core.Language.Xns
 {
     internal class XnsTokenizer : BaseTokenizer
     {
-        private List<XnsToken> _tokens;
         private Dictionary<int, List<XnsToken>> _tokensByLines;
 
         private bool _expectElementName = false;
@@ -22,32 +21,31 @@ namespace Ixen.Core.Language.Xns
         private bool _identifier;
         private bool _content;
 
-        public XnsTokenizer(string[] lines)
+        public XnsTokenizer(List<string> lines)
             : base(lines)
         { }
 
         public List<XnsToken> Tokenize()
         {
-            _tokens = new();
             _tokensByLines = new();
+
+            ResetStatesFlags(XnsTokenType.None);
+            HasErrors = false;
 
             try
             {
                 ReadTokens();
-                IsSuccess = true;
             }
             catch (Exception)
             {
-                IsSuccess = false;
+                HasErrors = true;
             }
 
-            return _tokens;
+            return GetTokens();
         }
 
         private void AddToken(XnsToken token)
         {
-            _tokens.Add(token);
-
             if (!_tokensByLines.ContainsKey(_lineNum))
             {
                 _tokensByLines.Add(_lineNum, new());
@@ -83,9 +81,9 @@ namespace Ixen.Core.Language.Xns
             char c2;
             var sb = new StringBuilder();
 
-            _expectElementName = true;
+            _errorOccured = false;
 
-            while ((c = PeekChar()) != '\0')
+            while ((c = PeekChar()) != '\0' && !_errorOccured)
             {
                 if (_identifier)
                 {
@@ -113,6 +111,8 @@ namespace Ixen.Core.Language.Xns
                             ResetStatesFlags(XnsTokenType.StyleName);
                             continue;
                         }
+
+                        GenerateError(sb);
                     }
                 }
 
@@ -131,9 +131,11 @@ namespace Ixen.Core.Language.Xns
                             AddToken(XnsTokenType.StyleValue, sb.ToString());
                             ResetStatesFlags(XnsTokenType.StyleValue);
                             sb.Clear();
-                            MoveCursor();
+
                             continue;
                         }
+
+                        GenerateError(sb);
                     }
                 }
 
@@ -152,7 +154,7 @@ namespace Ixen.Core.Language.Xns
                             break;
                         }
 
-                        AddToken(XnsTokenType.StyleEquals, "=");
+                        AddToken(XnsTokenType.StyleEquals, ":");
                         ResetStatesFlags(XnsTokenType.StyleEquals);
                         MoveCursor();
                         break;
@@ -186,19 +188,37 @@ namespace Ixen.Core.Language.Xns
                     default:
                         if (_expectElementName || _expectStyleName)
                         {
+                            if (_identifier)
+                            {
+                                GenerateError(sb);
+                                break;
+                            }
+
                             _identifier = true;
-                            continue;
+                            break;
                         }
 
                         if (_expectStyleValue)
                         {
+                            if (_content)
+                            {
+                                GenerateError(sb);
+                                break;
+                            }
+
                             _content = true;
-                            continue;
+                            break;
                         }
 
+                        GenerateError(sb);
                         break;
                 }
             }
+        }
+
+        private void GenerateError(StringBuilder sb)
+        {
+            _errorOccured = true;
         }
 
         private void ResetStatesFlags(XnsTokenType lastType)
@@ -216,6 +236,10 @@ namespace Ixen.Core.Language.Xns
 
             switch (lastType)   
             {
+                case XnsTokenType.None:
+                    _expectElementName = true;
+                    break;
+
                 case XnsTokenType.ClassIdentifier:
                     _expectContentBegin = true;
                     break;
@@ -246,7 +270,21 @@ namespace Ixen.Core.Language.Xns
             }
         }
 
-        public List<XnsToken> GetTokens() => _tokens;
+        public List<XnsToken> GetTokens()
+        {
+            var list = new List<XnsToken>();
+
+            foreach(var kvp in _tokensByLines)
+            {
+                foreach (var token in kvp.Value)
+                {
+                    list.Add(token);
+                }
+            }
+
+            return list;
+        }
+
         public List<XnsToken> GetTokensOfLine(int lineNum)
         {
             if (!_tokensByLines.ContainsKey(lineNum))
@@ -255,6 +293,66 @@ namespace Ixen.Core.Language.Xns
             }
 
             return _tokensByLines[lineNum];
+        }
+
+        public override void UpdateLine(int lineNum)
+        {
+            if (lineNum < 0)
+            {
+                return;
+            }
+            else if (lineNum == 0)
+            {
+                UpdateTokensOfLine(lineNum, null);
+                return;
+            }
+
+            int checkLine = lineNum - 1;
+            List<XnsToken> previousTokens;
+            XnsToken lastToken = null;
+            while (true)
+            {
+                previousTokens = GetTokensOfLine(checkLine);
+
+                if (previousTokens.Count > 0)
+                {
+                    lastToken = previousTokens[previousTokens.Count - 1];
+                    break;
+                }
+
+                if (--checkLine <= 0)
+                {
+                    break;
+                }
+            }
+
+            UpdateTokensOfLine(lineNum, lastToken);
+        }
+
+        private void UpdateTokensOfLine(int lineNum, XnsToken lastToken)
+        {
+            if (lastToken == null)
+            {
+                ResetStatesFlags(XnsTokenType.None);
+            }
+            else
+            {
+                ResetStatesFlags(lastToken.Type);
+            }
+
+            for (int i = lineNum; i < _inputLines.Count; i++)
+            {
+                if (_tokensByLines.ContainsKey(i))
+                {
+                    _tokensByLines[i].Clear();
+                }
+            }
+
+            _lineNum = lineNum;
+            _lineIndex = -1;
+            _isNewLine = false;
+
+            ReadTokens();
         }
     }
 }
