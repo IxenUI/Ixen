@@ -19,36 +19,4 @@ namespace Ixen.Core.Language
             : base(message, inner)
         { }
     }
-
-    internal class XnsParseException : XnsException
-    {
-        public XnsParseException()
-        { }
-
-        public XnsParseException(string message)
-            : base(message)
-        { }
-
-        public XnsParseException(string message, params object[] obj)
-            : base(string.Format(message, obj))
-        { }
-
-        public XnsParseException(string message, Exception inner)
-            : base(message, inner)
-        { }
-    }
-
-    internal class XnsUnexpectedCharacterException : XnsParseException
-    {
-        public XnsUnexpectedCharacterException()
-        { }
-
-        public XnsUnexpectedCharacterException(string gotChar, int lineNum, int lineIndex)
-            : base($"Unexpected {gotChar} character at line {lineNum} index {lineIndex}")
-        { }
-
-        public XnsUnexpectedCharacterException(string expectedChar, string gotChar, int lineNum, int lineIndex)
-            : base($"Expected {expectedChar} character, got {gotChar} at line {lineNum} index {lineIndex}")
-        { }
-    }
 }
