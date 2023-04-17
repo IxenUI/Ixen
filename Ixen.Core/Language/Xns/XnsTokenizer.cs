@@ -1,7 +1,7 @@
 ﻿using Ixen.Core.Language.Base;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
+using System.Linq;
 using System.Text;
 
 namespace Ixen.Core.Language.Xns
@@ -26,14 +26,18 @@ namespace Ixen.Core.Language.Xns
             : base(source)
         { }
 
-        public XnsTokenizer(ref string source)
-            : base(ref source)
+        public XnsTokenizer(SourceContent source)
+            : base(source)
         { }
+
+        public IEnumerable<XnsToken> GetTokens() => _tokens;
+        public IEnumerable<XnsToken> GetTokens(int indexFrom, int indexTo) => _tokens.Where(t => t.Index >= indexFrom && t.Index <= indexTo);
 
         public List<XnsToken> Tokenize()
         {
             _tokens = new();
 
+            ResetPosition();
             ResetStatesFlags(XnsTokenType.None);
             HasErrors = false;
 
@@ -136,8 +140,16 @@ namespace Ixen.Core.Language.Xns
                 {
                     case ' ':
                     case '\t':
+                        MoveCursor();
+                        break;
+
                     case '\r':
                     case '\n':
+                        if (_expectStyleEqual || _expectStyleValue)
+                        {
+                            GenerateError(sb);
+                            break;
+                        }
                         MoveCursor();
                         break;
 

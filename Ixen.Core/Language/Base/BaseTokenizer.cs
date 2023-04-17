@@ -2,7 +2,7 @@
 {
     internal abstract class BaseTokenizer
     {
-        protected string _source;
+        protected SourceContent _source;
 
         protected int _index = -1;
         protected int _nextIndex = 0;
@@ -13,24 +13,30 @@
 
         protected BaseTokenizer(string source)
         {
+            _source = new SourceContent(source);
+        }
+
+        protected BaseTokenizer(SourceContent source)
+        {
             _source = source;
         }
 
-        protected BaseTokenizer(ref string source)
+        protected void ResetPosition()
         {
-            _source = source;
+            _index = -1;
+            _nextIndex = 0;
         }
 
         protected char PeekChar()
         {
             _nextIndex = _index + 1;
 
-            if (_nextIndex >= _source.Length)
+            if (_nextIndex >= _source.Content.Length)
             {
                 return '\0';
             }
 
-            return _source[_nextIndex];
+            return _source.Content[_nextIndex];
         }
 
         protected char PeekNonSpaceChar()
@@ -40,12 +46,12 @@
 
             do
             {
-                if (++nextIndex >= _source.Length)
+                if (++nextIndex >= _source.Content.Length)
                 {
                     return '\0';
                 }
 
-                c = _source[nextIndex];
+                c = _source.Content[nextIndex];
             } while (char.IsWhiteSpace(c));
 
             return c;
