@@ -1,25 +1,52 @@
 ﻿using Ixen.Core.Language.Base;
-using System;
-using System.Linq;
+using System.Collections.Generic;
 
 namespace Ixen.Core.Language.Xnl
 {
     internal class XnlSource : BaseSource
     {
-        private XnlParser _parser;
-        private XnlNode _content;
+        private XnlTokenizer _tokenizer;
+        private XnlNodifier _nodifier = new();
+
+        private List<XnlToken> _tokens;
+        private XnlNode _node;
 
         public XnlSource(string source)
             : base(source)
         {
-            _parser = new XnlParser(source.Split(new string[] { Environment.NewLine }, StringSplitOptions.None).ToList());
+            _tokenizer = new XnlTokenizer(_source);
         }
 
-        public void Parse()
+        public List<XnlToken> Tokenize()
         {
-            _content = _parser.Parse();
+            _tokens = _tokenizer.Tokenize();
+
+            if (_tokenizer.HasErrors)
+            {
+                HasErrors = true;
+            }
+
+            return _tokens;
         }
 
-        public XnlNode GetContent() => _content;
+        public XnlNode Nodify()
+        {
+            if (_tokens == null)
+            {
+                Tokenize();
+            }
+
+            if (HasErrors)
+            {
+                return null;
+            }
+
+            _node = _nodifier.Nodify(_tokens);
+
+            return _node;
+        }
+
+        public IEnumerable<XnlToken> GetTokens() => _tokenizer.GetTokens();
+        public IEnumerable<XnlToken> GetTokens(int indexFrom, int indexTo) => _tokenizer.GetTokens(indexFrom, indexTo);
     }
 }

@@ -1,16 +1,10 @@
 ﻿using Ixen.Core.Language.Xnl;
-using Ixen.Core.Language.Xns;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Ixen.Core.UT.Xnl
 {
     [TestClass]
-    public class XnlTokenizerTest
+    public class XnlTokenizerTests
     {
         [TestMethod]
         public void TestTokenize()
