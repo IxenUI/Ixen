@@ -4,6 +4,7 @@ namespace Ixen.Core.Language.Xnl
 {
     internal class XnlNode
     {
+        public int Id { get; set; }
         public string Name { get; set; }
         public string Type { get; set; }
         public List<XnlNodeParameter> Parameters { get; set; } = new();

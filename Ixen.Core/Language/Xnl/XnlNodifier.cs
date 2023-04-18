@@ -18,10 +18,12 @@ namespace Ixen.Core.Language.Xnl
 
         private XnlNode ReadNodes(List<XnlToken> tokens)
         {
-            var node = new XnlNode();
-            var root = new XnlNode();
+            int nodeId = 0;
+            var root = new XnlNode { Id = nodeId };
             var parent = root;
             var stack = new Stack<XnlNode>();
+
+            XnlNode node = null;
             XnlNodeParameter nodeParameter = null;
 
             stack.Push(root);
@@ -33,6 +35,7 @@ namespace Ixen.Core.Language.Xnl
                     case XnlTokenType.ElementName:
                         node = new XnlNode()
                         {
+                            Id = ++nodeId,
                             Parent = parent,
                             Name = token.Content
                         };

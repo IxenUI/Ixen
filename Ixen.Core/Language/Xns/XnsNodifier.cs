@@ -18,10 +18,12 @@ namespace Ixen.Core.Language.Xns
 
         private XnsNode ReadNodes(List<XnsToken> tokens)
         {
-            var node = new XnsNode();
-            var root = new XnsNode();
+            int nodeId = 0;
+            var root = new XnsNode { Id = nodeId };
             var parent = root;
             var stack = new Stack<XnsNode>();
+
+            XnsNode node = null;
             XnsStyle style = null;
 
             stack.Push(root);
@@ -33,6 +35,7 @@ namespace Ixen.Core.Language.Xns
                     case XnsTokenType.ClassName:
                         node = new XnsNode()
                         {
+                            Id = ++nodeId,
                             Parent = parent,
                             Name = token.Content
                         };
