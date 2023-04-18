@@ -33,8 +33,6 @@ container:MonSuperType( start=""true"" machin=""bazar"" ) {
             var xnlSource = new XnlSource(source);
             var node = xnlSource.Nodify();
 
-            List<XnlNodeParameter> parameters;
-
             Assert.IsNotNull(node);
             Assert.AreEqual(node.Parameters.Count, 0);
             Assert.AreEqual(node.Children.Count, 1);
