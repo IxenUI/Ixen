@@ -4,7 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Ixen.Core.UT.Xns
 {
     [TestClass]
-    public class XnsTokenizerTest
+    public class XnsTokenizerTests
     {
         [TestMethod]
         public void TestTokenize()

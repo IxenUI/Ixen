@@ -29,10 +29,9 @@ namespace Ixen.Generators.Xnl
 
         static void Execute(Compilation compilation, ImmutableArray<(string name, string content)> texts, SourceProductionContext context)
         {
-            //if (!Debugger.IsAttached)
-            //{
-            //    Debugger.Launch();
-            //}
+            //if (!Debugger.IsAttached) { Debugger.Launch(); }
+
+            Debug.WriteLine("Execute Ixen XNS code generator");
 
             foreach ((string name, string content) in texts)
             {
