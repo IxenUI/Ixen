@@ -5,7 +5,7 @@ namespace Ixen.Core.Visual.Classes
 {
     public enum StyleClassTarget
     {
-        Any,
+        ClassName,
         ElementName,
         ElementType
     }
@@ -30,19 +30,19 @@ namespace Ixen.Core.Visual.Classes
         { }
 
         public StyleClass(string scope, string name)
-            : this(StyleClassTarget.Any, scope, name, new())
+            : this(StyleClassTarget.ClassName, scope, name, new())
         { }
 
         public StyleClass(string scope, string name, List<StyleDescriptor> styles)
-            : this(StyleClassTarget.Any, scope, name, styles)
+            : this(StyleClassTarget.ClassName, scope, name, styles)
         { }
 
         public StyleClass(string name)
-            : this(StyleClassTarget.Any, null, name, new())
+            : this(StyleClassTarget.ClassName, null, name, new())
         { }
 
         public StyleClass(string name, List<StyleDescriptor> styles)
-            : this(StyleClassTarget.Any, null, name, styles)
+            : this(StyleClassTarget.ClassName, null, name, styles)
         { }
     }
 }

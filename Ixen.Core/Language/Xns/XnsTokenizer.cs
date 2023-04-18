@@ -10,7 +10,7 @@ namespace Ixen.Core.Language.Xns
     {
         private List<XnsToken> _tokens;
 
-        private bool _expectElementName = false;
+        private bool _exceptClassName = false;
 
         private bool _expectContentBegin = false;
         private bool _expectContentEnd = false;
@@ -84,7 +84,7 @@ namespace Ixen.Core.Language.Xns
             {
                 if (_identifier)
                 {
-                    if (char.IsLetterOrDigit(c) || _expectElementName && (c == '_' || c == '.'))
+                    if (char.IsLetterOrDigit(c) || _exceptClassName && (c == '_' || c == '.'))
                     {
                         sb.Append(c);
                         MoveCursor();
@@ -93,11 +93,11 @@ namespace Ixen.Core.Language.Xns
                     else
                     {
                         c2 = PeekNonSpaceChar();
-                        if (_expectElementName && c2 == '{')
+                        if (_exceptClassName && c2 == '{')
                         {
-                            AddToken(XnsTokenType.ClassIdentifier, sb.ToString());
+                            AddToken(XnsTokenType.ClassName, sb.ToString());
                             sb.Clear();
-                            ResetStatesFlags(XnsTokenType.ClassIdentifier);
+                            ResetStatesFlags(XnsTokenType.ClassName);
                             continue;
                         }
 
@@ -193,7 +193,7 @@ namespace Ixen.Core.Language.Xns
                         break;
 
                     default:
-                        if (_expectElementName || _expectStyleName)
+                        if (_exceptClassName || _expectStyleName)
                         {
                             if (_identifier)
                             {
@@ -230,8 +230,7 @@ namespace Ixen.Core.Language.Xns
 
         private void ResetStatesFlags(XnsTokenType lastType)
         {
-            _expectElementName = false;
-
+            _exceptClassName = false;
             _expectContentBegin = false;
             _expectContentEnd = false;
             _expectStyleName = false;
@@ -244,10 +243,10 @@ namespace Ixen.Core.Language.Xns
             switch (lastType)   
             {
                 case XnsTokenType.None:
-                    _expectElementName = true;
+                    _exceptClassName = true;
                     break;
 
-                case XnsTokenType.ClassIdentifier:
+                case XnsTokenType.ClassName:
                     _expectContentBegin = true;
                     break;
 
@@ -257,7 +256,7 @@ namespace Ixen.Core.Language.Xns
                     break;
 
                 case XnsTokenType.EndClassContent:
-                    _expectElementName = true;
+                    _exceptClassName = true;
                     _expectContentEnd = true;
                     break;
 
@@ -271,7 +270,7 @@ namespace Ixen.Core.Language.Xns
 
                 case XnsTokenType.StyleValue:
                     _expectStyleName = true;
-                    _expectElementName = true;
+                    _exceptClassName = true;
                     _expectContentEnd = true;
                     break;
             }

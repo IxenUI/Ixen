@@ -44,7 +44,7 @@ namespace Ixen.Core.UT.Xns
 
             Assert.AreEqual(tokens[0].Index, 0);
             Assert.AreEqual(tokens[0].Content, "container");
-            Assert.AreEqual(tokens[0].Type, XnsTokenType.ClassIdentifier);
+            Assert.AreEqual(tokens[0].Type, XnsTokenType.ClassName);
 
             Assert.AreEqual(tokens[1].Type, XnsTokenType.BeginClassContent);
 
@@ -60,7 +60,7 @@ namespace Ixen.Core.UT.Xns
             Assert.AreEqual(tokens[7].Type, XnsTokenType.StyleValue);
             Assert.AreEqual(tokens[7].Content, "100%");
 
-            Assert.AreEqual(tokens[8].Type, XnsTokenType.ClassIdentifier);
+            Assert.AreEqual(tokens[8].Type, XnsTokenType.ClassName);
             Assert.AreEqual(tokens[8].Content, "panel");
 
             Assert.AreEqual(tokens[9].Type, XnsTokenType.BeginClassContent);
@@ -79,7 +79,7 @@ namespace Ixen.Core.UT.Xns
 
             Assert.AreEqual(tokens[16].Type, XnsTokenType.EndClassContent);
 
-            Assert.AreEqual(tokens[29].Type, XnsTokenType.ClassIdentifier);
+            Assert.AreEqual(tokens[29].Type, XnsTokenType.ClassName);
             Assert.AreEqual(tokens[29].Content, "entries");
 
             Assert.AreEqual(tokens[30].Type, XnsTokenType.BeginClassContent);
@@ -90,7 +90,7 @@ namespace Ixen.Core.UT.Xns
             Assert.AreEqual(tokens[33].Type, XnsTokenType.StyleValue);
             Assert.AreEqual(tokens[33].Content, "column");
 
-            Assert.AreEqual(tokens[34].Type, XnsTokenType.ClassIdentifier);
+            Assert.AreEqual(tokens[34].Type, XnsTokenType.ClassName);
             Assert.AreEqual(tokens[34].Content, "entry");
 
             Assert.AreEqual(tokens[35].Type, XnsTokenType.BeginClassContent);

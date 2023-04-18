@@ -5,7 +5,7 @@
         None,
         Error,
 
-        ClassIdentifier,
+        ClassName,
         BeginClassContent,
         EndClassContent,
         StyleName,

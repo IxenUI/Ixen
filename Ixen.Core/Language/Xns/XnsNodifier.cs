@@ -30,7 +30,7 @@ namespace Ixen.Core.Language.Xns
             {
                 switch (token.Type)
                 {
-                    case XnsTokenType.ClassIdentifier:
+                    case XnsTokenType.ClassName:
                         node = new XnsNode()
                         {
                             Parent = parent,

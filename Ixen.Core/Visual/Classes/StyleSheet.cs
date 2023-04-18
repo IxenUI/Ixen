@@ -164,7 +164,7 @@ namespace Ixen.Core.Visual.Classes
             {
                 switch (styleClass.Target)
                 {
-                    case StyleClassTarget.Any:
+                    case StyleClassTarget.ClassName:
                         AddClass(_globalClassesByName, styleClass);
                         break;
                     case StyleClassTarget.ElementName:
@@ -179,7 +179,7 @@ namespace Ixen.Core.Visual.Classes
             {
                 switch (styleClass.Target)
                 {
-                    case StyleClassTarget.Any:
+                    case StyleClassTarget.ClassName:
                         AddScopedClass(_classesByScopeAndName, styleClass);
                         break;
                     case StyleClassTarget.ElementName:

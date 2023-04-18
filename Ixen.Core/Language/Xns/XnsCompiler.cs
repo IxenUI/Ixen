@@ -52,11 +52,11 @@ namespace Ixen.Core.Language.Xns
         private StyleClass GetClass(XnsNode node)
         {
             string name = node.Name;
-            var target = StyleClassTarget.Any;
+            var target = StyleClassTarget.ElementName;
 
             if (name.StartsWith("."))
             {
-                target = StyleClassTarget.ElementName;
+                target = StyleClassTarget.ClassName;
                 name = name.Substring(1);
             }
             else if (name.StartsWith("#"))

@@ -49,7 +49,7 @@ namespace Ixen.Core.UT.Xns
 
             var containerClass = classes.Classes[0];
             Assert.AreEqual(containerClass.Name, "container");
-            Assert.AreEqual(containerClass.Target, StyleClassTarget.Any);
+            Assert.AreEqual(containerClass.Target, StyleClassTarget.ElementName);
             Assert.AreEqual(containerClass.Styles.Count, 2);
 
             Assert.AreEqual(containerClass.Styles[0].Identifier, StyleIdentifier.Layout);
@@ -65,7 +65,7 @@ namespace Ixen.Core.UT.Xns
             var panelClass = classes.Classes[1];
             Assert.AreEqual(panelClass.Name, "panel");
             Assert.AreEqual(panelClass.Scope, "container");
-            Assert.AreEqual(panelClass.Target, StyleClassTarget.Any);
+            Assert.AreEqual(panelClass.Target, StyleClassTarget.ElementName);
             Assert.AreEqual(panelClass.Styles.Count, 2);
 
             Assert.AreEqual(panelClass.Styles[0].Identifier, StyleIdentifier.Width);
@@ -84,7 +84,7 @@ namespace Ixen.Core.UT.Xns
             var contentClass = classes.Classes[2];
             Assert.AreEqual(contentClass.Name, "content");
             Assert.AreEqual(contentClass.Scope, "container");
-            Assert.AreEqual(contentClass.Target, StyleClassTarget.Any);
+            Assert.AreEqual(contentClass.Target, StyleClassTarget.ElementName);
             Assert.AreEqual(contentClass.Styles.Count, 3);
 
             Assert.AreEqual(contentClass.Styles[0].Identifier, StyleIdentifier.Width);
@@ -108,12 +108,12 @@ namespace Ixen.Core.UT.Xns
             var entriesClass = classes.Classes[3];
             Assert.AreEqual(entriesClass.Name, "entries");
             Assert.AreEqual(entriesClass.Scope, "container");
-            Assert.AreEqual(entriesClass.Target, StyleClassTarget.Any);
+            Assert.AreEqual(entriesClass.Target, StyleClassTarget.ElementName);
             Assert.AreEqual(entriesClass.Styles.Count, 1);
 
             var activeClass = classes.Classes[4];
             Assert.AreEqual(activeClass.Name, "active");
-            Assert.AreEqual(activeClass.Target, StyleClassTarget.ElementName);
+            Assert.AreEqual(activeClass.Target, StyleClassTarget.ClassName);
             Assert.AreEqual(activeClass.Styles.Count, 1);
         }
     }
