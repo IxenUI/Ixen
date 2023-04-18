@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace Ixen.Generators.Xnl
+namespace Ixen.Generators.Xns
 {
     [Generator]
     public class XnsGenerator : IIncrementalGenerator

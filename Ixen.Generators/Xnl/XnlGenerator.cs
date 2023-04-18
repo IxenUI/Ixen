@@ -1,8 +1,10 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Ixen.Core.Language.Xnl;
+using Microsoft.CodeAnalysis;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace Ixen.Generators.Xnl
 {
@@ -25,14 +27,80 @@ namespace Ixen.Generators.Xnl
 
         static void Execute(Compilation compilation, ImmutableArray<(string name, string content)> texts, SourceProductionContext context)
         {
-            //Debug.WriteLine("Execute code generator");
+            //if (!Debugger.IsAttached) { Debugger.Launch(); }
 
-            //var callingEntrypoint = compilation.GetEntryPoint(context.CancellationToken);
+            Debug.WriteLine("Execute Ixen XNL code generator");
 
-            //foreach ((string name, string content) in texts)
-            //{
-            //    context.AddSource($"{name}.g.cs", content);
-            //}
+            foreach ((string name, string content) in texts)
+            {
+                var xnlSource = new XnlSource(content);
+                var node = xnlSource.Nodify();
+
+                var sb = new StringBuilder();
+
+                sb.AppendLine("using Ixen.Core;");
+                sb.AppendLine("using Ixen.Core.Visual;");
+                sb.AppendLine();
+                sb.AppendLine("namespace Ixen.Generated.Layouts");
+                sb.AppendLine("{");
+
+                sb.AppendLine($"\tpublic class {name}_Layout");
+                sb.AppendLine("\t{");
+
+                sb.AppendLine("\t\tpublic VisualElement Content { get; set; }");
+                sb.AppendLine();
+
+                sb.AppendLine($"\t\tpublic {name}_Layout() ");
+                sb.AppendLine("\t\t{");
+                sb.AppendLine("\t\t\tBuildElements();");
+                sb.AppendLine("\t\t}");
+                sb.AppendLine();
+
+                sb.AppendLine($"\t\tpublic void BuildElements()");
+                sb.AppendLine("\t\t{");
+
+                AddDeclaration(sb, node, 3);
+                sb.AppendLine("\t\t\tContent = el0;");
+
+                sb.AppendLine("\t\t}");
+                sb.AppendLine("\t}");
+                sb.AppendLine("}");
+
+                context.AddSource($"{name}.layout.g.cs", sb.ToString());
+            }
+        }
+
+        static void AddDeclaration(StringBuilder sb, XnlNode node, int tabLevel)
+        {
+            string tabs = new string('\t', tabLevel);
+            string nodeId = node.Name != null ? $"el{node.Id}_{node.Name}" : $"el{node.Id}";
+            string childId;
+
+            sb.AppendLine($"{tabs}var {nodeId} = new VisualElement();");
+
+            foreach (var param in node.Parameters)
+            {
+                switch (param.Name)
+                {
+                    case "class":
+                        sb.AppendLine($"{tabs}{nodeId}.Classes.Add(\"{param.Value}\");");
+                        break;
+                }
+            }
+
+            if (node.Children.Count > 0)
+            {
+                sb.AppendLine();
+            }
+
+            foreach (var child in node.Children)
+            {
+                childId = child.Name != null ? $"el{child.Id}_{child.Name}" : $"el{child.Id}";
+                AddDeclaration(sb, child, tabLevel);
+                sb.AppendLine($"{tabs}{nodeId}.AddChild({childId});");
+            }
+
+            sb.AppendLine();
         }
     }
 }
