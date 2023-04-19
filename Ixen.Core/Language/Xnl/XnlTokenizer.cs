@@ -316,6 +316,7 @@ namespace Ixen.Core.Language.Xnl
                 case XnlTokenType.ElementTypeEquals:
                     _expectElementType = true;
                     _expectContentBegin = true;
+                    _expectParamsBegin = true;
                     break;
 
                 case XnlTokenType.ElementTypeName:
