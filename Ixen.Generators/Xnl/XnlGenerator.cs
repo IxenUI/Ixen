@@ -41,26 +41,21 @@ namespace Ixen.Generators.Xnl
                 sb.AppendLine("using Ixen.Core;");
                 sb.AppendLine("using Ixen.Core.Visual;");
                 sb.AppendLine();
-                sb.AppendLine("namespace Ixen.Generated.Layouts");
+                sb.AppendLine($"namespace Ixen.Views");
                 sb.AppendLine("{");
 
-                sb.AppendLine($"\tpublic class {name}_Layout");
+                sb.AppendLine($"\tpublic class {name} : VisualElement");
                 sb.AppendLine("\t{");
 
-                sb.AppendLine("\t\tpublic VisualElement Content { get; set; }");
-                sb.AppendLine();
-
-                sb.AppendLine($"\t\tpublic {name}_Layout() ");
-                sb.AppendLine("\t\t{");
-                sb.AppendLine("\t\t\tBuildElements();");
-                sb.AppendLine("\t\t}");
-                sb.AppendLine();
-
-                sb.AppendLine($"\t\tpublic void BuildElements()");
+                sb.AppendLine($"\t\tpublic {name}() ");
                 sb.AppendLine("\t\t{");
 
-                AddDeclaration(sb, node, 3);
-                sb.AppendLine("\t\t\tContent = el0;");
+                foreach (var child in node.Children)
+                {
+                    string childId = child.Name != null ? $"el{child.Id}_{child.Name}" : $"el{child.Id}";
+                    AddDeclaration(sb, child, 3);
+                    sb.AppendLine($"\t\t\tAddChild({childId});");
+                }
 
                 sb.AppendLine("\t\t}");
                 sb.AppendLine("\t}");
@@ -98,6 +93,7 @@ namespace Ixen.Generators.Xnl
                 childId = child.Name != null ? $"el{child.Id}_{child.Name}" : $"el{child.Id}";
                 AddDeclaration(sb, child, tabLevel);
                 sb.AppendLine($"{tabs}{nodeId}.AddChild({childId});");
+                sb.AppendLine();
             }
 
             sb.AppendLine();

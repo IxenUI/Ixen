@@ -1,4 +1,5 @@
-﻿using Ixen.Core.Rendering;
+﻿using Ixen.Core.Components;
+using Ixen.Core.Rendering;
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Computers;
 using Ixen.Core.Visual.Styles;
@@ -21,10 +22,10 @@ namespace Ixen.Core
         public string Title { get; set; }
         public VisualElement Root { get; set; }
 
-        public IxenSurface (VisualElement root = null, IxenSurfaceInitOptions initOptions = null)
+        public IxenSurface (Component mainComponent = null, IxenSurfaceInitOptions initOptions = null)
         {
             InitOptions = initOptions ?? new();
-            Root = root ?? new();
+            Root = mainComponent.GetVisualElement() ?? new();
             Root.SetPosition(0, 0);
             Title = InitOptions.Title;
         }

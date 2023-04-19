@@ -2,7 +2,7 @@
 
 namespace Ixen.Core.Visual
 {
-    public sealed class VisualElement : BoxedElement
+    public class VisualElement : BoxedElement
     {
         internal List<VisualElement> Children { get; private set; } = new();
         internal ViewPort ViewPort { get; private set; } = new();

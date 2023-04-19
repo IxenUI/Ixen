@@ -44,7 +44,7 @@ namespace Ixen.Generators.Xns
                 sb.AppendLine("using Ixen.Core.Visual.Styles.Descriptors;");
                 sb.AppendLine("using System.Collections.Generic;");
                 sb.AppendLine();
-                sb.AppendLine("namespace Ixen.Generated.StyleSheets");
+                sb.AppendLine("namespace Ixen.StyleSheets");
                 sb.AppendLine("{");
 
                 sb.AppendLine($"\tpublic class {name}_StyleSheet : StyleSheet");
