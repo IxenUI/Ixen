@@ -22,13 +22,17 @@ namespace Ixen.Core
         public string Title { get; set; }
         public VisualElement Root { get; set; }
 
-        public IxenSurface (Component mainComponent = null, IxenSurfaceInitOptions initOptions = null)
+        internal IxenSurface(VisualElement root, IxenSurfaceInitOptions initOptions = null)
         {
             InitOptions = initOptions ?? new();
-            Root = mainComponent.GetVisualElement() ?? new();
+            Root = root ?? new();
             Root.SetPosition(0, 0);
             Title = InitOptions.Title;
         }
+
+        public IxenSurface (Component mainComponent, IxenSurfaceInitOptions initOptions = null)
+            : this(mainComponent.GetVisualElement(), initOptions)
+        { }
 
         internal void ComputeLayout(int width, int height)
         {
