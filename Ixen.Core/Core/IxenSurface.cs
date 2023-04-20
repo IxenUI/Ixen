@@ -22,7 +22,7 @@ namespace Ixen.Core
         public string Title { get; set; }
         public VisualElement Root { get; set; }
 
-        internal IxenSurface(VisualElement root, IxenSurfaceInitOptions initOptions = null)
+        internal IxenSurface(VisualElement root = null, IxenSurfaceInitOptions initOptions = null)
         {
             InitOptions = initOptions ?? new();
             Root = root ?? new();
