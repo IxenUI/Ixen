@@ -14,17 +14,20 @@ namespace Ixen.Core.Language.Xnl
         private bool _expectElementName = false;
 
         private bool _expectElementType = false;
-        private bool _expectElementTypeEqual = false;
+        private bool _expectElementTypeBegin = false;
+        private bool _expectElementTypeEnd = false;
 
-        private bool _expectContentBegin = false;
-        private bool _expectContentEnd = false;
+        private bool _expectChildrenBegin = false;
+        private bool _expectChildrenEnd = false;
 
-        private bool _expectParamsBegin = false;
-        private bool _expectParamsEnd = false;
-        private bool _expectParamName = false;
-        private bool _expectParamEqual = false;
-        private bool _expectParamValueBegin = false;
-        private bool _expectParamValue = false;
+        private bool _expectPropertiesBegin = false;
+        private bool _expectPropertiesEnd = false;
+
+        private bool _expectPropertyName = false;
+        private bool _expectPropertyEqual = false;
+        private bool _expectPropertyValueBegin = false;
+        private bool _expectPropertyValueEnd = false;
+        private bool _expectPropertyValue = false;
 
         private bool _identifier;
         private bool _content;
@@ -115,11 +118,11 @@ namespace Ixen.Core.Language.Xnl
                             continue;
                         }
 
-                        if (_expectParamName)
+                        if (_expectPropertyName)
                         {
-                            AddToken(XnlTokenType.ParamName, sb.ToString());
+                            AddToken(XnlTokenType.PropertyName, sb.ToString());
                             sb.Clear();
-                            ResetStatesFlags(XnlTokenType.ParamName);
+                            ResetStatesFlags(XnlTokenType.PropertyName);
                             continue;
                         }
                     }
@@ -135,11 +138,11 @@ namespace Ixen.Core.Language.Xnl
                     }
                     else
                     {
-                        if (_expectParamValue)
+                        if (_expectPropertyValue)
                         {
-                            AddToken(XnlTokenType.ParamValue, sb.ToString());
+                            AddToken(XnlTokenType.PropertyValue, sb.ToString());
                             sb.Clear();
-                            ResetStatesFlags(XnlTokenType.ParamValue);
+                            ResetStatesFlags(XnlTokenType.PropertyValue);
                             MoveCursor();
                             continue;
                         }
@@ -160,85 +163,98 @@ namespace Ixen.Core.Language.Xnl
                         break;
 
                     case ':':
-                        if (!_expectElementTypeEqual)
+                        if (!_expectPropertyEqual)
                         {
                             AddErrorToken(XnlTokenErrorType.UnexpectedChar, ":");
                             MoveCursor();
                             break;
                         }
 
-                        AddToken(XnlTokenType.ElementTypeEquals, ":");
-                        ResetStatesFlags(XnlTokenType.ElementTypeEquals);
+                        AddToken(XnlTokenType.PropertyEqual, ":");
+                        ResetStatesFlags(XnlTokenType.PropertyEqual);
                         MoveCursor();
                         break;
 
-                    case '=':
-                        if (!_expectParamEqual)
+                    case '<':
+                        if (!_expectElementTypeBegin)
                         {
-                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, "=");
+                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, "<");
                             MoveCursor();
                             break;
                         }
 
-                        AddToken(XnlTokenType.ParamEquals, "=");
-                        ResetStatesFlags(XnlTokenType.ParamEquals);
+                        AddToken(XnlTokenType.ElementTypeBegin, "<");
+                        ResetStatesFlags(XnlTokenType.ElementTypeBegin);
                         MoveCursor();
                         break;
 
-                    case '(':
-                        if (!_expectParamsBegin)
+                    case '>':
+                        if (!_expectElementTypeEnd)
                         {
-                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, "(");
+                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, ">");
                             MoveCursor();
                             break;
                         }
 
-                        AddToken(XnlTokenType.BeginParams, "(");
-                        ResetStatesFlags(XnlTokenType.BeginParams);
-                        MoveCursor();
-                        break;
-
-                    case ')':
-                        if (!_expectParamsEnd)
-                        {
-                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, ")");
-                            MoveCursor();
-                            break;
-                        }
-
-                        AddToken(XnlTokenType.EndParams, ")");
-                        ResetStatesFlags(XnlTokenType.EndParams);
+                        AddToken(XnlTokenType.ElementTypeEnd, ">");
+                        ResetStatesFlags(XnlTokenType.ElementTypeEnd);
                         MoveCursor();
                         break;
 
                     case '{':
-                        if (!_expectContentBegin)
+                        if (!_expectPropertiesBegin)
                         {
                             AddErrorToken(XnlTokenErrorType.UnexpectedChar, "{");
                             MoveCursor();
                             break;
                         }
 
-                        AddToken(XnlTokenType.BeginContent, "{");
-                        ResetStatesFlags(XnlTokenType.BeginContent);
+                        AddToken(XnlTokenType.PropertiesBegin, "{");
+                        ResetStatesFlags(XnlTokenType.PropertiesBegin);
                         MoveCursor();
                         break;
 
                     case '}':
-                        if (!_expectContentEnd)
+                        if (!_expectPropertiesEnd)
                         {
                             AddErrorToken(XnlTokenErrorType.UnexpectedChar, "}");
                             MoveCursor();
                             break;
                         }
 
-                        AddToken(XnlTokenType.EndContent, "}");
-                        ResetStatesFlags(XnlTokenType.EndContent);
+                        AddToken(XnlTokenType.PropertiesEnd, "}");
+                        ResetStatesFlags(XnlTokenType.PropertiesEnd);
+                        MoveCursor();
+                        break;
+
+                    case '[':
+                        if (!_expectChildrenBegin)
+                        {
+                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, "[");
+                            MoveCursor();
+                            break;
+                        }
+
+                        AddToken(XnlTokenType.ChildrenBegin, "[");
+                        ResetStatesFlags(XnlTokenType.ChildrenBegin);
+                        MoveCursor();
+                        break;
+
+                    case ']':
+                        if (!_expectChildrenEnd)
+                        {
+                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, "]");
+                            MoveCursor();
+                            break;
+                        }
+
+                        AddToken(XnlTokenType.ChildrenEnd, "]");
+                        ResetStatesFlags(XnlTokenType.ChildrenEnd);
                         MoveCursor();
                         break;
 
                     case '"':
-                        if (!_expectParamValueBegin)
+                        if (!_expectPropertyValueBegin)
                         {
                             AddErrorToken(XnlTokenErrorType.UnexpectedChar, "\"");
                             MoveCursor();
@@ -246,12 +262,12 @@ namespace Ixen.Core.Language.Xnl
                         }
 
 
-                        ResetStatesFlags(XnlTokenType.ParamValueBegin);
+                        ResetStatesFlags(XnlTokenType.PropertyValueBegin);
                         MoveCursor();
                         break;
 
                     default:
-                        if (_expectElementName || _expectElementType || _expectParamName)
+                        if (_expectElementName || _expectElementType || _expectPropertyName)
                         {
                             if (_identifier)
                             {
@@ -263,7 +279,7 @@ namespace Ixen.Core.Language.Xnl
                             continue;
                         }
 
-                        if (_expectParamValue)
+                        if (_expectPropertyValue)
                         {
                             if (_content)
                             {
@@ -290,15 +306,17 @@ namespace Ixen.Core.Language.Xnl
         {
             _expectElementName = false;
             _expectElementType = false;
-            _expectElementTypeEqual = false;
-            _expectContentBegin = false;
-            _expectContentEnd = false;
-            _expectParamsBegin = false;
-            _expectParamsEnd = false;
-            _expectParamName = false;
-            _expectParamEqual = false;
-            _expectParamValueBegin = false;
-            _expectParamValue = false;
+            _expectElementTypeBegin = false;
+            _expectElementTypeEnd = false;
+            _expectChildrenBegin = false;
+            _expectChildrenEnd = false;
+            _expectPropertiesBegin = false;
+            _expectPropertiesEnd = false;
+            _expectPropertyName = false;
+            _expectPropertyEqual = false;
+            _expectPropertyValueBegin = false;
+            _expectPropertyValueEnd = false;
+            _expectPropertyValue = false;
 
             _identifier = false;
             _content = false;
@@ -307,58 +325,69 @@ namespace Ixen.Core.Language.Xnl
             {
                 case XnlTokenType.None:
                     _expectElementName = true;
+                    _expectElementTypeBegin = true;
+                    _expectPropertiesBegin = true;
                     break;
 
                 case XnlTokenType.ElementName:
-                    _expectElementTypeEqual = true;
+                    _expectElementTypeBegin = true;
+                    _expectPropertiesBegin = true;
                     break;
 
-                case XnlTokenType.ElementTypeEquals:
+                case XnlTokenType.ElementTypeBegin:
                     _expectElementType = true;
-                    _expectContentBegin = true;
-                    _expectParamsBegin = true;
                     break;
 
                 case XnlTokenType.ElementTypeName:
-                    _expectParamsBegin = true;
-                    _expectContentBegin = true;
+                    _expectElementTypeEnd = true;
                     break;
 
-                case XnlTokenType.BeginParams:
-                    _expectParamName = true;
+                case XnlTokenType.ElementTypeEnd:
+                    _expectPropertiesBegin = true;
                     break;
 
-                case XnlTokenType.EndParams:
+                case XnlTokenType.PropertiesBegin:
+                    _expectPropertyName = true;
+                    _expectPropertiesEnd = true;
+                    break;
+
+                case XnlTokenType.PropertiesEnd:
                     _expectElementName = true;
-                    _expectContentBegin = true;
-                    _expectContentEnd = true;
+                    _expectElementTypeBegin = true;
+                    _expectPropertiesBegin = true;
+                    _expectChildrenBegin = true;
+                    _expectChildrenEnd = true;
                     break;
 
-                case XnlTokenType.ParamName:
-                    _expectParamEqual = true;
+                case XnlTokenType.PropertyName:
+                    _expectPropertyEqual = true;
                     break;
 
-                case XnlTokenType.ParamEquals:
-                    _expectParamValueBegin = true;
+                case XnlTokenType.PropertyEqual:
+                    _expectPropertyValueBegin = true;
                     break;
 
-                case XnlTokenType.ParamValueBegin:
-                    _expectParamValue = true;
+                case XnlTokenType.PropertyValueBegin:
+                    _expectPropertyValue = true;
                     break;
 
-                case XnlTokenType.ParamValue:
-                    _expectParamName = true;
-                    _expectParamsEnd = true;
+                case XnlTokenType.PropertyValue:
+                    _expectPropertyName = true;
+                    _expectPropertiesEnd = true;
                     break;
 
-                case XnlTokenType.BeginContent:
+                case XnlTokenType.ChildrenBegin:
                     _expectElementName = true;
-                    _expectContentEnd = true;
+                    _expectElementTypeBegin = true;
+                    _expectPropertiesBegin = true;
+                    _expectChildrenEnd = true;
                     break;
 
-                case XnlTokenType.EndContent:
+                case XnlTokenType.ChildrenEnd:
                     _expectElementName = true;
-                    _expectContentEnd = true;
+                    _expectElementTypeBegin = true;
+                    _expectPropertiesBegin = true;
+                    _expectChildrenEnd = true;
                     break;
             }
         }

@@ -16,13 +16,26 @@ namespace Ixen.Core.Language.Xnl
             }
         }
 
+        private XnlNode CreateNode(int id, XnlNode parent)
+        {
+            var node = new XnlNode
+            {
+                Id = id,
+                Parent = parent
+            };
+
+            parent.Children.Add(node);
+
+            return node;
+        }
+
         private XnlNode ReadNodes(List<XnlToken> tokens)
         {
             int nodeId = 0;
+            bool createNode = true;
             var root = new XnlNode { Id = nodeId };
             var parent = root;
             var stack = new Stack<XnlNode>();
-
             XnlNode node = null;
             XnlNodeParameter nodeParameter = null;
 
@@ -32,38 +45,54 @@ namespace Ixen.Core.Language.Xnl
             {
                 switch (token.Type)
                 {
-                    case XnlTokenType.ElementName:
-                        node = new XnlNode()
+                    case XnlTokenType.PropertiesBegin:
+                        if (createNode)
                         {
-                            Id = ++nodeId,
-                            Parent = parent,
-                            Name = token.Content
-                        };
-                        parent.Children.Add(node);
+                            node = CreateNode(++nodeId, parent);
+                            createNode = false;
+                        }
+                        break;
+
+                    case XnlTokenType.PropertiesEnd:
+                        createNode = true;
+                        break;
+
+                    case XnlTokenType.ElementName:
+                        if (createNode)
+                        {
+                            node = CreateNode(++nodeId, parent);
+                            createNode = false;
+                        }
+                        node.Name = token.Content;
                         break;
 
                     case XnlTokenType.ElementTypeName:
+                        if (createNode)
+                        {
+                            node = CreateNode(++nodeId, parent);
+                            createNode = false;
+                        }
                         node.Type = token.Content;
                         break;
 
-                    case XnlTokenType.ParamName:
+                    case XnlTokenType.PropertyName:
                         nodeParameter = new XnlNodeParameter
                         {
                             Name = token.Content
                         };
                         break;
 
-                    case XnlTokenType.ParamValue:
+                    case XnlTokenType.PropertyValue:
                         nodeParameter.Value = token.Content;
-                        node.Parameters.Add(nodeParameter);
+                        node.Properties.Add(nodeParameter);
                         break;
 
-                    case XnlTokenType.BeginContent:
+                    case XnlTokenType.ChildrenBegin:
                         stack.Push(node);
                         parent = node;
                         break;
 
-                    case XnlTokenType.EndContent:
+                    case XnlTokenType.ChildrenEnd:
                         parent = stack.Pop().Parent;
                         break;
                 }

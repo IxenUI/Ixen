@@ -73,7 +73,7 @@ namespace Ixen.Generators.Xnl
 
             sb.AppendLine($"{tabs}var {nodeId} = new VisualElement();");
 
-            foreach (var param in node.Parameters)
+            foreach (var param in node.Properties)
             {
                 switch (param.Name)
                 {

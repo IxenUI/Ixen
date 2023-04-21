@@ -1,7 +1,5 @@
 ﻿using Ixen.Core.Language.Xnl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Generic;
-using System.Xml.Linq;
 
 namespace Ixen.Core.UT.Xnl
 {
@@ -9,83 +7,113 @@ namespace Ixen.Core.UT.Xnl
     public class XnlNodifierTests
     {
         [TestMethod]
-        public void TestNodify()
+        public void TestNodify1()
         {
             string source = @"
-container:MonSuperType( start=""true"" machin=""bazar"" ) {
-
-    panel:{
-    
-        entries:{
-        
-            entry:Nav( link=""/downloads"" class=""active"" )
-            entry:Nav( link=""/config"" )
-            entry:Nav( link=""/about"" )
-        
-        }
-    }
-    
-    content:{
-        _:Label( content=""Coucou"" )
-    }
-}";
+{}
+[
+	{}
+    {}
+]
+";
 
             var xnlSource = new XnlSource(source);
             var node = xnlSource.Nodify();
 
             Assert.IsNotNull(node);
-            Assert.AreEqual(node.Parameters.Count, 0);
             Assert.AreEqual(node.Children.Count, 1);
 
-            var containerNode = node.Children[0];
-            Assert.AreEqual(containerNode.Name, "container");
-            Assert.AreEqual(containerNode.Type, "MonSuperType");
-            Assert.AreEqual(containerNode.Parameters.Count, 2);
-            Assert.AreEqual(containerNode.Children.Count, 2);
+            var firstNode = node.Children[0];
+            Assert.AreEqual(firstNode.Children.Count, 2);
+            Assert.AreEqual(firstNode.Children[0].Children.Count, 0);
+            Assert.AreEqual(firstNode.Children[1].Children.Count, 0);
+        }
 
-            Assert.AreEqual(containerNode.Parameters[0].Name, "start");
-            Assert.AreEqual(containerNode.Parameters[0].Value, "true");
-            Assert.AreEqual(containerNode.Parameters[1].Name, "machin");
-            Assert.AreEqual(containerNode.Parameters[1].Value, "bazar");
+        [TestMethod]
+        public void TestNodify2()
+        {
+            string source = @"
+layout<VisualElement>{}
+[
+	test {}
+    <VisualElement> {}
+]
+";
 
-            var panelNode = containerNode.Children[0];
-            Assert.AreEqual(panelNode.Name, "panel");
-            Assert.AreEqual(panelNode.Parameters.Count, 0);
-            Assert.AreEqual(panelNode.Children.Count, 1);
+            var xnlSource = new XnlSource(source);
+            var node = xnlSource.Nodify();
 
-            var entriesNode = panelNode.Children[0];
-            Assert.AreEqual(entriesNode.Name, "entries");
-            Assert.AreEqual(entriesNode.Parameters.Count, 0);
-            Assert.AreEqual(entriesNode.Children.Count, 3);
+            Assert.IsNotNull(node);
+            Assert.AreEqual(node.Children.Count, 1);
 
-            Assert.AreEqual(entriesNode.Children[0].Name, "entry");
-            Assert.AreEqual(entriesNode.Children[0].Type, "Nav");
-            Assert.AreEqual(entriesNode.Children[1].Name, "entry");
-            Assert.AreEqual(entriesNode.Children[1].Type, "Nav");
-            Assert.AreEqual(entriesNode.Children[2].Name, "entry");
-            Assert.AreEqual(entriesNode.Children[2].Type, "Nav");
+            var firstNode = node.Children[0];
+            Assert.AreEqual(firstNode.Name, "layout");
+            Assert.AreEqual(firstNode.Type, "VisualElement");
+            Assert.AreEqual(firstNode.Children.Count, 2);
 
-            var navNode = entriesNode.Children[0];
-            Assert.AreEqual(navNode.Parameters.Count, 2);
-            Assert.AreEqual(navNode.Children.Count, 0);
+            var child1 = firstNode.Children[0];
+            Assert.AreEqual(child1.Name, "test");
+            Assert.IsNull(child1.Type);
+            Assert.AreEqual(child1.Children.Count, 0);
 
-            Assert.AreEqual(navNode.Parameters[0].Name, "link");
-            Assert.AreEqual(navNode.Parameters[0].Value, "/downloads");
-            Assert.AreEqual(navNode.Parameters[1].Name, "class");
-            Assert.AreEqual(navNode.Parameters[1].Value, "active");
+            var child2 = firstNode.Children[1];
+            Assert.IsNull(child2.Name);
+            Assert.AreEqual(child2.Type, "VisualElement");
+            Assert.AreEqual(child2.Children.Count, 0);
+        }
 
-            var contentNode = containerNode.Children[1];
-            Assert.AreEqual(contentNode.Parameters.Count, 0);
-            Assert.AreEqual(contentNode.Children.Count, 1);
+        [TestMethod]
+        public void TestNodify3()
+        {
+            string source = @"
+layout<VisualElement>{class: ""layout"" truc: ""chose""}
+[
+	{
+        class:""el1""
+    }
+    [
+        <label>{text: ""Coucou""}
+    ]
+    <textinput>{placeholder: ""salut""}
+]
+";
 
-            var anonNode = contentNode.Children[0];
-            Assert.AreEqual(anonNode.Name, "_");
-            Assert.AreEqual(anonNode.Type, "Label");
-            Assert.AreEqual(anonNode.Parameters.Count, 1);
-            Assert.AreEqual(anonNode.Children.Count, 0);
+            var xnlSource = new XnlSource(source);
+            var node = xnlSource.Nodify();
 
-            Assert.AreEqual(anonNode.Parameters[0].Name, "content");
-            Assert.AreEqual(anonNode.Parameters[0].Value, "Coucou");
+            Assert.IsNotNull(node);
+            Assert.AreEqual(node.Children.Count, 1);
+
+            var layoutNode = node.Children[0];
+            Assert.AreEqual(layoutNode.Name, "layout");
+            Assert.AreEqual(layoutNode.Type, "VisualElement");
+            Assert.AreEqual(layoutNode.Children.Count, 2);
+            Assert.AreEqual(layoutNode.Properties.Count, 2);
+            Assert.AreEqual(layoutNode.Properties[0].Name, "class");
+            Assert.AreEqual(layoutNode.Properties[0].Value, "layout");
+            Assert.AreEqual(layoutNode.Properties[1].Name, "truc");
+            Assert.AreEqual(layoutNode.Properties[1].Value, "chose");
+
+            var childNode1 = layoutNode.Children[0];
+            Assert.IsNull(childNode1.Name);
+            Assert.IsNull(childNode1.Type);
+            Assert.AreEqual(childNode1.Children.Count, 1);
+
+            var labelNode = childNode1.Children[0];
+            Assert.IsNull(labelNode.Name);
+            Assert.AreEqual(labelNode.Type, "label");
+            Assert.AreEqual(labelNode.Children.Count, 0);
+            Assert.AreEqual(labelNode.Properties.Count, 1);
+            Assert.AreEqual(labelNode.Properties[0].Name, "text");
+            Assert.AreEqual(labelNode.Properties[0].Value, "Coucou");
+
+            var childNode2 = layoutNode.Children[1];
+            Assert.IsNull(childNode2.Name);
+            Assert.AreEqual(childNode2.Type, "textinput");
+            Assert.AreEqual(childNode2.Children.Count, 0);
+            Assert.AreEqual(childNode2.Properties.Count, 1);
+            Assert.AreEqual(childNode2.Properties[0].Name, "placeholder");
+            Assert.AreEqual(childNode2.Properties[0].Value, "salut");
         }
     }
 }

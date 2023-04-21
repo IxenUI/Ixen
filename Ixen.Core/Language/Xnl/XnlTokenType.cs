@@ -6,18 +6,20 @@
         Error,
 
         ElementName,
-        ElementTypeEquals,
+        ElementTypeBegin,
         ElementTypeName,
+        ElementTypeEnd,
 
-        BeginParams,
-        EndParams,
+        PropertiesBegin,
+        PropertiesEnd,
 
-        ParamName,
-        ParamEquals,
-        ParamValueBegin,
-        ParamValue,
+        PropertyName,
+        PropertyEqual,
+        PropertyValueBegin,
+        PropertyValue,
+        PropertyValueEnd,
 
-        BeginContent,
-        EndContent,
+        ChildrenBegin,
+        ChildrenEnd,
     }
 }

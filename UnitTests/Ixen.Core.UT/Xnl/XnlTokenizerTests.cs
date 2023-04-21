@@ -7,99 +7,141 @@ namespace Ixen.Core.UT.Xnl
     public class XnlTokenizerTests
     {
         [TestMethod]
-        public void TestTokenize()
+        public void TestTokenize1()
         {
             string source = @"
-container:MonSuperType( start=""true"" machin=""bazar"" ) {
-
-    panel:{
-    
-        entries:{
-        
-            entry:Nav( link=""/downloads"" class=""active"" )
-            entry:Nav( link=""/config"" )
-            entry:Nav( link=""/about"" )
-        
-        }
-    }
-    
-    content:(class=""truc""){
-        _:Label( content=""Coucou"" )
-    }
-}";
-
+{}
+[
+	{}
+    {}
+]
+";
             var xnlSource = new XnlSource(source);
             var tokens = xnlSource.Tokenize();
 
-            Assert.AreEqual(tokens.Count, 65);
+            Assert.IsNotNull(tokens);
+            Assert.AreEqual(8, tokens.Count);
 
-            Assert.AreEqual(tokens[0].Content, "container");
+            Assert.AreEqual(tokens[0].Type, XnlTokenType.PropertiesBegin);
+            Assert.AreEqual(tokens[1].Type, XnlTokenType.PropertiesEnd);
+            Assert.AreEqual(tokens[2].Type, XnlTokenType.ChildrenBegin);
+            Assert.AreEqual(tokens[3].Type, XnlTokenType.PropertiesBegin);
+            Assert.AreEqual(tokens[4].Type, XnlTokenType.PropertiesEnd);
+            Assert.AreEqual(tokens[5].Type, XnlTokenType.PropertiesBegin);
+            Assert.AreEqual(tokens[6].Type, XnlTokenType.PropertiesEnd);
+            Assert.AreEqual(tokens[7].Type, XnlTokenType.ChildrenEnd);
+        }
+
+        [TestMethod]
+        public void TestTokenize2()
+        {
+            string source = @"
+layout<VisualElement>{}
+[
+	test{}
+    <VisualElement>{}
+]
+";
+            var xnlSource = new XnlSource(source);
+            var tokens = xnlSource.Tokenize();
+
+            Assert.IsNotNull(tokens);
+            Assert.AreEqual(16, tokens.Count);
+
             Assert.AreEqual(tokens[0].Type, XnlTokenType.ElementName);
-            Assert.AreEqual(tokens[1].Type, XnlTokenType.ElementTypeEquals);
+            Assert.AreEqual(tokens[0].Content, "layout");
+            Assert.AreEqual(tokens[1].Type, XnlTokenType.ElementTypeBegin);
             Assert.AreEqual(tokens[2].Type, XnlTokenType.ElementTypeName);
-            Assert.AreEqual(tokens[2].Content, "MonSuperType");
+            Assert.AreEqual(tokens[2].Content, "VisualElement");
+            Assert.AreEqual(tokens[3].Type, XnlTokenType.ElementTypeEnd);
+            Assert.AreEqual(tokens[4].Type, XnlTokenType.PropertiesBegin);
+            Assert.AreEqual(tokens[5].Type, XnlTokenType.PropertiesEnd);
+            Assert.AreEqual(tokens[6].Type, XnlTokenType.ChildrenBegin);
+            Assert.AreEqual(tokens[7].Type, XnlTokenType.ElementName);
+            Assert.AreEqual(tokens[7].Content, "test");
+            Assert.AreEqual(tokens[8].Type, XnlTokenType.PropertiesBegin);
+            Assert.AreEqual(tokens[9].Type, XnlTokenType.PropertiesEnd);
+            Assert.AreEqual(tokens[10].Type, XnlTokenType.ElementTypeBegin);
+            Assert.AreEqual(tokens[11].Type, XnlTokenType.ElementTypeName);
+            Assert.AreEqual(tokens[11].Content, "VisualElement");
+            Assert.AreEqual(tokens[12].Type, XnlTokenType.ElementTypeEnd);
+            Assert.AreEqual(tokens[13].Type, XnlTokenType.PropertiesBegin);
+            Assert.AreEqual(tokens[14].Type, XnlTokenType.PropertiesEnd);
+            Assert.AreEqual(tokens[15].Type, XnlTokenType.ChildrenEnd);
+        }
 
-            Assert.AreEqual(tokens[3].Type, XnlTokenType.BeginParams);
+        [TestMethod]
+        public void TestTokenize3()
+        {
+            string source = @"
+layout<VisualElement>{class: ""layout"" truc: ""chose""}
+[
+	{
+        class:""el1""
+    }
+    [
+        <label>{text: ""Coucou""}
+    ]
+    <textinput>{placeholder: ""salut""}
+]
+";
+            var xnlSource = new XnlSource(source);
+            var tokens = xnlSource.Tokenize();
 
-            Assert.AreEqual(tokens[4].Type, XnlTokenType.ParamName);
-            Assert.AreEqual(tokens[4].Content, "start");
-            Assert.AreEqual(tokens[5].Type, XnlTokenType.ParamEquals);
-            Assert.AreEqual(tokens[6].Type, XnlTokenType.ParamValue);
-            Assert.AreEqual(tokens[6].Content, "true");
+            Assert.IsNotNull(tokens);
+            Assert.AreEqual(37, tokens.Count);
 
-            Assert.AreEqual(tokens[7].Type, XnlTokenType.ParamName);
-            Assert.AreEqual(tokens[7].Content, "machin");
-            Assert.AreEqual(tokens[8].Type, XnlTokenType.ParamEquals);
-            Assert.AreEqual(tokens[9].Type, XnlTokenType.ParamValue);
-            Assert.AreEqual(tokens[9].Content, "bazar");
-
-            Assert.AreEqual(tokens[10].Type, XnlTokenType.EndParams);
-
-            Assert.AreEqual(tokens[11].Type, XnlTokenType.BeginContent);
-
-            Assert.AreEqual(tokens[12].Type, XnlTokenType.ElementName);
-            Assert.AreEqual(tokens[12].Content, "panel");
-
-            Assert.AreEqual(tokens[15].Type, XnlTokenType.ElementName);
-            Assert.AreEqual(tokens[15].Content, "entries");
-
-            Assert.AreEqual(tokens[18].Type, XnlTokenType.ElementName);
-            Assert.AreEqual(tokens[18].Content, "entry");
-            Assert.AreEqual(tokens[19].Type, XnlTokenType.ElementTypeEquals);
+            Assert.AreEqual(tokens[0].Type, XnlTokenType.ElementName);
+            Assert.AreEqual(tokens[0].Content, "layout");
+            Assert.AreEqual(tokens[1].Type, XnlTokenType.ElementTypeBegin);
+            Assert.AreEqual(tokens[2].Type, XnlTokenType.ElementTypeName);
+            Assert.AreEqual(tokens[2].Content, "VisualElement");
+            Assert.AreEqual(tokens[3].Type, XnlTokenType.ElementTypeEnd);
+            Assert.AreEqual(tokens[4].Type, XnlTokenType.PropertiesBegin);
+            Assert.AreEqual(tokens[5].Type, XnlTokenType.PropertyName);
+            Assert.AreEqual(tokens[5].Content, "class");
+            Assert.AreEqual(tokens[6].Type, XnlTokenType.PropertyEqual);
+            Assert.AreEqual(tokens[7].Type, XnlTokenType.PropertyValue);
+            Assert.AreEqual(tokens[7].Content, "layout");
+            Assert.AreEqual(tokens[8].Type, XnlTokenType.PropertyName);
+            Assert.AreEqual(tokens[8].Content, "truc");
+            Assert.AreEqual(tokens[9].Type, XnlTokenType.PropertyEqual);
+            Assert.AreEqual(tokens[10].Type, XnlTokenType.PropertyValue);
+            Assert.AreEqual(tokens[10].Content, "chose");
+            Assert.AreEqual(tokens[11].Type, XnlTokenType.PropertiesEnd);
+            Assert.AreEqual(tokens[12].Type, XnlTokenType.ChildrenBegin);
+            Assert.AreEqual(tokens[13].Type, XnlTokenType.PropertiesBegin);
+            Assert.AreEqual(tokens[14].Type, XnlTokenType.PropertyName);
+            Assert.AreEqual(tokens[14].Content, "class");
+            Assert.AreEqual(tokens[15].Type, XnlTokenType.PropertyEqual);
+            Assert.AreEqual(tokens[16].Type, XnlTokenType.PropertyValue);
+            Assert.AreEqual(tokens[16].Content, "el1");
+            Assert.AreEqual(tokens[17].Type, XnlTokenType.PropertiesEnd);
+            Assert.AreEqual(tokens[18].Type, XnlTokenType.ChildrenBegin);
+            Assert.AreEqual(tokens[19].Type, XnlTokenType.ElementTypeBegin);
             Assert.AreEqual(tokens[20].Type, XnlTokenType.ElementTypeName);
-            Assert.AreEqual(tokens[20].Content, "Nav");
-
-            Assert.AreEqual(tokens[45].Type, XnlTokenType.EndContent);
-            Assert.AreEqual(tokens[46].Type, XnlTokenType.EndContent);
-
-            Assert.AreEqual(tokens[47].Type, XnlTokenType.ElementName);
-            Assert.AreEqual(tokens[47].Content, "content");
-            Assert.AreEqual(tokens[48].Type, XnlTokenType.ElementTypeEquals);
-
-            Assert.AreEqual(tokens[49].Type, XnlTokenType.BeginParams);
-
-            Assert.AreEqual(tokens[50].Type, XnlTokenType.ParamName);
-            Assert.AreEqual(tokens[50].Content, "class");
-            Assert.AreEqual(tokens[51].Type, XnlTokenType.ParamEquals);
-            Assert.AreEqual(tokens[52].Type, XnlTokenType.ParamValue);
-            Assert.AreEqual(tokens[52].Content, "truc");
-
-            Assert.AreEqual(tokens[53].Type, XnlTokenType.EndParams);
-
-            Assert.AreEqual(tokens[54].Type, XnlTokenType.BeginContent);
-
-            Assert.AreEqual(tokens[55].Type, XnlTokenType.ElementName);
-            Assert.AreEqual(tokens[55].Content, "_");
-
-            Assert.AreEqual(tokens[59].Type, XnlTokenType.ParamName);
-            Assert.AreEqual(tokens[59].Content, "content");
-
-            Assert.AreEqual(tokens[60].Type, XnlTokenType.ParamEquals);
-            Assert.AreEqual(tokens[61].Type, XnlTokenType.ParamValue);
-            Assert.AreEqual(tokens[61].Content, "Coucou");
-
-            Assert.AreEqual(tokens[63].Type, XnlTokenType.EndContent);
-            Assert.AreEqual(tokens[64].Type, XnlTokenType.EndContent);
+            Assert.AreEqual(tokens[20].Content, "label");
+            Assert.AreEqual(tokens[21].Type, XnlTokenType.ElementTypeEnd);
+            Assert.AreEqual(tokens[22].Type, XnlTokenType.PropertiesBegin);
+            Assert.AreEqual(tokens[23].Type, XnlTokenType.PropertyName);
+            Assert.AreEqual(tokens[23].Content, "text");
+            Assert.AreEqual(tokens[24].Type, XnlTokenType.PropertyEqual);
+            Assert.AreEqual(tokens[25].Type, XnlTokenType.PropertyValue);
+            Assert.AreEqual(tokens[25].Content, "Coucou");
+            Assert.AreEqual(tokens[26].Type, XnlTokenType.PropertiesEnd);
+            Assert.AreEqual(tokens[27].Type, XnlTokenType.ChildrenEnd);
+            Assert.AreEqual(tokens[28].Type, XnlTokenType.ElementTypeBegin);
+            Assert.AreEqual(tokens[29].Type, XnlTokenType.ElementTypeName);
+            Assert.AreEqual(tokens[29].Content, "textinput");
+            Assert.AreEqual(tokens[30].Type, XnlTokenType.ElementTypeEnd);
+            Assert.AreEqual(tokens[31].Type, XnlTokenType.PropertiesBegin);
+            Assert.AreEqual(tokens[32].Type, XnlTokenType.PropertyName);
+            Assert.AreEqual(tokens[32].Content, "placeholder");
+            Assert.AreEqual(tokens[33].Type, XnlTokenType.PropertyEqual);
+            Assert.AreEqual(tokens[34].Type, XnlTokenType.PropertyValue);
+            Assert.AreEqual(tokens[34].Content, "salut");
+            Assert.AreEqual(tokens[35].Type, XnlTokenType.PropertiesEnd);
+            Assert.AreEqual(tokens[36].Type, XnlTokenType.ChildrenEnd);
         }
     }
 }
