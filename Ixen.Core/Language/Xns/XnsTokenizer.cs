@@ -53,7 +53,7 @@ namespace Ixen.Core.Language.Xns
             return _tokens;
         }
 
-        private void AddToken(XnsTokenType type, string content)
+        private void AddToken(XnsTokenType type, string content, bool previewChar)
             => _tokens.Add(new XnsToken
             {
                 Index = _index - content.Length + 1,
@@ -62,7 +62,7 @@ namespace Ixen.Core.Language.Xns
                 ErrorType = XnsTokenErrorType.None
             });
 
-        private void AddErrorToken(XnsTokenErrorType type, string content, string message = null)
+        private void AddErrorToken(XnsTokenErrorType type, string content, bool previewChar, string message = null)
             => _tokens.Add(new XnsToken
             {
                 Index = _index - content.Length + 1,
@@ -95,7 +95,7 @@ namespace Ixen.Core.Language.Xns
                         c2 = PeekNonSpaceChar();
                         if (_exceptClassName && c2 == '{')
                         {
-                            AddToken(XnsTokenType.ClassName, sb.ToString());
+                            AddToken(XnsTokenType.ClassName, sb.ToString(), false);
                             sb.Clear();
                             ResetStatesFlags(XnsTokenType.ClassName);
                             continue;
@@ -103,7 +103,7 @@ namespace Ixen.Core.Language.Xns
 
                         if (_expectStyleName && c2 == ':')
                         {
-                            AddToken(XnsTokenType.StyleName, sb.ToString());
+                            AddToken(XnsTokenType.StyleName, sb.ToString(), false);
                             sb.Clear();
                             ResetStatesFlags(XnsTokenType.StyleName);
                             continue;
@@ -125,7 +125,7 @@ namespace Ixen.Core.Language.Xns
                     {
                         if (_expectStyleValue)
                         {
-                            AddToken(XnsTokenType.StyleValue, sb.ToString());
+                            AddToken(XnsTokenType.StyleValue, sb.ToString(), false);
                             ResetStatesFlags(XnsTokenType.StyleValue);
                             sb.Clear();
 
@@ -156,12 +156,12 @@ namespace Ixen.Core.Language.Xns
                     case ':':
                         if (!_expectStyleEqual)
                         {
-                            AddErrorToken(XnsTokenErrorType.UnexpectedChar, ":");
+                            AddErrorToken(XnsTokenErrorType.UnexpectedChar, ":", true);
                             MoveCursor();
                             break;
                         }
 
-                        AddToken(XnsTokenType.StyleEquals, ":");
+                        AddToken(XnsTokenType.StyleEquals, ":", true);
                         ResetStatesFlags(XnsTokenType.StyleEquals);
                         MoveCursor();
                         break;
@@ -169,12 +169,12 @@ namespace Ixen.Core.Language.Xns
                     case '{':
                         if (!_expectContentBegin)
                         {
-                            AddErrorToken(XnsTokenErrorType.UnexpectedChar, "{");
+                            AddErrorToken(XnsTokenErrorType.UnexpectedChar, "{", true);
                             MoveCursor();
                             break;
                         }
 
-                        AddToken(XnsTokenType.BeginClassContent, "{");
+                        AddToken(XnsTokenType.BeginClassContent, "{", true);
                         ResetStatesFlags(XnsTokenType.BeginClassContent);
                         MoveCursor();
                         break;
@@ -182,12 +182,12 @@ namespace Ixen.Core.Language.Xns
                     case '}':
                         if (!_expectContentEnd)
                         {
-                            AddErrorToken(XnsTokenErrorType.UnexpectedChar, "}");
+                            AddErrorToken(XnsTokenErrorType.UnexpectedChar, "}", true);
                             MoveCursor();
                             break;
                         }
 
-                        AddToken(XnsTokenType.EndClassContent, "}");
+                        AddToken(XnsTokenType.EndClassContent, "}", true);
                         ResetStatesFlags(XnsTokenType.EndClassContent);
                         MoveCursor();
                         break;
