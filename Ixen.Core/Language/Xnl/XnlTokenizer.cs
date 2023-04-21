@@ -143,7 +143,6 @@ namespace Ixen.Core.Language.Xnl
                             AddToken(XnlTokenType.PropertyValue, sb.ToString());
                             sb.Clear();
                             ResetStatesFlags(XnlTokenType.PropertyValue);
-                            MoveCursor();
                             continue;
                         }
                     }
@@ -254,15 +253,24 @@ namespace Ixen.Core.Language.Xnl
                         break;
 
                     case '"':
-                        if (!_expectPropertyValueBegin)
+                        if (!_expectPropertyValueBegin && !_expectPropertyValueEnd)
                         {
                             AddErrorToken(XnlTokenErrorType.UnexpectedChar, "\"");
                             MoveCursor();
                             break;
                         }
 
-
-                        ResetStatesFlags(XnlTokenType.PropertyValueBegin);
+                        if (_expectPropertyValueBegin)
+                        {
+                            AddToken(XnlTokenType.PropertyValueBegin, "\"");
+                            ResetStatesFlags(XnlTokenType.PropertyValueBegin);
+                        }
+                        else if (_expectPropertyValueEnd)
+                        {
+                            AddToken(XnlTokenType.PropertyValueEnd, "\"");
+                            ResetStatesFlags(XnlTokenType.PropertyValueEnd);
+                        }
+                        
                         MoveCursor();
                         break;
 
@@ -372,6 +380,10 @@ namespace Ixen.Core.Language.Xnl
                     break;
 
                 case XnlTokenType.PropertyValue:
+                    _expectPropertyValueEnd = true;
+                    break;
+
+                case XnlTokenType.PropertyValueEnd:
                     _expectPropertyName = true;
                     _expectPropertiesEnd = true;
                     break;
