@@ -55,7 +55,7 @@ namespace Ixen.Generators.Xns
 
                 foreach (var c in sheet.Classes)
                 {
-                    sb.AppendLine($"\t\t\tAddClass(new StyleClass(\"{c.Name}\", new List<StyleDescriptor>()");
+                    sb.AppendLine($"\t\t\tAddClass(new StyleClass(StyleClassTarget.{c.Target}, \"{c.Name}\", new List<StyleDescriptor>()");
                     sb.AppendLine("\t\t\t{");
 
                     foreach (var style in c.Styles)

@@ -25,24 +25,12 @@ namespace Ixen.Core.Visual.Classes
             Styles = styles;
         }
 
-        public StyleClass (StyleClassTarget target, string scope, string name)
-            : this (target, scope, name, new())
+        public StyleClass (StyleClassTarget target, string name, List<StyleDescriptor> styles)
+            : this (target, null, name, styles)
         { }
 
-        public StyleClass(string scope, string name)
-            : this(StyleClassTarget.ClassName, scope, name, new())
-        { }
-
-        public StyleClass(string scope, string name, List<StyleDescriptor> styles)
-            : this(StyleClassTarget.ClassName, scope, name, styles)
-        { }
-
-        public StyleClass(string name)
-            : this(StyleClassTarget.ClassName, null, name, new())
-        { }
-
-        public StyleClass(string name, List<StyleDescriptor> styles)
-            : this(StyleClassTarget.ClassName, null, name, styles)
+        public StyleClass(StyleClassTarget target, string name)
+            : this(target, null, name, new())
         { }
     }
 }
