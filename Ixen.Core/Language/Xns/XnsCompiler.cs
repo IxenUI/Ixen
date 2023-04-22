@@ -70,10 +70,7 @@ namespace Ixen.Core.Language.Xns
 
         private void AddClass(XnsNode node, List<StyleClass> list)
         {
-            List<StyleDescriptor> styles = ToStyles(node);
-
-
-            if (styles.Count > 0)
+            if (node.Styles.Count > 0)
             {
                 list.Add(GetClass(node));
             }
