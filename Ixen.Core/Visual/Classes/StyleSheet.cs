@@ -40,14 +40,9 @@ namespace Ixen.Core.Visual.Classes
             }
         }
 
-        private static StyleClass GetGlobalClass(string name)
+        internal static StyleClass GetGlobalClass(string name)
         {
-            if (name == null)
-            {
-                return null;
-            }
-
-            if (_globalClassesByName.TryGetValue(name, out StyleClass value))
+            if (name != null && _globalClassesByName.TryGetValue(name, out StyleClass value))
             {
                 return value;
             }
@@ -55,31 +50,21 @@ namespace Ixen.Core.Visual.Classes
             return null;
         }
 
-        internal static StyleClass GetClass(string name, string scope = null)
+        internal static StyleClass GetClass(string name, string scope)
         {
-            if (name == null)
-            {
-                return null;
-            }
-
-            if (scope != null
+            if (name != null && scope != null
                 && _classesByScopeAndName.TryGetValue(scope, out Dictionary<string, StyleClass> scopedClasses)
                 && scopedClasses.TryGetValue(name, out StyleClass value))
             {
                 return value;
             }
 
-            return GetGlobalClass(name);
+            return null;
         }
 
-        private static StyleClass GetGlobalElementClass(string name)
+        internal static StyleClass GetGlobalElementClass(string name)
         {
-            if (name == null)
-            {
-                return null;
-            }
-
-            if (_globalElementClassesByName.TryGetValue(name, out StyleClass value))
+            if (name != null && _globalElementClassesByName.TryGetValue(name, out StyleClass value))
             {
                 return value;
             }
@@ -87,54 +72,40 @@ namespace Ixen.Core.Visual.Classes
             return null;
         }
 
-        internal static StyleClass GetTypeClass(string name, string scope = null)
+        internal static StyleClass GetElementClass(string name, string scope)
         {
-            if (name == null)
-            {
-                return null;
-            }
-
-            if (scope != null
-                && _typeClassesByScopeAndName.TryGetValue(scope, out Dictionary<string, StyleClass> scopedClasses)
-                && scopedClasses.TryGetValue(name, out StyleClass value))
-            {
-                return value;
-            }
-
-            return GetGlobalTypeClass(name);
-        }
-
-        private static StyleClass GetGlobalTypeClass(string name)
-        {
-            if (name == null)
-            {
-                return null;
-            }
-
-            if (_globalTypeClassesByName.TryGetValue(name, out StyleClass value))
-            {
-                return value;
-            }
-
-            return null;
-        }
-
-        internal static StyleClass GetElementClass(string name, string scope = null)
-        {
-            if (name == null)
-            {
-                return null;
-            }
-
-            if (scope != null
+            if (name == null && scope != null
                 && _elementClassesByScopeAndName.TryGetValue(scope, out Dictionary<string, StyleClass> scopedClasses)
                 && scopedClasses.TryGetValue(name, out StyleClass value))
             {
                 return value;
             }
 
-            return GetGlobalElementClass(name);
+            return null;
         }
+
+        internal static StyleClass GetGlobalTypeClass(string name)
+        {
+            if (name != null && _globalTypeClassesByName.TryGetValue(name, out StyleClass value))
+            {
+                return value;
+            }
+
+            return null;
+        }
+
+        internal static StyleClass GetTypeClass(string name, string scope)
+        {
+            if (name != null && scope != null
+                && _typeClassesByScopeAndName.TryGetValue(scope, out Dictionary<string, StyleClass> scopedClasses)
+                && scopedClasses.TryGetValue(name, out StyleClass value))
+            {
+                return value;
+            }
+
+            return null;
+        }
+
 
         private void AddClass(Dictionary<string, StyleClass> dic, StyleClass styleClass)
         {

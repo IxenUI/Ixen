@@ -10,7 +10,7 @@ namespace Ixen.Core.Components
     public class Component<TView> : Component
         where TView : VisualElement, new()
     {
-        internal TView View { get; private set; } = new();
+        internal TView View { get; private set; } = new() { TypeName = typeof(TView).Name };
         internal override VisualElement GetVisualElement() => View;
      }
 }

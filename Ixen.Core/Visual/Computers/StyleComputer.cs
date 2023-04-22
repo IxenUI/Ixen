@@ -4,6 +4,7 @@ using Ixen.Core.Visual.Styles.Handlers;
 using Ixen.Core.Visual.Styles;
 using System.Text;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Ixen.Core.Visual.Computers
 {
@@ -11,35 +12,15 @@ namespace Ixen.Core.Visual.Computers
     {
         internal void Compute(VisualElement element)
         {
-            StyleClass sc;
-
             if (element.MustRefreshStyles)
             {
                 ApplyBaseStyle(element);
 
-                foreach (var c in element.Classes)
+                foreach (var c in GetApplyingClasses(element))
                 {
-                    sc = StyleSheet.GetClass(c);
-
-                    if (sc != null)
+                    foreach (var style in c.Styles)
                     {
-                        foreach (var style in sc.Styles)
-                        {
-                            ApplyStyle(element.StylesHandlers, style);
-                        }
-                    }
-                }
-
-                if (element.Name != null)
-                {
-                    sc = StyleSheet.GetElementClass(element.Name);
-
-                    if (sc != null)
-                    {
-                        foreach (var style in sc.Styles)
-                        {
-                            ApplyStyle(element.StylesHandlers, style);
-                        }
+                        ApplyStyle(element.StylesHandlers, style);
                     }
                 }
 
@@ -50,6 +31,44 @@ namespace Ixen.Core.Visual.Computers
             {
                 Compute(child);
             }
+        }
+
+        private void AddClassToList(List<StyleClass> list, StyleClass c)
+        {
+            if (c != null)
+            {
+                list.Add(c);
+            }
+        }
+
+        // priority order :
+        // - Element name 
+        // - Global element name
+        // - Class
+        // - Global class
+        // - Type
+        // - Global type
+        private List<StyleClass> GetApplyingClasses(VisualElement element)
+        {
+            var list = new List<StyleClass>();
+            var scope = GetScope(element);
+
+            AddClassToList(list, StyleSheet.GetGlobalTypeClass(element.TypeName));
+            AddClassToList(list, StyleSheet.GetTypeClass(element.TypeName, scope));
+
+            foreach (var c in element.Classes)
+            {
+                AddClassToList(list, StyleSheet.GetGlobalClass(c));
+                AddClassToList(list, StyleSheet.GetClass(c, scope));
+            }
+
+            if (element.Name != null)
+            {
+                AddClassToList(list, StyleSheet.GetGlobalElementClass(element.Name));
+                AddClassToList(list, StyleSheet.GetElementClass(element.Name, scope));
+            }
+
+            return list;
         }
 
         private void ApplyBaseStyle(VisualElement element)
