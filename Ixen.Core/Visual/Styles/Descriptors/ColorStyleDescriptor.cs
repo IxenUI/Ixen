@@ -4,6 +4,6 @@
     {
         internal override string Identifier => StyleIdentifier.Color;
 
-        public string Value { get; set; } = "#000000";
+        public string Value { get; set; } = null;
     }
 }
