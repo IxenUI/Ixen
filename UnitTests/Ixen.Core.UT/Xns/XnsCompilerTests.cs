@@ -11,7 +11,7 @@ namespace Ixen.Core.UT.Xns
     public class XnsCompilerTests
     {
         [TestMethod]
-        public void TestParse()
+        public void TestCompile()
         {
             string source = @"container {
     layout: row
