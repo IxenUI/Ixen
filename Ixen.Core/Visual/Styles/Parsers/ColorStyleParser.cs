@@ -5,7 +5,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
 {
     internal class ColorStyleParser : StyleParser
     {
-        private static Regex _regex = new Regex(@"(#(?:[0-9A-F]{6}|[0-9A-F]{8}))");
+        private static Regex _regex = new Regex(@"(#(?:[0-9A-F]{8}|[0-9A-F]{6}))");
         public ColorStyleDescriptor Descriptor { get; } = new ColorStyleDescriptor();
 
         public ColorStyleParser(string content)
