@@ -3,7 +3,6 @@ using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Xml.Linq;
 
 namespace Ixen.Core.UT.Xns
 {
@@ -24,7 +23,7 @@ namespace Ixen.Core.UT.Xns
     
     content {
         width: 1*
-        background: #EEEEEE
+        row-template: 1px
         padding: 5px
     }
     
@@ -88,7 +87,7 @@ namespace Ixen.Core.UT.Xns
             Assert.AreEqual(contentClass.Styles.Count, 3);
 
             Assert.AreEqual(contentClass.Styles[0].Identifier, StyleIdentifier.Width);
-            Assert.AreEqual(contentClass.Styles[1].Identifier, StyleIdentifier.Background);
+            Assert.AreEqual(contentClass.Styles[1].Identifier, StyleIdentifier.RowTemplate);
             Assert.AreEqual(contentClass.Styles[2].Identifier, StyleIdentifier.Padding);
 
             widthStyle = (WidthStyleDescriptor)contentClass.Styles[0];

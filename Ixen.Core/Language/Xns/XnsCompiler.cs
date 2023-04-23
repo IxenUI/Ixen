@@ -103,6 +103,9 @@ namespace Ixen.Core.Language.Xns
                 case StyleIdentifier.Border:
                     return new BorderStyleParser(xnsStyle.Value).Descriptor;
 
+                case StyleIdentifier.ColumnTemplate:
+                    return new ColumnTemplateStyleParser(xnsStyle.Value).Descriptor;
+
                 case StyleIdentifier.Height:
                     return new HeightStyleParser(xnsStyle.Value).Descriptor;
 
@@ -117,6 +120,9 @@ namespace Ixen.Core.Language.Xns
 
                 case StyleIdentifier.Padding:
                     return new PaddingStyleParser(xnsStyle.Value).Descriptor;
+
+                case StyleIdentifier.RowTemplate:
+                    return new RowTemplateStyleParser(xnsStyle.Value).Descriptor;
 
                 case StyleIdentifier.Width:
                     return new WidthStyleParser(xnsStyle.Value).Descriptor;

@@ -21,7 +21,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
                             "{ " +
                                 $"{nameof(SizeStyleDescriptor.Unit)} = {nameof(SizeUnit)}.{d.Unit}, " +
                                 $"{nameof(SizeStyleDescriptor.Value)} = {d.Value} " +
-                            "}, "
+                            "}"
                         )) +
                     "} " +
                 "}";
