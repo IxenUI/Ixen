@@ -72,6 +72,10 @@ namespace Ixen.Generators.Xnl
             string childId;
 
             sb.AppendLine($"{tabs}var {nodeId} = new VisualElement();");
+            if (node.Name != null)
+            {
+                sb.AppendLine($"{tabs}{nodeId}.Name = \"{node.Name}\";");
+            }
 
             foreach (var param in node.Properties)
             {
