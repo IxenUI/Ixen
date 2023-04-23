@@ -95,46 +95,82 @@ namespace Ixen.Core.Visual.Computers
 
         private void ComputeTotalWidthWeight(VisualElement element)
         {
+            SizeStyleDescriptor sizeStyle;
+
             foreach (VisualElement child in element.Children)
             {
-                if (child.StylesHandlers.Width?.Descriptor.Unit == SizeUnit.Weight)
+                sizeStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width);
+                if (sizeStyle.Unit == SizeUnit.Weight)
                 {
-                    element.TotalWidthWeight += child.StylesHandlers.Width.Descriptor.Value;
+                    element.TotalWidthWeight += sizeStyle.Value;
                 }
             }
         }
 
         private void ComputeTotalHeightWeight(VisualElement element)
         {
+            SizeStyleDescriptor sizeStyle;
+
             foreach (VisualElement child in element.Children)
             {
-                if (child.StylesHandlers.Height?.Descriptor.Unit == SizeUnit.Weight)
+                sizeStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Height);
+                if (sizeStyle.Unit == SizeUnit.Weight)
                 {
-                    element.TotalHeightWeight += child.StylesHandlers.Height.Descriptor.Value;
+                    element.TotalHeightWeight += sizeStyle.Value;
                 }
             }
         }
 
+        private SizeStyleDescriptor GetSizeStyleDescriptor(VisualElement element, SizeStyleDescriptorType sizeType)
+        {
+            // Direct size style has priority
+            SizeStyleDescriptor sizeStyle = (sizeType == SizeStyleDescriptorType.Width)
+                ? element.StylesHandlers.Width.Descriptor
+                : element.StylesHandlers.Height.Descriptor;
+
+            // Get the templated size if any
+            if (sizeStyle.Value == 0 && element.Parent != null)
+            {
+                LayoutStyleDescriptor layoutStyle = element.Parent.StylesHandlers.Layout.Descriptor;
+                SizeTemplateStyleDescriptor sizeTemplateStyle = (sizeType == SizeStyleDescriptorType.Width)
+                    ? element.Parent.StylesHandlers.RowTemplate?.Descriptor
+                    : element.Parent.StylesHandlers.ColumnTemplate?.Descriptor;
+
+                if (layoutStyle != null
+                    && sizeTemplateStyle != null
+                    && sizeTemplateStyle.Value.Count > 0
+                    && (layoutStyle.Type == LayoutType.Grid
+                    || layoutStyle.Type == LayoutType.Column
+                    || layoutStyle.Type == LayoutType.Row))
+                {
+                    int index = element.ChildIndex % sizeTemplateStyle.Value.Count;
+                    sizeStyle = sizeTemplateStyle.Value[index];
+                }
+            }
+
+            return sizeStyle;
+        }
+
         private float ComputeWidth(VisualElement element, VisualElement child, DimensionalElement container, float remainingWidth)
         {
-            SizeStyleDescriptor widthStyle = child.StylesHandlers.Width?.Descriptor;
+            SizeStyleDescriptor sizeStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width);
             MaskStyleDescriptor maskStyle = element.StylesHandlers.Mask?.Descriptor;
             float width = 0;
 
-            if (widthStyle != null)
+            if (sizeStyle != null)
             {
-                switch (widthStyle?.Unit)
+                switch (sizeStyle?.Unit)
                 {
                     case SizeUnit.Pixels:
                         ComputeHorizontalMargin(element, child, container);
                         ComputeHorizontalPadding(element, child, container);
-                        width = widthStyle.Value;
+                        width = sizeStyle.Value;
                         break;
 
                     case SizeUnit.Percents:
                         ComputeHorizontalMargin(element, child, container);
                         ComputeHorizontalPadding(element, child, container);
-                        width = (container.Width / 100) * widthStyle.Value;
+                        width = (container.Width / 100) * sizeStyle.Value;
                         break;
                 }
 
@@ -147,7 +183,7 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeFilledWidth(VisualElement element, VisualElement child, DimensionalElement container, float remainingWidth)
         {
-            SizeStyleDescriptor widthStyle = child.StylesHandlers.Width?.Descriptor;
+            SizeStyleDescriptor widthStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width);
             float margin;
 
             if (widthStyle != null)
@@ -226,7 +262,7 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeHeight(VisualElement element, VisualElement child, DimensionalElement container, float remainingHeight)
         {
-            SizeStyleDescriptor heightStyle = child.StylesHandlers.Height?.Descriptor;
+            SizeStyleDescriptor heightStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Height);
             MaskStyleDescriptor maskStyle = element.StylesHandlers.Mask?.Descriptor;
             float height = 0;
 
@@ -256,7 +292,7 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeFilledHeight(VisualElement element, VisualElement child, DimensionalElement container, float remainingHeight)
         {
-            SizeStyleDescriptor heightStyle = child.StylesHandlers.Height?.Descriptor;
+            SizeStyleDescriptor heightStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Height);
             float margin;
 
             if (heightStyle != null)

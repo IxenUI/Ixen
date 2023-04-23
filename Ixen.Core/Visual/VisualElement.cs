@@ -4,6 +4,7 @@ namespace Ixen.Core.Visual
 {
     public class VisualElement : BoxedElement
     {
+        internal int ChildIndex { get; set; }
         internal List<VisualElement> Children { get; private set; } = new();
         internal ViewPort ViewPort { get; private set; } = new();
         
@@ -26,14 +27,18 @@ namespace Ixen.Core.Visual
         {
             element.Parent = this;
             Children.Add(element);
+            ComputeChildrenIndexes();
         }
 
         public void AddChildren(params VisualElement[] elements)
         {
             foreach (VisualElement element in elements)
             {
-                AddChild(element);
+                element.Parent = this;
+                Children.Add(element);
             }
+
+            ComputeChildrenIndexes();
         }
 
         public void RemoveChild(VisualElement element)
@@ -41,6 +46,16 @@ namespace Ixen.Core.Visual
             if (Children.Remove(element))
             {
                 element.Parent = null;
+            }
+
+            ComputeChildrenIndexes();
+        }
+
+        private void ComputeChildrenIndexes()
+        {
+            for (int i = 0; i < Children.Count; i++)
+            {
+                Children[i].ChildIndex = i;
             }
         }
 

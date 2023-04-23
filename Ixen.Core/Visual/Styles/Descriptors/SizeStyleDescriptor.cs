@@ -1,5 +1,11 @@
 ﻿namespace Ixen.Core.Visual.Styles.Descriptors
 {
+    internal enum SizeStyleDescriptorType
+    {
+        Width,
+        Height
+    }
+
     public enum SizeUnit
     {
         Undefined,
