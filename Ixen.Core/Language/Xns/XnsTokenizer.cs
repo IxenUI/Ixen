@@ -84,7 +84,7 @@ namespace Ixen.Core.Language.Xns
             {
                 if (_identifier)
                 {
-                    if (char.IsLetterOrDigit(c) || _exceptClassName && (c == '_' || c == '.' || c == '#'))
+                    if (char.IsLetterOrDigit(c) || _exceptClassName && (c == '_' || c == '-' || c == '.' || c == '#'))
                     {
                         sb.Append(c);
                         MoveCursor();
