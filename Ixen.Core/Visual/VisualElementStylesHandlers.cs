@@ -7,12 +7,12 @@ namespace Ixen.Core.Visual
         public BackgroundStyleHandler Background { get; set; }
         public BorderStyleHandler Border { get; set; }
         public ColumnTemplateStyleHandler ColumnTemplate { get; set; }
-        public HeightStyleHandler Height { get; set; } = new();
-        public LayoutStyleHandler Layout { get; set; } = new();
-        public MarginStyleHandler Margin { get; set; } = new();
-        public MaskStyleHandler Mask { get; set; } = new();
-        public PaddingStyleHandler Padding { get; set; } = new();
+        public HeightStyleHandler Height { get; set; }
+        public LayoutStyleHandler Layout { get; set; }
+        public MarginStyleHandler Margin { get; set; }
+        public MaskStyleHandler Mask { get; set; }
+        public PaddingStyleHandler Padding { get; set; }
         public RowTemplateStyleHandler RowTemplate { get; set; }
-        public WidthStyleHandler Width { get; set; } = new();
+        public WidthStyleHandler Width { get; set; }
     }
 }

@@ -24,6 +24,11 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
         internal override void Render(VisualElement element, RendererContext context)
         {
+            if (Descriptor.Thickness == 0)
+            {
+                return;
+            }
+
             switch (Descriptor.Type)
             {
                 case BorderType.Center:

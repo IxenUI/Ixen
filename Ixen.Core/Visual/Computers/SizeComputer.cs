@@ -12,7 +12,7 @@ namespace Ixen.Core.Visual.Computers
             float remainingWidth = element.Width;
             float remainingHeight = element.Height;
 
-            var layoutStyle = element.StylesHandlers.Layout?.Descriptor;
+            var layoutStyle = element.StylesHandlers.Layout.Descriptor;
 
             if (!element.TotalWeightSet)
             {
@@ -133,12 +133,10 @@ namespace Ixen.Core.Visual.Computers
             {
                 LayoutStyleDescriptor layoutStyle = element.Parent.StylesHandlers.Layout.Descriptor;
                 SizeTemplateStyleDescriptor sizeTemplateStyle = (sizeType == SizeStyleDescriptorType.Width)
-                    ? element.Parent.StylesHandlers.RowTemplate?.Descriptor
-                    : element.Parent.StylesHandlers.ColumnTemplate?.Descriptor;
+                    ? element.Parent.StylesHandlers.RowTemplate.Descriptor
+                    : element.Parent.StylesHandlers.ColumnTemplate.Descriptor;
 
-                if (layoutStyle != null
-                    && sizeTemplateStyle != null
-                    && sizeTemplateStyle.Value.Count > 0
+                if (sizeTemplateStyle.Value.Count > 0
                     && (layoutStyle.Type == LayoutType.Grid
                     || layoutStyle.Type == LayoutType.Column
                     || layoutStyle.Type == LayoutType.Row))
@@ -154,47 +152,37 @@ namespace Ixen.Core.Visual.Computers
         private float ComputeWidth(VisualElement element, VisualElement child, DimensionalElement container, float remainingWidth)
         {
             SizeStyleDescriptor sizeStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width);
-            MaskStyleDescriptor maskStyle = element.StylesHandlers.Mask?.Descriptor;
+            MaskStyleDescriptor maskStyle = element.StylesHandlers.Mask.Descriptor;
             float width = 0;
 
-            if (sizeStyle != null)
+            switch (sizeStyle.Unit)
             {
-                switch (sizeStyle?.Unit)
-                {
-                    case SizeUnit.Pixels:
-                        ComputeHorizontalMargin(element, child, container);
-                        ComputeHorizontalPadding(element, child, container);
-                        width = sizeStyle.Value;
-                        break;
+                case SizeUnit.Pixels:
+                    ComputeHorizontalMargin(element, child, container);
+                    ComputeHorizontalPadding(element, child, container);
+                    width = sizeStyle.Value;
+                    break;
 
-                    case SizeUnit.Percents:
-                        ComputeHorizontalMargin(element, child, container);
-                        ComputeHorizontalPadding(element, child, container);
-                        width = (container.Width / 100) * sizeStyle.Value;
-                        break;
-                }
-
-                child.Width = maskStyle.Right ? Math.Min(width, remainingWidth) : width;
-                return child.BoxWidth;
+                case SizeUnit.Percents:
+                    ComputeHorizontalMargin(element, child, container);
+                    ComputeHorizontalPadding(element, child, container);
+                    width = (container.Width / 100) * sizeStyle.Value;
+                    break;
             }
 
-            return 0;
+            child.Width = maskStyle.Right ? Math.Min(width, remainingWidth) : width;
+            return child.BoxWidth;
         }
 
         private float ComputeFilledWidth(VisualElement element, VisualElement child, DimensionalElement container, float remainingWidth)
         {
             SizeStyleDescriptor widthStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width);
-            float margin;
 
-            if (widthStyle != null)
+            if (widthStyle.Unit == SizeUnit.Weight)
             {
-                switch (widthStyle.Unit)
-                {
-                    case SizeUnit.Weight:
-                        margin = ComputeHorizontalMargin(element, child, container);
-                        child.Width = ((remainingWidth - margin) / element.TotalWidthWeight) * widthStyle.Value;
-                        return child.BoxWidth;
-                }
+                float margin = ComputeHorizontalMargin(element, child, container);
+                child.Width = ((remainingWidth - margin) / element.TotalWidthWeight) * widthStyle.Value;
+                return child.BoxWidth;
             }
 
             return 0;
@@ -202,29 +190,26 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeHorizontalMargin(VisualElement element, VisualElement child, DimensionalElement container)
         {
-            MarginStyleDescriptor marginStyle = child.StylesHandlers.Margin?.Descriptor;
+            MarginStyleDescriptor marginStyle = child.StylesHandlers.Margin.Descriptor;
 
-            if (marginStyle != null)
+            switch (marginStyle.Left.Unit)
             {
-                switch (marginStyle.Left.Unit)
-                {
-                    case SizeUnit.Pixels:
-                        child.MarginLeft = marginStyle.Left.Value;
-                        break;
-                    case SizeUnit.Percents:
-                        child.MarginLeft = (container.Width / 100) * marginStyle.Left.Value;
-                        break;
-                }
+                case SizeUnit.Pixels:
+                    child.MarginLeft = marginStyle.Left.Value;
+                    break;
+                case SizeUnit.Percents:
+                    child.MarginLeft = (container.Width / 100) * marginStyle.Left.Value;
+                    break;
+            }
 
-                switch (marginStyle.Right.Unit)
-                {
-                    case SizeUnit.Pixels:
-                        child.MarginRight = marginStyle.Right.Value;
-                        break;
-                    case SizeUnit.Percents:
-                        child.MarginRight = (container.Width / 100) * marginStyle.Right.Value;
-                        break;
-                }
+            switch (marginStyle.Right.Unit)
+            {
+                case SizeUnit.Pixels:
+                    child.MarginRight = marginStyle.Right.Value;
+                    break;
+                case SizeUnit.Percents:
+                    child.MarginRight = (container.Width / 100) * marginStyle.Right.Value;
+                    break;
             }
 
             return child.HorizontalMargin;
@@ -232,29 +217,26 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeHorizontalPadding(VisualElement element, VisualElement child, DimensionalElement container)
         {
-            MarginStyleDescriptor paddingStyle = child.StylesHandlers.Padding?.Descriptor;
+            MarginStyleDescriptor paddingStyle = child.StylesHandlers.Padding.Descriptor;
 
-            if (paddingStyle != null)
+            switch (paddingStyle.Left.Unit)
             {
-                switch (paddingStyle.Left.Unit)
-                {
-                    case SizeUnit.Pixels:
-                        child.PaddingLeft = paddingStyle.Left.Value;
-                        break;
-                    case SizeUnit.Percents:
-                        child.PaddingLeft = (container.Width / 100) * paddingStyle.Left.Value;
-                        break;
-                }
+                case SizeUnit.Pixels:
+                    child.PaddingLeft = paddingStyle.Left.Value;
+                    break;
+                case SizeUnit.Percents:
+                    child.PaddingLeft = (container.Width / 100) * paddingStyle.Left.Value;
+                    break;
+            }
 
-                switch (paddingStyle.Right.Unit)
-                {
-                    case SizeUnit.Pixels:
-                        child.PaddingRight = paddingStyle.Right.Value;
-                        break;
-                    case SizeUnit.Percents:
-                        child.PaddingRight = (container.Width / 100) * paddingStyle.Right.Value;
-                        break;
-                }
+            switch (paddingStyle.Right.Unit)
+            {
+                case SizeUnit.Pixels:
+                    child.PaddingRight = paddingStyle.Right.Value;
+                    break;
+                case SizeUnit.Percents:
+                    child.PaddingRight = (container.Width / 100) * paddingStyle.Right.Value;
+                    break;
             }
 
             return child.HorizontalPadding;
@@ -263,31 +245,26 @@ namespace Ixen.Core.Visual.Computers
         private float ComputeHeight(VisualElement element, VisualElement child, DimensionalElement container, float remainingHeight)
         {
             SizeStyleDescriptor heightStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Height);
-            MaskStyleDescriptor maskStyle = element.StylesHandlers.Mask?.Descriptor;
+            MaskStyleDescriptor maskStyle = element.StylesHandlers.Mask.Descriptor;
             float height = 0;
 
-            if (heightStyle != null)
+            switch (heightStyle.Unit)
             {
-                switch (heightStyle.Unit)
-                {
-                    case SizeUnit.Pixels:
-                        ComputeVerticalMargin(element, child, container);
-                        ComputeVerticalPadding(element, child, container);
-                        height = heightStyle.Value;
-                        break;
+                case SizeUnit.Pixels:
+                    ComputeVerticalMargin(element, child, container);
+                    ComputeVerticalPadding(element, child, container);
+                    height = heightStyle.Value;
+                    break;
 
-                    case SizeUnit.Percents:
-                        ComputeVerticalMargin(element, child, container);
-                        ComputeVerticalPadding(element, child, container);
-                        height = (container.Height / 100) * heightStyle.Value;
-                        break;
-                }
-
-                child.Height = maskStyle.Bottom ? Math.Min(height, remainingHeight) : height;
-                return child.BoxHeight;
+                case SizeUnit.Percents:
+                    ComputeVerticalMargin(element, child, container);
+                    ComputeVerticalPadding(element, child, container);
+                    height = (container.Height / 100) * heightStyle.Value;
+                    break;
             }
 
-            return 0;
+            child.Height = maskStyle.Bottom ? Math.Min(height, remainingHeight) : height;
+            return child.BoxHeight;
         }
 
         private float ComputeFilledHeight(VisualElement element, VisualElement child, DimensionalElement container, float remainingHeight)
@@ -311,29 +288,26 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeVerticalMargin(VisualElement element, VisualElement child, DimensionalElement container)
         {
-            MarginStyleDescriptor marginStyle = child.StylesHandlers.Margin?.Descriptor;
+            MarginStyleDescriptor marginStyle = child.StylesHandlers.Margin.Descriptor;
 
-            if (marginStyle != null)
+            switch (marginStyle.Top.Unit)
             {
-                switch (marginStyle.Top.Unit)
-                {
-                    case SizeUnit.Pixels:
-                        child.MarginTop = marginStyle.Top.Value;
-                        break;
-                    case SizeUnit.Percents:
-                        child.MarginTop = (container.Height / 100) * marginStyle.Top.Value;
-                        break;
-                }
+                case SizeUnit.Pixels:
+                    child.MarginTop = marginStyle.Top.Value;
+                    break;
+                case SizeUnit.Percents:
+                    child.MarginTop = (container.Height / 100) * marginStyle.Top.Value;
+                    break;
+            }
 
-                switch (marginStyle.Bottom.Unit)
-                {
-                    case SizeUnit.Pixels:
-                        child.MarginBottom = marginStyle.Bottom.Value;
-                        break;
-                    case SizeUnit.Percents:
-                        child.MarginBottom = (container.Height / 100) * marginStyle.Bottom.Value;
-                        break;
-                }
+            switch (marginStyle.Bottom.Unit)
+            {
+                case SizeUnit.Pixels:
+                    child.MarginBottom = marginStyle.Bottom.Value;
+                    break;
+                case SizeUnit.Percents:
+                    child.MarginBottom = (container.Height / 100) * marginStyle.Bottom.Value;
+                    break;
             }
 
             return child.VerticalMargin;
@@ -341,29 +315,26 @@ namespace Ixen.Core.Visual.Computers
 
         private float ComputeVerticalPadding(VisualElement element, VisualElement child, DimensionalElement container)
         {
-            MarginStyleDescriptor paddingStyle = child.StylesHandlers.Padding?.Descriptor;
+            MarginStyleDescriptor paddingStyle = child.StylesHandlers.Padding.Descriptor;
 
-            if (paddingStyle != null)
+            switch (paddingStyle.Top.Unit)
             {
-                switch (paddingStyle.Top.Unit)
-                {
-                    case SizeUnit.Pixels:
-                        child.PaddingTop = paddingStyle.Top.Value;
-                        break;
-                    case SizeUnit.Percents:
-                        child.PaddingTop = (container.Height / 100) * paddingStyle.Top.Value;
-                        break;
-                }
+                case SizeUnit.Pixels:
+                    child.PaddingTop = paddingStyle.Top.Value;
+                    break;
+                case SizeUnit.Percents:
+                    child.PaddingTop = (container.Height / 100) * paddingStyle.Top.Value;
+                    break;
+            }
 
-                switch (paddingStyle.Bottom.Unit)
-                {
-                    case SizeUnit.Pixels:
-                        child.PaddingBottom = paddingStyle.Bottom.Value;
-                        break;
-                    case SizeUnit.Percents:
-                        child.PaddingBottom = (container.Height / 100) * paddingStyle.Bottom.Value;
-                        break;
-                }
+            switch (paddingStyle.Bottom.Unit)
+            {
+                case SizeUnit.Pixels:
+                    child.PaddingBottom = paddingStyle.Bottom.Value;
+                    break;
+                case SizeUnit.Percents:
+                    child.PaddingBottom = (container.Height / 100) * paddingStyle.Bottom.Value;
+                    break;
             }
 
             return child.VerticalPadding;

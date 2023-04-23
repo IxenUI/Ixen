@@ -1,10 +1,9 @@
 ﻿using Ixen.Core.Visual.Classes;
+using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Ixen.Core.Visual.Styles.Handlers;
-using Ixen.Core.Visual.Styles;
-using System.Text;
-using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Ixen.Core.Visual.Computers
 {
