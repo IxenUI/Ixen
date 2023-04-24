@@ -1,7 +1,6 @@
 ﻿using Ixen.Core.Language.Base;
 using Ixen.Core.Visual.Classes;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Ixen.Core.Language.Xns
 {

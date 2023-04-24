@@ -53,18 +53,18 @@ namespace Ixen.Core.Visual.Computers
             var scope = GetScope(element);
 
             AddClassToList(list, StyleSheet.GetGlobalTypeClass(element.TypeName));
-            AddClassToList(list, StyleSheet.GetTypeClass(element.TypeName, scope));
+            AddClassToList(list, StyleSheet.GetGlobalTypeClass(element.TypeName, scope));
 
             foreach (var c in element.Classes)
             {
                 AddClassToList(list, StyleSheet.GetGlobalClass(c));
-                AddClassToList(list, StyleSheet.GetClass(c, scope));
+                AddClassToList(list, StyleSheet.GetGlobalClass(c, scope));
             }
 
             if (element.Name != null)
             {
                 AddClassToList(list, StyleSheet.GetGlobalElementClass(element.Name));
-                AddClassToList(list, StyleSheet.GetElementClass(element.Name, scope));
+                AddClassToList(list, StyleSheet.GetGlobalElementClass(element.Name, scope));
             }
 
             return list;

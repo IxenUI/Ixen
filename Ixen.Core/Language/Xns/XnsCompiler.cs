@@ -65,7 +65,7 @@ namespace Ixen.Core.Language.Xns
                 name = name.Substring(1);
             }
 
-            return new StyleClass(target, GetScope(node), name, ToStyles(node));
+            return new StyleClass(target, null, GetScope(node), name, ToStyles(node));
         }
 
         private void AddClass(XnsNode node, List<StyleClass> list)

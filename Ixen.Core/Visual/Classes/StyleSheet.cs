@@ -16,9 +16,17 @@ namespace Ixen.Core.Visual.Classes
         private static Dictionary<string, StyleClass> _globalElementClassesByName = new();
         private static Dictionary<string, StyleClass> _globalTypeClassesByName = new();
 
-        private static Dictionary<string, Dictionary<string, StyleClass>> _classesByScopeAndName = new();
-        private static Dictionary<string, Dictionary<string, StyleClass>> _elementClassesByScopeAndName = new();
-        private static Dictionary<string, Dictionary<string, StyleClass>> _typeClassesByScopeAndName = new();
+        private static Dictionary<string, Dictionary<string, StyleClass>> _globalClassesByScopeAndName = new();
+        private static Dictionary<string, Dictionary<string, StyleClass>> _globalElementClassesByScopeAndName = new();
+        private static Dictionary<string, Dictionary<string, StyleClass>> _globalTypeClassesByScopeAndName = new();
+
+        private static Dictionary<string, Dictionary<string, StyleClass>> _classesBySheetScopeAndName = new();
+        private static Dictionary<string, Dictionary<string, StyleClass>> _elementClassesBySheetScopeAndName = new();
+        private static Dictionary<string, Dictionary<string, StyleClass>> _typeClassesBySheetScopeAndName = new();
+
+        private static Dictionary<string, Dictionary<string, Dictionary<string, StyleClass>>> _classesBySheetScopeScopeAndName = new();
+        private static Dictionary<string, Dictionary<string, Dictionary<string, StyleClass>>> _elementClassesBySheetScopeScopeAndName = new();
+        private static Dictionary<string, Dictionary<string, Dictionary<string, StyleClass>>> _typeClassesBySheetScopeScopeAndName = new();
 
         static StyleSheet() {
             ScanForClasses();
@@ -50,11 +58,36 @@ namespace Ixen.Core.Visual.Classes
             return null;
         }
 
-        internal static StyleClass GetClass(string name, string scope)
+        internal static StyleClass GetGlobalClass(string name, string scope)
         {
             if (name != null && scope != null
-                && _classesByScopeAndName.TryGetValue(scope, out Dictionary<string, StyleClass> scopedClasses)
+                && _globalClassesByScopeAndName.TryGetValue(scope, out Dictionary<string, StyleClass> scopedClasses)
                 && scopedClasses.TryGetValue(name, out StyleClass value))
+            {
+                return value;
+            }
+
+            return null;
+        }
+
+        internal static StyleClass GetClass(string name, string sheetScope)
+        {
+            if (name != null && sheetScope != null
+                && _classesBySheetScopeAndName.TryGetValue(sheetScope, out Dictionary<string, StyleClass> classes)
+                && classes.TryGetValue(name, out StyleClass value))
+            {
+                return value;
+            }
+
+            return null;
+        }
+
+        internal static StyleClass GetClass(string name, string sheetScope, string scope)
+        {
+            if (name != null && sheetScope != null && scope != null
+                && _classesBySheetScopeScopeAndName.TryGetValue(sheetScope, out Dictionary<string, Dictionary<string, StyleClass>> scopedClasses)
+                && scopedClasses.TryGetValue(scope, out Dictionary<string, StyleClass> classes)
+                && classes.TryGetValue(name, out StyleClass value))
             {
                 return value;
             }
@@ -72,11 +105,36 @@ namespace Ixen.Core.Visual.Classes
             return null;
         }
 
-        internal static StyleClass GetElementClass(string name, string scope)
+        internal static StyleClass GetGlobalElementClass(string name, string scope)
         {
-            if (name == null && scope != null
-                && _elementClassesByScopeAndName.TryGetValue(scope, out Dictionary<string, StyleClass> scopedClasses)
+            if (name != null && scope != null
+                && _globalElementClassesByScopeAndName.TryGetValue(scope, out Dictionary<string, StyleClass> scopedClasses)
                 && scopedClasses.TryGetValue(name, out StyleClass value))
+            {
+                return value;
+            }
+
+            return null;
+        }
+
+        internal static StyleClass GetElementClass(string name, string sheetScope)
+        {
+            if (name != null && sheetScope != null
+                && _elementClassesBySheetScopeAndName.TryGetValue(sheetScope, out Dictionary<string, StyleClass> classes)
+                && classes.TryGetValue(name, out StyleClass value))
+            {
+                return value;
+            }
+
+            return null;
+        }
+
+        internal static StyleClass GetElementClass(string name, string sheetScope, string scope)
+        {
+            if (name != null && sheetScope != null && scope != null
+                && _elementClassesBySheetScopeScopeAndName.TryGetValue(sheetScope, out Dictionary<string, Dictionary<string, StyleClass>> scopedClasses)
+                && scopedClasses.TryGetValue(scope, out Dictionary<string, StyleClass> classes)
+                && classes.TryGetValue(name, out StyleClass value))
             {
                 return value;
             }
@@ -94,10 +152,10 @@ namespace Ixen.Core.Visual.Classes
             return null;
         }
 
-        internal static StyleClass GetTypeClass(string name, string scope)
+        internal static StyleClass GetGlobalTypeClass(string name, string scope)
         {
             if (name != null && scope != null
-                && _typeClassesByScopeAndName.TryGetValue(scope, out Dictionary<string, StyleClass> scopedClasses)
+                && _globalTypeClassesByScopeAndName.TryGetValue(scope, out Dictionary<string, StyleClass> scopedClasses)
                 && scopedClasses.TryGetValue(name, out StyleClass value))
             {
                 return value;
@@ -106,6 +164,30 @@ namespace Ixen.Core.Visual.Classes
             return null;
         }
 
+        internal static StyleClass GetTypeClass(string name, string sheetScope)
+        {
+            if (name != null && sheetScope != null
+                && _typeClassesBySheetScopeAndName.TryGetValue(sheetScope, out Dictionary<string, StyleClass> classes)
+                && classes.TryGetValue(name, out StyleClass value))
+            {
+                return value;
+            }
+
+            return null;
+        }
+
+        internal static StyleClass GetTypeClass(string name, string sheetScope, string scope)
+        {
+            if (name != null && sheetScope != null && scope != null
+                && _typeClassesBySheetScopeScopeAndName.TryGetValue(sheetScope, out Dictionary<string, Dictionary<string, StyleClass>> scopedClasses)
+                && scopedClasses.TryGetValue(scope, out Dictionary<string, StyleClass> classes)
+                && classes.TryGetValue(name, out StyleClass value))
+            {
+                return value;
+            }
+
+            return null;
+        }
 
         private void AddClass(Dictionary<string, StyleClass> dic, StyleClass styleClass)
         {
@@ -129,36 +211,92 @@ namespace Ixen.Core.Visual.Classes
             AddClass(dic[styleClass.Scope], styleClass);
         }
 
+        private void AddSheetScopedClass(Dictionary<string, Dictionary<string, StyleClass>> dic, StyleClass styleClass)
+        {
+            if (!dic.ContainsKey(styleClass.SheetScope))
+            {
+                dic.Add(styleClass.SheetScope, new());
+            }
+
+            AddClass(dic[styleClass.SheetScope], styleClass);
+        }
+
+        private void AddSheetScopedScopedClass(Dictionary<string, Dictionary<string, Dictionary<string, StyleClass>>> dic, StyleClass styleClass)
+        {
+            if (!dic.ContainsKey(styleClass.SheetScope))
+            {
+                dic.Add(styleClass.SheetScope, new());
+            }
+
+            AddScopedClass(dic[styleClass.SheetScope], styleClass);
+        }
+
         protected void AddClass(StyleClass styleClass)
         {
-            if (styleClass.Scope == null)
+            if (styleClass.SheetScope == null)
             {
-                switch (styleClass.Target)
+                if (styleClass.Scope == null)
                 {
-                    case StyleClassTarget.ClassName:
-                        AddClass(_globalClassesByName, styleClass);
-                        break;
-                    case StyleClassTarget.ElementName:
-                        AddClass(_globalElementClassesByName, styleClass);
-                        break;
-                    case StyleClassTarget.ElementType:
-                        AddClass(_globalTypeClassesByName, styleClass);
-                        break;
+                    switch (styleClass.Target)
+                    {
+                        case StyleClassTarget.ClassName:
+                            AddClass(_globalClassesByName, styleClass);
+                            break;
+                        case StyleClassTarget.ElementName:
+                            AddClass(_globalElementClassesByName, styleClass);
+                            break;
+                        case StyleClassTarget.ElementType:
+                            AddClass(_globalTypeClassesByName, styleClass);
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (styleClass.Target)
+                    {
+                        case StyleClassTarget.ClassName:
+                            AddScopedClass(_globalClassesByScopeAndName, styleClass);
+                            break;
+                        case StyleClassTarget.ElementName:
+                            AddScopedClass(_globalElementClassesByScopeAndName, styleClass);
+                            break;
+                        case StyleClassTarget.ElementType:
+                            AddScopedClass(_globalTypeClassesByScopeAndName, styleClass);
+                            break;
+                    }
                 }
             }
             else
             {
-                switch (styleClass.Target)
+                if (styleClass.Scope == null)
                 {
-                    case StyleClassTarget.ClassName:
-                        AddScopedClass(_classesByScopeAndName, styleClass);
-                        break;
-                    case StyleClassTarget.ElementName:
-                        AddScopedClass(_elementClassesByScopeAndName, styleClass);
-                        break;
-                    case StyleClassTarget.ElementType:
-                        AddScopedClass(_typeClassesByScopeAndName, styleClass);
-                        break;
+                    switch (styleClass.Target)
+                    {
+                        case StyleClassTarget.ClassName:
+                            AddSheetScopedClass(_classesBySheetScopeAndName, styleClass);
+                            break;
+                        case StyleClassTarget.ElementName:
+                            AddSheetScopedClass(_elementClassesBySheetScopeAndName, styleClass);
+                            break;
+                        case StyleClassTarget.ElementType:
+                            AddSheetScopedClass(_typeClassesBySheetScopeAndName, styleClass);
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (styleClass.Target)
+                    {
+                        case StyleClassTarget.ClassName:
+                            AddSheetScopedScopedClass(_classesBySheetScopeScopeAndName, styleClass);
+                            break;
+                        case StyleClassTarget.ElementName:
+                            AddSheetScopedScopedClass(_elementClassesBySheetScopeScopeAndName, styleClass);
+                            break;
+                        case StyleClassTarget.ElementType:
+                            AddSheetScopedScopedClass(_typeClassesBySheetScopeScopeAndName, styleClass);
+                            break;
+                    }
                 }
             }
         }

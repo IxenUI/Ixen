@@ -52,10 +52,13 @@ namespace Ixen.Generators.Xns
 
                 sb.AppendLine($"\t\tpublic {name}_StyleSheet() ");
                 sb.AppendLine("\t\t{");
-
                 foreach (var c in sheet.Classes)
                 {
-                    sb.AppendLine($"\t\t\tAddClass(new StyleClass(StyleClassTarget.{c.Target}, \"{c.Name}\", new List<StyleDescriptor>()");
+                    sb.AppendLine($"\t\t\tAddClass(new StyleClass(StyleClassTarget.{c.Target}, " +
+                        $"null, " +
+                        $"{(!string.IsNullOrWhiteSpace(c.Scope) ? $"\"{c.Scope}\"" : "null")}, " +
+                        $"{(!string.IsNullOrWhiteSpace(c.Name) ? $"\"{c.Name}\"" : "null")}, " +
+                        $"new List<StyleDescriptor>()");
                     sb.AppendLine("\t\t\t{");
 
                     foreach (var style in c.Styles)
