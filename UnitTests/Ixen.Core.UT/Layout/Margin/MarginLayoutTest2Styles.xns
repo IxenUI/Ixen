@@ -1,0 +1,14 @@
+﻿container_mltest2 {
+    width: 1*
+    height: 1*
+    layout: row
+    background: #F5F5F5
+
+    el1 {
+        width: 200px
+        height: 100px
+        background: #FF0000
+        margin: 50%
+    }
+}
+
