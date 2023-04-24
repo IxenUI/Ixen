@@ -24,7 +24,7 @@ namespace Ixen.Core.UT.StyleScoping
     }
 
     [TestClass]
-    public class StyleScopingTests
+    public class TestStyleSheetScoping
     {
         [TestMethod]
         public void TestScopes()
