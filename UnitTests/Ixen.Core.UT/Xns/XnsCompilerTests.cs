@@ -16,18 +16,18 @@ namespace Ixen.Core.UT.Xns
     layout: row
     width: 100%
     
-    panel {
+    panel-test_Test2 {
         width: 50px
         background: #222222
     }
     
-    content {
+    .content {
         width: 1*
         row-template: 1px
         padding: 5px
     }
     
-    entries {
+    #entries {
         layout: column
         
         entry {
@@ -62,7 +62,7 @@ namespace Ixen.Core.UT.Xns
             Assert.AreEqual(widthStyle.Value, 100);
 
             var panelClass = classes.Classes[1];
-            Assert.AreEqual(panelClass.Name, "panel");
+            Assert.AreEqual(panelClass.Name, "panel-test_Test2");
             Assert.AreEqual(panelClass.Scope, "container");
             Assert.AreEqual(panelClass.Target, StyleClassTarget.ElementName);
             Assert.AreEqual(panelClass.Styles.Count, 2);
@@ -83,7 +83,7 @@ namespace Ixen.Core.UT.Xns
             var contentClass = classes.Classes[2];
             Assert.AreEqual(contentClass.Name, "content");
             Assert.AreEqual(contentClass.Scope, "container");
-            Assert.AreEqual(contentClass.Target, StyleClassTarget.ElementName);
+            Assert.AreEqual(contentClass.Target, StyleClassTarget.ClassName);
             Assert.AreEqual(contentClass.Styles.Count, 3);
 
             Assert.AreEqual(contentClass.Styles[0].Identifier, StyleIdentifier.Width);
@@ -107,7 +107,7 @@ namespace Ixen.Core.UT.Xns
             var entriesClass = classes.Classes[3];
             Assert.AreEqual(entriesClass.Name, "entries");
             Assert.AreEqual(entriesClass.Scope, "container");
-            Assert.AreEqual(entriesClass.Target, StyleClassTarget.ElementName);
+            Assert.AreEqual(entriesClass.Target, StyleClassTarget.ElementType);
             Assert.AreEqual(entriesClass.Styles.Count, 1);
 
             var activeClass = classes.Classes[4];

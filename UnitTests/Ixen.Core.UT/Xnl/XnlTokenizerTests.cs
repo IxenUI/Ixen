@@ -82,6 +82,9 @@ layout<VisualElement>{class: ""layout"" truc: ""chose""}
     [
         <label>{text: ""Coucou""}
     ]
+    // comment
+    /* multi
+        comment */
     <textinput>{placeholder: ""salut""}
 ]
 ";
@@ -89,7 +92,7 @@ layout<VisualElement>{class: ""layout"" truc: ""chose""}
             var tokens = xnlSource.Tokenize();
 
             Assert.IsNotNull(tokens);
-            Assert.AreEqual(47, tokens.Count);
+            Assert.AreEqual(49, tokens.Count);
 
             Assert.AreEqual(tokens[0].Type, XnlTokenType.ElementName);
             Assert.AreEqual(tokens[0].Content, "layout");
@@ -138,20 +141,22 @@ layout<VisualElement>{class: ""layout"" truc: ""chose""}
             Assert.AreEqual(tokens[33].Type, XnlTokenType.PropertyValueEnd);
             Assert.AreEqual(tokens[34].Type, XnlTokenType.PropertiesEnd);
             Assert.AreEqual(tokens[35].Type, XnlTokenType.ChildrenEnd);
-            Assert.AreEqual(tokens[36].Type, XnlTokenType.ElementTypeBegin);
-            Assert.AreEqual(tokens[37].Type, XnlTokenType.ElementTypeName);
-            Assert.AreEqual(tokens[37].Content, "textinput");
-            Assert.AreEqual(tokens[38].Type, XnlTokenType.ElementTypeEnd);
-            Assert.AreEqual(tokens[39].Type, XnlTokenType.PropertiesBegin);
-            Assert.AreEqual(tokens[40].Type, XnlTokenType.PropertyName);
-            Assert.AreEqual(tokens[40].Content, "placeholder");
-            Assert.AreEqual(tokens[41].Type, XnlTokenType.PropertyEqual);
-            Assert.AreEqual(tokens[42].Type, XnlTokenType.PropertyValueBegin);
-            Assert.AreEqual(tokens[43].Type, XnlTokenType.PropertyValue);
-            Assert.AreEqual(tokens[43].Content, "salut");
-            Assert.AreEqual(tokens[44].Type, XnlTokenType.PropertyValueEnd);
-            Assert.AreEqual(tokens[45].Type, XnlTokenType.PropertiesEnd);
-            Assert.AreEqual(tokens[46].Type, XnlTokenType.ChildrenEnd);
+            Assert.AreEqual(tokens[36].Type, XnlTokenType.Comment);
+            Assert.AreEqual(tokens[37].Type, XnlTokenType.Comment);
+            Assert.AreEqual(tokens[38].Type, XnlTokenType.ElementTypeBegin);
+            Assert.AreEqual(tokens[39].Type, XnlTokenType.ElementTypeName);
+            Assert.AreEqual(tokens[39].Content, "textinput");
+            Assert.AreEqual(tokens[40].Type, XnlTokenType.ElementTypeEnd);
+            Assert.AreEqual(tokens[41].Type, XnlTokenType.PropertiesBegin);
+            Assert.AreEqual(tokens[42].Type, XnlTokenType.PropertyName);
+            Assert.AreEqual(tokens[42].Content, "placeholder");
+            Assert.AreEqual(tokens[43].Type, XnlTokenType.PropertyEqual);
+            Assert.AreEqual(tokens[44].Type, XnlTokenType.PropertyValueBegin);
+            Assert.AreEqual(tokens[45].Type, XnlTokenType.PropertyValue);
+            Assert.AreEqual(tokens[45].Content, "salut");
+            Assert.AreEqual(tokens[46].Type, XnlTokenType.PropertyValueEnd);
+            Assert.AreEqual(tokens[47].Type, XnlTokenType.PropertiesEnd);
+            Assert.AreEqual(tokens[48].Type, XnlTokenType.ChildrenEnd);
         }
     }
 }
