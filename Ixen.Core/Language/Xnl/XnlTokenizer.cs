@@ -1,19 +1,15 @@
 ﻿using Ixen.Core.Language.Base;
-using Ixen.Core.Language.Xns;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace Ixen.Core.Language.Xnl
 {
-    internal class XnlTokenizer : BaseTokenizer
+    internal class XnlTokenizer : BaseTokenizer<XnlToken, XnlTokenType, XnlTokenErrorType>
     {
-        private List<XnlToken> _tokens;
-
         private bool _expectElementName = false;
 
-        private bool _expectElementType = false;
+        private bool _expectElementTypeName = false;
         private bool _expectElementTypeBegin = false;
         private bool _expectElementTypeEnd = false;
 
@@ -29,8 +25,7 @@ namespace Ixen.Core.Language.Xnl
         private bool _expectPropertyValueEnd = false;
         private bool _expectPropertyValue = false;
 
-        private bool _identifier;
-        private bool _content;
+        private int _contentLevel;
 
         public XnlTokenizer(string source)
             : base(source)
@@ -40,15 +35,12 @@ namespace Ixen.Core.Language.Xnl
             : base(source)
         { }
 
-        public IEnumerable<XnlToken> GetTokens() => _tokens;
-        public IEnumerable<XnlToken> GetTokens(int indexFrom, int indexTo) => _tokens.Where(t => t.Index >= indexFrom && t.Index <= indexTo);
-
-        public List<XnlToken> Tokenize()
+        public override List<XnlToken> Tokenize()
         {
             _tokens = new();
 
             ResetPosition();
-            ResetStatesFlags(XnlTokenType.None);
+            SetStatesFlags(XnlTokenType.None);
             HasErrors = false;
 
             try
@@ -63,257 +55,105 @@ namespace Ixen.Core.Language.Xnl
             return _tokens;
         }
 
-        private void AddToken(XnlTokenType type, string content, bool previewChar)
-            => _tokens.Add(new XnlToken
-            {
-                Index = (previewChar ? _nextIndex : _index) - content.Length + 1,
-                Content = content,
-                Type = type,
-                ErrorType = XnlTokenErrorType.None
-            });
-
-        private void AddErrorToken(XnlTokenErrorType type, string content, bool previewChar, string message = null)
-            => _tokens.Add(new XnlToken
-            {
-                Index = (previewChar ? _nextIndex : _index) - content.Length + 1,
-                Content = content,
-                Message = message,
-                Type = XnlTokenType.Error,
-                ErrorType = type
-            });
+        protected override XnlTokenType GetCommentType() => XnlTokenType.Comment;
 
         private void ReadTokens()
         {
-            char c;
-            //char c2;
-            var sb = new StringBuilder();
-
             _errorOccured = false;
 
-            while ((c = PeekChar()) != '\0' && !_errorOccured)
+            while (PeekChar() != '\0')
             {
-                if (_identifier)
+                if (_expectElementName && ReadElementName())
                 {
-                    if (char.IsLetterOrDigit(c) || c == '_')
-                    {
-                        sb.Append(c);
-                        MoveCursor();
-                        continue;
-                    }
-                    else
-                    {
-                        if (_expectElementName)
-                        {
-                            AddToken(XnlTokenType.ElementName, sb.ToString(), false);
-                            sb.Clear();
-                            ResetStatesFlags(XnlTokenType.ElementName);
-                            continue;
-                        }
-
-                        if (_expectElementType)
-                        {
-                            AddToken(XnlTokenType.ElementTypeName, sb.ToString(), false);
-                            sb.Clear();
-                            ResetStatesFlags(XnlTokenType.ElementTypeName);
-                            continue;
-                        }
-
-                        if (_expectPropertyName)
-                        {
-                            AddToken(XnlTokenType.PropertyName, sb.ToString(), false);
-                            sb.Clear();
-                            ResetStatesFlags(XnlTokenType.PropertyName);
-                            continue;
-                        }
-                    }
+                    SetStatesFlags(XnlTokenType.ElementName);
+                    continue;
                 }
 
-                if (_content)
+                if (_expectElementTypeBegin && ReadElementTypeBegin())
                 {
-                    if (c != '"')
-                    {
-                        sb.Append(c);
-                        MoveCursor();
-                        continue;
-                    }
-                    else
-                    {
-                        if (_expectPropertyValue)
-                        {
-                            AddToken(XnlTokenType.PropertyValue, sb.ToString(), false);
-                            sb.Clear();
-                            ResetStatesFlags(XnlTokenType.PropertyValue);
-                            continue;
-                        }
-                    }
+                    SetStatesFlags(XnlTokenType.ElementTypeBegin);
+                    continue;
                 }
 
-                switch (c)
+                if (_expectElementTypeEnd && ReadElementTypeEnd())
                 {
-                    case ' ':
-                    case '\t':
-                        MoveCursor();
-                        break;
-
-                    case '\r':
-                    case '\n':
-                        // TODO : error for non onelined contents
-                        MoveCursor();
-                        break;
-
-                    case ':':
-                        if (!_expectPropertyEqual)
-                        {
-                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, ":", true);
-                            MoveCursor();
-                            break;
-                        }
-
-                        AddToken(XnlTokenType.PropertyEqual, ":", true);
-                        ResetStatesFlags(XnlTokenType.PropertyEqual);
-                        MoveCursor();
-                        break;
-
-                    case '<':
-                        if (!_expectElementTypeBegin)
-                        {
-                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, "<", true);
-                            MoveCursor();
-                            break;
-                        }
-
-                        AddToken(XnlTokenType.ElementTypeBegin, "<", true);
-                        ResetStatesFlags(XnlTokenType.ElementTypeBegin);
-                        MoveCursor();
-                        break;
-
-                    case '>':
-                        if (!_expectElementTypeEnd)
-                        {
-                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, ">", true);
-                            MoveCursor();
-                            break;
-                        }
-
-                        AddToken(XnlTokenType.ElementTypeEnd, ">", true);
-                        ResetStatesFlags(XnlTokenType.ElementTypeEnd);
-                        MoveCursor();
-                        break;
-
-                    case '{':
-                        if (!_expectPropertiesBegin)
-                        {
-                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, "{", true);
-                            MoveCursor();
-                            break;
-                        }
-
-                        AddToken(XnlTokenType.PropertiesBegin, "{", true);
-                        ResetStatesFlags(XnlTokenType.PropertiesBegin);
-                        MoveCursor();
-                        break;
-
-                    case '}':
-                        if (!_expectPropertiesEnd)
-                        {
-                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, "}", true);
-                            MoveCursor();
-                            break;
-                        }
-
-                        AddToken(XnlTokenType.PropertiesEnd, "}", true);
-                        ResetStatesFlags(XnlTokenType.PropertiesEnd);
-                        MoveCursor();
-                        break;
-
-                    case '[':
-                        if (!_expectChildrenBegin)
-                        {
-                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, "[", true);
-                            MoveCursor();
-                            break;
-                        }
-
-                        AddToken(XnlTokenType.ChildrenBegin, "[", true);
-                        ResetStatesFlags(XnlTokenType.ChildrenBegin);
-                        MoveCursor();
-                        break;
-
-                    case ']':
-                        if (!_expectChildrenEnd)
-                        {
-                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, "]", true);
-                            MoveCursor();
-                            break;
-                        }
-
-                        AddToken(XnlTokenType.ChildrenEnd, "]", true);
-                        ResetStatesFlags(XnlTokenType.ChildrenEnd);
-                        MoveCursor();
-                        break;
-
-                    case '"':
-                        if (!_expectPropertyValueBegin && !_expectPropertyValueEnd)
-                        {
-                            AddErrorToken(XnlTokenErrorType.UnexpectedChar, "\"", true);
-                            MoveCursor();
-                            break;
-                        }
-
-                        if (_expectPropertyValueBegin)
-                        {
-                            AddToken(XnlTokenType.PropertyValueBegin, "\"", true);
-                            ResetStatesFlags(XnlTokenType.PropertyValueBegin);
-                        }
-                        else if (_expectPropertyValueEnd)
-                        {
-                            AddToken(XnlTokenType.PropertyValueEnd, "\"", true);
-                            ResetStatesFlags(XnlTokenType.PropertyValueEnd);
-                        }
-                        
-                        MoveCursor();
-                        break;
-
-                    default:
-                        if (_expectElementName || _expectElementType || _expectPropertyName)
-                        {
-                            if (_identifier)
-                            {
-                                GenerateError(sb);
-                                break;
-                            }
-
-                            _identifier = true;
-                            continue;
-                        }
-
-                        if (_expectPropertyValue)
-                        {
-                            if (_content)
-                            {
-                                GenerateError(sb);
-                                break;
-                            }
-
-                            _content = true;
-                            continue;
-                        }
-
-                        GenerateError(sb);
-                        break;
+                    SetStatesFlags(XnlTokenType.ElementTypeEnd);
+                    continue;
                 }
+
+                if (_expectElementTypeName && ReadElementTypeName())
+                {
+                    SetStatesFlags(XnlTokenType.ElementTypeName);
+                    continue;
+                }
+
+                if (_expectChildrenBegin && ReadChildrenBegin())
+                {
+                    SetStatesFlags(XnlTokenType.ChildrenBegin);
+                    continue;
+                }
+
+                if (_expectChildrenEnd && ReadChildrenEnd())
+                {
+                    SetStatesFlags(XnlTokenType.ChildrenEnd);
+                    continue;
+                }
+
+                if (_expectPropertiesBegin && ReadPropertiesBegin())
+                {
+                    SetStatesFlags(XnlTokenType.PropertiesBegin);
+                    continue;
+                }
+
+                if (_expectPropertiesEnd && ReadPropertiesEnd())
+                {
+                    SetStatesFlags(XnlTokenType.PropertiesEnd);
+                    continue;
+                }
+
+                if (_expectPropertyName && ReadPropertyName())
+                {
+                    SetStatesFlags(XnlTokenType.PropertyName);
+                    continue;
+                }
+
+                if (_expectPropertyEqual && ReadPropertyEqual())
+                {
+                    SetStatesFlags(XnlTokenType.PropertyEqual);
+                    continue;
+                }
+
+                if (_expectPropertyValueBegin && ReadPropertyValueBegin())
+                {
+                    SetStatesFlags(XnlTokenType.PropertyValueBegin);
+                    continue;
+                }
+
+                if (_expectPropertyValueEnd && ReadPropertyValueEnd())
+                {
+                    SetStatesFlags(XnlTokenType.PropertyValueEnd);
+                    continue;
+                }
+
+                if (_expectPropertyValue && ReadPropertyValue())
+                {
+                    SetStatesFlags(XnlTokenType.PropertyValue);
+                    continue;
+                }
+
+                if (ReadComment())
+                {
+                    continue;
+                }
+
+                break;
             }
         }
 
-        private void GenerateError(StringBuilder sb)
-        {
-            _errorOccured = true;
-        }
-
-        private void ResetStatesFlags(XnlTokenType lastType)
+        private void ResetStatesFlags()
         {
             _expectElementName = false;
-            _expectElementType = false;
+            _expectElementTypeName = false;
             _expectElementTypeBegin = false;
             _expectElementTypeEnd = false;
             _expectChildrenBegin = false;
@@ -325,9 +165,11 @@ namespace Ixen.Core.Language.Xnl
             _expectPropertyValueBegin = false;
             _expectPropertyValueEnd = false;
             _expectPropertyValue = false;
+        }
 
-            _identifier = false;
-            _content = false;
+        private void SetStatesFlags(XnlTokenType lastType)
+        {
+            ResetStatesFlags();
 
             switch (lastType)
             {
@@ -343,7 +185,7 @@ namespace Ixen.Core.Language.Xnl
                     break;
 
                 case XnlTokenType.ElementTypeBegin:
-                    _expectElementType = true;
+                    _expectElementTypeName = true;
                     break;
 
                 case XnlTokenType.ElementTypeName:
@@ -393,15 +235,177 @@ namespace Ixen.Core.Language.Xnl
                     _expectElementTypeBegin = true;
                     _expectPropertiesBegin = true;
                     _expectChildrenEnd = true;
+                    _contentLevel++;
                     break;
 
                 case XnlTokenType.ChildrenEnd:
+                    _contentLevel--;
                     _expectElementName = true;
                     _expectElementTypeBegin = true;
                     _expectPropertiesBegin = true;
                     _expectChildrenEnd = true;
                     break;
             }
+        }
+
+        private bool ReadElementTypeBegin() => ReadCharToken(XnlTokenType.ElementTypeBegin, '<');
+        private bool ReadElementTypeEnd() => ReadCharToken(XnlTokenType.ElementTypeEnd, '>');
+        private bool ReadPropertiesBegin() => ReadCharToken(XnlTokenType.PropertiesBegin, '{');
+        private bool ReadPropertiesEnd() => ReadCharToken(XnlTokenType.PropertiesEnd, '}');
+        private bool ReadChildrenBegin() => ReadCharToken(XnlTokenType.ChildrenBegin, '[');
+        private bool ReadChildrenEnd() => ReadCharToken(XnlTokenType.ChildrenEnd, ']');
+        private bool ReadPropertyValueBegin() => ReadCharToken(XnlTokenType.PropertyValueBegin, '"');
+        private bool ReadPropertyValueEnd() => ReadCharToken(XnlTokenType.PropertyValueEnd, '"');
+        private bool ReadPropertyEqual() => ReadCharToken(XnlTokenType.PropertyEqual, ':');
+
+        private bool ReadElementName()
+        {
+            int index = _index;
+            char c = PeekNonSpaceChar();
+
+            if (char.IsLetter(c) || c == '_')
+            {
+                int tokenIndex = _peekIndex;
+                var sb = new StringBuilder();
+                sb.Append(c);
+                MoveCursor();
+
+                while (true)
+                {
+                    c = PeekChar();
+                    if (char.IsLetterOrDigit(c) || c == '_')
+                    {
+                        sb.Append(c);
+                        MoveCursor();
+                        continue;
+                    }
+
+                    break;
+                }
+
+                c = PeekNonSpaceChar();
+
+                if ((c == '{' || c == '<') && (sb.Length >= 1))
+                {
+                    AddToken(tokenIndex, XnlTokenType.ElementName, sb.ToString());
+                    return true;
+                }
+            }
+
+            _index = index;
+            return false;
+        }
+
+        private bool ReadElementTypeName()
+        {
+            int index = _index;
+            char c = PeekNonSpaceChar();
+
+            if (char.IsLetter(c))
+            {
+                int tokenIndex = _peekIndex;
+                var sb = new StringBuilder();
+                sb.Append(c);
+                MoveCursor();
+
+                while (true)
+                {
+                    c = PeekChar();
+                    if (char.IsLetterOrDigit(c))
+                    {
+                        sb.Append(c);
+                        MoveCursor();
+                        continue;
+                    }
+
+                    break;
+                }
+
+                c = PeekNonSpaceChar();
+
+                if (c == '>' && sb.Length >= 1)
+                {
+                    AddToken(tokenIndex, XnlTokenType.ElementTypeName, sb.ToString());
+                    return true;
+                }
+            }
+
+            _index = index;
+            return false;
+        }
+
+        private bool ReadPropertyName()
+        {
+            int index = _index;
+            char c = PeekNonSpaceChar();
+
+            if (char.IsLetter(c))
+            {
+                int tokenIndex = _peekIndex;
+                var sb = new StringBuilder();
+                sb.Append(c);
+                MoveCursor();
+
+                while (true)
+                {
+                    c = PeekChar();
+                    if (char.IsLetter(c) || c == '-')
+                    {
+                        sb.Append(c);
+                        MoveCursor();
+                        continue;
+                    }
+
+                    break;
+                }
+
+                c = PeekNonSpaceChar();
+
+                if (c == ':')
+                {
+                    AddToken(tokenIndex, XnlTokenType.PropertyName, sb.ToString());
+                    return true;
+                }
+            }
+
+            _index = index;
+            return false;
+        }
+
+        private bool ReadPropertyValue()
+        {
+            int index = _index;
+            char c = PeekNonSpaceChar();
+
+            if (c != '"')
+            {
+                int tokenIndex = _peekIndex;
+                var sb = new StringBuilder();
+                sb.Append(c);
+                MoveCursor();
+
+                while (true)
+                {
+                    c = PeekChar();
+                    if (c != '"')
+                    {
+                        sb.Append(c);
+                        MoveCursor();
+                        continue;
+                    }
+
+                    break;
+                }
+
+                if (sb.Length >= 1)
+                {
+                    AddToken(tokenIndex, XnlTokenType.PropertyValue, sb.ToString());
+                    return true;
+                }
+            }
+
+            _index = index;
+            return false;
         }
     }
 }

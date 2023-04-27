@@ -13,6 +13,8 @@
         StyleValue,
 
         StyleSizeValue,
-        StyleColorValue
+        StyleColorValue,
+
+        Comment
     }
 }

@@ -21,5 +21,7 @@
 
         ChildrenBegin,
         ChildrenEnd,
+
+        Comment
     }
 }

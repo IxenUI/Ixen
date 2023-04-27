@@ -1,26 +1,22 @@
 ﻿using Ixen.Core.Language.Base;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace Ixen.Core.Language.Xns
 {
-    internal class XnsTokenizer : BaseTokenizer
+    internal class XnsTokenizer : BaseTokenizer<XnsToken, XnsTokenType, XnsTokenErrorType>
     {
-        private List<XnsToken> _tokens;
-
-        private bool _exceptClassName = false;
+        private bool _expectClassName = false;
 
         private bool _expectContentBegin = false;
         private bool _expectContentEnd = false;
 
         private bool _expectStyleName = false;
-        private bool _expectStyleEqual = false;
+        private bool _expectStyleEquals = false;
         private bool _expectStyleValue = false;
 
-        private bool _identifier;
-        private bool _content;
+        private int _contentLevel;
 
         public XnsTokenizer(string source)
             : base(source)
@@ -30,15 +26,13 @@ namespace Ixen.Core.Language.Xns
             : base(source)
         { }
 
-        public IEnumerable<XnsToken> GetTokens() => _tokens;
-        public IEnumerable<XnsToken> GetTokens(int indexFrom, int indexTo) => _tokens.Where(t => t.Index >= indexFrom && t.Index <= indexTo);
 
-        public List<XnsToken> Tokenize()
+        public override List<XnsToken> Tokenize()
         {
             _tokens = new();
 
             ResetPosition();
-            ResetStatesFlags(XnsTokenType.None);
+            SetStatesFlags(XnsTokenType.None);
             HasErrors = false;
 
             try
@@ -53,197 +47,75 @@ namespace Ixen.Core.Language.Xns
             return _tokens;
         }
 
-        private void AddToken(XnsTokenType type, string content, bool previewChar)
-            => _tokens.Add(new XnsToken
-            {
-                Index = _index - content.Length + 1,
-                Content = content,
-                Type = type,
-                ErrorType = XnsTokenErrorType.None
-            });
-
-        private void AddErrorToken(XnsTokenErrorType type, string content, bool previewChar, string message = null)
-            => _tokens.Add(new XnsToken
-            {
-                Index = _index - content.Length + 1,
-                Content = content,
-                Message = message,
-                Type = XnsTokenType.Error,
-                ErrorType = type
-            });
-
         private void ReadTokens()
         {
-            char c;
-            char c2;
-            var sb = new StringBuilder();
-
             _errorOccured = false;
 
-            while ((c = PeekChar()) != '\0' && !_errorOccured)
+            while (PeekChar() != '\0')
             {
-                if (_identifier)
+                if (_expectClassName && ReadClassName())
                 {
-                    if (char.IsLetterOrDigit(c) || _exceptClassName && (c == '_' || c == '-' || c == '.' || c == '#'))
-                    {
-                        sb.Append(c);
-                        MoveCursor();
-                        continue;
-                    }
-                    else
-                    {
-                        c2 = PeekNonSpaceChar();
-                        if (_exceptClassName && c2 == '{')
-                        {
-                            AddToken(XnsTokenType.ClassName, sb.ToString(), false);
-                            sb.Clear();
-                            ResetStatesFlags(XnsTokenType.ClassName);
-                            continue;
-                        }
-
-                        if (_expectStyleName && c2 == ':')
-                        {
-                            AddToken(XnsTokenType.StyleName, sb.ToString(), false);
-                            sb.Clear();
-                            ResetStatesFlags(XnsTokenType.StyleName);
-                            continue;
-                        }
-
-                        GenerateError(sb);
-                    }
+                    SetStatesFlags(XnsTokenType.ClassName);
+                    continue;
                 }
 
-                if (_content)
+                if (_expectContentBegin && ReadContentBegin())
                 {
-                    if (c != '\r' && c != '\n')
-                    {
-                        sb.Append(c);
-                        MoveCursor();
-                        continue;
-                    }
-                    else
-                    {
-                        if (_expectStyleValue)
-                        {
-                            AddToken(XnsTokenType.StyleValue, sb.ToString(), false);
-                            ResetStatesFlags(XnsTokenType.StyleValue);
-                            sb.Clear();
-
-                            continue;
-                        }
-
-                        GenerateError(sb);
-                    }
+                    SetStatesFlags(XnsTokenType.BeginClassContent);
+                    continue;
                 }
 
-                switch (c)
+                if (_expectContentEnd && ReadContentEnd())
                 {
-                    case ' ':
-                    case '\t':
-                        MoveCursor();
-                        break;
-
-                    case '\r':
-                    case '\n':
-                        if (_expectStyleEqual || _expectStyleValue)
-                        {
-                            GenerateError(sb);
-                            break;
-                        }
-                        MoveCursor();
-                        break;
-
-                    case ':':
-                        if (!_expectStyleEqual)
-                        {
-                            AddErrorToken(XnsTokenErrorType.UnexpectedChar, ":", true);
-                            MoveCursor();
-                            break;
-                        }
-
-                        AddToken(XnsTokenType.StyleEquals, ":", true);
-                        ResetStatesFlags(XnsTokenType.StyleEquals);
-                        MoveCursor();
-                        break;
-
-                    case '{':
-                        if (!_expectContentBegin)
-                        {
-                            AddErrorToken(XnsTokenErrorType.UnexpectedChar, "{", true);
-                            MoveCursor();
-                            break;
-                        }
-
-                        AddToken(XnsTokenType.BeginClassContent, "{", true);
-                        ResetStatesFlags(XnsTokenType.BeginClassContent);
-                        MoveCursor();
-                        break;
-
-                    case '}':
-                        if (!_expectContentEnd)
-                        {
-                            AddErrorToken(XnsTokenErrorType.UnexpectedChar, "}", true);
-                            MoveCursor();
-                            break;
-                        }
-
-                        AddToken(XnsTokenType.EndClassContent, "}", true);
-                        ResetStatesFlags(XnsTokenType.EndClassContent);
-                        MoveCursor();
-                        break;
-
-                    default:
-                        if (_exceptClassName || _expectStyleName)
-                        {
-                            if (_identifier)
-                            {
-                                GenerateError(sb);
-                                break;
-                            }
-
-                            _identifier = true;
-                            break;
-                        }
-
-                        if (_expectStyleValue)
-                        {
-                            if (_content)
-                            {
-                                GenerateError(sb);
-                                break;
-                            }
-
-                            _content = true;
-                            break;
-                        }
-
-                        GenerateError(sb);
-                        break;
+                    SetStatesFlags(XnsTokenType.EndClassContent);
+                    continue;
                 }
+
+                if (_expectStyleName && ReadStyleName())
+                {
+                    SetStatesFlags(XnsTokenType.StyleName);
+                    continue;
+                }
+
+                if (_expectStyleEquals && ReadStyleEquals())
+                {
+                    SetStatesFlags(XnsTokenType.StyleEquals);
+                    continue;
+                }
+
+                if (_expectStyleValue && ReadStyleValue())
+                {
+                    SetStatesFlags(XnsTokenType.StyleValue);
+                    continue;
+                }
+
+                if (ReadComment())
+                {
+                    continue;
+                }
+
+                break;
             }
         }
 
-        private void GenerateError(StringBuilder sb)
+        private void ResetStatesFlags()
         {
-            _errorOccured = true;
-        }
-
-        private void ResetStatesFlags(XnsTokenType lastType)
-        {
-            _exceptClassName = false;
+            _expectClassName = false;
             _expectContentBegin = false;
             _expectContentEnd = false;
             _expectStyleName = false;
-            _expectStyleEqual = false;
+            _expectStyleEquals = false;
             _expectStyleValue = false;
+        }
 
-            _identifier = false;
-            _content = false;
+        private void SetStatesFlags(XnsTokenType lastType)
+        {
+            ResetStatesFlags();
 
             switch (lastType)   
             {
                 case XnsTokenType.None:
-                    _exceptClassName = true;
+                    _expectClassName = true;
                     break;
 
                 case XnsTokenType.ClassName:
@@ -251,17 +123,26 @@ namespace Ixen.Core.Language.Xns
                     break;
 
                 case XnsTokenType.BeginClassContent:
+                    _expectClassName = true;
                     _expectStyleName = true;
                     _expectContentEnd = true;
+                    _contentLevel++;
                     break;
 
                 case XnsTokenType.EndClassContent:
-                    _exceptClassName = true;
-                    _expectContentEnd = true;
+                    _contentLevel--;
+                    _expectClassName = true;
+                    
+                    if (_contentLevel > 0)
+                    {
+                        _expectStyleName = true;
+                        _expectContentEnd = true;
+                    }
+                    
                     break;
 
                 case XnsTokenType.StyleName:
-                    _expectStyleEqual = true;
+                    _expectStyleEquals = true;
                     break;
 
                 case XnsTokenType.StyleEquals:
@@ -270,10 +151,127 @@ namespace Ixen.Core.Language.Xns
 
                 case XnsTokenType.StyleValue:
                     _expectStyleName = true;
-                    _exceptClassName = true;
+                    _expectClassName = true;
                     _expectContentEnd = true;
                     break;
             }
         }
+
+        private bool ReadClassName()
+        {
+            int index = _index;
+            char c = PeekNonSpaceChar();
+
+            if (char.IsLetter(c) || c == '.' || c == '#' || c == '_')
+            {
+                int tokenIndex = _peekIndex;
+                var sb = new StringBuilder();
+                sb.Append(c);
+                MoveCursor();
+
+                while (true)
+                {
+                    c = PeekChar();
+                    if (char.IsLetterOrDigit(c) || c == '_' ||  c == '-')
+                    {
+                        sb.Append(c);
+                        MoveCursor();
+                        continue;
+                    }
+
+                    break;
+                }
+
+                c = PeekNonSpaceChar();
+
+                if (c == '{' && (sb.Length >= 1 || char.IsLetter(sb[0])))
+                {
+                    AddToken(tokenIndex, XnsTokenType.ClassName, sb.ToString());
+                    return true;
+                }
+            }
+
+            _index = index;
+            return false;
+        }
+
+        private bool ReadStyleName()
+        {
+            int index = _index;
+            char c = PeekNonSpaceChar();
+
+            if (char.IsLetter(c))
+            {
+                int tokenIndex = _peekIndex;
+                var sb = new StringBuilder();
+                sb.Append(c);
+                MoveCursor();
+
+                while (true)
+                {
+                    c = PeekChar();
+                    if (char.IsLetter(c) || c == '-')
+                    {
+                        sb.Append(c);
+                        MoveCursor();
+                        continue;
+                    }
+
+                    break;
+                }
+
+                c = PeekNonSpaceChar();
+
+                if (c == ':')
+                {
+                    AddToken(tokenIndex, XnsTokenType.StyleName, sb.ToString());
+                    return true;
+                }
+            }
+
+            _index = index;
+            return false;
+        }
+
+        private bool ReadStyleValue()
+        {
+            int index = _index;
+            char c = PeekNonSpaceChar();
+
+            if (char.IsLetterOrDigit(c) || c == '#')
+            {
+                int tokenIndex = _peekIndex;
+                var sb = new StringBuilder();
+                sb.Append(c);
+                MoveCursor();
+
+                while (true)
+                {
+                    c = PeekChar();
+                    if (char.IsLetterOrDigit(c) || c == '%' || c == '*' || c == ' ' || c == '\t')
+                    {
+                        sb.Append(c);
+                        MoveCursor();
+                        continue;
+                    }
+
+                    break;
+                }
+
+                if (sb.Length > 1)
+                {
+                    AddToken(tokenIndex, XnsTokenType.StyleValue, sb.ToString());
+                    return true;
+                }
+            }
+
+            _index = index;
+            return false;
+        }
+
+        protected override XnsTokenType GetCommentType() => XnsTokenType.Comment;
+        private bool ReadStyleEquals() => ReadCharToken(XnsTokenType.StyleEquals, ':');
+        private bool ReadContentBegin() => ReadCharToken(XnsTokenType.BeginClassContent, '{');
+        private bool ReadContentEnd() => ReadCharToken(XnsTokenType.EndClassContent, '}');
     }
 }

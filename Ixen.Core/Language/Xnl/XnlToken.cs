@@ -1,12 +1,11 @@
-﻿namespace Ixen.Core.Language.Xnl
+﻿using Ixen.Core.Language.Base;
+
+namespace Ixen.Core.Language.Xnl
 {
-    internal class XnlToken
+    internal class XnlToken : BaseToken<XnlTokenType, XnlTokenErrorType>
     {
-        public int Index { get; set; }
-        public XnlTokenType Type { get; set; }
-        public bool IsError => Type == XnlTokenType.Error;
-        public string Content { get; set; }
-        public string Message { get; set; }
-        public XnlTokenErrorType ErrorType { get; set; }
+        public override bool IsError => Type == XnlTokenType.Error;
+        public override XnlTokenType Type { get; set; } = XnlTokenType.None;
+        public override XnlTokenErrorType ErrorType { get; set; } = XnlTokenErrorType.None;
     }
 }
