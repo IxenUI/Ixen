@@ -14,6 +14,10 @@
     <None Remove="Layout\Margin\MarginLayoutTest2View.xnl" />
     <None Remove="Layout\Padding\PaddingLayoutTest1Styles.xns" />
     <None Remove="Layout\Padding\PaddingLayoutTest1View.xnl" />
+    <None Remove="Layout\Row\RowLayoutTest1Styles.xns" />
+    <None Remove="Layout\Row\RowLayoutTest1View.xnl" />
+    <None Remove="Layout\Row\RowLayoutTest2Styles.xns" />
+    <None Remove="Layout\Row\RowLayoutTest2View.xnl" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,6 +27,10 @@
     <AdditionalFiles Include="Layout\Margin\MarginLayoutTest1View.xnl" />
     <AdditionalFiles Include="Layout\Padding\PaddingLayoutTest1Styles.xns" />
     <AdditionalFiles Include="Layout\Padding\PaddingLayoutTest1View.xnl" />
+    <AdditionalFiles Include="Layout\Row\RowLayoutTest2View.xnl" />
+    <AdditionalFiles Include="Layout\Row\RowLayoutTest2Styles.xns" />
+    <AdditionalFiles Include="Layout\Row\RowLayoutTest1Styles.xns" />
+    <AdditionalFiles Include="Layout\Row\RowLayoutTest1View.xnl" />
   </ItemGroup>
 
   <ItemGroup>

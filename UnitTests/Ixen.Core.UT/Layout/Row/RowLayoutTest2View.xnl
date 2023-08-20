@@ -1,0 +1,8 @@
+﻿container_rltest2 {}
+[
+	mask_el {} [
+		el1 {}
+		el2 {}
+		el3 {}
+	]
+]

@@ -1,0 +1,10 @@
+﻿container_rltest1 {}
+[
+	el1 {}
+    el2 {} [
+		sel1 {}
+		sel2 {}
+	]
+	el3 {}
+	el4 {}
+]
