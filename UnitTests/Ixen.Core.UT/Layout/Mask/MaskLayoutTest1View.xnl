@@ -1,5 +1,4 @@
-﻿container_rltest2 {}
-[
+﻿container_mask_test1 {} [
 	mask_el {} [
 		el1 {}
 		el2 {}

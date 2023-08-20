@@ -27,8 +27,8 @@
     <AdditionalFiles Include="Layout\Margin\MarginLayoutTest1View.xnl" />
     <AdditionalFiles Include="Layout\Padding\PaddingLayoutTest1Styles.xns" />
     <AdditionalFiles Include="Layout\Padding\PaddingLayoutTest1View.xnl" />
-    <AdditionalFiles Include="Layout\Row\RowLayoutTest2View.xnl" />
-    <AdditionalFiles Include="Layout\Row\RowLayoutTest2Styles.xns" />
+    <AdditionalFiles Include="Layout\Mask\MaskLayoutTest1View.xnl" />
+    <AdditionalFiles Include="Layout\Mask\MaskLayoutTest1Styles.xns" />
     <AdditionalFiles Include="Layout\Row\RowLayoutTest1Styles.xns" />
     <AdditionalFiles Include="Layout\Row\RowLayoutTest1View.xnl" />
   </ItemGroup>
