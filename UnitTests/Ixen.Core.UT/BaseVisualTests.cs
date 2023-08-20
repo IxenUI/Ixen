@@ -10,7 +10,7 @@ namespace Ixen.Core.UT
 {
     public abstract class BaseVisualTests
     {
-        private string _outputRendersDir = Path.Combine(Environment.CurrentDirectory, "RenderResults");
+        private string _outputRendersDir = Path.Combine(Environment.CurrentDirectory, "_RenderResults");
         private static MD5 _md5 = MD5.Create();
 
         public BaseVisualTests()
@@ -31,6 +31,7 @@ namespace Ixen.Core.UT
 
             string fileExpectedPath = Path.Combine(_outputRendersDir, $"{testMethodName}_EXPECTED.png");
             string fileErrorPath = Path.Combine(_outputRendersDir, $"{testMethodName}_NOK.png");
+
             if (expectedHash == hash)
             {
                 File.Delete(fileErrorPath);
@@ -58,7 +59,7 @@ namespace Ixen.Core.UT
                 }
             }
             catch
-            { }
+            {}
         }
     }
 }

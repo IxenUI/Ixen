@@ -5,7 +5,8 @@ namespace Ixen.Core.UT.StyleScoping
 {
     public class StyleScopingTests : StyleSheet
     {
-        public StyleScopingTests() {
+        public StyleScopingTests()
+        {
             AddClass(new StyleClass(StyleClassTarget.ClassName, null, null, "testGlobalClass", null));
             AddClass(new StyleClass(StyleClassTarget.ClassName, null, "container", "testScopedGlobalClass", null));
             AddClass(new StyleClass(StyleClassTarget.ClassName, "StyleSheet1", null, "testSheetScopedClass", null));
