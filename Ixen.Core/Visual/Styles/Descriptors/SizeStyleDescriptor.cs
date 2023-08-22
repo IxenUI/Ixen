@@ -8,7 +8,7 @@
 
     public enum SizeUnit
     {
-        Undefined,
+        Unset, 
         Pixels,
         Percents,
         Weight
@@ -18,7 +18,7 @@
     {
         internal override string Identifier => StyleIdentifier.Size;
 
-        public SizeUnit Unit { get; set; } = SizeUnit.Pixels;
-        public float Value { get; set; } = 0;
+        public SizeUnit Unit { get; set; } = SizeUnit.Unset; // by default, is equivalent to Weight, but does not override inherited value
+        public float Value { get; set; } = 1;
     }
 }
