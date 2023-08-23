@@ -6,6 +6,10 @@
         private float _y;
         private float _width;
         private float _height;
+        private float _renderWidth;
+        private float _renderHeight;
+
+        internal bool Renderable => _renderWidth > 0 || _renderHeight > 0;
 
         internal virtual float X
         {
@@ -31,10 +35,28 @@
             set => _height = value < 0 ? 0 : value;
         }
 
+        internal float RenderWidth
+        {
+            get => _renderWidth;
+            set => _renderWidth = value < 0 ? 0 : value;
+        }
+
+        internal float RenderHeight
+        {
+            get => _renderHeight;
+            set => _renderHeight = value < 0 ? 0 : value;
+        }
+
         internal virtual void SetSize(float width, float height)
         {
             Width = width;
             Height = height;
+        }
+
+        internal virtual void SetRenderSize(float width, float height)
+        {
+            RenderWidth = width;
+            RenderHeight = height;
         }
 
         internal virtual void SetPosition(float x, float y)

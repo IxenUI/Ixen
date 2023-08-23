@@ -9,8 +9,13 @@ namespace Ixen.Core.Visual.Computers
         {
             float computedWidth;
             float computedHeight;
-            float remainingWidth = element.Width;
-            float remainingHeight = element.Height;
+            float remainingWidth = element.RenderWidth;
+            float remainingHeight = element.RenderHeight;
+
+            if (!element.Renderable)
+            {
+                return;
+            }
 
             var layoutStyle = element.StylesHandlers.Layout.Descriptor;
 
@@ -152,7 +157,6 @@ namespace Ixen.Core.Visual.Computers
         private float ComputeWidth(VisualElement element, VisualElement child, DimensionalElement container, float remainingWidth)
         {
             SizeStyleDescriptor sizeStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width);
-            MaskStyleDescriptor maskStyle = element.StylesHandlers.Mask.Descriptor;
             float width = 0;
 
             switch (sizeStyle.Unit)
@@ -170,7 +174,9 @@ namespace Ixen.Core.Visual.Computers
                     break;
             }
 
-            child.Width = maskStyle.Right ? Math.Min(width, remainingWidth) : width;
+            child.Width = width;
+            child.RenderWidth = Math.Max(0, Math.Min(child.ActualWidth, remainingWidth - child.MarginLeft));
+            
             return child.BoxWidth;
         }
 
@@ -182,6 +188,8 @@ namespace Ixen.Core.Visual.Computers
             {
                 float margin = ComputeHorizontalMargin(element, child, container);
                 child.Width = ((remainingWidth - margin) / element.TotalWidthWeight) * widthStyle.Value;
+                child.RenderWidth = Math.Max(0, Math.Min(child.ActualWidth, remainingWidth - child.MarginLeft));
+
                 return child.BoxWidth;
             }
 
@@ -245,7 +253,6 @@ namespace Ixen.Core.Visual.Computers
         private float ComputeHeight(VisualElement element, VisualElement child, DimensionalElement container, float remainingHeight)
         {
             SizeStyleDescriptor heightStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Height);
-            MaskStyleDescriptor maskStyle = element.StylesHandlers.Mask.Descriptor;
             float height = 0;
 
             switch (heightStyle.Unit)
@@ -263,7 +270,9 @@ namespace Ixen.Core.Visual.Computers
                     break;
             }
 
-            child.Height = maskStyle.Bottom ? Math.Min(height, remainingHeight) : height;
+            child.Height = height;
+            child.RenderHeight = Math.Max(0, Math.Min(child.ActualHeight, remainingHeight - child.MarginTop));
+
             return child.BoxHeight;
         }
 
@@ -275,6 +284,8 @@ namespace Ixen.Core.Visual.Computers
             {
                 float margin = ComputeVerticalMargin(element, child, container);
                 child.Height = ((remainingHeight - margin) / element.TotalHeightWeight) * heightStyle.Value;
+                child.RenderHeight = Math.Max(0, Math.Min(child.ActualHeight, remainingHeight - child.MarginTop));
+
                 return child.BoxHeight;
             }
 

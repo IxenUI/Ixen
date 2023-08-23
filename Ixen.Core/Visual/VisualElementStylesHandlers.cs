@@ -10,7 +10,6 @@ namespace Ixen.Core.Visual
         public HeightStyleHandler Height { get; set; } = new();
         public LayoutStyleHandler Layout { get; set; } = new();
         public MarginStyleHandler Margin { get; set; } = new();
-        public MaskStyleHandler Mask { get; set; } = new();
         public PaddingStyleHandler Padding { get; set; } = new();
         public RowTemplateStyleHandler RowTemplate { get; set; } = new();
         public WidthStyleHandler Width { get; set; } = new();

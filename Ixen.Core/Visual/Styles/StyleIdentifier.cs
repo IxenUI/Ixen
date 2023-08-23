@@ -17,7 +17,6 @@
         public const string Height = "height";
         public const string Layout = "layout";
         public const string Margin = "margin";
-        public const string Mask = "mask";
         public const string Padding = "padding";
         public const string RowIndex = "row-index";
         public const string RowTemplate = "row-template";

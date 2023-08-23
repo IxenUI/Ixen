@@ -87,7 +87,6 @@ namespace Ixen.Core.Visual.Computers
             element.StylesHandlers.Height = new HeightStyleHandler(element.Styles.Height);
             element.StylesHandlers.Layout = new LayoutStyleHandler(element.Styles.Layout);
             element.StylesHandlers.Margin = new MarginStyleHandler(element.Styles.Margin);
-            element.StylesHandlers.Mask = new MaskStyleHandler(element.Styles.Mask);
             element.StylesHandlers.Padding = new PaddingStyleHandler(element.Styles.Padding);
             element.StylesHandlers.Width = new WidthStyleHandler(element.Styles.Width);
         }
@@ -118,10 +117,6 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.Margin:
                     handlers.Margin = new MarginStyleHandler((MarginStyleDescriptor)style);
-                    break;
-
-                case StyleIdentifier.Mask:
-                    handlers.Mask = new MaskStyleHandler((MaskStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Padding:

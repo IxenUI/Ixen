@@ -115,9 +115,6 @@ namespace Ixen.Core.Language.Xns
                 case StyleIdentifier.Margin:
                     return new MarginStyleParser(xnsStyle.Value).Descriptor;
 
-                case StyleIdentifier.Mask:
-                    return new MaskStyleParser(xnsStyle.Value).Descriptor;
-
                 case StyleIdentifier.Padding:
                     return new PaddingStyleParser(xnsStyle.Value).Descriptor;
 
