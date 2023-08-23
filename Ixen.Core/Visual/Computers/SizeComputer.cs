@@ -166,7 +166,7 @@ namespace Ixen.Core.Visual.Computers
                 case SizeUnit.Percents:
                     ComputeHorizontalMargin(element, child, container);
                     ComputeHorizontalPadding(element, child, container);
-                    width = (container.Width / 100) * sizeStyle.Value;
+                    width = (element.Width / 100) * sizeStyle.Value;
                     break;
             }
 
@@ -259,7 +259,7 @@ namespace Ixen.Core.Visual.Computers
                 case SizeUnit.Percents:
                     ComputeVerticalMargin(element, child, container);
                     ComputeVerticalPadding(element, child, container);
-                    height = (container.Height / 100) * heightStyle.Value;
+                    height = (element.Height / 100) * heightStyle.Value;
                     break;
             }
 

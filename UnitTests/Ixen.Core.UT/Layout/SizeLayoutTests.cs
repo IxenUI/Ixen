@@ -36,6 +36,18 @@ namespace Ixen.Core.UT.Layout
         }
 
         [TestMethod]
+        public void TestPercentsSize()
+        {
+            var root = GetTestLayout
+            (
+                new WidthStyleDescriptor { Unit = SizeUnit.Percents, Value = 50 },
+                new HeightStyleDescriptor { Unit = SizeUnit.Percents, Value = 25 }
+            );
+
+            AssertVisual("af8445820e05e4923e2d1260a178ddff", root);
+        }
+
+        [TestMethod]
         public void TestWeightSize()
         {
             var root = GetTestLayout
