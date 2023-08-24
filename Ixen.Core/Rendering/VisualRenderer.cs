@@ -1,8 +1,10 @@
-﻿using Ixen.Core.Rendering;
+﻿using Ixen.Core.Visual;
+using SkiaSharp;
+using System;
 
-namespace Ixen.Core.Visual.Styles
+namespace Ixen.Core.Rendering
 {
-    internal class StyleRenderer
+    internal class VisualRenderer
     {
         internal void Render(VisualElement element, RendererContext context, ViewPort viewPort)
         {
@@ -14,13 +16,29 @@ namespace Ixen.Core.Visual.Styles
             }
         }
 
+        private DimensionalElement ComputeElementClip(VisualElement element)
+        {
+            DimensionalElement res = element;
+
+            while (element.Parent != null)
+            {
+                element = element.Parent;
+                res = res.Intersect(element);
+            }
+
+            return res;
+        }
+
         private void RenderElement(VisualElement element, RendererContext context)
         {
             VisualElementStylesHandlers styles = element.StylesHandlers;
-            if (styles == null || !element.Renderable)
+            if (styles == null)
             {
                 return;
             }
+
+            var clip = ComputeElementClip(element);
+            context.SetClip(clip.X, clip.Y, clip.Width, clip.Height);
 
             styles.Background?.Render(element, context);
             styles.Border?.Render(element, context);

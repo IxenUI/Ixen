@@ -2,7 +2,6 @@
 using Ixen.Core.Rendering;
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Computers;
-using Ixen.Core.Visual.Styles;
 using SkiaSharp;
 
 namespace Ixen.Core
@@ -16,7 +15,7 @@ namespace Ixen.Core
         private SizeComputer _sizeComputer = new();
         private LayoutComputer _layoutComputer = new();
         private RendererContext _rendererContext = new();
-        private StyleRenderer _styleRenderer = new();
+        private VisualRenderer _renderer = new();
 
         public IxenSurfaceInitOptions InitOptions { get; private set; }
         public string Title { get; set; }
@@ -47,7 +46,6 @@ namespace Ixen.Core
             if (Root != null)
             {
                 Root.SetSize(width, height);
-                Root.SetRenderSize(width, height);
 
                 _styleComputer.Compute(Root);
                 _sizeComputer.Compute(Root, Root);
@@ -62,7 +60,7 @@ namespace Ixen.Core
 
             if (Root != null)
             {
-                _styleRenderer.Render(Root, _rendererContext, _viewPort);
+                _renderer.Render(Root, _rendererContext, _viewPort);
             }
         }
 
