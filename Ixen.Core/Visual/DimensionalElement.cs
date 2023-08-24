@@ -1,4 +1,7 @@
-﻿namespace Ixen.Core.Visual
+﻿using SkiaSharp;
+using System;
+
+namespace Ixen.Core.Visual
 {
     public class DimensionalElement
     {
@@ -6,10 +9,6 @@
         private float _y;
         private float _width;
         private float _height;
-        private float _renderWidth;
-        private float _renderHeight;
-
-        internal bool Renderable => _renderWidth > 0 || _renderHeight > 0;
 
         internal virtual float X
         {
@@ -35,17 +34,11 @@
             set => _height = value < 0 ? 0 : value;
         }
 
-        internal float RenderWidth
-        {
-            get => _renderWidth;
-            set => _renderWidth = value < 0 ? 0 : value;
-        }
+        internal virtual float ActualWidth
+            => Width;
 
-        internal float RenderHeight
-        {
-            get => _renderHeight;
-            set => _renderHeight = value < 0 ? 0 : value;
-        }
+        internal virtual float ActualHeight
+            => Height;
 
         internal virtual void SetSize(float width, float height)
         {
@@ -53,16 +46,50 @@
             Height = height;
         }
 
-        internal virtual void SetRenderSize(float width, float height)
-        {
-            RenderWidth = width;
-            RenderHeight = height;
-        }
-
         internal virtual void SetPosition(float x, float y)
         {
             X = x;
             Y = y;
+        }
+
+        internal bool IsIntersect(DimensionalElement element)
+        {
+            if (X < element.X + element.ActualWidth
+                && X + ActualWidth > element.X
+                && Y < element.Y + element.ActualHeight)
+            {
+                return Y + ActualHeight > element.Y;
+            }
+
+            return false;
+        }
+
+        internal bool IsIntersectInclusive(DimensionalElement element)
+        {
+            if (X <= element.X + element.ActualWidth
+                && X + ActualWidth >= element.X
+                && Y <= element.Y + element.ActualHeight)
+            {
+                return Y + ActualHeight >= element.Y;
+            }
+
+            return false;
+        }
+
+        internal DimensionalElement Intersect(DimensionalElement element)
+        {
+            if (!IsIntersectInclusive(element))
+            {
+                return new DimensionalElement();
+            }
+
+            var res = new DimensionalElement();
+            res.X = Math.Max(X, element.X);
+            res.Y = Math.Max(Y, element.Y);
+            res.Width = Math.Min(X + ActualWidth, element.X + element.ActualWidth) - res.X;
+            res.Height = Math.Min(Y + ActualHeight, element.Y + element.ActualHeight) - res.Y;
+
+            return res;
         }
     }
 }

@@ -9,13 +9,8 @@ namespace Ixen.Core.Visual.Computers
         {
             float computedWidth;
             float computedHeight;
-            float remainingWidth = element.RenderWidth;
-            float remainingHeight = element.RenderHeight;
-
-            if (!element.Renderable)
-            {
-                return;
-            }
+            float remainingWidth = element.ActualWidth;
+            float remainingHeight = element.ActualHeight;
 
             var layoutStyle = element.StylesHandlers.Layout.Descriptor;
 
@@ -174,8 +169,7 @@ namespace Ixen.Core.Visual.Computers
                     break;
             }
 
-            child.Width = width;
-            child.RenderWidth = Math.Max(0, Math.Min(child.ActualWidth, remainingWidth - child.MarginLeft));
+            child.Width = Math.Max(0, Math.Min(width, remainingWidth));
             
             return child.BoxWidth;
         }
@@ -188,7 +182,6 @@ namespace Ixen.Core.Visual.Computers
             {
                 float margin = ComputeHorizontalMargin(element, child, container);
                 child.Width = ((remainingWidth - margin) / element.TotalWidthWeight) * widthStyle.Value;
-                child.RenderWidth = Math.Max(0, Math.Min(child.ActualWidth, remainingWidth - child.MarginLeft));
 
                 return child.BoxWidth;
             }
@@ -270,8 +263,7 @@ namespace Ixen.Core.Visual.Computers
                     break;
             }
 
-            child.Height = height;
-            child.RenderHeight = Math.Max(0, Math.Min(child.ActualHeight, remainingHeight - child.MarginTop));
+            child.Height = Math.Max(0, Math.Min(height, remainingHeight));
 
             return child.BoxHeight;
         }
@@ -284,7 +276,6 @@ namespace Ixen.Core.Visual.Computers
             {
                 float margin = ComputeVerticalMargin(element, child, container);
                 child.Height = ((remainingHeight - margin) / element.TotalHeightWeight) * heightStyle.Value;
-                child.RenderHeight = Math.Max(0, Math.Min(child.ActualHeight, remainingHeight - child.MarginTop));
 
                 return child.BoxHeight;
             }

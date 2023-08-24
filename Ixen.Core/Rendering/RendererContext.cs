@@ -4,11 +4,29 @@ namespace Ixen.Core.Rendering
 {
     public sealed class RendererContext
     {
+        private SKRect _clipRect = SKRect.Empty;
         internal SKCanvas SKCanvas { get; set; }
 
         public void Clear(Color color)
         {
             SKCanvas.Clear(color.SKColor);
+        }
+
+        public void SetClip(float x, float y, float width, float height)
+        {
+            var clipRect = new SKRect(x, y, x + width, y + height);
+
+            if (clipRect != _clipRect)
+            {
+                if (_clipRect != SKRect.Empty)
+                {
+                    SKCanvas.Restore();
+                }
+
+                SKCanvas.Save();
+                SKCanvas.ClipRect(clipRect, SKClipOperation.Intersect, false);
+                _clipRect = clipRect;
+            }
         }
 
         public void DrawInnerRectangle(float x, float y, float width, float height, Pen pen)

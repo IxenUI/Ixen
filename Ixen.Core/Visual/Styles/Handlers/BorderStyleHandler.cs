@@ -32,13 +32,13 @@ namespace Ixen.Core.Visual.Styles.Handlers
             switch (Descriptor.Type)
             {
                 case BorderType.Center:
-                    context.DrawRectangle(element.X, element.Y, element.RenderWidth, element.RenderHeight, _pen);
+                    context.DrawRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, _pen);
                     break;
                 case BorderType.Inner:
-                    context.DrawInnerRectangle(element.X, element.Y, element.RenderWidth, element.RenderHeight, _pen);
+                    context.DrawInnerRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, _pen);
                     break;
                 case BorderType.Outer:
-                    context.DrawOuterRectangle(element.X, element.Y, element.RenderWidth, element.RenderHeight, _pen);
+                    context.DrawOuterRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, _pen);
                     break;
             }
         }

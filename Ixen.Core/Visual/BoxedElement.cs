@@ -101,11 +101,11 @@
                 + PaddingTop + PaddingBottom
                 + BorderTop + BorderBottom;
 
-        internal float ActualWidth
+        internal override float ActualWidth
             => Width
                 + PaddingLeft + PaddingRight;
 
-        internal float ActualHeight
+        internal override float ActualHeight
             => Height
                 + PaddingTop + PaddingBottom;
 
