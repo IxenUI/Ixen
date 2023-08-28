@@ -14,6 +14,7 @@ namespace Ixen.Core
         private StyleComputer _styleComputer = new();
         private SizeComputer _sizeComputer = new();
         private LayoutComputer _layoutComputer = new();
+        private ClippingComputer _clippingComputer = new();
         private RendererContext _rendererContext = new();
         private VisualRenderer _renderer = new();
 
@@ -50,6 +51,7 @@ namespace Ixen.Core
                 _styleComputer.Compute(Root);
                 _sizeComputer.Compute(Root, Root);
                 _layoutComputer.Compute(Root);
+                _clippingComputer.Compute(Root);
             }
         }
 

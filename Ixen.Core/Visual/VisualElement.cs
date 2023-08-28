@@ -13,6 +13,7 @@ namespace Ixen.Core.Visual
         internal bool TotalWeightSet { get; set; } = false;
 
         internal VisualElement Parent { get; private set; }
+        internal DimensionalElement Clip { get; set; }
         internal bool IsRendered { get; private set; }
         internal bool MustRefreshStyles { get; set; } = true;
 

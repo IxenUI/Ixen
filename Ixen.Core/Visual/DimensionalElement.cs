@@ -1,5 +1,4 @@
-﻿using SkiaSharp;
-using System;
+﻿using System;
 
 namespace Ixen.Core.Visual
 {
@@ -9,6 +8,21 @@ namespace Ixen.Core.Visual
         private float _y;
         private float _width;
         private float _height;
+
+        internal DimensionalElement()
+        {}
+
+        internal DimensionalElement(DimensionalElement element)
+        {
+            X = element.X;
+            Y = element.Y;
+            Width = element.ActualWidth;
+            Height = element.ActualHeight;
+        }
+
+        internal bool IsVoid => ActualHeight == 0 || ActualWidth == 0;
+        internal bool IsInvalid => ActualHeight < 0 || ActualWidth < 0;
+        internal bool IsVoidOrInvalid => ActualHeight <= 0 || ActualWidth <= 0;
 
         internal virtual float X
         {

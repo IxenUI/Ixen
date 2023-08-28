@@ -1,6 +1,4 @@
 ﻿using Ixen.Core.Visual;
-using SkiaSharp;
-using System;
 
 namespace Ixen.Core.Rendering
 {
@@ -16,29 +14,15 @@ namespace Ixen.Core.Rendering
             }
         }
 
-        private DimensionalElement ComputeElementClip(VisualElement element)
-        {
-            DimensionalElement res = element;
-
-            while (element.Parent != null)
-            {
-                element = element.Parent;
-                res = res.Intersect(element);
-            }
-
-            return res;
-        }
-
         private void RenderElement(VisualElement element, RendererContext context)
         {
             VisualElementStylesHandlers styles = element.StylesHandlers;
-            if (styles == null)
+            if (styles == null || element.Clip.IsVoidOrInvalid)
             {
                 return;
             }
 
-            var clip = ComputeElementClip(element);
-            context.SetClip(clip.X, clip.Y, clip.Width, clip.Height);
+            context.SetClip(element.Clip.X, element.Clip.Y, element.Clip.Width, element.Clip.Height);
 
             styles.Background?.Render(element, context);
             styles.Border?.Render(element, context);
