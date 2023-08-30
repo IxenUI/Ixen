@@ -11,7 +11,8 @@
         Unset, 
         Pixels,
         Percents,
-        Weight
+        Weight,
+        Content
     }
 
     public class SizeStyleDescriptor : StyleDescriptor

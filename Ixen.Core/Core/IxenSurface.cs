@@ -47,6 +47,8 @@ namespace Ixen.Core
             if (Root != null)
             {
                 Root.SetSize(width, height);
+                Root.IsWidthComputed = true;
+                Root.IsHeightComputed = true;
 
                 _styleComputer.Compute(Root);
                 _sizeComputer.Compute(Root);

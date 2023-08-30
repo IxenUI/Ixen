@@ -10,7 +10,9 @@ namespace Ixen.Core.Visual
         
         internal float TotalWidthWeight { get; set; }
         internal float TotalHeightWeight { get; set; }
-        internal bool TotalWeightSet { get; set; } = false;
+        internal bool IsTotalWeightSet { get; set; } = false;
+        internal bool IsWidthComputed { get; set; } = false;
+        internal bool IsHeightComputed { get; set; } = false;
 
         internal VisualElement Parent { get; private set; }
         internal DimensionalElement Clip { get; set; }

@@ -40,6 +40,11 @@ namespace Ixen.Core.UT.StyleParser
             Assert.IsTrue(parser.IsValid);
             Assert.AreEqual(2, descriptor.Value);
             Assert.AreEqual(SizeUnit.Weight, descriptor.Unit);
+
+            parser = new SizeStyleParser("?");
+            descriptor = parser.Descriptor;
+            Assert.IsTrue(parser.IsValid);
+            Assert.AreEqual(SizeUnit.Content, descriptor.Unit);
         }
     }
 }

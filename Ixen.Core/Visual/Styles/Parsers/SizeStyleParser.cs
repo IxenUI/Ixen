@@ -5,7 +5,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
 {
     internal class SizeStyleParser : StyleParser
     {
-        private static Regex _regex = new Regex(@"([0-9]+(?:\.[0-9]+)?)(px|%|\*|)");
+        private static Regex _regex = new Regex(@"(([0-9]+(?:\.[0-9]+)?)(px|%|\*|)|\?)");
         public SizeStyleDescriptor Descriptor { get; } = new SizeStyleDescriptor();
 
         public SizeStyleParser(string content)
@@ -16,20 +16,26 @@ namespace Ixen.Core.Visual.Styles.Parsers
         {
             Match m = _regex.Match(_content);
 
-            if (!m.Success || m.Groups.Count < 2)
+            if (!m.Success || m.Groups.Count < 4)
             {
                 return false;
+            }
+
+            if (m.Groups[1].Value == "?")
+            {
+                Descriptor.Unit = SizeUnit.Content;
+                Descriptor.Value = 0;
+                return true;
             }
 
             float floatValue;
-            if (!float.TryParse(m.Groups[1].Value, out floatValue))
+            if (!float.TryParse(m.Groups[2].Value, out floatValue))
             {
                 return false;
             }
 
-            
             Descriptor.Value = floatValue;
-            switch(m.Groups[2].Value)
+            switch(m.Groups[3].Value)
             {
                 case "px":
                     Descriptor.Unit = SizeUnit.Pixels;

@@ -238,7 +238,7 @@ namespace Ixen.Core.Language.Xns
             int index = _index;
             char c = PeekNonSpaceChar();
 
-            if (char.IsLetterOrDigit(c) || c == '#')
+            if (char.IsLetterOrDigit(c) || c == '#' || c == '?')
             {
                 int tokenIndex = _peekIndex;
                 var sb = new StringBuilder();
@@ -258,7 +258,7 @@ namespace Ixen.Core.Language.Xns
                     break;
                 }
 
-                if (sb.Length > 1)
+                if (sb.Length >= 1)
                 {
                     AddToken(tokenIndex, XnsTokenType.StyleValue, sb.ToString());
                     return true;

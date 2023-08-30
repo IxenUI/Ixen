@@ -7,22 +7,25 @@ namespace Ixen.Core.Visual.Computers
     {
         internal void Compute(VisualElement element)
         {
+            var widthContainerElement = GetWidthContainerElement(element);
+            var heightContainerElement = GetHeightContainerElement(element);
+
             float computedWidth;
             float computedHeight;
-            float remainingWidth = element.ActualWidth;
-            float remainingHeight = element.ActualHeight;
+            float remainingWidth = widthContainerElement.ActualWidth;
+            float remainingHeight = heightContainerElement.ActualHeight;
 
             var layoutStyle = element.StylesHandlers.Layout.Descriptor;
 
-            if (!element.TotalWeightSet)
+            if (!element.IsTotalWeightSet)
             {
                 ComputeTotalWeight(element, layoutStyle);
             }
 
             foreach (VisualElement child in element.Children)
             {
-                computedWidth = ComputeWidth(element, child, remainingWidth);
-                computedHeight = ComputeHeight(element, child, remainingHeight);
+                computedWidth = ComputeWidth(widthContainerElement, child, remainingWidth);
+                computedHeight = ComputeHeight(heightContainerElement, child, remainingHeight);
 
                 if (layoutStyle != null)
                 {
@@ -51,12 +54,12 @@ namespace Ixen.Core.Visual.Computers
             {
                 if (element.TotalWidthWeight > 0)
                 {
-                    ComputeFilledWidth(element, child, remainingWidth);
+                    ComputeFilledWidth(widthContainerElement, child, remainingWidth);
                 }
 
                 if (element.TotalHeightWeight > 0)
                 {
-                    ComputeFilledHeight(element, child, remainingHeight);
+                    ComputeFilledHeight(heightContainerElement, child, remainingHeight);
                 }
 
                 Compute(child);
@@ -87,7 +90,7 @@ namespace Ixen.Core.Visual.Computers
                 ComputeTotalHeightWeight(element);
             }
             
-            element.TotalWeightSet = true;
+            element.IsTotalWeightSet = true;
         }
 
         private void ComputeTotalWidthWeight(VisualElement element)
@@ -146,10 +149,21 @@ namespace Ixen.Core.Visual.Computers
             return sizeStyle;
         }
 
+        private VisualElement GetWidthContainerElement(VisualElement element)
+        {
+            while (!element.IsWidthComputed)
+            {
+                element = element.Parent;
+            }
+
+            return element;
+        }
+
         private float ComputeWidth(VisualElement element, VisualElement child, float remainingWidth)
         {
             SizeStyleDescriptor sizeStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width);
             float width = 0;
+            bool computed = false;
 
             switch (sizeStyle.Unit)
             {
@@ -157,28 +171,32 @@ namespace Ixen.Core.Visual.Computers
                     ComputeHorizontalMargin(element, child);
                     ComputeHorizontalPadding(element, child);
                     width = sizeStyle.Value;
+                    computed = true;
                     break;
 
                 case SizeUnit.Percents:
                     ComputeHorizontalMargin(element, child);
                     ComputeHorizontalPadding(element, child);
                     width = (element.ActualWidth / 100) * sizeStyle.Value;
+                    computed = true;
                     break;
             }
 
             child.Width = Math.Max(0, Math.Min(width, remainingWidth));
-            
+            child.IsWidthComputed = computed;
+
             return child.BoxWidth;
         }
 
         private float ComputeFilledWidth(VisualElement element, VisualElement child, float remainingWidth)
         {
-            SizeStyleDescriptor widthStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width);
+            SizeStyleDescriptor sizeStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width);
 
-            if (widthStyle.Unit == SizeUnit.Weight || widthStyle.Unit == SizeUnit.Unset)
+            if (sizeStyle.Unit == SizeUnit.Weight || sizeStyle.Unit == SizeUnit.Unset)
             {
                 float margin = ComputeHorizontalMargin(element, child);
-                child.Width = ((remainingWidth - margin) / element.TotalWidthWeight) * widthStyle.Value;
+                child.Width = ((remainingWidth - margin) / element.TotalWidthWeight) * sizeStyle.Value;
+                child.IsWidthComputed = true;
 
                 return child.BoxWidth;
             }
@@ -240,27 +258,41 @@ namespace Ixen.Core.Visual.Computers
             return child.HorizontalPadding;
         }
 
+        private VisualElement GetHeightContainerElement(VisualElement element)
+        {
+            while (!element.IsHeightComputed)
+            {
+                element = element.Parent;
+            }
+
+            return element;
+        }
+
         private float ComputeHeight(VisualElement element, VisualElement child, float remainingHeight)
         {
-            SizeStyleDescriptor heightStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Height);
+            SizeStyleDescriptor sizeStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Height);
             float height = 0;
+            bool computed = false;
 
-            switch (heightStyle.Unit)
+            switch (sizeStyle.Unit)
             {
                 case SizeUnit.Pixels:
                     ComputeVerticalMargin(element, child);
                     ComputeVerticalPadding(element, child);
-                    height = heightStyle.Value;
+                    height = sizeStyle.Value;
+                    computed = true;
                     break;
 
                 case SizeUnit.Percents:
                     ComputeVerticalMargin(element, child);
                     ComputeVerticalPadding(element, child);
-                    height = (element.ActualHeight / 100) * heightStyle.Value;
+                    height = (element.ActualHeight / 100) * sizeStyle.Value;
+                    computed = true;
                     break;
             }
 
             child.Height = Math.Max(0, Math.Min(height, remainingHeight));
+            child.IsHeightComputed = computed;
 
             return child.BoxHeight;
         }
@@ -273,6 +305,7 @@ namespace Ixen.Core.Visual.Computers
             {
                 float margin = ComputeVerticalMargin(element, child);
                 child.Height = ((remainingHeight - margin) / element.TotalHeightWeight) * heightStyle.Value;
+                child.IsHeightComputed = true;
 
                 return child.BoxHeight;
             }
