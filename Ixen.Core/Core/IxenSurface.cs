@@ -49,7 +49,7 @@ namespace Ixen.Core
                 Root.SetSize(width, height);
 
                 _styleComputer.Compute(Root);
-                _sizeComputer.Compute(Root, Root);
+                _sizeComputer.Compute(Root);
                 _layoutComputer.Compute(Root);
                 _clippingComputer.Compute(Root);
             }
