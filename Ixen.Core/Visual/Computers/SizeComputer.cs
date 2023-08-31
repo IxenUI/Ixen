@@ -71,23 +71,15 @@ namespace Ixen.Core.Visual.Computers
             element.TotalWidthWeight = 0;
             element.TotalHeightWeight = 0;
 
-            if (layout != null)
+            if (layout.Type == LayoutType.Column)
             {
-                if (layout.Type == LayoutType.Column)
-                {
-                    ComputeTotalHeightWeight(element);
-                    element.TotalWidthWeight = 1;
-                }
-                else if (layout.Type == LayoutType.Row)
-                {
-                    ComputeTotalWidthWeight(element);
-                    element.TotalHeightWeight = 1;
-                }
+                ComputeTotalHeightWeight(element);
+                element.TotalWidthWeight = 1;
             }
-            else
+            else if (layout.Type == LayoutType.Row)
             {
                 ComputeTotalWidthWeight(element);
-                ComputeTotalHeightWeight(element);
+                element.TotalHeightWeight = 1;
             }
             
             element.IsTotalWeightSet = true;
