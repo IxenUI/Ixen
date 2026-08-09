@@ -6,7 +6,10 @@ namespace Ixen.Core.Visual
     {
         public BackgroundStyleDescriptor Background { get; set; } = new();
         public BorderStyleDescriptor Border { get; set; } = new();
+        public ColorStyleDescriptor Color { get; set; } = new();
         public ColumnTemplateStyleDescriptor ColumnTemplate { get; set; } = new();
+        public FontFamilyStyleDescriptor FontFamily { get; set; } = new();
+        public FontSizeStyleDescriptor FontSize { get; set; } = new();
         public HeightStyleDescriptor Height { get; set; } = new();
         public LayoutStyleDescriptor Layout { get; set; } = new();
         public MarginStyleDescriptor Margin { get; set; } = new();

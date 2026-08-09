@@ -1,0 +1,4 @@
+root {} [
+	title<VisualElement> { text: "Coucou" id: "the-title" class: "big" }
+	plain {}
+]

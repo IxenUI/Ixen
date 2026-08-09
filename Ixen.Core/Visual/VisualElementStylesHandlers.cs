@@ -4,14 +4,30 @@ namespace Ixen.Core.Visual
 {
     internal class VisualElementStylesHandlers
     {
-        public BackgroundStyleHandler Background { get; set; } = new();
-        public BorderStyleHandler Border { get; set; } = new();
-        public ColumnTemplateStyleHandler ColumnTemplate { get; set; } = new();
-        public HeightStyleHandler Height { get; set; } = new();
-        public LayoutStyleHandler Layout { get; set; } = new();
-        public MarginStyleHandler Margin { get; set; } = new();
-        public PaddingStyleHandler Padding { get; set; } = new();
-        public RowTemplateStyleHandler RowTemplate { get; set; } = new();
-        public WidthStyleHandler Width { get; set; } = new();
+        internal static readonly BackgroundStyleHandler DefaultBackground = new();
+        internal static readonly BorderStyleHandler DefaultBorder = new();
+        internal static readonly ColorStyleHandler DefaultColor = new();
+        internal static readonly ColumnTemplateStyleHandler DefaultColumnTemplate = new();
+        internal static readonly FontFamilyStyleHandler DefaultFontFamily = new();
+        internal static readonly FontSizeStyleHandler DefaultFontSize = new();
+        internal static readonly HeightStyleHandler DefaultHeight = new();
+        internal static readonly LayoutStyleHandler DefaultLayout = new();
+        internal static readonly MarginStyleHandler DefaultMargin = new();
+        internal static readonly PaddingStyleHandler DefaultPadding = new();
+        internal static readonly RowTemplateStyleHandler DefaultRowTemplate = new();
+        internal static readonly WidthStyleHandler DefaultWidth = new();
+
+        public BackgroundStyleHandler Background { get; set; } = DefaultBackground;
+        public BorderStyleHandler Border { get; set; } = DefaultBorder;
+        public ColorStyleHandler Color { get; set; } = DefaultColor;
+        public ColumnTemplateStyleHandler ColumnTemplate { get; set; } = DefaultColumnTemplate;
+        public FontFamilyStyleHandler FontFamily { get; set; } = DefaultFontFamily;
+        public FontSizeStyleHandler FontSize { get; set; } = DefaultFontSize;
+        public HeightStyleHandler Height { get; set; } = DefaultHeight;
+        public LayoutStyleHandler Layout { get; set; } = DefaultLayout;
+        public MarginStyleHandler Margin { get; set; } = DefaultMargin;
+        public PaddingStyleHandler Padding { get; set; } = DefaultPadding;
+        public RowTemplateStyleHandler RowTemplate { get; set; } = DefaultRowTemplate;
+        public WidthStyleHandler Width { get; set; } = DefaultWidth;
     }
 }

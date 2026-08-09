@@ -4,6 +4,8 @@ namespace Ixen.Core.Rendering
 {
     internal class VisualRenderer
     {
+        private TextRenderer _textRenderer = new();
+
         internal void Render(VisualElement element, RendererContext context, ViewPort viewPort)
         {
             RenderElement(element, context);
@@ -26,6 +28,7 @@ namespace Ixen.Core.Rendering
 
             styles.Background?.Render(element, context);
             styles.Border?.Render(element, context);
+            _textRenderer.Render(element, context);
         }
     }
 }

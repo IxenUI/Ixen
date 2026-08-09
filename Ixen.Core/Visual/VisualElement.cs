@@ -10,6 +10,24 @@ namespace Ixen.Core.Visual
         internal VisualElement Parent { get; private set; }
         internal DimensionalElement Clip { get; set; }
         internal bool MustRefreshStyles { get; set; } = true;
+        internal bool IsLayoutDirty { get; private set; } = true;
+
+        private string _text;
+
+        public string Text
+        {
+            get => _text;
+            set
+            {
+                if (_text == value)
+                {
+                    return;
+                }
+
+                _text = value;
+                InvalidateLayout();
+            }
+        }
 
         public string Id { get; set; }
         public string Name { get; set; }
@@ -43,6 +61,7 @@ namespace Ixen.Core.Visual
             if (Children.Remove(element))
             {
                 element.Parent = null;
+                InvalidateLayout();
             }
 
             ComputeChildrenIndexes();
@@ -58,11 +77,37 @@ namespace Ixen.Core.Visual
 
         public void Invalidate()
         {
+            MarkStylesDirty();
+            InvalidateLayout();
+        }
+
+        public void InvalidateLayout()
+        {
+            IsLayoutDirty = true;
+
+            for (VisualElement parent = Parent; parent != null && !parent.IsLayoutDirty; parent = parent.Parent)
+            {
+                parent.IsLayoutDirty = true;
+            }
+        }
+
+        internal void ClearLayoutDirty()
+        {
+            IsLayoutDirty = false;
+
+            foreach (VisualElement child in Children)
+            {
+                child.ClearLayoutDirty();
+            }
+        }
+
+        private void MarkStylesDirty()
+        {
             MustRefreshStyles = true;
 
             foreach (VisualElement child in Children)
             {
-                child.Invalidate();
+                child.MarkStylesDirty();
             }
         }
     }

@@ -8,24 +8,35 @@ namespace Ixen.Generators
     internal static class Diagnostics
     {
         private const string CATEGORY = "Ixen";
+        private const string FALLBACK_TITLE = "Ixen problem";
 
-        private static readonly Dictionary<string, DiagnosticDescriptor> _errorDescriptors = new()
+        private static readonly Dictionary<string, string> _titles = new()
         {
-            [LanguageErrorCode.SYNTAX] = Descriptor(LanguageErrorCode.SYNTAX, "Ixen syntax error", DiagnosticSeverity.Error),
-            [LanguageErrorCode.UNKNOWN_STYLE] = Descriptor(LanguageErrorCode.UNKNOWN_STYLE, "Unknown Ixen style property", DiagnosticSeverity.Error),
-            [LanguageErrorCode.INVALID_STYLE_VALUE] = Descriptor(LanguageErrorCode.INVALID_STYLE_VALUE, "Invalid Ixen style value", DiagnosticSeverity.Error),
-            [LanguageErrorCode.STRUCTURE] = Descriptor(LanguageErrorCode.STRUCTURE, "Ixen structure error", DiagnosticSeverity.Error),
-            [LanguageErrorCode.UNSUPPORTED_SCOPE] = Descriptor(LanguageErrorCode.UNSUPPORTED_SCOPE, "Unmatchable Ixen style scope", DiagnosticSeverity.Warning)
+            [LanguageErrorCode.SYNTAX] = "Ixen syntax problem",
+            [LanguageErrorCode.UNKNOWN_STYLE] = "Unknown Ixen style property",
+            [LanguageErrorCode.INVALID_STYLE_VALUE] = "Invalid Ixen style value",
+            [LanguageErrorCode.STRUCTURE] = "Ixen structure problem",
+            [LanguageErrorCode.UNSUPPORTED_SCOPE] = "Unmatchable Ixen style scope",
+            [LanguageErrorCode.INVALID_ELEMENT_TYPE] = "Invalid XNL element type",
+            [LanguageErrorCode.INVALID_PROPERTY] = "Invalid XNL property",
+            [LanguageErrorCode.INVALID_PROPERTY_VALUE] = "Invalid XNL property value"
         };
 
-        private static readonly Dictionary<string, DiagnosticDescriptor> _warningDescriptors = new()
+        private static readonly Dictionary<(string code, DiagnosticSeverity severity), DiagnosticDescriptor> _descriptors
+            = BuildDescriptors();
+
+        private static Dictionary<(string, DiagnosticSeverity), DiagnosticDescriptor> BuildDescriptors()
         {
-            [LanguageErrorCode.SYNTAX] = Descriptor(LanguageErrorCode.SYNTAX, "Ixen syntax warning", DiagnosticSeverity.Warning),
-            [LanguageErrorCode.UNKNOWN_STYLE] = Descriptor(LanguageErrorCode.UNKNOWN_STYLE, "Unknown Ixen style property", DiagnosticSeverity.Warning),
-            [LanguageErrorCode.INVALID_STYLE_VALUE] = Descriptor(LanguageErrorCode.INVALID_STYLE_VALUE, "Invalid Ixen style value", DiagnosticSeverity.Warning),
-            [LanguageErrorCode.STRUCTURE] = Descriptor(LanguageErrorCode.STRUCTURE, "Ixen structure warning", DiagnosticSeverity.Warning),
-            [LanguageErrorCode.UNSUPPORTED_SCOPE] = Descriptor(LanguageErrorCode.UNSUPPORTED_SCOPE, "Unmatchable Ixen style scope", DiagnosticSeverity.Warning)
-        };
+            var result = new Dictionary<(string, DiagnosticSeverity), DiagnosticDescriptor>();
+
+            foreach (KeyValuePair<string, string> entry in _titles)
+            {
+                result[(entry.Key, DiagnosticSeverity.Error)] = Descriptor(entry.Key, entry.Value, DiagnosticSeverity.Error);
+                result[(entry.Key, DiagnosticSeverity.Warning)] = Descriptor(entry.Key, entry.Value, DiagnosticSeverity.Warning);
+            }
+
+            return result;
+        }
 
         private static DiagnosticDescriptor Descriptor(string id, string title, DiagnosticSeverity severity)
             => new DiagnosticDescriptor(id, title, "{0}", CATEGORY, severity, true);
@@ -33,18 +44,18 @@ namespace Ixen.Generators
         internal static void Report(SourceProductionContext context, string path, string content,
             IReadOnlyList<LanguageError> diagnostics)
         {
-            foreach (LanguageError error in diagnostics)
+            foreach (LanguageError diagnostic in diagnostics)
             {
-                Dictionary<string, DiagnosticDescriptor> descriptors = error.Severity == LanguageErrorSeverity.Warning
-                    ? _warningDescriptors
-                    : _errorDescriptors;
+                DiagnosticSeverity severity = diagnostic.Severity == LanguageErrorSeverity.Warning
+                    ? DiagnosticSeverity.Warning
+                    : DiagnosticSeverity.Error;
 
-                if (!descriptors.TryGetValue(error.Code, out DiagnosticDescriptor descriptor))
+                if (!_descriptors.TryGetValue((diagnostic.Code, severity), out DiagnosticDescriptor descriptor))
                 {
-                    descriptor = descriptors[LanguageErrorCode.SYNTAX];
+                    descriptor = Descriptor(diagnostic.Code, FALLBACK_TITLE, severity);
                 }
 
-                context.ReportDiagnostic(Diagnostic.Create(descriptor, ToLocation(path, content, error), error.Message));
+                context.ReportDiagnostic(Diagnostic.Create(descriptor, ToLocation(path, content, diagnostic), diagnostic.Message));
             }
         }
 
