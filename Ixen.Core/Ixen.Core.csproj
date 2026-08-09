@@ -5,14 +5,14 @@
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>disable</Nullable>
-		<Copyright>©2023 by kipy</Copyright>
+		<Copyright>©2026 by kipy</Copyright>
 		<AssemblyVersion>0.0.1</AssemblyVersion>
 		<FileVersion>0.0.1</FileVersion>
 		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="SkiaSharp" Version="2.88.6" />
+		<PackageReference Include="SkiaSharp" Version="4.151.1" />
 	</ItemGroup>
 
 </Project>
