@@ -1,11 +1,12 @@
-﻿namespace Ixen.Core.Visual.Computers
+namespace Ixen.Core.Visual.Computers
 {
     internal class RowLayoutComputer
     {
         internal void Compute(VisualElement element)
         {
-            float x = element.X;
-            float y = element.Y;
+            float startX = element.X + element.PaddingLeft;
+            float x = startX;
+            float y = element.Y + element.PaddingTop;
             float topH = 0;
 
             foreach (VisualElement child in element.Children)
@@ -21,13 +22,13 @@
 
             if (!element.IsWidthComputed)
             {
-                element.Width = x;
+                element.Width = (x - startX) + element.HorizontalPadding;
                 element.IsWidthComputed = true;
             }
 
             if (!element.IsHeightComputed)
             {
-                element.Height = topH;
+                element.Height = topH + element.VerticalPadding;
                 element.IsHeightComputed = true;
             }
         }

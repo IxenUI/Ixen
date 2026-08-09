@@ -92,22 +92,30 @@
         internal float BoxWidth
             => Width
                 + MarginLeft + MarginRight
-                + PaddingLeft + PaddingRight
                 + BorderLeft + BorderRight;
 
         internal float BoxHeight
             => Height
                 + MarginTop + MarginBottom
-                + PaddingTop + PaddingBottom
                 + BorderTop + BorderBottom;
 
-        internal override float ActualWidth
-            => Width
-                + PaddingLeft + PaddingRight;
+        internal float ContentWidth
+        {
+            get
+            {
+                float value = Width - HorizontalPadding;
+                return value < 0 ? 0 : value;
+            }
+        }
 
-        internal override float ActualHeight
-            => Height
-                + PaddingTop + PaddingBottom;
+        internal float ContentHeight
+        {
+            get
+            {
+                float value = Height - VerticalPadding;
+                return value < 0 ? 0 : value;
+            }
+        }
 
         internal float HorizontalMargin
             => MarginLeft + MarginRight;
