@@ -9,6 +9,6 @@ namespace Ixen.Core.UT.Layout.Padding
     {
         [TestMethod]
         public void TestPaddingLayout1() 
-            => AssertVisual("aead6cc112183963c9ae827519babe28", new Component<PaddingLayoutTest1View>().View);
+            => AssertVisual("3ae790ae8c088e36fb71e74d82498635", new Component<PaddingLayoutTest1View>().View);
     }
 }

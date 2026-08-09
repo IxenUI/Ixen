@@ -32,7 +32,7 @@ namespace Ixen.Core.UT.Layout.Padding
 
             root.AddChildren(el1, el2);
 
-            AssertVisual("aead6cc112183963c9ae827519babe28", root);
+            AssertVisual("3ae790ae8c088e36fb71e74d82498635", root);
         }
     }
 }

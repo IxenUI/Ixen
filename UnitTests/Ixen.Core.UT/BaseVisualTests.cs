@@ -44,7 +44,13 @@ namespace Ixen.Core.UT
             {
                 DumpBitmapToFile(fileErrorPath, bitmap);
 
-                Assert.Fail();
+                Assert.Fail(
+                    $"Render mismatch for {testMethodName} at {width}x{height}." +
+                    $"{Environment.NewLine}  expected hash : {expectedHash}" +
+                    $"{Environment.NewLine}  actual hash   : {hash}" +
+                    $"{Environment.NewLine}  rendered      : {fileErrorPath}" +
+                    $"{Environment.NewLine}  baseline      : {fileExpectedPath}" +
+                    $"{Environment.NewLine}If the change is intentional, inspect the rendered file then update the expected hash.");
             }
         }
 
