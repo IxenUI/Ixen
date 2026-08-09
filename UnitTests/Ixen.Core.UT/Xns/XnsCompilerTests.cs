@@ -51,8 +51,8 @@ namespace Ixen.Core.UT.Xns
             Assert.AreEqual(StyleClassTarget.ElementName, containerClass.Target);
             Assert.AreEqual(2, containerClass.Styles.Count);
 
-            Assert.AreEqual(StyleIdentifier.Layout, containerClass.Styles[0].Identifier);
-            Assert.AreEqual(StyleIdentifier.Width, containerClass.Styles[1].Identifier);
+            Assert.AreEqual(StyleIdentifier.LAYOUT, containerClass.Styles[0].Identifier);
+            Assert.AreEqual(StyleIdentifier.WIDTH, containerClass.Styles[1].Identifier);
 
             var layoutStyle = (LayoutStyleDescriptor)containerClass.Styles[0];
             Assert.AreEqual(LayoutType.Row, layoutStyle.Type);
@@ -67,8 +67,8 @@ namespace Ixen.Core.UT.Xns
             Assert.AreEqual(StyleClassTarget.ElementName, panelClass.Target);
             Assert.AreEqual(2, panelClass.Styles.Count);
 
-            Assert.AreEqual(StyleIdentifier.Width, panelClass.Styles[0].Identifier);
-            Assert.AreEqual(StyleIdentifier.Background, panelClass.Styles[1].Identifier);
+            Assert.AreEqual(StyleIdentifier.WIDTH, panelClass.Styles[0].Identifier);
+            Assert.AreEqual(StyleIdentifier.BACKGROUND, panelClass.Styles[1].Identifier);
 
             widthStyle = (WidthStyleDescriptor)panelClass.Styles[0];
             Assert.AreEqual(SizeUnit.Pixels, widthStyle.Unit);
@@ -86,9 +86,9 @@ namespace Ixen.Core.UT.Xns
             Assert.AreEqual(StyleClassTarget.ClassName, contentClass.Target);
             Assert.AreEqual(3, contentClass.Styles.Count);
 
-            Assert.AreEqual(StyleIdentifier.Width, contentClass.Styles[0].Identifier);
-            Assert.AreEqual(StyleIdentifier.RowTemplate, contentClass.Styles[1].Identifier);
-            Assert.AreEqual(StyleIdentifier.Padding, contentClass.Styles[2].Identifier);
+            Assert.AreEqual(StyleIdentifier.WIDTH, contentClass.Styles[0].Identifier);
+            Assert.AreEqual(StyleIdentifier.ROW_TEMPLATE, contentClass.Styles[1].Identifier);
+            Assert.AreEqual(StyleIdentifier.PADDING, contentClass.Styles[2].Identifier);
 
             widthStyle = (WidthStyleDescriptor)contentClass.Styles[0];
             Assert.AreEqual(SizeUnit.Weight, widthStyle.Unit);

@@ -4,7 +4,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 {
     public class RowTemplateStyleDescriptor : SizeTemplateStyleDescriptor
     {
-        internal override string Identifier => StyleIdentifier.RowTemplate;
+        internal override string Identifier => StyleIdentifier.ROW_TEMPLATE;
 
         public void Set(SizeTemplateStyleDescriptor sizeTemplateDescriptor)
         {

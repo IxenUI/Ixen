@@ -2,7 +2,7 @@
 {
     public class WidthStyleDescriptor : SizeStyleDescriptor
     {
-        internal override string Identifier => StyleIdentifier.Width;
+        internal override string Identifier => StyleIdentifier.WIDTH;
 
         public void Set(SizeStyleDescriptor sizeDescriptor)
         {

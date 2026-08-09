@@ -2,7 +2,7 @@
 {
     public class SpaceStyleDescriptor : StyleDescriptor
     {
-        internal override string Identifier => StyleIdentifier.Space;
+        internal override string Identifier => StyleIdentifier.SPACE;
 
         public SizeStyleDescriptor Top { get; set; } = new();
         public SizeStyleDescriptor Right { get; set; } = new();

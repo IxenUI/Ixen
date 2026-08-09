@@ -3,23 +3,23 @@
     public static class StyleIdentifier
     {
         // Internal bases
-        internal const string Boolean = "bool";
-        internal const string Size = "size";
-        internal const string Space = "space";
-        internal const string SizeTemplate = "size-template";
+        internal const string BOOLEAN = "bool";
+        internal const string SIZE = "size";
+        internal const string SPACE = "space";
+        internal const string SIZE_TEMPLATE = "size-template";
 
         // Actual properties
-        public const string Background = "background";
-        public const string Border  = "border";
-        public const string Color = "color";
-        public const string ColumnIndex = "column-index";
-        public const string ColumnTemplate = "column-template";
-        public const string Height = "height";
-        public const string Layout = "layout";
-        public const string Margin = "margin";
-        public const string Padding = "padding";
-        public const string RowIndex = "row-index";
-        public const string RowTemplate = "row-template";
-        public const string Width = "width";
+        public const string BACKGROUND = "background";
+        public const string BORDER = "border";
+        public const string COLOR = "color";
+        public const string COLUMN_INDEX = "column-index";
+        public const string COLUMN_TEMPLATE = "column-template";
+        public const string HEIGHT = "height";
+        public const string LAYOUT = "layout";
+        public const string MARGIN = "margin";
+        public const string PADDING = "padding";
+        public const string ROW_INDEX = "row-index";
+        public const string ROW_TEMPLATE = "row-template";
+        public const string WIDTH = "width";
     }
 }

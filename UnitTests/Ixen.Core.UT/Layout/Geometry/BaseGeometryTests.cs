@@ -6,10 +6,10 @@ namespace Ixen.Core.UT.Layout.Geometry
 {
     public abstract class BaseGeometryTests
     {
-        protected const int ViewportWidth = 400;
-        protected const int ViewportHeight = 400;
+        protected const int VIEWPORT_WIDTH = 400;
+        protected const int VIEWPORT_HEIGHT = 400;
 
-        protected static VisualElement Layout(VisualElement subject, int width = ViewportWidth, int height = ViewportHeight)
+        protected static VisualElement Layout(VisualElement subject, int width = VIEWPORT_WIDTH, int height = VIEWPORT_HEIGHT)
         {
             var viewport = new VisualElement { Name = "viewport" };
             viewport.AddChild(subject);

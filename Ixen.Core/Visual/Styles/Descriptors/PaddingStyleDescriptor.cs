@@ -2,7 +2,7 @@
 {
     public class PaddingStyleDescriptor : MarginStyleDescriptor
     {
-        internal override string Identifier => StyleIdentifier.Padding;
+        internal override string Identifier => StyleIdentifier.PADDING;
 
 
         internal override bool CanGenerateSource => true;

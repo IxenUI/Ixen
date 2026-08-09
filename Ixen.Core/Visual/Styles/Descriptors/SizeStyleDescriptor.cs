@@ -17,7 +17,7 @@
 
     public class SizeStyleDescriptor : StyleDescriptor
     {
-        internal override string Identifier => StyleIdentifier.Size;
+        internal override string Identifier => StyleIdentifier.SIZE;
 
         public SizeUnit Unit { get; set; } = SizeUnit.Unset; // by default, is equivalent to Weight, but does not override inherited value
         public float Value { get; set; } = 1;

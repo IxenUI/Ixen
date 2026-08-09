@@ -2,7 +2,7 @@
 {
     public class MarginStyleDescriptor : SpaceStyleDescriptor
     {
-        internal override string Identifier => StyleIdentifier.Margin;
+        internal override string Identifier => StyleIdentifier.MARGIN;
 
         public void Set(SpaceStyleDescriptor spaceDescriptor)
         {

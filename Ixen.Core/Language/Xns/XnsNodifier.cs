@@ -54,7 +54,8 @@ namespace Ixen.Core.Language.Xns
                     case XnsTokenType.StyleName:
                         style = new XnsStyle
                         {
-                            Name = token.Content
+                            Name = token.Content,
+                            NameIndex = token.Index
                         };
                         break;
 
@@ -62,6 +63,7 @@ namespace Ixen.Core.Language.Xns
                     case XnsTokenType.StyleSizeValue:
                     case XnsTokenType.StyleColorValue:
                         style.Value = token.Content;
+                        style.ValueIndex = token.Index;
                         node.Styles.Add(style);
                         break;
                 }

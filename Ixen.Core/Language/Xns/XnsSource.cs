@@ -22,12 +22,9 @@ namespace Ixen.Core.Language.Xns
 
         public List<XnsToken> Tokenize()
         {
+            _errors.Clear();
             _tokens = _tokenizer.Tokenize();
-
-            if (_tokenizer.HasErrors)
-            {
-                HasErrors = true;
-            }
+            _errors.AddRange(_tokenizer.Errors);
 
             return _tokens;
         }
@@ -46,6 +43,11 @@ namespace Ixen.Core.Language.Xns
 
             _node = _nodifier.Nodify(_tokens);
 
+            if (_node == null)
+            {
+                AddError(LanguageErrorCode.STRUCTURE, "Could not build the style tree from this file.", 0, 0);
+            }
+
             return _node;
         }
 
@@ -61,7 +63,7 @@ namespace Ixen.Core.Language.Xns
                 return null;
             }
 
-            _classesSet = _compiler.Compile(_node);
+            _classesSet = _compiler.Compile(_node, _errors);
 
             return _classesSet;
         }

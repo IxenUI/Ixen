@@ -2,7 +2,7 @@
 {
     public class ColorStyleDescriptor : StyleDescriptor
     {
-        internal override string Identifier => StyleIdentifier.Color;
+        internal override string Identifier => StyleIdentifier.COLOR;
 
         public string Value { get; set; } = null;
     }

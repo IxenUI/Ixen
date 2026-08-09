@@ -12,7 +12,7 @@
 
     public class LayoutStyleDescriptor : StyleDescriptor
     {
-        internal override string Identifier => StyleIdentifier.Layout;
+        internal override string Identifier => StyleIdentifier.LAYOUT;
 
         public LayoutType Type { get; set; } = LayoutType.Column;
 

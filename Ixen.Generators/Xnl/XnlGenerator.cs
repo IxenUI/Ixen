@@ -1,4 +1,4 @@
-﻿using Ixen.Core.Language.Xnl;
+using Ixen.Core.Language.Xnl;
 using Microsoft.CodeAnalysis;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -16,25 +16,33 @@ namespace Ixen.Generators.Xnl
             IncrementalValuesProvider<AdditionalText> textFiles = context.AdditionalTextsProvider
                 .Where(static file => file.Path.EndsWith(".xnl"));
 
-            IncrementalValuesProvider<(string name, string content)> namesAndContents = textFiles
-                .Select((text, cancellationToken) => (name: Path.GetFileNameWithoutExtension(text.Path), content: text.GetText(cancellationToken)!.ToString()));
+            IncrementalValuesProvider<(string name, string content, string path)> namesAndContents = textFiles
+                .Select((text, cancellationToken) => (
+                    name: Path.GetFileNameWithoutExtension(text.Path),
+                    content: text.GetText(cancellationToken)!.ToString(),
+                    path: text.Path));
 
-            IncrementalValueProvider<(Compilation, ImmutableArray<(string name, string content)>)> compilationAndNC
+            IncrementalValueProvider<(Compilation, ImmutableArray<(string name, string content, string path)>)> compilationAndNC
                 = context.CompilationProvider.Combine(namesAndContents.Collect());
 
             context.RegisterSourceOutput(compilationAndNC, (spc, source) => Execute(source.Item1, source.Item2, spc));
         }
 
-        static void Execute(Compilation compilation, ImmutableArray<(string name, string content)> texts, SourceProductionContext context)
+        static void Execute(Compilation compilation, ImmutableArray<(string name, string content, string path)> texts, SourceProductionContext context)
         {
-            //if (!Debugger.IsAttached) { Debugger.Launch(); }
-
             Debug.WriteLine("Execute Ixen XNL code generator");
 
-            foreach ((string name, string content) in texts)
+            foreach ((string name, string content, string path) in texts)
             {
                 var xnlSource = new XnlSource(content);
                 var node = xnlSource.Nodify();
+
+                Diagnostics.Report(context, path, content, xnlSource.Errors);
+
+                if (node == null)
+                {
+                    continue;
+                }
 
                 var sb = new StringBuilder();
 

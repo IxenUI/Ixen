@@ -1,0 +1,61 @@
+using Ixen.Core.Language.Base;
+using Ixen.Core.Language.Xnl;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
+
+namespace Ixen.Core.UT.Xnl
+{
+    [TestClass]
+    public class XnlErrorTests
+    {
+        [TestMethod]
+        public void ValidSource_ReportsNoError()
+        {
+            var xnlSource = new XnlSource("container {}\r\n[\r\n\tel1 {}\r\n\tel2 {}\r\n]\r\n");
+            var node = xnlSource.Nodify();
+
+            Assert.IsFalse(xnlSource.HasErrors, string.Join(" | ", xnlSource.Errors.Select(e => e.Message)));
+            Assert.IsNotNull(node);
+        }
+
+        [TestMethod]
+        public void TrailingWhitespaceAndNewlines_AreNotAnError()
+        {
+            var xnlSource = new XnlSource("container {}\r\n   \r\n\r\n");
+            xnlSource.Nodify();
+
+            Assert.IsFalse(xnlSource.HasErrors, string.Join(" | ", xnlSource.Errors.Select(e => e.Message)));
+        }
+
+        [TestMethod]
+        public void UnclosedChildrenBlock_IsReportedAtEndOfFile()
+        {
+            var xnlSource = new XnlSource("container {}\r\n[\r\n\tel1 {}\r\n");
+            var node = xnlSource.Nodify();
+
+            Assert.IsTrue(xnlSource.HasErrors);
+            Assert.AreEqual(LanguageErrorCode.SYNTAX, xnlSource.Errors[0].Code);
+            Assert.IsNull(node);
+        }
+
+        [TestMethod]
+        public void UnexpectedCharacter_IsReportedAtItsPosition()
+        {
+            string source = "container {}\r\n@\r\n";
+            var xnlSource = new XnlSource(source);
+            xnlSource.Nodify();
+
+            Assert.IsTrue(xnlSource.HasErrors);
+            Assert.AreEqual(LanguageErrorCode.SYNTAX, xnlSource.Errors[0].Code);
+            Assert.AreEqual("@", source.Substring(xnlSource.Errors[0].Index, xnlSource.Errors[0].Length));
+        }
+
+        [TestMethod]
+        public void ErrorsPreventNodifying()
+        {
+            var xnlSource = new XnlSource("container {}\r\n@\r\n");
+
+            Assert.IsNull(xnlSource.Nodify());
+        }
+    }
+}
