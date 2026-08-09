@@ -41,36 +41,7 @@ namespace Ixen.Core.Language.Xns
                 name = name.Substring(1);
             }
 
-            string scope = GetScope(node);
-            WarnOnUnmatchableScope(node, scope, errors);
-
-            return new StyleClass(target, null, scope, name, ToStyles(node, errors));
-        }
-
-        private void WarnOnUnmatchableScope(XnsNode node, string scope, List<LanguageError> errors)
-        {
-            if (scope == null)
-            {
-                return;
-            }
-
-            foreach (string segment in scope.Split(new[] { StyleScope.SEPARATOR }, System.StringSplitOptions.None))
-            {
-                if (!segment.StartsWith(".") && !segment.StartsWith("#"))
-                {
-                    continue;
-                }
-
-                errors.Add(new LanguageError(
-                    LanguageErrorCode.UNSUPPORTED_SCOPE,
-                    $"'{node.Name}' is nested under the selector '{segment}', so its scope '{scope}' can never match at runtime: " +
-                    "scopes are built from element names only. Nest under an element name instead.",
-                    node.NameIndex,
-                    node.Name?.Length ?? 0,
-                    LanguageErrorSeverity.Warning));
-
-                return;
-            }
+            return new StyleClass(target, null, GetScope(node), name, ToStyles(node, errors));
         }
 
         private void AddClass(XnsNode node, List<StyleClass> list, List<LanguageError> errors)
