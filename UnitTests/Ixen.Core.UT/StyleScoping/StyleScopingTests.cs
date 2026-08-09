@@ -50,7 +50,7 @@ namespace Ixen.Core.UT.StyleScoping
         [TestMethod]
         public void ScopedClass_IsFoundWithItsScope()
         {
-            StyleClass styleClass = BuildRegistry().GetGlobalClass("testScopedGlobalClass", SCOPE);
+            StyleClass styleClass = BuildRegistry().GetScopedClass(StyleClassTarget.ClassName, "testScopedGlobalClass", null, SCOPE);
 
             Assert.IsNotNull(styleClass);
             Assert.AreEqual("testScopedGlobalClass", styleClass.Name);
@@ -71,7 +71,7 @@ namespace Ixen.Core.UT.StyleScoping
         [TestMethod]
         public void SheetScopedAndScopedClass_IsFoundWithBoth()
         {
-            StyleClass styleClass = BuildRegistry().GetClass("testSheetScopedScopedClass", SHEET_SCOPE, SCOPE);
+            StyleClass styleClass = BuildRegistry().GetScopedClass(StyleClassTarget.ClassName, "testSheetScopedScopedClass", SHEET_SCOPE, SCOPE);
 
             Assert.IsNotNull(styleClass);
             Assert.AreEqual("testSheetScopedScopedClass", styleClass.Name);
@@ -88,7 +88,7 @@ namespace Ixen.Core.UT.StyleScoping
             Assert.IsNotNull(global);
             Assert.IsNull(global.Scope);
 
-            StyleClass scoped = registry.GetGlobalElementClass("testElementScopedGlobalClass", SCOPE);
+            StyleClass scoped = registry.GetScopedClass(StyleClassTarget.ElementName, "testElementScopedGlobalClass", null, SCOPE);
             Assert.IsNotNull(scoped);
             Assert.AreEqual(SCOPE, scoped.Scope);
 
@@ -97,7 +97,7 @@ namespace Ixen.Core.UT.StyleScoping
             Assert.AreEqual(SHEET_SCOPE, sheetScoped.SheetScope);
             Assert.IsNull(sheetScoped.Scope);
 
-            StyleClass both = registry.GetElementClass("testElementSheetScopedScopedClass", SHEET_SCOPE, SCOPE);
+            StyleClass both = registry.GetScopedClass(StyleClassTarget.ElementName, "testElementSheetScopedScopedClass", SHEET_SCOPE, SCOPE);
             Assert.IsNotNull(both);
             Assert.AreEqual(SHEET_SCOPE, both.SheetScope);
             Assert.AreEqual(SCOPE, both.Scope);
@@ -112,7 +112,7 @@ namespace Ixen.Core.UT.StyleScoping
             Assert.IsNotNull(global);
             Assert.IsNull(global.Scope);
 
-            StyleClass scoped = registry.GetGlobalTypeClass("testTypeScopedGlobalClass", SCOPE);
+            StyleClass scoped = registry.GetScopedClass(StyleClassTarget.ElementType, "testTypeScopedGlobalClass", null, SCOPE);
             Assert.IsNotNull(scoped);
             Assert.AreEqual(SCOPE, scoped.Scope);
 
@@ -121,7 +121,7 @@ namespace Ixen.Core.UT.StyleScoping
             Assert.AreEqual(SHEET_SCOPE, sheetScoped.SheetScope);
             Assert.IsNull(sheetScoped.Scope);
 
-            StyleClass both = registry.GetTypeClass("testTypeSheetScopedScopedClass", SHEET_SCOPE, SCOPE);
+            StyleClass both = registry.GetScopedClass(StyleClassTarget.ElementType, "testTypeSheetScopedScopedClass", SHEET_SCOPE, SCOPE);
             Assert.IsNotNull(both);
             Assert.AreEqual(SHEET_SCOPE, both.SheetScope);
             Assert.AreEqual(SCOPE, both.Scope);

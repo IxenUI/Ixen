@@ -16,7 +16,6 @@ namespace Ixen.Generators
             [LanguageErrorCode.UNKNOWN_STYLE] = "Unknown Ixen style property",
             [LanguageErrorCode.INVALID_STYLE_VALUE] = "Invalid Ixen style value",
             [LanguageErrorCode.STRUCTURE] = "Ixen structure problem",
-            [LanguageErrorCode.UNSUPPORTED_SCOPE] = "Unmatchable Ixen style scope",
             [LanguageErrorCode.INVALID_ELEMENT_TYPE] = "Invalid XNL element type",
             [LanguageErrorCode.INVALID_PROPERTY] = "Invalid XNL property",
             [LanguageErrorCode.INVALID_PROPERTY_VALUE] = "Invalid XNL property value"

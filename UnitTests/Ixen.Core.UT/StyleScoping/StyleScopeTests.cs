@@ -108,26 +108,20 @@ namespace Ixen.Core.UT.StyleScoping
         }
 
         [TestMethod]
-        public void NestingUnderAClassSelector_IsReportedAsAnUnmatchableScope()
+        public void NestingUnderAClassSelector_ReportsNothing()
         {
             var xnsSource = new XnsSource("container {\r\n    .card {\r\n        inner { width: 1px }\r\n    }\r\n}");
             xnsSource.Compile();
 
-            Assert.IsFalse(xnsSource.HasErrors, "an unmatchable scope is a warning, not an error");
-
-            LanguageError warning = xnsSource.Diagnostics.Single(d => d.Code == LanguageErrorCode.UNSUPPORTED_SCOPE);
-            Assert.AreEqual(LanguageErrorSeverity.Warning, warning.Severity);
-            Assert.IsTrue(warning.Message.Contains(".card"), warning.Message);
+            Assert.AreEqual(0, xnsSource.Diagnostics.Count, string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
         }
 
         [TestMethod]
-        public void NestingUnderATypeSelector_IsReportedAsAnUnmatchableScope()
+        public void NestingUnderAClassSelector_KeepsThePrefixInTheScope()
         {
-            var xnsSource = new XnsSource("container {\r\n    #entries {\r\n        inner { width: 1px }\r\n    }\r\n}");
-            xnsSource.Compile();
+            StyleClass inner = CompiledClass("container {\r\n    .card {\r\n        inner { width: 1px }\r\n    }\r\n}", "inner");
 
-            Assert.IsFalse(xnsSource.HasErrors);
-            Assert.AreEqual(1, xnsSource.Diagnostics.Count(d => d.Code == LanguageErrorCode.UNSUPPORTED_SCOPE));
+            Assert.AreEqual("container/.card", inner.Scope);
         }
 
         [TestMethod]

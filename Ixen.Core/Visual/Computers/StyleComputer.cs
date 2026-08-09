@@ -8,6 +8,8 @@ namespace Ixen.Core.Visual.Computers
 {
     internal class StyleComputer
     {
+        private readonly List<StyleClass> _matches = new();
+
         internal void Compute(VisualElement element, StyleRegistry registry)
         {
             if (element.MustRefreshStyles)
@@ -33,22 +35,39 @@ namespace Ixen.Core.Visual.Computers
         // - Global type
         private void ApplyClasses(VisualElement element, StyleRegistry registry)
         {
-            string scope = registry.HasScopedClasses ? GetScope(element) : null;
             VisualElementStylesHandlers handlers = element.StylesHandlers;
+            bool scoped = registry.HasScopedClasses;
 
             ApplyClass(handlers, registry.GetGlobalTypeClass(element.TypeName));
-            ApplyClass(handlers, registry.GetGlobalTypeClass(element.TypeName, scope));
+            ApplyScopedClasses(handlers, registry, StyleClassTarget.ElementType, element.TypeName, element, scoped);
 
             foreach (string c in element.Classes)
             {
                 ApplyClass(handlers, registry.GetGlobalClass(c));
-                ApplyClass(handlers, registry.GetGlobalClass(c, scope));
+                ApplyScopedClasses(handlers, registry, StyleClassTarget.ClassName, c, element, scoped);
             }
 
             if (element.Name != null)
             {
                 ApplyClass(handlers, registry.GetGlobalElementClass(element.Name));
-                ApplyClass(handlers, registry.GetGlobalElementClass(element.Name, scope));
+                ApplyScopedClasses(handlers, registry, StyleClassTarget.ElementName, element.Name, element, scoped);
+            }
+        }
+
+        private void ApplyScopedClasses(VisualElementStylesHandlers handlers, StyleRegistry registry,
+            StyleClassTarget target, string name, VisualElement element, bool scoped)
+        {
+            if (!scoped || name == null)
+            {
+                return;
+            }
+
+            _matches.Clear();
+            registry.CollectMatchingScopedClasses(target, name, element, _matches);
+
+            foreach (StyleClass styleClass in _matches)
+            {
+                ApplyClass(handlers, styleClass);
             }
         }
 
@@ -211,7 +230,5 @@ namespace Ixen.Core.Visual.Computers
             }
         }
 
-        private string GetScope(VisualElement element)
-            => StyleScope.Build(element, e => e.Parent, e => e.Name);
     }
 }

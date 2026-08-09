@@ -10,50 +10,84 @@ namespace Ixen.Core.Visual.Classes
         private static readonly Lazy<StyleRegistry> _default =
             new Lazy<StyleRegistry>(CreateFromLoadedAssemblies);
 
-        private readonly Dictionary<(StyleClassTarget target, string sheetScope, string scope, string name), StyleClass> _classes = new();
+        private sealed class ScopedClass
+        {
+            internal StyleClass Class { get; }
+            internal StyleScopeSegment[] Segments { get; }
+
+            internal ScopedClass(StyleClass styleClass)
+            {
+                Class = styleClass;
+                Segments = StyleScope.Parse(styleClass.Scope);
+            }
+        }
+
+        private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), StyleClass> _unscoped = new();
+        private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), List<ScopedClass>> _scoped = new();
+
+        private int _count;
 
         public static StyleRegistry Default => _default.Value;
 
-        public int Count => _classes.Count;
+        public int Count => _count;
 
-        internal bool HasScopedClasses { get; private set; }
+        internal bool HasScopedClasses => _scoped.Count > 0;
 
         public void Add(StyleClass styleClass)
         {
-            if (styleClass == null)
+            if (styleClass == null || styleClass.Name == null)
             {
                 return;
             }
 
-            if (styleClass.Scope != null)
+            var key = (styleClass.Target, styleClass.SheetScope, styleClass.Name);
+
+            if (styleClass.Scope == null)
             {
-                HasScopedClasses = true;
+                if (!_unscoped.ContainsKey(key))
+                {
+                    _count++;
+                }
+
+                _unscoped[key] = styleClass;
+                return;
             }
 
-            _classes[Key(styleClass.Target, styleClass.SheetScope, styleClass.Scope, styleClass.Name)] = styleClass;
+            if (!_scoped.TryGetValue(key, out List<ScopedClass> candidates))
+            {
+                candidates = new List<ScopedClass>();
+                _scoped[key] = candidates;
+            }
+
+            var entry = new ScopedClass(styleClass);
+            int existing = candidates.FindIndex(c => c.Class.Scope == styleClass.Scope);
+
+            if (existing >= 0)
+            {
+                candidates[existing] = entry;
+            }
+            else
+            {
+                candidates.Add(entry);
+                _count++;
+            }
+
+            // Least specific first, so a longer scope applied later wins.
+            candidates.Sort((a, b) => a.Segments.Length.CompareTo(b.Segments.Length));
         }
 
-        public void Add(StyleSheet sheet)
+        public void Add(StyleSheet sheet) => AddRange(sheet?.Classes);
+
+        public void Add(ClassesSet set) => AddRange(set?.Classes);
+
+        private void AddRange(List<StyleClass> classes)
         {
-            if (sheet?.Classes == null)
+            if (classes == null)
             {
                 return;
             }
 
-            foreach (StyleClass styleClass in sheet.Classes)
-            {
-                Add(styleClass);
-            }
-        }
-
-        public void Add(ClassesSet set)
-        {
-            if (set?.Classes == null)
-            {
-                return;
-            }
-
-            foreach (StyleClass styleClass in set.Classes)
+            foreach (StyleClass styleClass in classes)
             {
                 Add(styleClass);
             }
@@ -61,60 +95,73 @@ namespace Ixen.Core.Visual.Classes
 
         public void Clear()
         {
-            _classes.Clear();
-            HasScopedClasses = false;
+            _unscoped.Clear();
+            _scoped.Clear();
+            _count = 0;
         }
 
         internal StyleClass GetGlobalClass(string name)
-            => Get(StyleClassTarget.ClassName, null, null, name);
-
-        internal StyleClass GetGlobalClass(string name, string scope)
-            => scope == null ? null : Get(StyleClassTarget.ClassName, null, scope, name);
+            => GetUnscoped(StyleClassTarget.ClassName, null, name);
 
         internal StyleClass GetClass(string name, string sheetScope)
-            => sheetScope == null ? null : Get(StyleClassTarget.ClassName, sheetScope, null, name);
-
-        internal StyleClass GetClass(string name, string sheetScope, string scope)
-            => sheetScope == null || scope == null ? null : Get(StyleClassTarget.ClassName, sheetScope, scope, name);
+            => sheetScope == null ? null : GetUnscoped(StyleClassTarget.ClassName, sheetScope, name);
 
         internal StyleClass GetGlobalElementClass(string name)
-            => Get(StyleClassTarget.ElementName, null, null, name);
-
-        internal StyleClass GetGlobalElementClass(string name, string scope)
-            => scope == null ? null : Get(StyleClassTarget.ElementName, null, scope, name);
+            => GetUnscoped(StyleClassTarget.ElementName, null, name);
 
         internal StyleClass GetElementClass(string name, string sheetScope)
-            => sheetScope == null ? null : Get(StyleClassTarget.ElementName, sheetScope, null, name);
-
-        internal StyleClass GetElementClass(string name, string sheetScope, string scope)
-            => sheetScope == null || scope == null ? null : Get(StyleClassTarget.ElementName, sheetScope, scope, name);
+            => sheetScope == null ? null : GetUnscoped(StyleClassTarget.ElementName, sheetScope, name);
 
         internal StyleClass GetGlobalTypeClass(string name)
-            => Get(StyleClassTarget.ElementType, null, null, name);
-
-        internal StyleClass GetGlobalTypeClass(string name, string scope)
-            => scope == null ? null : Get(StyleClassTarget.ElementType, null, scope, name);
+            => GetUnscoped(StyleClassTarget.ElementType, null, name);
 
         internal StyleClass GetTypeClass(string name, string sheetScope)
-            => sheetScope == null ? null : Get(StyleClassTarget.ElementType, sheetScope, null, name);
+            => sheetScope == null ? null : GetUnscoped(StyleClassTarget.ElementType, sheetScope, name);
 
-        internal StyleClass GetTypeClass(string name, string sheetScope, string scope)
-            => sheetScope == null || scope == null ? null : Get(StyleClassTarget.ElementType, sheetScope, scope, name);
+        internal void CollectMatchingScopedClasses(StyleClassTarget target, string name, VisualElement element,
+            List<StyleClass> result)
+        {
+            if (name == null || _scoped.Count == 0)
+            {
+                return;
+            }
 
-        private StyleClass Get(StyleClassTarget target, string sheetScope, string scope, string name)
+            if (!_scoped.TryGetValue((target, null, name), out List<ScopedClass> candidates))
+            {
+                return;
+            }
+
+            foreach (ScopedClass candidate in candidates)
+            {
+                if (StyleScope.Matches(candidate.Segments, element))
+                {
+                    result.Add(candidate.Class);
+                }
+            }
+        }
+
+        internal StyleClass GetScopedClass(StyleClassTarget target, string name, string sheetScope, string scope)
+        {
+            if (name == null || scope == null
+                || !_scoped.TryGetValue((target, sheetScope, name), out List<ScopedClass> candidates))
+            {
+                return null;
+            }
+
+            return candidates.FirstOrDefault(c => c.Class.Scope == scope)?.Class;
+        }
+
+        private StyleClass GetUnscoped(StyleClassTarget target, string sheetScope, string name)
         {
             if (name == null)
             {
                 return null;
             }
 
-            return _classes.TryGetValue(Key(target, sheetScope, scope, name), out StyleClass value)
+            return _unscoped.TryGetValue((target, sheetScope, name), out StyleClass value)
                 ? value
                 : null;
         }
-
-        private static (StyleClassTarget, string, string, string) Key(StyleClassTarget target, string sheetScope, string scope, string name)
-            => (target, sheetScope, scope, name);
 
         public static StyleRegistry CreateFromLoadedAssemblies()
         {
