@@ -129,7 +129,7 @@ namespace Ixen.Core.UT.Layout.Geometry
         }
 
         [TestMethod]
-        public void ContentSizedSiblings_CurrentlyOverlapBecauseSizeIsResolvedAfterPositioning()
+        public void ContentSizedSiblings_AreLaidOutSequentiallyWithoutOverlapping()
         {
             var box = Element("box", LayoutType.Row, SizeUnit.Pixels, 300, SizeUnit.Pixels, 100);
             var firstAuto = Element("firstAuto", LayoutType.Row, SizeUnit.Content, 0, SizeUnit.Pixels, 50);
@@ -141,7 +141,22 @@ namespace Ixen.Core.UT.Layout.Geometry
             Layout(box);
 
             AssertBox(firstAuto, 0, 0, 40, 50);
-            AssertBox(secondAuto, 0, 0, 30, 50);
+            AssertBox(secondAuto, 40, 0, 30, 50);
+        }
+
+        [TestMethod]
+        public void ContentSizedElement_ShrinksToItsChildrenEvenWhenWeightSiblingsArePresent()
+        {
+            var box = Element("box", LayoutType.Row, SizeUnit.Pixels, 200, SizeUnit.Pixels, 100);
+            var auto = Element("auto", LayoutType.Row, SizeUnit.Content, 0, SizeUnit.Pixels, 50);
+            auto.AddChild(Element("inner", LayoutType.Column, SizeUnit.Pixels, 60, SizeUnit.Pixels, 20));
+            var filler = Element("filler", LayoutType.Column, SizeUnit.Weight, 1, SizeUnit.Pixels, 50);
+            box.AddChildren(auto, filler);
+
+            Layout(box);
+
+            AssertBox(auto, 0, 0, 60, 50);
+            AssertBox(filler, 60, 0, 140, 50);
         }
     }
 }

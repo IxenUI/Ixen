@@ -12,8 +12,8 @@ namespace Ixen.Core
 
         private ViewPort _viewPort = new();
         private StyleComputer _styleComputer = new();
-        private SizeComputer _sizeComputer = new();
-        private LayoutComputer _layoutComputer = new();
+        private MeasureComputer _measureComputer = new();
+        private ArrangeComputer _arrangeComputer = new();
         private ClippingComputer _clippingComputer = new();
         private RendererContext _rendererContext = new();
         private VisualRenderer _renderer = new();
@@ -36,23 +36,14 @@ namespace Ixen.Core
 
         internal void ComputeLayout(int width, int height)
         {
-            if (_viewPort.Width == width && _viewPort.Height == height)
-            {
-                return;
-            }
-
             _viewPort.Width = width;
             _viewPort.Height = height;
-           
+
             if (Root != null)
             {
-                Root.SetSize(width, height);
-                Root.IsWidthComputed = true;
-                Root.IsHeightComputed = true;
-
                 _styleComputer.Compute(Root);
-                _sizeComputer.Compute(Root);
-                _layoutComputer.Compute(Root);
+                _measureComputer.Measure(Root, width, height, true, true);
+                _arrangeComputer.Arrange(Root, 0, 0);
                 _clippingComputer.Compute(Root);
             }
         }
