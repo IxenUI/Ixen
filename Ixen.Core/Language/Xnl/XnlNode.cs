@@ -6,7 +6,9 @@ namespace Ixen.Core.Language.Xnl
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        public int NameIndex { get; set; }
         public string Type { get; set; }
+        public int TypeIndex { get; set; }
         public List<XnlNodeParameter> Properties { get; set; } = new();
         public XnlNode Parent { get; set; }
         public List<XnlNode> Children { get; set; } = new();

@@ -113,8 +113,17 @@ namespace Ixen.Core.Language.Xns
                 case StyleIdentifier.BORDER:
                     return Validated(new BorderStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
+                case StyleIdentifier.COLOR:
+                    return Validated(new ColorStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+
                 case StyleIdentifier.COLUMN_TEMPLATE:
                     return Validated(new ColumnTemplateStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+
+                case StyleIdentifier.FONT_FAMILY:
+                    return Validated(new FontFamilyStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+
+                case StyleIdentifier.FONT_SIZE:
+                    return Validated(new FontSizeStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
                 case StyleIdentifier.HEIGHT:
                     return Validated(new HeightStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);

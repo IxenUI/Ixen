@@ -82,6 +82,13 @@ namespace Ixen.Core.Rendering
             SKCanvas.DrawRect(x, y, width, height, pen.SKPaint);
         }
 
+        internal void DrawText(string text, float x, float top, string fontFamily, float fontSize, Brush brush)
+        {
+            SKFont font = FontCache.Get(fontFamily, fontSize);
+
+            SKCanvas.DrawText(text, x, top - font.Metrics.Ascent, SKTextAlign.Left, font, brush.SKPaint);
+        }
+
         public void FillRectangle(float x, float y, float width, float height, Brush brush)
         {
             SKCanvas.DrawRect(x, y, width, height, brush.SKPaint);

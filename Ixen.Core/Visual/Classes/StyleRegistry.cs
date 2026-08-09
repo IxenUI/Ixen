@@ -16,11 +16,18 @@ namespace Ixen.Core.Visual.Classes
 
         public int Count => _classes.Count;
 
+        internal bool HasScopedClasses { get; private set; }
+
         public void Add(StyleClass styleClass)
         {
             if (styleClass == null)
             {
                 return;
+            }
+
+            if (styleClass.Scope != null)
+            {
+                HasScopedClasses = true;
             }
 
             _classes[Key(styleClass.Target, styleClass.SheetScope, styleClass.Scope, styleClass.Name)] = styleClass;
@@ -52,7 +59,11 @@ namespace Ixen.Core.Visual.Classes
             }
         }
 
-        public void Clear() => _classes.Clear();
+        public void Clear()
+        {
+            _classes.Clear();
+            HasScopedClasses = false;
+        }
 
         internal StyleClass GetGlobalClass(string name)
             => Get(StyleClassTarget.ClassName, null, null, name);

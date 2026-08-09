@@ -13,14 +13,7 @@ namespace Ixen.Core.Visual.Computers
             if (element.MustRefreshStyles)
             {
                 ApplyBaseStyle(element);
-
-                foreach (var c in GetApplyingClasses(element, registry))
-                {
-                    foreach (var style in c.Styles)
-                    {
-                        ApplyStyle(element.StylesHandlers, style);
-                    }
-                }
+                ApplyClasses(element, registry);
 
                 element.MustRefreshStyles = false;
             }
@@ -31,79 +24,162 @@ namespace Ixen.Core.Visual.Computers
             }
         }
 
-        private void AddClassToList(List<StyleClass> list, StyleClass c)
-        {
-            if (c != null)
-            {
-                list.Add(c);
-            }
-        }
-
         // priority order :
-        // - Element name 
+        // - Element name
         // - Global element name
         // - Class
         // - Global class
         // - Type
         // - Global type
-        private List<StyleClass> GetApplyingClasses(VisualElement element, StyleRegistry registry)
+        private void ApplyClasses(VisualElement element, StyleRegistry registry)
         {
-            var list = new List<StyleClass>();
-            var scope = GetScope(element);
+            string scope = registry.HasScopedClasses ? GetScope(element) : null;
+            VisualElementStylesHandlers handlers = element.StylesHandlers;
 
-            AddClassToList(list, registry.GetGlobalTypeClass(element.TypeName));
-            AddClassToList(list, registry.GetGlobalTypeClass(element.TypeName, scope));
+            ApplyClass(handlers, registry.GetGlobalTypeClass(element.TypeName));
+            ApplyClass(handlers, registry.GetGlobalTypeClass(element.TypeName, scope));
 
-            foreach (var c in element.Classes)
+            foreach (string c in element.Classes)
             {
-                AddClassToList(list, registry.GetGlobalClass(c));
-                AddClassToList(list, registry.GetGlobalClass(c, scope));
+                ApplyClass(handlers, registry.GetGlobalClass(c));
+                ApplyClass(handlers, registry.GetGlobalClass(c, scope));
             }
 
             if (element.Name != null)
             {
-                AddClassToList(list, registry.GetGlobalElementClass(element.Name));
-                AddClassToList(list, registry.GetGlobalElementClass(element.Name, scope));
+                ApplyClass(handlers, registry.GetGlobalElementClass(element.Name));
+                ApplyClass(handlers, registry.GetGlobalElementClass(element.Name, scope));
+            }
+        }
+
+        private void ApplyClass(VisualElementStylesHandlers handlers, StyleClass styleClass)
+        {
+            if (styleClass?.Styles == null)
+            {
+                return;
             }
 
-            return list;
+            foreach (StyleDescriptor style in styleClass.Styles)
+            {
+                ApplyStyle(handlers, style);
+            }
         }
 
         private void ApplyBaseStyle(VisualElement element)
         {
-            element.StylesHandlers = new();
+            VisualElementStylesDescriptors styles = element.Styles;
+            VisualElementStylesHandlers handlers = element.StylesHandlers;
 
-            if (element.Styles.Background != null)
+            handlers.Background = IsPainting(styles.Background)
+                ? new BackgroundStyleHandler(styles.Background)
+                : VisualElementStylesHandlers.DefaultBackground;
+
+            handlers.Border = IsPainting(styles.Border)
+                ? new BorderStyleHandler(styles.Border)
+                : VisualElementStylesHandlers.DefaultBorder;
+
+            if (handlers.Color.Descriptor != styles.Color)
             {
-                element.StylesHandlers.Background = new BackgroundStyleHandler(element.Styles.Background);
-            }
-            
-            if (element.Styles.Border != null)
-            {
-                element.StylesHandlers.Border = new BorderStyleHandler(element.Styles.Border);
+                handlers.Color = styles.Color != null
+                    ? new ColorStyleHandler(styles.Color)
+                    : VisualElementStylesHandlers.DefaultColor;
             }
 
-            element.StylesHandlers.Height = new HeightStyleHandler(element.Styles.Height);
-            element.StylesHandlers.Layout = new LayoutStyleHandler(element.Styles.Layout);
-            element.StylesHandlers.Margin = new MarginStyleHandler(element.Styles.Margin);
-            element.StylesHandlers.Padding = new PaddingStyleHandler(element.Styles.Padding);
-            element.StylesHandlers.Width = new WidthStyleHandler(element.Styles.Width);
+            if (handlers.FontFamily.Descriptor != styles.FontFamily)
+            {
+                handlers.FontFamily = styles.FontFamily != null
+                    ? new FontFamilyStyleHandler(styles.FontFamily)
+                    : VisualElementStylesHandlers.DefaultFontFamily;
+            }
+
+            if (handlers.FontSize.Descriptor != styles.FontSize)
+            {
+                handlers.FontSize = styles.FontSize != null
+                    ? new FontSizeStyleHandler(styles.FontSize)
+                    : VisualElementStylesHandlers.DefaultFontSize;
+            }
+
+            if (handlers.ColumnTemplate.Descriptor != styles.ColumnTemplate)
+            {
+                handlers.ColumnTemplate = styles.ColumnTemplate != null
+                    ? new ColumnTemplateStyleHandler(styles.ColumnTemplate)
+                    : VisualElementStylesHandlers.DefaultColumnTemplate;
+            }
+
+            if (handlers.RowTemplate.Descriptor != styles.RowTemplate)
+            {
+                handlers.RowTemplate = styles.RowTemplate != null
+                    ? new RowTemplateStyleHandler(styles.RowTemplate)
+                    : VisualElementStylesHandlers.DefaultRowTemplate;
+            }
+
+            if (handlers.Height.Descriptor != styles.Height)
+            {
+                handlers.Height = new HeightStyleHandler(styles.Height);
+            }
+
+            if (handlers.Layout.Descriptor != styles.Layout)
+            {
+                handlers.Layout = new LayoutStyleHandler(styles.Layout);
+            }
+
+            if (handlers.Margin.Descriptor != styles.Margin)
+            {
+                handlers.Margin = new MarginStyleHandler(styles.Margin);
+            }
+
+            if (handlers.Padding.Descriptor != styles.Padding)
+            {
+                handlers.Padding = new PaddingStyleHandler(styles.Padding);
+            }
+
+            if (handlers.Width.Descriptor != styles.Width)
+            {
+                handlers.Width = new WidthStyleHandler(styles.Width);
+            }
         }
+
+        private static bool IsPainting(BackgroundStyleDescriptor descriptor)
+            => descriptor != null
+                && (!string.IsNullOrWhiteSpace(descriptor.Color) || !string.IsNullOrWhiteSpace(descriptor.ImageUrl));
+
+        private static bool IsPainting(BorderStyleDescriptor descriptor)
+            => descriptor != null
+                && descriptor.Thickness > 0
+                && !string.IsNullOrWhiteSpace(descriptor.Color);
 
         private void ApplyStyle(VisualElementStylesHandlers handlers, StyleDescriptor style)
         {
             switch (style.Identifier)
             {
                 case StyleIdentifier.BACKGROUND:
-                    handlers.Background = new BackgroundStyleHandler((BackgroundStyleDescriptor)style);
+                    var background = (BackgroundStyleDescriptor)style;
+                    handlers.Background = IsPainting(background)
+                        ? new BackgroundStyleHandler(background)
+                        : VisualElementStylesHandlers.DefaultBackground;
                     break;
 
                 case StyleIdentifier.BORDER:
-                    handlers.Border = new BorderStyleHandler((BorderStyleDescriptor)style);
+                    var border = (BorderStyleDescriptor)style;
+                    handlers.Border = IsPainting(border)
+                        ? new BorderStyleHandler(border)
+                        : VisualElementStylesHandlers.DefaultBorder;
+                    break;
+
+                case StyleIdentifier.COLOR:
+                    handlers.Color = new ColorStyleHandler((ColorStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.COLUMN_TEMPLATE:
                     handlers.ColumnTemplate = new ColumnTemplateStyleHandler((ColumnTemplateStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.FONT_FAMILY:
+                    handlers.FontFamily = new FontFamilyStyleHandler((FontFamilyStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.FONT_SIZE:
+                    handlers.FontSize = new FontSizeStyleHandler((FontSizeStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.HEIGHT:

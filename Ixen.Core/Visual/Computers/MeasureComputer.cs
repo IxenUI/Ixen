@@ -5,6 +5,13 @@ namespace Ixen.Core.Visual.Computers
 {
     internal class MeasureComputer
     {
+        private readonly ITextMeasurer _textMeasurer;
+
+        internal MeasureComputer(ITextMeasurer textMeasurer)
+        {
+            _textMeasurer = textMeasurer;
+        }
+
         internal void Measure(VisualElement element, float availableWidth, float availableHeight, bool widthIsDefinite, bool heightIsDefinite)
         {
             float contentWidth = Math.Max(0, availableWidth - element.HorizontalPadding);
@@ -12,13 +19,39 @@ namespace Ixen.Core.Visual.Computers
 
             MeasureChildren(element, contentWidth, contentHeight);
 
+            float textWidth = 0;
+            float textHeight = 0;
+
+            if (!widthIsDefinite || !heightIsDefinite)
+            {
+                MeasureText(element, out textWidth, out textHeight);
+            }
+
             element.Width = widthIsDefinite
                 ? availableWidth
-                : AggregateWidth(element) + element.HorizontalPadding;
+                : Math.Max(AggregateWidth(element), textWidth) + element.HorizontalPadding;
 
             element.Height = heightIsDefinite
                 ? availableHeight
-                : AggregateHeight(element) + element.VerticalPadding;
+                : Math.Max(AggregateHeight(element), textHeight) + element.VerticalPadding;
+        }
+
+        private void MeasureText(VisualElement element, out float width, out float height)
+        {
+            width = 0;
+            height = 0;
+
+            if (_textMeasurer == null || string.IsNullOrEmpty(element.Text))
+            {
+                return;
+            }
+
+            _textMeasurer.MeasureText(
+                element.Text,
+                element.StylesHandlers.FontFamily.Descriptor.Value,
+                element.StylesHandlers.FontSize.Descriptor.Value,
+                out width,
+                out height);
         }
 
         private void MeasureChildren(VisualElement element, float contentWidth, float contentHeight)

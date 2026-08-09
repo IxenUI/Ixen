@@ -64,6 +64,7 @@ namespace Ixen.Core.Language.Xnl
                             createNode = false;
                         }
                         node.Name = token.Content;
+                        node.NameIndex = token.Index;
                         break;
 
                     case XnlTokenType.ElementTypeName:
@@ -73,17 +74,20 @@ namespace Ixen.Core.Language.Xnl
                             createNode = false;
                         }
                         node.Type = token.Content;
+                        node.TypeIndex = token.Index;
                         break;
 
                     case XnlTokenType.PropertyName:
                         nodeParameter = new XnlNodeParameter
                         {
-                            Name = token.Content
+                            Name = token.Content,
+                            NameIndex = token.Index
                         };
                         break;
 
                     case XnlTokenType.PropertyValue:
                         nodeParameter.Value = token.Content;
+                        nodeParameter.ValueIndex = token.Index;
                         node.Properties.Add(nodeParameter);
                         break;
 

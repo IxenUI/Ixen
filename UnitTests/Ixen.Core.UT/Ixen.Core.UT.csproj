@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
 
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -29,6 +29,8 @@
     <AdditionalFiles Include="Layout\Padding\PaddingLayoutTest1View.xnl" />
     <AdditionalFiles Include="Layout\Row\RowLayoutTest1Styles.xns" />
     <AdditionalFiles Include="Layout\Row\RowLayoutTest1View.xnl" />
+    <AdditionalFiles Include="Xnl\Fixtures\TypedView.xnl" />
+    <AdditionalFiles Include="Xnl\Fixtures\TypedValuesView.xnl" />
   </ItemGroup>
 
   <ItemGroup>

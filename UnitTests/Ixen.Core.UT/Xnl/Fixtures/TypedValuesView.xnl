@@ -1,0 +1,14 @@
+holder {} [
+	widget<XnlTestWidget> {
+		label: "Coucou"
+		path: "C:\temp\new"
+		count: "42"
+		enabled: "true"
+		ratio: "1.5"
+		precision: "2.25"
+		amount: "9.99"
+		initial: "K"
+		direction: "Row"
+		optional: "7"
+	}
+]
