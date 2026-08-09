@@ -1,6 +1,7 @@
 ﻿using Ixen.Core.Components;
 using Ixen.Core.Rendering;
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Computers;
 using SkiaSharp;
 
@@ -21,6 +22,7 @@ namespace Ixen.Core
         public IxenSurfaceInitOptions InitOptions { get; private set; }
         public string Title { get; set; }
         public VisualElement Root { get; set; }
+        public StyleRegistry Styles { get; set; } = StyleRegistry.Default;
 
         internal IxenSurface(VisualElement root = null, IxenSurfaceInitOptions initOptions = null)
         {
@@ -41,7 +43,7 @@ namespace Ixen.Core
 
             if (Root != null)
             {
-                _styleComputer.Compute(Root);
+                _styleComputer.Compute(Root, Styles ?? StyleRegistry.Default);
                 _measureComputer.Measure(Root, width, height, true, true);
                 _arrangeComputer.Arrange(Root, 0, 0);
                 _clippingComputer.Compute(Root);

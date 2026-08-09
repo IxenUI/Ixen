@@ -9,13 +9,13 @@ namespace Ixen.Core.Visual.Computers
 {
     internal class StyleComputer
     {
-        internal void Compute(VisualElement element)
+        internal void Compute(VisualElement element, StyleRegistry registry)
         {
             if (element.MustRefreshStyles)
             {
                 ApplyBaseStyle(element);
 
-                foreach (var c in GetApplyingClasses(element))
+                foreach (var c in GetApplyingClasses(element, registry))
                 {
                     foreach (var style in c.Styles)
                     {
@@ -28,7 +28,7 @@ namespace Ixen.Core.Visual.Computers
 
             foreach (VisualElement child in element.Children)
             {
-                Compute(child);
+                Compute(child, registry);
             }
         }
 
@@ -47,24 +47,24 @@ namespace Ixen.Core.Visual.Computers
         // - Global class
         // - Type
         // - Global type
-        private List<StyleClass> GetApplyingClasses(VisualElement element)
+        private List<StyleClass> GetApplyingClasses(VisualElement element, StyleRegistry registry)
         {
             var list = new List<StyleClass>();
             var scope = GetScope(element);
 
-            AddClassToList(list, StyleSheet.GetGlobalTypeClass(element.TypeName));
-            AddClassToList(list, StyleSheet.GetGlobalTypeClass(element.TypeName, scope));
+            AddClassToList(list, registry.GetGlobalTypeClass(element.TypeName));
+            AddClassToList(list, registry.GetGlobalTypeClass(element.TypeName, scope));
 
             foreach (var c in element.Classes)
             {
-                AddClassToList(list, StyleSheet.GetGlobalClass(c));
-                AddClassToList(list, StyleSheet.GetGlobalClass(c, scope));
+                AddClassToList(list, registry.GetGlobalClass(c));
+                AddClassToList(list, registry.GetGlobalClass(c, scope));
             }
 
             if (element.Name != null)
             {
-                AddClassToList(list, StyleSheet.GetGlobalElementClass(element.Name));
-                AddClassToList(list, StyleSheet.GetGlobalElementClass(element.Name, scope));
+                AddClassToList(list, registry.GetGlobalElementClass(element.Name));
+                AddClassToList(list, registry.GetGlobalElementClass(element.Name, scope));
             }
 
             return list;
