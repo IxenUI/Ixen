@@ -52,13 +52,15 @@ namespace Ixen.Core
 
         internal void Render(SKCanvas canvas)
         {
-            _rendererContext.SKCanvas = canvas;
+            _rendererContext.BeginFrame(canvas);
             _rendererContext.Clear(_clearColor);
 
             if (Root != null)
             {
                 _renderer.Render(Root, _rendererContext, _viewPort);
             }
+
+            _rendererContext.EndFrame();
         }
 
         internal SKBitmap RenderToBitmap()

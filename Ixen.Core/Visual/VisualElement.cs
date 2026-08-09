@@ -6,8 +6,7 @@ namespace Ixen.Core.Visual
     {
         internal int ChildIndex { get; set; }
         internal List<VisualElement> Children { get; private set; } = new();
-        internal ViewPort ViewPort { get; private set; } = new();
-        
+
         internal VisualElement Parent { get; private set; }
         internal DimensionalElement Clip { get; set; }
         internal bool MustRefreshStyles { get; set; } = true;
