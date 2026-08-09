@@ -8,15 +8,8 @@ namespace Ixen.Core.Visual
         internal List<VisualElement> Children { get; private set; } = new();
         internal ViewPort ViewPort { get; private set; } = new();
         
-        internal float TotalWidthWeight { get; set; }
-        internal float TotalHeightWeight { get; set; }
-        internal bool IsTotalWeightSet { get; set; } = false;
-        internal bool IsWidthComputed { get; set; } = false;
-        internal bool IsHeightComputed { get; set; } = false;
-
         internal VisualElement Parent { get; private set; }
         internal DimensionalElement Clip { get; set; }
-        internal bool IsRendered { get; private set; }
         internal bool MustRefreshStyles { get; set; } = true;
 
         public string Id { get; set; }
@@ -29,6 +22,7 @@ namespace Ixen.Core.Visual
         public void AddChild(VisualElement element)
         {
             element.Parent = this;
+            element.Invalidate();
             Children.Add(element);
             ComputeChildrenIndexes();
         }
@@ -38,6 +32,7 @@ namespace Ixen.Core.Visual
             foreach (VisualElement element in elements)
             {
                 element.Parent = this;
+                element.Invalidate();
                 Children.Add(element);
             }
 
@@ -62,9 +57,14 @@ namespace Ixen.Core.Visual
             }
         }
 
-        internal void Invalidate()
+        public void Invalidate()
         {
-            IsRendered = false;
+            MustRefreshStyles = true;
+
+            foreach (VisualElement child in Children)
+            {
+                child.Invalidate();
+            }
         }
     }
 }
