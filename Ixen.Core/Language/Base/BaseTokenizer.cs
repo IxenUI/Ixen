@@ -10,7 +10,6 @@ namespace Ixen.Core.Language.Base
 
         protected int _index = -1;
         protected int _peekIndex = -1;
-        protected bool _errorOccured = false;
         protected List<LanguageError> _diagnostics = new();
 
         public IReadOnlyList<LanguageError> Diagnostics => _diagnostics;

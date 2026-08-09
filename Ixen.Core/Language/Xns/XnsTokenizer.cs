@@ -49,7 +49,6 @@ namespace Ixen.Core.Language.Xns
 
         private void ReadTokens()
         {
-            _errorOccured = false;
 
             while (PeekChar() != '\0')
             {
