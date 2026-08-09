@@ -11,13 +11,13 @@ namespace Ixen.Core.Language.Base
         protected int _index = -1;
         protected int _peekIndex = -1;
         protected bool _errorOccured = false;
-        protected List<LanguageError> _errors = new();
+        protected List<LanguageError> _diagnostics = new();
 
-        public IReadOnlyList<LanguageError> Errors => _errors;
-        public bool HasErrors => _errors.Count > 0;
+        public IReadOnlyList<LanguageError> Diagnostics => _diagnostics;
+        public bool HasErrors => _diagnostics.Any(d => d.Severity == LanguageErrorSeverity.Error);
 
         protected void AddError(string code, string message, int index, int length)
-            => _errors.Add(new LanguageError(code, message, index, length));
+            => _diagnostics.Add(new LanguageError(code, message, index, length));
 
         protected void ReportUnexpectedInput(bool isAtValidEnd)
         {

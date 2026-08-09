@@ -13,9 +13,9 @@ namespace Ixen.Core.UT.Xns
             var xnsSource = new XnsSource(source);
             xnsSource.Compile();
 
-            Assert.AreEqual(1, xnsSource.Errors.Count, "expected exactly one error");
+            Assert.AreEqual(1, xnsSource.Diagnostics.Count, "expected exactly one error");
 
-            return xnsSource.Errors[0];
+            return xnsSource.Diagnostics[0];
         }
 
         [TestMethod]
@@ -32,7 +32,7 @@ namespace Ixen.Core.UT.Xns
 }");
             var classes = xnsSource.Compile();
 
-            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Errors.Select(e => e.Message)));
+            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(e => e.Message)));
             Assert.IsNotNull(classes);
         }
 
@@ -42,7 +42,7 @@ namespace Ixen.Core.UT.Xns
             var xnsSource = new XnsSource("container {\r\n    layout: row\r\n}\r\n   \r\n\r\n");
             xnsSource.Compile();
 
-            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Errors.Select(e => e.Message)));
+            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(e => e.Message)));
         }
 
         [TestMethod]
@@ -51,7 +51,7 @@ namespace Ixen.Core.UT.Xns
             var xnsSource = new XnsSource("container {\r\n    layout: row\r\n}\r\n// done\r\n");
             xnsSource.Compile();
 
-            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Errors.Select(e => e.Message)));
+            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(e => e.Message)));
         }
 
         [TestMethod]
@@ -90,7 +90,7 @@ namespace Ixen.Core.UT.Xns
             var xnsSource = new XnsSource("container {\r\n    layout: dock\r\n}");
             xnsSource.Compile();
 
-            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Errors.Select(e => e.Message)));
+            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(e => e.Message)));
         }
 
         [TestMethod]
@@ -100,7 +100,7 @@ namespace Ixen.Core.UT.Xns
             xnsSource.Compile();
 
             Assert.IsTrue(xnsSource.HasErrors);
-            Assert.AreEqual(LanguageErrorCode.SYNTAX, xnsSource.Errors[0].Code);
+            Assert.AreEqual(LanguageErrorCode.SYNTAX, xnsSource.Diagnostics[0].Code);
         }
 
         [TestMethod]
@@ -111,8 +111,8 @@ namespace Ixen.Core.UT.Xns
             xnsSource.Compile();
 
             Assert.IsTrue(xnsSource.HasErrors);
-            Assert.AreEqual(LanguageErrorCode.SYNTAX, xnsSource.Errors[0].Code);
-            Assert.AreEqual("@", source.Substring(xnsSource.Errors[0].Index, xnsSource.Errors[0].Length));
+            Assert.AreEqual(LanguageErrorCode.SYNTAX, xnsSource.Diagnostics[0].Code);
+            Assert.AreEqual("@", source.Substring(xnsSource.Diagnostics[0].Index, xnsSource.Diagnostics[0].Length));
         }
 
         [TestMethod]

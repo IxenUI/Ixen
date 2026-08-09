@@ -4,7 +4,6 @@ using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Ixen.Core.Visual.Styles.Parsers;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Ixen.Core.Language.Xns
 {
@@ -24,23 +23,7 @@ namespace Ixen.Core.Language.Xns
         }
 
         private string GetScope(XnsNode node)
-        {
-            var sb = new StringBuilder();
-
-            while (node.Parent != null)
-            {
-                if (!string.IsNullOrEmpty(node.Parent.Name))
-                {
-                    sb.Insert(0, node.Parent.Name);
-                }
-
-                node = node.Parent;
-            }
-
-            return sb.Length > 0
-                ? sb.ToString()
-                : null;
-        }
+            => StyleScope.Build(node, n => n.Parent, n => n.Name);
 
         private StyleClass GetClass(XnsNode node, List<LanguageError> errors)
         {
@@ -58,7 +41,36 @@ namespace Ixen.Core.Language.Xns
                 name = name.Substring(1);
             }
 
-            return new StyleClass(target, null, GetScope(node), name, ToStyles(node, errors));
+            string scope = GetScope(node);
+            WarnOnUnmatchableScope(node, scope, errors);
+
+            return new StyleClass(target, null, scope, name, ToStyles(node, errors));
+        }
+
+        private void WarnOnUnmatchableScope(XnsNode node, string scope, List<LanguageError> errors)
+        {
+            if (scope == null)
+            {
+                return;
+            }
+
+            foreach (string segment in scope.Split(new[] { StyleScope.SEPARATOR }, System.StringSplitOptions.None))
+            {
+                if (!segment.StartsWith(".") && !segment.StartsWith("#"))
+                {
+                    continue;
+                }
+
+                errors.Add(new LanguageError(
+                    LanguageErrorCode.UNSUPPORTED_SCOPE,
+                    $"'{node.Name}' is nested under the selector '{segment}', so its scope '{scope}' can never match at runtime: " +
+                    "scopes are built from element names only. Nest under an element name instead.",
+                    node.NameIndex,
+                    node.Name?.Length ?? 0,
+                    LanguageErrorSeverity.Warning));
+
+                return;
+            }
         }
 
         private void AddClass(XnsNode node, List<StyleClass> list, List<LanguageError> errors)

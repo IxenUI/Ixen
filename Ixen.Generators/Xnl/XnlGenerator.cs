@@ -37,7 +37,7 @@ namespace Ixen.Generators.Xnl
                 var xnlSource = new XnlSource(content);
                 var node = xnlSource.Nodify();
 
-                Diagnostics.Report(context, path, content, xnlSource.Errors);
+                Diagnostics.Report(context, path, content, xnlSource.Diagnostics);
 
                 if (node == null)
                 {

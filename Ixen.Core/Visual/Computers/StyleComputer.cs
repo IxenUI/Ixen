@@ -3,7 +3,6 @@ using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Ixen.Core.Visual.Styles.Handlers;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Ixen.Core.Visual.Computers
 {
@@ -137,22 +136,6 @@ namespace Ixen.Core.Visual.Computers
         }
 
         private string GetScope(VisualElement element)
-        {
-            var sb = new StringBuilder();
-
-            while (element.Parent != null)
-            {
-                if (!string.IsNullOrEmpty(element.Parent.Name))
-                {
-                    sb.Insert(0, element.Parent.Name);
-                }
-
-                element = element.Parent;
-            }
-
-            return sb.Length > 0
-                ? sb.ToString()
-                : null;
-        }
+            => StyleScope.Build(element, e => e.Parent, e => e.Name);
     }
 }

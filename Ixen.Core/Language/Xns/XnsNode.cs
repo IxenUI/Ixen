@@ -6,6 +6,7 @@ namespace Ixen.Core.Language.Xns
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        public int NameIndex { get; set; }
         public List<XnsStyle> Styles { get; set; } = new();
         public XnsNode Parent { get; set; }
         public List<XnsNode> Children { get; set; } = new();

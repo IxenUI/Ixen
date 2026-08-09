@@ -19,9 +19,9 @@ namespace Ixen.Core.Language.Xnl
 
         public List<XnlToken> Tokenize()
         {
-            _errors.Clear();
+            _diagnostics.Clear();
             _tokens = _tokenizer.Tokenize();
-            _errors.AddRange(_tokenizer.Errors);
+            _diagnostics.AddRange(_tokenizer.Diagnostics);
 
             return _tokens;
         }
