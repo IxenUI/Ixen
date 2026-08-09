@@ -30,18 +30,18 @@ namespace Ixen.Core.Language.Xns
         public override List<XnsToken> Tokenize()
         {
             _tokens = new();
+            _errors.Clear();
 
             ResetPosition();
             SetStatesFlags(XnsTokenType.None);
-            HasErrors = false;
 
             try
             {
                 ReadTokens();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                HasErrors = true;
+                AddError(LanguageErrorCode.SYNTAX, $"Tokenizer failure: {ex.Message}", _index, 0);
             }
 
             return _tokens;
@@ -94,6 +94,7 @@ namespace Ixen.Core.Language.Xns
                     continue;
                 }
 
+                ReportUnexpectedInput(_contentLevel == 0);
                 break;
             }
         }

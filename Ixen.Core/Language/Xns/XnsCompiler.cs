@@ -1,8 +1,8 @@
-﻿using Ixen.Core.Visual.Classes;
+using Ixen.Core.Language.Base;
+using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Ixen.Core.Visual.Styles.Parsers;
-using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -13,21 +13,14 @@ namespace Ixen.Core.Language.Xns
         public XnsCompiler()
         { }
 
-        public ClassesSet Compile(XnsNode node)
+        public ClassesSet Compile(XnsNode node, List<LanguageError> errors)
         {
-            try
-            {
-                var set = new ClassesSet();
-                set.Classes = new List<StyleClass>();
+            var set = new ClassesSet();
+            set.Classes = new List<StyleClass>();
 
-                AddClass(node, set.Classes);
+            AddClass(node, set.Classes, errors);
 
-                return set;
-            }
-            catch
-            {
-                return null;
-            }
+            return set;
         }
 
         private string GetScope(XnsNode node)
@@ -49,7 +42,7 @@ namespace Ixen.Core.Language.Xns
                 : null;
         }
 
-        private StyleClass GetClass(XnsNode node)
+        private StyleClass GetClass(XnsNode node, List<LanguageError> errors)
         {
             string name = node.Name;
             var target = StyleClassTarget.ElementName;
@@ -65,68 +58,96 @@ namespace Ixen.Core.Language.Xns
                 name = name.Substring(1);
             }
 
-            return new StyleClass(target, null, GetScope(node), name, ToStyles(node));
+            return new StyleClass(target, null, GetScope(node), name, ToStyles(node, errors));
         }
 
-        private void AddClass(XnsNode node, List<StyleClass> list)
+        private void AddClass(XnsNode node, List<StyleClass> list, List<LanguageError> errors)
         {
             if (node.Styles.Count > 0)
             {
-                list.Add(GetClass(node));
+                list.Add(GetClass(node, errors));
             }
 
             foreach (var child in node.Children)
             {
-                AddClass(child, list);
+                AddClass(child, list, errors);
             }
         }
 
-        private List<StyleDescriptor> ToStyles(XnsNode xnsNode)
+        private List<StyleDescriptor> ToStyles(XnsNode xnsNode, List<LanguageError> errors)
         {
             var styles = new List<StyleDescriptor>();
 
             foreach (var xnsStyle in xnsNode.Styles)
             {
-                styles.Add(ToStyleDescriptor(xnsStyle));
+                StyleDescriptor descriptor = ToStyleDescriptor(xnsStyle, errors);
+
+                if (descriptor != null)
+                {
+                    styles.Add(descriptor);
+                }
             }
 
             return styles;
         }
 
-        private StyleDescriptor ToStyleDescriptor(XnsStyle xnsStyle)
+        private StyleDescriptor ToStyleDescriptor(XnsStyle xnsStyle, List<LanguageError> errors)
         {
             switch (xnsStyle.Name.ToLower())
             {
-                case StyleIdentifier.Background:
-                    return new BackgroundStyleParser(xnsStyle.Value).Descriptor;
+                case StyleIdentifier.BACKGROUND:
+                    return Validated(new BackgroundStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
-                case StyleIdentifier.Border:
-                    return new BorderStyleParser(xnsStyle.Value).Descriptor;
+                case StyleIdentifier.BORDER:
+                    return Validated(new BorderStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
-                case StyleIdentifier.ColumnTemplate:
-                    return new ColumnTemplateStyleParser(xnsStyle.Value).Descriptor;
+                case StyleIdentifier.COLUMN_TEMPLATE:
+                    return Validated(new ColumnTemplateStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
-                case StyleIdentifier.Height:
-                    return new HeightStyleParser(xnsStyle.Value).Descriptor;
+                case StyleIdentifier.HEIGHT:
+                    return Validated(new HeightStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
-                case StyleIdentifier.Layout:
-                    return new LayoutStyleParser(xnsStyle.Value).Descriptor;
+                case StyleIdentifier.LAYOUT:
+                    return Validated(new LayoutStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
-                case StyleIdentifier.Margin:
-                    return new MarginStyleParser(xnsStyle.Value).Descriptor;
+                case StyleIdentifier.MARGIN:
+                    return Validated(new MarginStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
-                case StyleIdentifier.Padding:
-                    return new PaddingStyleParser(xnsStyle.Value).Descriptor;
+                case StyleIdentifier.PADDING:
+                    return Validated(new PaddingStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
-                case StyleIdentifier.RowTemplate:
-                    return new RowTemplateStyleParser(xnsStyle.Value).Descriptor;
+                case StyleIdentifier.ROW_TEMPLATE:
+                    return Validated(new RowTemplateStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
-                case StyleIdentifier.Width:
-                    return new WidthStyleParser(xnsStyle.Value).Descriptor;
+                case StyleIdentifier.WIDTH:
+                    return Validated(new WidthStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
                 default:
-                    throw new NotSupportedException();
+                    errors.Add(new LanguageError(
+                        LanguageErrorCode.UNKNOWN_STYLE,
+                        $"Unknown style property '{xnsStyle.Name}'.",
+                        xnsStyle.NameIndex,
+                        xnsStyle.Name?.Length ?? 0));
+                    return null;
             }
+        }
+
+        private StyleDescriptor Validated<TParser>(TParser parser, System.Func<TParser, StyleDescriptor> selector,
+            XnsStyle xnsStyle, List<LanguageError> errors)
+            where TParser : StyleParser
+        {
+            if (parser.IsValid)
+            {
+                return selector(parser);
+            }
+
+            errors.Add(new LanguageError(
+                LanguageErrorCode.INVALID_STYLE_VALUE,
+                $"Invalid value '{xnsStyle.Value}' for style property '{xnsStyle.Name}'.",
+                xnsStyle.ValueIndex,
+                xnsStyle.Value?.Length ?? 0));
+
+            return null;
         }
     }
 }

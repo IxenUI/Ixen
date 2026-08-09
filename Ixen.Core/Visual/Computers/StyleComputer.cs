@@ -95,39 +95,39 @@ namespace Ixen.Core.Visual.Computers
         {
             switch (style.Identifier)
             {
-                case StyleIdentifier.Background:
+                case StyleIdentifier.BACKGROUND:
                     handlers.Background = new BackgroundStyleHandler((BackgroundStyleDescriptor)style);
                     break;
 
-                case StyleIdentifier.Border:
+                case StyleIdentifier.BORDER:
                     handlers.Border = new BorderStyleHandler((BorderStyleDescriptor)style);
                     break;
 
-                case StyleIdentifier.ColumnTemplate:
+                case StyleIdentifier.COLUMN_TEMPLATE:
                     handlers.ColumnTemplate = new ColumnTemplateStyleHandler((ColumnTemplateStyleDescriptor)style);
                     break;
 
-                case StyleIdentifier.Height:
+                case StyleIdentifier.HEIGHT:
                     handlers.Height = new HeightStyleHandler((HeightStyleDescriptor)style);
                     break;
 
-                case StyleIdentifier.Layout:
+                case StyleIdentifier.LAYOUT:
                     handlers.Layout = new LayoutStyleHandler((LayoutStyleDescriptor)style);
                     break;
 
-                case StyleIdentifier.Margin:
+                case StyleIdentifier.MARGIN:
                     handlers.Margin = new MarginStyleHandler((MarginStyleDescriptor)style);
                     break;
 
-                case StyleIdentifier.Padding:
+                case StyleIdentifier.PADDING:
                     handlers.Padding = new PaddingStyleHandler((PaddingStyleDescriptor)style);
                     break;
 
-                case StyleIdentifier.RowTemplate:
+                case StyleIdentifier.ROW_TEMPLATE:
                     handlers.RowTemplate = new RowTemplateStyleHandler((RowTemplateStyleDescriptor)style);
                     break;
 
-                case StyleIdentifier.Width:
+                case StyleIdentifier.WIDTH:
                     handlers.Width = new WidthStyleHandler((WidthStyleDescriptor)style);
                     break;
 

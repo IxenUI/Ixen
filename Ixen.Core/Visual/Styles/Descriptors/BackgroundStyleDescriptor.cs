@@ -4,7 +4,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 {
     public class BackgroundStyleDescriptor : StyleDescriptor
     {
-        internal override string Identifier => StyleIdentifier.Background;
+        internal override string Identifier => StyleIdentifier.BACKGROUND;
 
         public string Color { get; set; } = null;
         public string ImageUrl { get; set; }

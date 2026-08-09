@@ -1,6 +1,5 @@
-﻿using Ixen.Core.Language.Xns;
+using Ixen.Core.Language.Xns;
 using Microsoft.CodeAnalysis;
-using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
@@ -18,25 +17,33 @@ namespace Ixen.Generators.Xns
                 .Where(static file => file.Path.ToLower()
                 .EndsWith(".xns"));
 
-            IncrementalValuesProvider<(string name, string content)> namesAndContents = textFiles
-                .Select((text, cancellationToken) => (name: Path.GetFileNameWithoutExtension(text.Path), content: text.GetText(cancellationToken)!.ToString()));
+            IncrementalValuesProvider<(string name, string content, string path)> namesAndContents = textFiles
+                .Select((text, cancellationToken) => (
+                    name: Path.GetFileNameWithoutExtension(text.Path),
+                    content: text.GetText(cancellationToken)!.ToString(),
+                    path: text.Path));
 
-            IncrementalValueProvider<(Compilation, ImmutableArray<(string name, string content)>)> compilationAndNC
+            IncrementalValueProvider<(Compilation, ImmutableArray<(string name, string content, string path)>)> compilationAndNC
                 = context.CompilationProvider.Combine(namesAndContents.Collect());
 
             context.RegisterSourceOutput(compilationAndNC, (spc, source) => Execute(source.Item1, source.Item2, spc));
         }
 
-        static void Execute(Compilation compilation, ImmutableArray<(string name, string content)> texts, SourceProductionContext context)
+        static void Execute(Compilation compilation, ImmutableArray<(string name, string content, string path)> texts, SourceProductionContext context)
         {
-            //if (!Debugger.IsAttached) { Debugger.Launch(); }
-
             Debug.WriteLine("Execute Ixen XNS code generator");
 
-            foreach ((string name, string content) in texts)
+            foreach ((string name, string content, string path) in texts)
             {
                 var xnsSource = new XnsSource(content);
                 var sheet = xnsSource.Compile();
+
+                Diagnostics.Report(context, path, content, xnsSource.Errors);
+
+                if (sheet == null)
+                {
+                    continue;
+                }
 
                 var sb = new StringBuilder();
 

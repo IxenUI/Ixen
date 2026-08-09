@@ -11,8 +11,30 @@ namespace Ixen.Core.Language.Base
         protected int _index = -1;
         protected int _peekIndex = -1;
         protected bool _errorOccured = false;
+        protected List<LanguageError> _errors = new();
 
-        public bool HasErrors { get; protected set; }
+        public IReadOnlyList<LanguageError> Errors => _errors;
+        public bool HasErrors => _errors.Count > 0;
+
+        protected void AddError(string code, string message, int index, int length)
+            => _errors.Add(new LanguageError(code, message, index, length));
+
+        protected void ReportUnexpectedInput(bool isAtValidEnd)
+        {
+            char c = PeekNonSpaceChar();
+
+            if (c == '\0')
+            {
+                if (!isAtValidEnd)
+                {
+                    AddError(LanguageErrorCode.SYNTAX, "Unexpected end of file: a block is not closed.", _source.Content.Length, 0);
+                }
+
+                return;
+            }
+
+            AddError(LanguageErrorCode.SYNTAX, $"Unexpected character '{c}'.", _peekIndex, 1);
+        }
 
         protected BaseTokenizer(string source)
         {
