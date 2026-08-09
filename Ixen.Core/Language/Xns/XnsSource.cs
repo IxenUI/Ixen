@@ -22,9 +22,9 @@ namespace Ixen.Core.Language.Xns
 
         public List<XnsToken> Tokenize()
         {
-            _errors.Clear();
+            _diagnostics.Clear();
             _tokens = _tokenizer.Tokenize();
-            _errors.AddRange(_tokenizer.Errors);
+            _diagnostics.AddRange(_tokenizer.Diagnostics);
 
             return _tokens;
         }
@@ -63,7 +63,7 @@ namespace Ixen.Core.Language.Xns
                 return null;
             }
 
-            _classesSet = _compiler.Compile(_node, _errors);
+            _classesSet = _compiler.Compile(_node, _diagnostics);
 
             return _classesSet;
         }

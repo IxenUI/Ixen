@@ -6,6 +6,13 @@ namespace Ixen.Core.Language.Base
         public const string UNKNOWN_STYLE = "XN002";
         public const string INVALID_STYLE_VALUE = "XN003";
         public const string STRUCTURE = "XN004";
+        public const string UNSUPPORTED_SCOPE = "XN005";
+    }
+
+    internal enum LanguageErrorSeverity
+    {
+        Error,
+        Warning
     }
 
     internal class LanguageError
@@ -14,13 +21,16 @@ namespace Ixen.Core.Language.Base
         public string Message { get; set; }
         public int Index { get; set; }
         public int Length { get; set; }
+        public LanguageErrorSeverity Severity { get; set; }
 
-        public LanguageError(string code, string message, int index, int length)
+        public LanguageError(string code, string message, int index, int length,
+            LanguageErrorSeverity severity = LanguageErrorSeverity.Error)
         {
             Code = code;
             Message = message;
             Index = index < 0 ? 0 : index;
             Length = length < 0 ? 0 : length;
+            Severity = severity;
         }
     }
 }

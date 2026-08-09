@@ -14,7 +14,7 @@ namespace Ixen.Core.UT.Xnl
             var xnlSource = new XnlSource("container {}\r\n[\r\n\tel1 {}\r\n\tel2 {}\r\n]\r\n");
             var node = xnlSource.Nodify();
 
-            Assert.IsFalse(xnlSource.HasErrors, string.Join(" | ", xnlSource.Errors.Select(e => e.Message)));
+            Assert.IsFalse(xnlSource.HasErrors, string.Join(" | ", xnlSource.Diagnostics.Select(e => e.Message)));
             Assert.IsNotNull(node);
         }
 
@@ -24,7 +24,7 @@ namespace Ixen.Core.UT.Xnl
             var xnlSource = new XnlSource("container {}\r\n   \r\n\r\n");
             xnlSource.Nodify();
 
-            Assert.IsFalse(xnlSource.HasErrors, string.Join(" | ", xnlSource.Errors.Select(e => e.Message)));
+            Assert.IsFalse(xnlSource.HasErrors, string.Join(" | ", xnlSource.Diagnostics.Select(e => e.Message)));
         }
 
         [TestMethod]
@@ -34,7 +34,7 @@ namespace Ixen.Core.UT.Xnl
             var node = xnlSource.Nodify();
 
             Assert.IsTrue(xnlSource.HasErrors);
-            Assert.AreEqual(LanguageErrorCode.SYNTAX, xnlSource.Errors[0].Code);
+            Assert.AreEqual(LanguageErrorCode.SYNTAX, xnlSource.Diagnostics[0].Code);
             Assert.IsNull(node);
         }
 
@@ -46,8 +46,8 @@ namespace Ixen.Core.UT.Xnl
             xnlSource.Nodify();
 
             Assert.IsTrue(xnlSource.HasErrors);
-            Assert.AreEqual(LanguageErrorCode.SYNTAX, xnlSource.Errors[0].Code);
-            Assert.AreEqual("@", source.Substring(xnlSource.Errors[0].Index, xnlSource.Errors[0].Length));
+            Assert.AreEqual(LanguageErrorCode.SYNTAX, xnlSource.Diagnostics[0].Code);
+            Assert.AreEqual("@", source.Substring(xnlSource.Diagnostics[0].Index, xnlSource.Diagnostics[0].Length));
         }
 
         [TestMethod]

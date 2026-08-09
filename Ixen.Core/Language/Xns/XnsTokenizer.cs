@@ -30,7 +30,7 @@ namespace Ixen.Core.Language.Xns
         public override List<XnsToken> Tokenize()
         {
             _tokens = new();
-            _errors.Clear();
+            _diagnostics.Clear();
 
             ResetPosition();
             SetStatesFlags(XnsTokenType.None);

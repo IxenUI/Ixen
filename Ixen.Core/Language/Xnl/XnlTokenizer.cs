@@ -38,7 +38,7 @@ namespace Ixen.Core.Language.Xnl
         public override List<XnlToken> Tokenize()
         {
             _tokens = new();
-            _errors.Clear();
+            _diagnostics.Clear();
 
             ResetPosition();
             SetStatesFlags(XnlTokenType.None);

@@ -38,7 +38,7 @@ namespace Ixen.Generators.Xns
                 var xnsSource = new XnsSource(content);
                 var sheet = xnsSource.Compile();
 
-                Diagnostics.Report(context, path, content, xnsSource.Errors);
+                Diagnostics.Report(context, path, content, xnsSource.Diagnostics);
 
                 if (sheet == null)
                 {

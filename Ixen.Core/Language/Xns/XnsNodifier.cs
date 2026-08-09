@@ -37,7 +37,8 @@ namespace Ixen.Core.Language.Xns
                         {
                             Id = ++nodeId,
                             Parent = parent,
-                            Name = token.Content
+                            Name = token.Content,
+                            NameIndex = token.Index
                         };
                         parent.Children.Add(node);
                         break;
