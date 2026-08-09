@@ -34,7 +34,7 @@ namespace Ixen.Core.UT.StyleScoping
 
             styleClass = StyleSheet.GetGlobalClass("testGlobalClass");
             Assert.IsNotNull(styleClass);
-            Assert.AreEqual(styleClass.Name, "testGlobalClass");
+            Assert.AreEqual("testGlobalClass", styleClass.Name);
             Assert.IsNull(styleClass.Scope);
 
             styleClass = StyleSheet.GetGlobalClass("testScopedGlobalClass");
@@ -42,64 +42,64 @@ namespace Ixen.Core.UT.StyleScoping
 
             styleClass = StyleSheet.GetGlobalClass("testScopedGlobalClass", "container");
             Assert.IsNotNull(styleClass);
-            Assert.AreEqual(styleClass.Name, "testScopedGlobalClass");
-            Assert.AreEqual(styleClass.Scope, "container");
+            Assert.AreEqual("testScopedGlobalClass", styleClass.Name);
+            Assert.AreEqual("container", styleClass.Scope);
 
             styleClass = StyleSheet.GetClass("testSheetScopedClass", "StyleSheet1");
             Assert.IsNotNull(styleClass);
-            Assert.AreEqual(styleClass.Name, "testSheetScopedClass");
-            Assert.AreEqual(styleClass.SheetScope, "StyleSheet1");
+            Assert.AreEqual("testSheetScopedClass", styleClass.Name);
+            Assert.AreEqual("StyleSheet1", styleClass.SheetScope);
             Assert.IsNull(styleClass.Scope);
 
             styleClass = StyleSheet.GetClass("testSheetScopedScopedClass", "StyleSheet1", "container");
             Assert.IsNotNull(styleClass);
-            Assert.AreEqual(styleClass.Name, "testSheetScopedScopedClass");
-            Assert.AreEqual(styleClass.SheetScope, "StyleSheet1");
-            Assert.AreEqual(styleClass.Scope, "container");
+            Assert.AreEqual("testSheetScopedScopedClass", styleClass.Name);
+            Assert.AreEqual("StyleSheet1", styleClass.SheetScope);
+            Assert.AreEqual("container", styleClass.Scope);
 
             styleClass = StyleSheet.GetGlobalElementClass("testElementGlobalClass");
             Assert.IsNotNull(styleClass);
-            Assert.AreEqual(styleClass.Name, "testElementGlobalClass");
+            Assert.AreEqual("testElementGlobalClass", styleClass.Name);
             Assert.IsNull(styleClass.Scope);
 
             styleClass = StyleSheet.GetGlobalElementClass("testElementScopedGlobalClass", "container");
             Assert.IsNotNull(styleClass);
-            Assert.AreEqual(styleClass.Name, "testElementScopedGlobalClass");
-            Assert.AreEqual(styleClass.Scope, "container");
+            Assert.AreEqual("testElementScopedGlobalClass", styleClass.Name);
+            Assert.AreEqual("container", styleClass.Scope);
 
             styleClass = StyleSheet.GetElementClass("testElementSheetScopedClass", "StyleSheet1");
             Assert.IsNotNull(styleClass);
-            Assert.AreEqual(styleClass.Name, "testElementSheetScopedClass");
-            Assert.AreEqual(styleClass.SheetScope, "StyleSheet1");
+            Assert.AreEqual("testElementSheetScopedClass", styleClass.Name);
+            Assert.AreEqual("StyleSheet1", styleClass.SheetScope);
             Assert.IsNull(styleClass.Scope);
 
             styleClass = StyleSheet.GetElementClass("testElementSheetScopedScopedClass", "StyleSheet1", "container");
             Assert.IsNotNull(styleClass);
-            Assert.AreEqual(styleClass.Name, "testElementSheetScopedScopedClass");
-            Assert.AreEqual(styleClass.SheetScope, "StyleSheet1");
-            Assert.AreEqual(styleClass.Scope, "container");
+            Assert.AreEqual("testElementSheetScopedScopedClass", styleClass.Name);
+            Assert.AreEqual("StyleSheet1", styleClass.SheetScope);
+            Assert.AreEqual("container", styleClass.Scope);
 
             styleClass = StyleSheet.GetGlobalTypeClass("testTypeGlobalClass");
             Assert.IsNotNull(styleClass);
-            Assert.AreEqual(styleClass.Name, "testTypeGlobalClass");
+            Assert.AreEqual("testTypeGlobalClass", styleClass.Name);
             Assert.IsNull(styleClass.Scope);
 
             styleClass = StyleSheet.GetGlobalTypeClass("testTypeScopedGlobalClass", "container");
             Assert.IsNotNull(styleClass);
-            Assert.AreEqual(styleClass.Name, "testTypeScopedGlobalClass");
-            Assert.AreEqual(styleClass.Scope, "container");
+            Assert.AreEqual("testTypeScopedGlobalClass", styleClass.Name);
+            Assert.AreEqual("container", styleClass.Scope);
 
             styleClass = StyleSheet.GetTypeClass("testTypeSheetScopedClass", "StyleSheet1");
             Assert.IsNotNull(styleClass);
-            Assert.AreEqual(styleClass.Name, "testTypeSheetScopedClass");
-            Assert.AreEqual(styleClass.SheetScope, "StyleSheet1");
+            Assert.AreEqual("testTypeSheetScopedClass", styleClass.Name);
+            Assert.AreEqual("StyleSheet1", styleClass.SheetScope);
             Assert.IsNull(styleClass.Scope);
 
             styleClass = StyleSheet.GetTypeClass("testTypeSheetScopedScopedClass", "StyleSheet1", "container");
             Assert.IsNotNull(styleClass);
-            Assert.AreEqual(styleClass.Name, "testTypeSheetScopedScopedClass");
-            Assert.AreEqual(styleClass.SheetScope, "StyleSheet1");
-            Assert.AreEqual(styleClass.Scope, "container");
+            Assert.AreEqual("testTypeSheetScopedScopedClass", styleClass.Name);
+            Assert.AreEqual("StyleSheet1", styleClass.SheetScope);
+            Assert.AreEqual("container", styleClass.Scope);
         }
     }
 }

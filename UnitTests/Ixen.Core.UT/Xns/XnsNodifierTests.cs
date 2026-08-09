@@ -42,56 +42,56 @@ namespace Ixen.Core.UT.Xns
             var node = xnsSource.Nodify();
 
             Assert.IsNotNull(node);
-            Assert.AreEqual(node.Children.Count, 2);
+            Assert.AreEqual(2, node.Children.Count);
 
             var containerNode = node.Children[0];
-            Assert.AreEqual(containerNode.Name, "container");
-            Assert.AreEqual(containerNode.Styles.Count, 2);
-            Assert.AreEqual(containerNode.Children.Count, 3);
+            Assert.AreEqual("container", containerNode.Name);
+            Assert.AreEqual(2, containerNode.Styles.Count);
+            Assert.AreEqual(3, containerNode.Children.Count);
 
-            Assert.AreEqual(containerNode.Styles[0].Name, "layout");
-            Assert.AreEqual(containerNode.Styles[0].Value, "row");
-            Assert.AreEqual(containerNode.Styles[1].Name, "width");
-            Assert.AreEqual(containerNode.Styles[1].Value, "100%");
+            Assert.AreEqual("layout", containerNode.Styles[0].Name);
+            Assert.AreEqual("row", containerNode.Styles[0].Value);
+            Assert.AreEqual("width", containerNode.Styles[1].Name);
+            Assert.AreEqual("100%", containerNode.Styles[1].Value);
 
             var panelNode = containerNode.Children[0];
-            Assert.AreEqual(panelNode.Name, "panel");
-            Assert.AreEqual(panelNode.Styles.Count, 2);
-            Assert.AreEqual(panelNode.Children.Count, 0);
+            Assert.AreEqual("panel", panelNode.Name);
+            Assert.AreEqual(2, panelNode.Styles.Count);
+            Assert.AreEqual(0, panelNode.Children.Count);
 
-            Assert.AreEqual(panelNode.Styles[0].Name, "width");
-            Assert.AreEqual(panelNode.Styles[0].Value, "50px");
-            Assert.AreEqual(panelNode.Styles[1].Name, "background");
-            Assert.AreEqual(panelNode.Styles[1].Value, "#222222");
+            Assert.AreEqual("width", panelNode.Styles[0].Name);
+            Assert.AreEqual("50px", panelNode.Styles[0].Value);
+            Assert.AreEqual("background", panelNode.Styles[1].Name);
+            Assert.AreEqual("#222222", panelNode.Styles[1].Value);
 
             var contentNode = containerNode.Children[1];
-            Assert.AreEqual(contentNode.Name, "content");
-            Assert.AreEqual(contentNode.Styles.Count, 3);
-            Assert.AreEqual(contentNode.Children.Count, 0);
+            Assert.AreEqual("content", contentNode.Name);
+            Assert.AreEqual(3, contentNode.Styles.Count);
+            Assert.AreEqual(0, contentNode.Children.Count);
 
-            Assert.AreEqual(contentNode.Styles[0].Name, "width");
-            Assert.AreEqual(contentNode.Styles[0].Value, "1*");
-            Assert.AreEqual(contentNode.Styles[1].Name, "background");
-            Assert.AreEqual(contentNode.Styles[1].Value, "#EEEEEE");
-            Assert.AreEqual(contentNode.Styles[2].Name, "padding");
-            Assert.AreEqual(contentNode.Styles[2].Value, "5px");
+            Assert.AreEqual("width", contentNode.Styles[0].Name);
+            Assert.AreEqual("1*", contentNode.Styles[0].Value);
+            Assert.AreEqual("background", contentNode.Styles[1].Name);
+            Assert.AreEqual("#EEEEEE", contentNode.Styles[1].Value);
+            Assert.AreEqual("padding", contentNode.Styles[2].Name);
+            Assert.AreEqual("5px", contentNode.Styles[2].Value);
 
             var entriesNode = containerNode.Children[2];
-            Assert.AreEqual(entriesNode.Name, "entries");
-            Assert.AreEqual(entriesNode.Styles.Count, 1);
-            Assert.AreEqual(entriesNode.Children.Count, 1);
+            Assert.AreEqual("entries", entriesNode.Name);
+            Assert.AreEqual(1, entriesNode.Styles.Count);
+            Assert.AreEqual(1, entriesNode.Children.Count);
 
-            Assert.AreEqual(entriesNode.Styles[0].Name, "layout");
-            Assert.AreEqual(entriesNode.Styles[0].Value, "column");
+            Assert.AreEqual("layout", entriesNode.Styles[0].Name);
+            Assert.AreEqual("column", entriesNode.Styles[0].Value);
 
-            Assert.AreEqual(entriesNode.Children[0].Name, "entry");
+            Assert.AreEqual("entry", entriesNode.Children[0].Name);
 
             var activeNode = node.Children[1];
-            Assert.AreEqual(activeNode.Name, ".active");
-            Assert.AreEqual(activeNode.Styles.Count, 1);
+            Assert.AreEqual(".active", activeNode.Name);
+            Assert.AreEqual(1, activeNode.Styles.Count);
 
-            Assert.AreEqual(activeNode.Styles[0].Name, "background");
-            Assert.AreEqual(activeNode.Styles[0].Value, "#FF2222");
+            Assert.AreEqual("background", activeNode.Styles[0].Name);
+            Assert.AreEqual("#FF2222", activeNode.Styles[0].Value);
         }
     }
 }

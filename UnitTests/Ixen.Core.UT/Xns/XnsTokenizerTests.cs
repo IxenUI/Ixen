@@ -40,66 +40,66 @@ namespace Ixen.Core.UT.Xns
             var xnsSource = new XnsSource(source);
             var tokens = xnsSource.Tokenize();
 
-            Assert.AreEqual(tokens.Count, 46);
+            Assert.AreEqual(46, tokens.Count);
 
-            Assert.AreEqual(tokens[0].Index, 0);
-            Assert.AreEqual(tokens[0].Content, "container");
-            Assert.AreEqual(tokens[0].Type, XnsTokenType.ClassName);
+            Assert.AreEqual(0, tokens[0].Index);
+            Assert.AreEqual("container", tokens[0].Content);
+            Assert.AreEqual(XnsTokenType.ClassName, tokens[0].Type);
 
-            Assert.AreEqual(tokens[1].Type, XnsTokenType.BeginClassContent);
+            Assert.AreEqual(XnsTokenType.BeginClassContent, tokens[1].Type);
 
-            Assert.AreEqual(tokens[2].Type, XnsTokenType.StyleName);
-            Assert.AreEqual(tokens[2].Content, "layout");
-            Assert.AreEqual(tokens[3].Type, XnsTokenType.StyleEquals);
-            Assert.AreEqual(tokens[4].Type, XnsTokenType.StyleValue);
-            Assert.AreEqual(tokens[4].Content, "row");
+            Assert.AreEqual(XnsTokenType.StyleName, tokens[2].Type);
+            Assert.AreEqual("layout", tokens[2].Content);
+            Assert.AreEqual(XnsTokenType.StyleEquals, tokens[3].Type);
+            Assert.AreEqual(XnsTokenType.StyleValue, tokens[4].Type);
+            Assert.AreEqual("row", tokens[4].Content);
 
-            Assert.AreEqual(tokens[5].Type, XnsTokenType.StyleName);
-            Assert.AreEqual(tokens[5].Content, "width");
-            Assert.AreEqual(tokens[6].Type, XnsTokenType.StyleEquals);
-            Assert.AreEqual(tokens[7].Type, XnsTokenType.StyleValue);
-            Assert.AreEqual(tokens[7].Content, "100%");
+            Assert.AreEqual(XnsTokenType.StyleName, tokens[5].Type);
+            Assert.AreEqual("width", tokens[5].Content);
+            Assert.AreEqual(XnsTokenType.StyleEquals, tokens[6].Type);
+            Assert.AreEqual(XnsTokenType.StyleValue, tokens[7].Type);
+            Assert.AreEqual("100%", tokens[7].Content);
 
-            Assert.AreEqual(tokens[8].Type, XnsTokenType.Comment);
+            Assert.AreEqual(XnsTokenType.Comment, tokens[8].Type);
 
-            Assert.AreEqual(tokens[9].Type, XnsTokenType.ClassName);
-            Assert.AreEqual(tokens[9].Content, "panel");
+            Assert.AreEqual(XnsTokenType.ClassName, tokens[9].Type);
+            Assert.AreEqual("panel", tokens[9].Content);
 
-            Assert.AreEqual(tokens[10].Type, XnsTokenType.BeginClassContent);
+            Assert.AreEqual(XnsTokenType.BeginClassContent, tokens[10].Type);
 
-            Assert.AreEqual(tokens[11].Type, XnsTokenType.StyleName);
-            Assert.AreEqual(tokens[11].Content, "width");
-            Assert.AreEqual(tokens[12].Type, XnsTokenType.StyleEquals);
-            Assert.AreEqual(tokens[13].Type, XnsTokenType.StyleValue);
-            Assert.AreEqual(tokens[13].Content, "50px");
+            Assert.AreEqual(XnsTokenType.StyleName, tokens[11].Type);
+            Assert.AreEqual("width", tokens[11].Content);
+            Assert.AreEqual(XnsTokenType.StyleEquals, tokens[12].Type);
+            Assert.AreEqual(XnsTokenType.StyleValue, tokens[13].Type);
+            Assert.AreEqual("50px", tokens[13].Content);
 
-            Assert.AreEqual(tokens[14].Type, XnsTokenType.StyleName);
-            Assert.AreEqual(tokens[14].Content, "background");
-            Assert.AreEqual(tokens[15].Type, XnsTokenType.StyleEquals);
-            Assert.AreEqual(tokens[16].Type, XnsTokenType.StyleValue);
-            Assert.AreEqual(tokens[16].Content, "#222222");
+            Assert.AreEqual(XnsTokenType.StyleName, tokens[14].Type);
+            Assert.AreEqual("background", tokens[14].Content);
+            Assert.AreEqual(XnsTokenType.StyleEquals, tokens[15].Type);
+            Assert.AreEqual(XnsTokenType.StyleValue, tokens[16].Type);
+            Assert.AreEqual("#222222", tokens[16].Content);
 
-            Assert.AreEqual(tokens[17].Type, XnsTokenType.EndClassContent);
+            Assert.AreEqual(XnsTokenType.EndClassContent, tokens[17].Type);
 
-            Assert.AreEqual(tokens[30].Type, XnsTokenType.ClassName);
-            Assert.AreEqual(tokens[30].Content, "entries");
+            Assert.AreEqual(XnsTokenType.ClassName, tokens[30].Type);
+            Assert.AreEqual("entries", tokens[30].Content);
 
-            Assert.AreEqual(tokens[31].Type, XnsTokenType.BeginClassContent);
+            Assert.AreEqual(XnsTokenType.BeginClassContent, tokens[31].Type);
 
-            Assert.AreEqual(tokens[32].Type, XnsTokenType.StyleName);
-            Assert.AreEqual(tokens[32].Content, "layout");
-            Assert.AreEqual(tokens[33].Type, XnsTokenType.StyleEquals);
-            Assert.AreEqual(tokens[34].Type, XnsTokenType.StyleValue);
-            Assert.AreEqual(tokens[34].Content, "column");
+            Assert.AreEqual(XnsTokenType.StyleName, tokens[32].Type);
+            Assert.AreEqual("layout", tokens[32].Content);
+            Assert.AreEqual(XnsTokenType.StyleEquals, tokens[33].Type);
+            Assert.AreEqual(XnsTokenType.StyleValue, tokens[34].Type);
+            Assert.AreEqual("column", tokens[34].Content);
 
-            Assert.AreEqual(tokens[35].Type, XnsTokenType.ClassName);
-            Assert.AreEqual(tokens[35].Content, "entry");
+            Assert.AreEqual(XnsTokenType.ClassName, tokens[35].Type);
+            Assert.AreEqual("entry", tokens[35].Content);
 
-            Assert.AreEqual(tokens[36].Type, XnsTokenType.BeginClassContent);
-            Assert.AreEqual(tokens[37].Type, XnsTokenType.EndClassContent);
+            Assert.AreEqual(XnsTokenType.BeginClassContent, tokens[36].Type);
+            Assert.AreEqual(XnsTokenType.EndClassContent, tokens[37].Type);
 
-            Assert.AreEqual(tokens[38].Type, XnsTokenType.EndClassContent);
-            Assert.AreEqual(tokens[39].Type, XnsTokenType.EndClassContent);
+            Assert.AreEqual(XnsTokenType.EndClassContent, tokens[38].Type);
+            Assert.AreEqual(XnsTokenType.EndClassContent, tokens[39].Type);
         }
     }
 }

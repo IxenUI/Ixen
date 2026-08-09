@@ -44,76 +44,76 @@ namespace Ixen.Core.UT.Xns
             var classes = xnsSource.Compile();
 
             Assert.IsNotNull(classes);
-            Assert.AreEqual(classes.Classes.Count, 5);
+            Assert.AreEqual(5, classes.Classes.Count);
 
             var containerClass = classes.Classes[0];
-            Assert.AreEqual(containerClass.Name, "container");
-            Assert.AreEqual(containerClass.Target, StyleClassTarget.ElementName);
-            Assert.AreEqual(containerClass.Styles.Count, 2);
+            Assert.AreEqual("container", containerClass.Name);
+            Assert.AreEqual(StyleClassTarget.ElementName, containerClass.Target);
+            Assert.AreEqual(2, containerClass.Styles.Count);
 
-            Assert.AreEqual(containerClass.Styles[0].Identifier, StyleIdentifier.Layout);
-            Assert.AreEqual(containerClass.Styles[1].Identifier, StyleIdentifier.Width);
+            Assert.AreEqual(StyleIdentifier.Layout, containerClass.Styles[0].Identifier);
+            Assert.AreEqual(StyleIdentifier.Width, containerClass.Styles[1].Identifier);
 
             var layoutStyle = (LayoutStyleDescriptor)containerClass.Styles[0];
-            Assert.AreEqual(layoutStyle.Type, LayoutType.Row);
+            Assert.AreEqual(LayoutType.Row, layoutStyle.Type);
 
             var widthStyle = (WidthStyleDescriptor)containerClass.Styles[1];
-            Assert.AreEqual(widthStyle.Unit, SizeUnit.Percents);
-            Assert.AreEqual(widthStyle.Value, 100);
+            Assert.AreEqual(SizeUnit.Percents, widthStyle.Unit);
+            Assert.AreEqual(100, widthStyle.Value);
 
             var panelClass = classes.Classes[1];
-            Assert.AreEqual(panelClass.Name, "panel-test_Test2");
-            Assert.AreEqual(panelClass.Scope, "container");
-            Assert.AreEqual(panelClass.Target, StyleClassTarget.ElementName);
-            Assert.AreEqual(panelClass.Styles.Count, 2);
+            Assert.AreEqual("panel-test_Test2", panelClass.Name);
+            Assert.AreEqual("container", panelClass.Scope);
+            Assert.AreEqual(StyleClassTarget.ElementName, panelClass.Target);
+            Assert.AreEqual(2, panelClass.Styles.Count);
 
-            Assert.AreEqual(panelClass.Styles[0].Identifier, StyleIdentifier.Width);
-            Assert.AreEqual(panelClass.Styles[1].Identifier, StyleIdentifier.Background);
+            Assert.AreEqual(StyleIdentifier.Width, panelClass.Styles[0].Identifier);
+            Assert.AreEqual(StyleIdentifier.Background, panelClass.Styles[1].Identifier);
 
             widthStyle = (WidthStyleDescriptor)panelClass.Styles[0];
-            Assert.AreEqual(widthStyle.Unit, SizeUnit.Pixels);
-            Assert.AreEqual(widthStyle.Value, 50);
+            Assert.AreEqual(SizeUnit.Pixels, widthStyle.Unit);
+            Assert.AreEqual(50, widthStyle.Value);
 
             var backroundStyle = (BackgroundStyleDescriptor)panelClass.Styles[1];
-            Assert.AreEqual(backroundStyle.Color, "#222222");
+            Assert.AreEqual("#222222", backroundStyle.Color);
             Assert.IsFalse(backroundStyle.RepeatX);
             Assert.IsFalse(backroundStyle.RepeatY);
             Assert.IsNull(backroundStyle.ImageUrl);
 
             var contentClass = classes.Classes[2];
-            Assert.AreEqual(contentClass.Name, "content");
-            Assert.AreEqual(contentClass.Scope, "container");
-            Assert.AreEqual(contentClass.Target, StyleClassTarget.ClassName);
-            Assert.AreEqual(contentClass.Styles.Count, 3);
+            Assert.AreEqual("content", contentClass.Name);
+            Assert.AreEqual("container", contentClass.Scope);
+            Assert.AreEqual(StyleClassTarget.ClassName, contentClass.Target);
+            Assert.AreEqual(3, contentClass.Styles.Count);
 
-            Assert.AreEqual(contentClass.Styles[0].Identifier, StyleIdentifier.Width);
-            Assert.AreEqual(contentClass.Styles[1].Identifier, StyleIdentifier.RowTemplate);
-            Assert.AreEqual(contentClass.Styles[2].Identifier, StyleIdentifier.Padding);
+            Assert.AreEqual(StyleIdentifier.Width, contentClass.Styles[0].Identifier);
+            Assert.AreEqual(StyleIdentifier.RowTemplate, contentClass.Styles[1].Identifier);
+            Assert.AreEqual(StyleIdentifier.Padding, contentClass.Styles[2].Identifier);
 
             widthStyle = (WidthStyleDescriptor)contentClass.Styles[0];
-            Assert.AreEqual(widthStyle.Unit, SizeUnit.Weight);
-            Assert.AreEqual(widthStyle.Value, 1);
+            Assert.AreEqual(SizeUnit.Weight, widthStyle.Unit);
+            Assert.AreEqual(1, widthStyle.Value);
 
             var paddingStyle = (PaddingStyleDescriptor)contentClass.Styles[2];
-            Assert.AreEqual(paddingStyle.Top.Unit, SizeUnit.Pixels);
-            Assert.AreEqual(paddingStyle.Top.Value, 5);
-            Assert.AreEqual(paddingStyle.Right.Unit, SizeUnit.Pixels);
-            Assert.AreEqual(paddingStyle.Right.Value, 5);
-            Assert.AreEqual(paddingStyle.Bottom.Unit, SizeUnit.Pixels);
-            Assert.AreEqual(paddingStyle.Bottom.Value, 5);
-            Assert.AreEqual(paddingStyle.Left.Unit, SizeUnit.Pixels);
-            Assert.AreEqual(paddingStyle.Left.Value, 5);
+            Assert.AreEqual(SizeUnit.Pixels, paddingStyle.Top.Unit);
+            Assert.AreEqual(5, paddingStyle.Top.Value);
+            Assert.AreEqual(SizeUnit.Pixels, paddingStyle.Right.Unit);
+            Assert.AreEqual(5, paddingStyle.Right.Value);
+            Assert.AreEqual(SizeUnit.Pixels, paddingStyle.Bottom.Unit);
+            Assert.AreEqual(5, paddingStyle.Bottom.Value);
+            Assert.AreEqual(SizeUnit.Pixels, paddingStyle.Left.Unit);
+            Assert.AreEqual(5, paddingStyle.Left.Value);
 
             var entriesClass = classes.Classes[3];
-            Assert.AreEqual(entriesClass.Name, "entries");
-            Assert.AreEqual(entriesClass.Scope, "container");
-            Assert.AreEqual(entriesClass.Target, StyleClassTarget.ElementType);
-            Assert.AreEqual(entriesClass.Styles.Count, 1);
+            Assert.AreEqual("entries", entriesClass.Name);
+            Assert.AreEqual("container", entriesClass.Scope);
+            Assert.AreEqual(StyleClassTarget.ElementType, entriesClass.Target);
+            Assert.AreEqual(1, entriesClass.Styles.Count);
 
             var activeClass = classes.Classes[4];
-            Assert.AreEqual(activeClass.Name, "active");
-            Assert.AreEqual(activeClass.Target, StyleClassTarget.ClassName);
-            Assert.AreEqual(activeClass.Styles.Count, 1);
+            Assert.AreEqual("active", activeClass.Name);
+            Assert.AreEqual(StyleClassTarget.ClassName, activeClass.Target);
+            Assert.AreEqual(1, activeClass.Styles.Count);
         }
     }
 }
