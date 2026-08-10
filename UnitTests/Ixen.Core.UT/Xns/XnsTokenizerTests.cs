@@ -123,5 +123,15 @@ namespace Ixen.Core.UT.Xns
             Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
             Assert.AreEqual(".active", tokens.Where(t => t.Type == XnsTokenType.ClassName).Last().Content);
         }
+
+        [TestMethod]
+        public void AContentUnitIsReadOutsideTheFirstPosition()
+        {
+            var xnsSource = new XnsSource("box {\r\n    row-template: 100px ? 1*\r\n}");
+            var tokens = xnsSource.Tokenize();
+
+            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
+            Assert.AreEqual("100px ? 1*", tokens.Single(t => t.Type == XnsTokenType.StyleValue).Content);
+        }
     }
 }

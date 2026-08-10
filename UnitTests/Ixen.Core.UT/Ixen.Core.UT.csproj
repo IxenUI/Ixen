@@ -29,6 +29,10 @@
     <AdditionalFiles Include="Layout\Padding\PaddingLayoutTest1View.xnl" />
     <AdditionalFiles Include="Layout\Row\RowLayoutTest1Styles.xns" />
     <AdditionalFiles Include="Layout\Row\RowLayoutTest1View.xnl" />
+    <AdditionalFiles Include="Layout\Grid\GridLayoutTest1Styles.xns" />
+    <AdditionalFiles Include="Layout\Grid\GridLayoutTest1View.xnl" />
+    <AdditionalFiles Include="Layout\Grid\GridLayoutTest2Styles.xns" />
+    <AdditionalFiles Include="Layout\Grid\GridLayoutTest2View.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\TypedView.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\TypedValuesView.xnl" />
     <AdditionalFiles Include="Xns\Fixtures\AllGeneratedStyles.xns" />

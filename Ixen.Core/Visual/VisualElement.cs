@@ -7,6 +7,32 @@ namespace Ixen.Core.Visual
         internal int ChildIndex { get; set; }
         internal List<VisualElement> Children { get; private set; } = new();
 
+        private float[] _gridColumns;
+        private float[] _gridRows;
+
+        internal float[] GridColumns => _gridColumns;
+        internal float[] GridRows => _gridRows;
+
+        internal float[] EnsureGridColumns(int count)
+        {
+            if (_gridColumns == null || _gridColumns.Length != count)
+            {
+                _gridColumns = new float[count];
+            }
+
+            return _gridColumns;
+        }
+
+        internal float[] EnsureGridRows(int count)
+        {
+            if (_gridRows == null || _gridRows.Length != count)
+            {
+                _gridRows = new float[count];
+            }
+
+            return _gridRows;
+        }
+
         internal VisualElement Parent { get; private set; }
         internal DimensionalElement Clip { get; set; }
         internal bool MustRefreshStyles { get; set; } = true;

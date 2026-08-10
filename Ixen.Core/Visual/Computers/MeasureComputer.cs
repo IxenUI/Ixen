@@ -1,10 +1,14 @@
 using Ixen.Core.Visual.Styles.Descriptors;
 using System;
+using System.Collections.Generic;
 
 namespace Ixen.Core.Visual.Computers
 {
     internal class MeasureComputer
     {
+        private static readonly SizeStyleDescriptor _fillTrack = new SizeStyleDescriptor { Unit = SizeUnit.Weight, Value = 1 };
+        private static readonly SizeStyleDescriptor _contentTrack = new SizeStyleDescriptor { Unit = SizeUnit.Content, Value = 1 };
+
         private readonly ITextMeasurer _textMeasurer;
 
         internal MeasureComputer(ITextMeasurer textMeasurer)
@@ -17,7 +21,16 @@ namespace Ixen.Core.Visual.Computers
             float contentWidth = Math.Max(0, availableWidth - element.HorizontalPadding);
             float contentHeight = Math.Max(0, availableHeight - element.VerticalPadding);
 
-            MeasureChildren(element, contentWidth, contentHeight);
+            bool isGrid = IsGrid(element);
+
+            if (isGrid)
+            {
+                MeasureGrid(element, contentWidth, contentHeight);
+            }
+            else
+            {
+                MeasureChildren(element, contentWidth, contentHeight);
+            }
 
             float textWidth = 0;
             float textHeight = 0;
@@ -29,11 +42,11 @@ namespace Ixen.Core.Visual.Computers
 
             element.Width = widthIsDefinite
                 ? availableWidth
-                : Math.Max(AggregateWidth(element), textWidth) + element.HorizontalPadding;
+                : Math.Max(AggregateWidth(element, isGrid), textWidth) + element.HorizontalPadding;
 
             element.Height = heightIsDefinite
                 ? availableHeight
-                : Math.Max(AggregateHeight(element), textHeight) + element.VerticalPadding;
+                : Math.Max(AggregateHeight(element, isGrid), textHeight) + element.VerticalPadding;
         }
 
         private void MeasureText(VisualElement element, out float width, out float height)
@@ -160,8 +173,227 @@ namespace Ixen.Core.Visual.Computers
             }
         }
 
-        private float AggregateWidth(VisualElement element)
+        private void MeasureGrid(VisualElement element, float contentWidth, float contentHeight)
         {
+            if (element.Children.Count == 0)
+            {
+                return;
+            }
+
+            foreach (VisualElement child in element.Children)
+            {
+                ResolveHorizontalSpacing(child, contentWidth);
+                ResolveVerticalSpacing(child, contentHeight);
+            }
+
+            List<SizeStyleDescriptor> columnTemplate = element.StylesHandlers.RowTemplate.Descriptor.Value;
+            List<SizeStyleDescriptor> rowTemplate = element.StylesHandlers.ColumnTemplate.Descriptor.Value;
+
+            int columnCount = columnTemplate.Count > 0 ? columnTemplate.Count : 1;
+            int rowCount = (element.Children.Count + columnCount - 1) / columnCount;
+
+            float[] columns = element.EnsureGridColumns(columnCount);
+            float[] rows = element.EnsureGridRows(rowCount);
+
+            ResolveColumnTracks(element, columnTemplate, columns, contentWidth);
+            ResolveRowTracks(element, rowTemplate, columns, rows, contentHeight);
+
+            foreach (VisualElement child in element.Children)
+            {
+                MeasureCell(child,
+                    columns[child.ChildIndex % columnCount],
+                    rows[child.ChildIndex / columnCount],
+                    true, true);
+            }
+        }
+
+        private void ResolveColumnTracks(VisualElement element, List<SizeStyleDescriptor> template, float[] columns, float available)
+        {
+            float pool = available;
+            float totalWeight = 0;
+
+            for (int i = 0; i < columns.Length; i++)
+            {
+                SizeStyleDescriptor style = TrackStyle(template, i, _fillTrack);
+
+                switch (style.Unit)
+                {
+                    case SizeUnit.Pixels:
+                        columns[i] = style.Value;
+                        break;
+
+                    case SizeUnit.Percents:
+                        columns[i] = (available / 100) * style.Value;
+                        break;
+
+                    case SizeUnit.Content:
+                        columns[i] = MeasureColumnExtent(element, columns.Length, i, available);
+                        break;
+
+                    default:
+                        columns[i] = 0;
+                        totalWeight += style.Value;
+                        continue;
+                }
+
+                pool -= columns[i];
+            }
+
+            ShareRemainder(template, columns, _fillTrack, pool, totalWeight);
+        }
+
+        private void ResolveRowTracks(VisualElement element, List<SizeStyleDescriptor> template, float[] columns, float[] rows, float available)
+        {
+            float pool = available;
+            float totalWeight = 0;
+
+            for (int i = 0; i < rows.Length; i++)
+            {
+                SizeStyleDescriptor style = TrackStyle(template, i, _contentTrack);
+
+                switch (style.Unit)
+                {
+                    case SizeUnit.Pixels:
+                        rows[i] = style.Value;
+                        break;
+
+                    case SizeUnit.Percents:
+                        rows[i] = (available / 100) * style.Value;
+                        break;
+
+                    case SizeUnit.Content:
+                        rows[i] = MeasureRowExtent(element, columns, i, available);
+                        break;
+
+                    default:
+                        rows[i] = 0;
+                        totalWeight += style.Value;
+                        continue;
+                }
+
+                pool -= rows[i];
+            }
+
+            ShareRemainder(template, rows, _contentTrack, pool, totalWeight);
+        }
+
+        private void ShareRemainder(List<SizeStyleDescriptor> template, float[] tracks, SizeStyleDescriptor fallback,
+            float pool, float totalWeight)
+        {
+            if (totalWeight <= 0)
+            {
+                return;
+            }
+
+            pool = Math.Max(0, pool);
+
+            for (int i = 0; i < tracks.Length; i++)
+            {
+                SizeStyleDescriptor style = TrackStyle(template, i, fallback);
+
+                if (style.Unit == SizeUnit.Weight || style.Unit == SizeUnit.Unset)
+                {
+                    tracks[i] = (pool / totalWeight) * style.Value;
+                }
+            }
+        }
+
+        private float MeasureColumnExtent(VisualElement element, int columnCount, int column, float available)
+        {
+            float extent = 0;
+
+            foreach (VisualElement child in element.Children)
+            {
+                if (child.ChildIndex % columnCount != column)
+                {
+                    continue;
+                }
+
+                MeasureCell(child, available, available, false, false);
+
+                if (child.BoxWidth > extent)
+                {
+                    extent = child.BoxWidth;
+                }
+            }
+
+            return extent;
+        }
+
+        private float MeasureRowExtent(VisualElement element, float[] columns, int row, float available)
+        {
+            float extent = 0;
+
+            foreach (VisualElement child in element.Children)
+            {
+                if (child.ChildIndex / columns.Length != row)
+                {
+                    continue;
+                }
+
+                MeasureCell(child, columns[child.ChildIndex % columns.Length], available, true, false);
+
+                if (child.BoxHeight > extent)
+                {
+                    extent = child.BoxHeight;
+                }
+            }
+
+            return extent;
+        }
+
+        private void MeasureCell(VisualElement child, float cellWidth, float cellHeight,
+            bool widthCellIsDefinite, bool heightCellIsDefinite)
+        {
+            ResolveCellAxis(child.StylesHandlers.Width.Descriptor, cellWidth, child.HorizontalMargin,
+                widthCellIsDefinite, out float availableWidth, out bool widthIsDefinite);
+
+            ResolveCellAxis(child.StylesHandlers.Height.Descriptor, cellHeight, child.VerticalMargin,
+                heightCellIsDefinite, out float availableHeight, out bool heightIsDefinite);
+
+            Measure(child, availableWidth, availableHeight, widthIsDefinite, heightIsDefinite);
+        }
+
+        private void ResolveCellAxis(SizeStyleDescriptor style, float cell, float margin, bool cellIsDefinite,
+            out float available, out bool isDefinite)
+        {
+            if (!cellIsDefinite && style.Unit != SizeUnit.Pixels)
+            {
+                available = Math.Max(0, cell - margin);
+                isDefinite = false;
+                return;
+            }
+
+            ResolveAxis(style, cell, margin, false, 0, out available, out isDefinite);
+        }
+
+        private static SizeStyleDescriptor TrackStyle(List<SizeStyleDescriptor> template, int index, SizeStyleDescriptor fallback)
+            => template.Count > 0 ? template[index % template.Count] : fallback;
+
+        private static float Sum(float[] values)
+        {
+            float total = 0;
+
+            if (values == null)
+            {
+                return total;
+            }
+
+            foreach (float value in values)
+            {
+                total += value;
+            }
+
+            return total;
+        }
+
+        private float AggregateWidth(VisualElement element, bool isGrid)
+        {
+            if (isGrid)
+            {
+                return Sum(element.GridColumns);
+            }
+
             float total = 0;
             bool isRow = IsRow(element);
 
@@ -180,8 +412,13 @@ namespace Ixen.Core.Visual.Computers
             return total;
         }
 
-        private float AggregateHeight(VisualElement element)
+        private float AggregateHeight(VisualElement element, bool isGrid)
         {
+            if (isGrid)
+            {
+                return Sum(element.GridRows);
+            }
+
             float total = 0;
             bool isRow = IsRow(element);
 
@@ -206,6 +443,12 @@ namespace Ixen.Core.Visual.Computers
             return layoutStyle != null && layoutStyle.Type == LayoutType.Row;
         }
 
+        private static bool IsGrid(VisualElement element)
+        {
+            LayoutStyleDescriptor layoutStyle = element.StylesHandlers.Layout.Descriptor;
+            return layoutStyle != null && layoutStyle.Type == LayoutType.Grid;
+        }
+
         private static bool IsFilling(SizeStyleDescriptor style)
             => style.Unit == SizeUnit.Weight || style.Unit == SizeUnit.Unset;
 
@@ -225,8 +468,7 @@ namespace Ixen.Core.Visual.Computers
                     : element.Parent.StylesHandlers.ColumnTemplate.Descriptor;
 
                 if (sizeTemplateStyle.Value.Count > 0
-                    && (layoutStyle.Type == LayoutType.Grid
-                    || (layoutStyle.Type == LayoutType.Column && sizeType == SizeStyleDescriptorType.Height)
+                    && ((layoutStyle.Type == LayoutType.Column && sizeType == SizeStyleDescriptorType.Height)
                     || (layoutStyle.Type == LayoutType.Row && sizeType == SizeStyleDescriptorType.Width)))
                 {
                     int index = element.ChildIndex % sizeTemplateStyle.Value.Count;

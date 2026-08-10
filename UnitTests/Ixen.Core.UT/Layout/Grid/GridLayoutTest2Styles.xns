@@ -1,0 +1,10 @@
+container_grid_test2 {
+    layout: grid
+    width: ?
+    height: ?
+    row-template: 100px ?
+    column-template: 40px
+
+    acell2 { width: 80px }
+    acell4 { width: 60px }
+}
