@@ -5,30 +5,26 @@ namespace Ixen.Core.Rendering
 {
     public sealed class RendererContext
     {
-        private SKRect _clipRect = SKRect.Empty;
-        private bool _hasSavedState;
-
         private readonly SKRoundRect _roundRect = new();
         private readonly SKPoint[] _radii = new SKPoint[4];
+
+        private int _clipDepth;
 
         internal SKCanvas SKCanvas { get; private set; }
 
         internal void BeginFrame(SKCanvas canvas)
         {
             SKCanvas = canvas;
-            _clipRect = SKRect.Empty;
-            _hasSavedState = false;
+            _clipDepth = 0;
         }
 
         internal void EndFrame()
         {
-            if (_hasSavedState)
+            while (_clipDepth > 0)
             {
                 SKCanvas.Restore();
-                _hasSavedState = false;
+                _clipDepth--;
             }
-
-            _clipRect = SKRect.Empty;
         }
 
         public void Clear(Color color)
@@ -36,29 +32,35 @@ namespace Ixen.Core.Rendering
             SKCanvas.Clear(color.SKColor);
         }
 
-        public void SetClip(float x, float y, float width, float height)
+        internal void PushClip(float x, float y, float width, float height, CornerRadiusStyleDescriptor radius)
         {
-            var clipRect = new SKRect(x, y, x + width, y + height);
+            SKCanvas.Save();
+            _clipDepth++;
 
-            if (_hasSavedState && clipRect == _clipRect)
+            if (radius != null && radius.HasRadius)
+            {
+                SKCanvas.ClipRoundRect(BuildRoundRect(x, y, width, height, radius), SKClipOperation.Intersect, true);
+                return;
+            }
+
+            SKCanvas.ClipRect(new SKRect(x, y, x + width, y + height), SKClipOperation.Intersect, false);
+        }
+
+        internal void PopClip()
+        {
+            if (_clipDepth == 0)
             {
                 return;
             }
 
-            if (_hasSavedState)
-            {
-                SKCanvas.Restore();
-            }
-
-            SKCanvas.Save();
-            SKCanvas.ClipRect(clipRect, SKClipOperation.Intersect, false);
-
-            _clipRect = clipRect;
-            _hasSavedState = true;
+            SKCanvas.Restore();
+            _clipDepth--;
         }
 
         public void DrawInnerRectangle(float x, float y, float width, float height, Pen pen)
         {
+            pen.Antialisasing = false;
+
             SKCanvas.DrawRect
             (
                 x + pen.Width / 2,
@@ -71,6 +73,8 @@ namespace Ixen.Core.Rendering
 
         public void DrawOuterRectangle(float x, float y, float width, float height, Pen pen)
         {
+            pen.Antialisasing = false;
+
             SKCanvas.DrawRect
             (
                 x - pen.Width / 2,
@@ -83,6 +87,7 @@ namespace Ixen.Core.Rendering
 
         public void DrawRectangle(float x, float y, float width, float height, Pen pen)
         {
+            pen.Antialisasing = false;
             SKCanvas.DrawRect(x, y, width, height, pen.SKPaint);
         }
 
@@ -90,18 +95,21 @@ namespace Ixen.Core.Rendering
         {
             SKFont font = FontCache.Get(fontFamily, fontSize);
 
+            brush.Antialisasing = true;
             SKCanvas.DrawText(text, x, top - font.Metrics.Ascent, SKTextAlign.Left, font, brush.SKPaint);
         }
 
         internal void FillRoundRectangle(float x, float y, float width, float height,
             CornerRadiusStyleDescriptor radius, Brush brush)
         {
+            brush.Antialisasing = true;
             SKCanvas.DrawRoundRect(BuildRoundRect(x, y, width, height, radius), brush.SKPaint);
         }
 
         internal void DrawRoundRectangle(float x, float y, float width, float height,
             CornerRadiusStyleDescriptor radius, Pen pen)
         {
+            pen.Antialisasing = true;
             SKCanvas.DrawRoundRect(BuildRoundRect(x, y, width, height, radius), pen.SKPaint);
         }
 
@@ -120,6 +128,7 @@ namespace Ixen.Core.Rendering
 
         public void FillRectangle(float x, float y, float width, float height, Brush brush)
         {
+            brush.Antialisasing = false;
             SKCanvas.DrawRect(x, y, width, height, brush.SKPaint);
         }
     }

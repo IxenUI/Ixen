@@ -44,6 +44,34 @@ namespace Ixen.Core.UT.Rendering
         }
 
         [TestMethod]
+        public void AnElementIsClippedByItsAncestorsButNotByItself()
+        {
+            var root = new VisualElement { Name = "root" };
+            root.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
+
+            var child = new VisualElement { Name = "child" };
+            child.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 20 };
+            child.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 20 };
+            child.Styles.Border = new BorderStyleDescriptor { Color = "#FF0000", Thickness = 4, Type = BorderType.Outer };
+            root.AddChild(child);
+
+            var surface = new IxenSurface(root);
+            surface.ComputeLayout(BITMAP, BITMAP);
+
+            using (var bitmap = new SKBitmap(BITMAP, BITMAP))
+            using (var canvas = new SKCanvas(bitmap))
+            {
+                surface.Render(canvas);
+
+                Assert.AreEqual(20, child.Width, "the child spans x 0..19");
+                Assert.AreNotEqual(0, bitmap.GetPixel(20, 5).Alpha,
+                    "an outer border must be allowed to paint past the element's own bounds");
+                Assert.AreEqual(0, bitmap.GetPixel(BITMAP - 1, 5).Alpha,
+                    "but nothing may paint outside the root");
+            }
+        }
+
+        [TestMethod]
         public void RenderingTwice_ProducesTheSamePixels()
         {
             IxenSurface surface = BuildOverflowingSurface();
