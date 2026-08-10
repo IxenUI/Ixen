@@ -38,6 +38,46 @@ namespace Ixen.Core.UT.Rendering
         private static bool IsPainted(SKBitmap bitmap, int x, int y)
             => bitmap.GetPixel(x, y).Alpha != 0;
 
+        private static int CountPartiallyCovered(SKBitmap bitmap)
+        {
+            int count = 0;
+
+            for (int x = 0; x < bitmap.Width; x++)
+            {
+                for (int y = 0; y < bitmap.Height; y++)
+                {
+                    byte alpha = bitmap.GetPixel(x, y).Alpha;
+
+                    if (alpha > 0 && alpha < 255)
+                    {
+                        count++;
+                    }
+                }
+            }
+
+            return count;
+        }
+
+        [TestMethod]
+        public void TheRoundedEdgeIsAntialiased()
+        {
+            using (SKBitmap bitmap = Render(20, 20, 20, 20))
+            {
+                Assert.IsTrue(CountPartiallyCovered(bitmap) > 20,
+                    $"only {CountPartiallyCovered(bitmap)} partially covered pixels: the curve is not antialiased");
+            }
+        }
+
+        [TestMethod]
+        public void ASquareEdgeStaysHard()
+        {
+            using (SKBitmap bitmap = Render(0, 0, 0, 0))
+            {
+                Assert.AreEqual(0, CountPartiallyCovered(bitmap),
+                    "a rectangle must not be softened, or abutting elements would show seams");
+            }
+        }
+
         [TestMethod]
         public void WithoutARadius_EveryCornerIsPainted()
         {
