@@ -72,7 +72,6 @@ namespace Ixen.Core.Visual.Classes
                 _count++;
             }
 
-            // Least specific first, so a longer scope applied later wins.
             candidates.Sort((a, b) => a.Segments.Length.CompareTo(b.Segments.Length));
         }
 

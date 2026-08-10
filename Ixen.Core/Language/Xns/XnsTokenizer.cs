@@ -248,7 +248,8 @@ namespace Ixen.Core.Language.Xns
                 while (true)
                 {
                     c = PeekChar();
-                    if (char.IsLetterOrDigit(c) || c == '%' || c == '*' || c == ' ' || c == '\t')
+                    if (char.IsLetterOrDigit(c) || c == '%' || c == '*' || c == '.' || c == '#'
+                        || c == ' ' || c == '\t')
                     {
                         sb.Append(c);
                         MoveCursor();

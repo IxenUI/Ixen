@@ -29,6 +29,14 @@ namespace Ixen.Core.Visual.Styles.Handlers
                 return;
             }
 
+            CornerRadiusStyleDescriptor radius = element.StylesHandlers.CornerRadius.Descriptor;
+
+            if (radius.HasRadius)
+            {
+                context.DrawRoundRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, radius, _pen);
+                return;
+            }
+
             switch (Descriptor.Type)
             {
                 case BorderType.Center:

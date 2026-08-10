@@ -23,6 +23,14 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
         internal override void Render(VisualElement element, RendererContext context)
         {
+            CornerRadiusStyleDescriptor radius = element.StylesHandlers.CornerRadius.Descriptor;
+
+            if (radius.HasRadius)
+            {
+                context.FillRoundRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, radius, _brush);
+                return;
+            }
+
             context.FillRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, _brush);
         }
     }

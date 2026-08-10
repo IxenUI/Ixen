@@ -90,6 +90,9 @@ namespace Ixen.Core.Language.Xns
                 case StyleIdentifier.COLUMN_TEMPLATE:
                     return Validated(new ColumnTemplateStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
+                case StyleIdentifier.CORNER_RADIUS:
+                    return Validated(new CornerRadiusStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+
                 case StyleIdentifier.FONT_FAMILY:
                     return Validated(new FontFamilyStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 

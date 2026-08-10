@@ -131,7 +131,6 @@ namespace Ixen.Generators.Xnl
             sb.AppendLine();
         }
 
-        // The probed namespaces mirror what the generated file can see: its own usings plus its own namespace.
         static INamedTypeSymbol ResolveElementType(XnlNode node, Compilation compilation,
             INamedTypeSymbol visualElementSymbol, List<LanguageError> diagnostics, out bool useDeclaredType)
         {
@@ -148,8 +147,6 @@ namespace Ixen.Generators.Xnl
 
             if (symbol == null)
             {
-                // Most likely a view generated in this same compilation, which we cannot see from here.
-                // Emit it verbatim and let the C# compiler have the final word.
                 useDeclaredType = true;
                 return null;
             }
@@ -209,7 +206,6 @@ namespace Ixen.Generators.Xnl
 
             if (elementSymbol == null)
             {
-                // No symbol to validate against, so assume a string and let the C# compiler decide.
                 sb.AppendLine($"{tabs}{nodeId}.{propertyName} = {StringLiteral(param.Value)};");
                 return;
             }

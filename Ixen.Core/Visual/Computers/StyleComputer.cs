@@ -118,6 +118,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultFontSize;
             }
 
+            if (handlers.CornerRadius.Descriptor != styles.CornerRadius)
+            {
+                handlers.CornerRadius = styles.CornerRadius != null
+                    ? new CornerRadiusStyleHandler(styles.CornerRadius)
+                    : VisualElementStylesHandlers.DefaultCornerRadius;
+            }
+
             if (handlers.ColumnTemplate.Descriptor != styles.ColumnTemplate)
             {
                 handlers.ColumnTemplate = styles.ColumnTemplate != null
@@ -191,6 +198,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.COLUMN_TEMPLATE:
                     handlers.ColumnTemplate = new ColumnTemplateStyleHandler((ColumnTemplateStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.CORNER_RADIUS:
+                    handlers.CornerRadius = new CornerRadiusStyleHandler((CornerRadiusStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.FONT_FAMILY:

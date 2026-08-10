@@ -19,9 +19,9 @@
         internal override string ToSource()
             => $"new {nameof(BorderStyleDescriptor)} " +
                 "{ " +
-                    $"{nameof(Color)} = \"{Color}\", " +
-                    $"{nameof(Thickness)} = {Thickness}, " +
-                    $"{nameof(Type)} = {Type} " +
+                    $"{nameof(Color)} = {SourceOf(Color)}, " +
+                    $"{nameof(Thickness)} = {SourceOf(Thickness)}, " +
+                    $"{nameof(Type)} = {nameof(BorderType)}.{Type} " +
                 "}";
     }
 }

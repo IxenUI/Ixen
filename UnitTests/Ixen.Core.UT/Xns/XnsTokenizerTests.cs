@@ -1,5 +1,6 @@
 ﻿using Ixen.Core.Language.Xns;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace Ixen.Core.UT.Xns
 {
@@ -100,6 +101,27 @@ namespace Ixen.Core.UT.Xns
 
             Assert.AreEqual(XnsTokenType.EndClassContent, tokens[38].Type);
             Assert.AreEqual(XnsTokenType.EndClassContent, tokens[39].Type);
+        }
+
+        [TestMethod]
+        public void ADecimalValueIsReadAsASingleToken()
+        {
+            var xnsSource = new XnsSource("box {\r\n    corner-radius: 2.5px\r\n}");
+            var tokens = xnsSource.Tokenize();
+
+            XnsToken value = tokens.Single(t => t.Type == XnsTokenType.StyleValue);
+
+            Assert.AreEqual("2.5px", value.Content);
+        }
+
+        [TestMethod]
+        public void ADecimalValueDoesNotSwallowTheNextClass()
+        {
+            var xnsSource = new XnsSource("box {\r\n    corner-radius: 2.5px\r\n}\r\n.active {\r\n    corner-radius: 1px\r\n}");
+            var tokens = xnsSource.Tokenize();
+
+            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
+            Assert.AreEqual(".active", tokens.Where(t => t.Type == XnsTokenType.ClassName).Last().Content);
         }
     }
 }

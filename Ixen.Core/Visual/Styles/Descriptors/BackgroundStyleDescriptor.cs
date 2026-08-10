@@ -16,10 +16,10 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         internal override string ToSource()
             => $"new {nameof(BackgroundStyleDescriptor)} " +
                 "{ " +
-                    (string.IsNullOrWhiteSpace(Color) ? "" : $"{nameof(Color)} = \"{Color}\", ") +
-                    (string.IsNullOrWhiteSpace(ImageUrl) ? "" : $"{nameof(ImageUrl)} = \"{ImageUrl}\", ") +
-                    $"{nameof(RepeatX)} = {(RepeatX ? "true" : "false")}, " +
-                    $"{nameof(RepeatY)} = {(RepeatY ? "true" : "false")} " +
+                    (string.IsNullOrWhiteSpace(Color) ? "" : $"{nameof(Color)} = {SourceOf(Color)}, ") +
+                    (string.IsNullOrWhiteSpace(ImageUrl) ? "" : $"{nameof(ImageUrl)} = {SourceOf(ImageUrl)}, ") +
+                    $"{nameof(RepeatX)} = {SourceOf(RepeatX)}, " +
+                    $"{nameof(RepeatY)} = {SourceOf(RepeatY)} " +
                 "}";
     }
 }

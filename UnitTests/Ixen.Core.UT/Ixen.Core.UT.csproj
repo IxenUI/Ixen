@@ -31,6 +31,7 @@
     <AdditionalFiles Include="Layout\Row\RowLayoutTest1View.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\TypedView.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\TypedValuesView.xnl" />
+    <AdditionalFiles Include="Xns\Fixtures\AllGeneratedStyles.xns" />
   </ItemGroup>
 
   <ItemGroup>
