@@ -52,6 +52,11 @@ namespace Ixen.Core.Language.Xnl
                 AddError(LanguageErrorCode.SYNTAX, $"Tokenizer failure: {ex.Message}", _index, 0);
             }
 
+            if (_contentLevel != 0)
+            {
+                ReportUnclosedBlock();
+            }
+
             return _tokens;
         }
 
@@ -145,7 +150,7 @@ namespace Ixen.Core.Language.Xnl
                     continue;
                 }
 
-                ReportUnexpectedInput(_contentLevel == 0);
+                ReportUnexpectedCharacter();
                 break;
             }
         }
@@ -377,27 +382,35 @@ namespace Ixen.Core.Language.Xnl
             int index = _index;
             char c = PeekNonSpaceChar();
 
-            if (c != '"')
+            if (c != '"' && c != '\0')
             {
                 int tokenIndex = _peekIndex;
                 var sb = new StringBuilder();
                 sb.Append(c);
                 MoveCursor();
 
+                bool terminated = false;
+
                 while (true)
                 {
                     c = PeekChar();
-                    if (c != '"')
+
+                    if (c == '"')
                     {
-                        sb.Append(c);
-                        MoveCursor();
-                        continue;
+                        terminated = true;
+                        break;
                     }
 
-                    break;
+                    if (c == '\0' || c == '\r' || c == '\n')
+                    {
+                        break;
+                    }
+
+                    sb.Append(c);
+                    MoveCursor();
                 }
 
-                if (sb.Length >= 1)
+                if (terminated)
                 {
                     AddToken(tokenIndex, XnlTokenType.PropertyValue, sb.ToString());
                     return true;

@@ -18,22 +18,21 @@ namespace Ixen.Core.Language.Base
         protected void AddError(string code, string message, int index, int length)
             => _diagnostics.Add(new LanguageError(code, message, index, length));
 
-        protected void ReportUnexpectedInput(bool isAtValidEnd)
+        protected void ReportUnexpectedCharacter()
         {
             char c = PeekNonSpaceChar();
 
             if (c == '\0')
             {
-                if (!isAtValidEnd)
-                {
-                    AddError(LanguageErrorCode.SYNTAX, "Unexpected end of file: a block is not closed.", _source.Content.Length, 0);
-                }
-
                 return;
             }
 
             AddError(LanguageErrorCode.SYNTAX, $"Unexpected character '{c}'.", _peekIndex, 1);
         }
+
+        protected void ReportUnclosedBlock()
+            => AddError(LanguageErrorCode.SYNTAX, "Unexpected end of file: a block is not closed.",
+                _source.Content.Length, 0);
 
         protected BaseTokenizer(string source)
         {

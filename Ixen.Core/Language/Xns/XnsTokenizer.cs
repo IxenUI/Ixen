@@ -44,6 +44,11 @@ namespace Ixen.Core.Language.Xns
                 AddError(LanguageErrorCode.SYNTAX, $"Tokenizer failure: {ex.Message}", _index, 0);
             }
 
+            if (_contentLevel != 0)
+            {
+                ReportUnclosedBlock();
+            }
+
             return _tokens;
         }
 
@@ -93,7 +98,7 @@ namespace Ixen.Core.Language.Xns
                     continue;
                 }
 
-                ReportUnexpectedInput(_contentLevel == 0);
+                ReportUnexpectedCharacter();
                 break;
             }
         }

@@ -51,6 +51,28 @@ namespace Ixen.Core.UT.Xnl
         }
 
         [TestMethod]
+        [Timeout(3000)]
+        public void AnUnterminatedPropertyValue_DoesNotHang()
+        {
+            var xnlSource = new XnlSource("container {}\r\n[\r\n\tel1 { text: \"coucou }\r\n\tel2 {}\r\n]\r\n");
+
+            xnlSource.Tokenize();
+
+            Assert.IsTrue(xnlSource.HasErrors, "an unterminated string should be reported");
+        }
+
+        [TestMethod]
+        [Timeout(3000)]
+        public void AnUnterminatedPropertyValueAtEndOfFile_DoesNotHang()
+        {
+            var xnlSource = new XnlSource("container {}\r\n[\r\n\tel1 { text: \"");
+
+            xnlSource.Tokenize();
+
+            Assert.IsTrue(xnlSource.HasErrors, "an unterminated string should be reported");
+        }
+
+        [TestMethod]
         public void ErrorsPreventNodifying()
         {
             var xnlSource = new XnlSource("container {}\r\n@\r\n");
