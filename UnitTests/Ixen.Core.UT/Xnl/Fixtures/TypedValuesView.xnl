@@ -11,4 +11,11 @@ holder {} [
 		direction: "Row"
 		optional: "7"
 	}
+	empties<XnlTestWidget> {
+		label: ""
+		optional: ""
+	}
+	padded<XnlTestWidget> {
+		label: "  Coucou  "
+	}
 ]

@@ -158,5 +158,57 @@ layout<VisualElement>{class: ""layout"" truc: ""chose""}
             Assert.AreEqual(XnlTokenType.PropertiesEnd, tokens[47].Type);
             Assert.AreEqual(XnlTokenType.ChildrenEnd, tokens[48].Type);
         }
+
+        private static XnlToken PropertyValueOf(string source)
+        {
+            var xnlSource = new XnlSource(source);
+            var tokens = xnlSource.Tokenize();
+
+            Assert.IsFalse(xnlSource.HasErrors, source);
+
+            foreach (var token in tokens)
+            {
+                if (token.Type == XnlTokenType.PropertyValue)
+                {
+                    return token;
+                }
+            }
+
+            Assert.Fail($"no property value token in: {source}");
+            return null;
+        }
+
+        [TestMethod]
+        public void AnEmptyPropertyValueIsTokenized()
+        {
+            XnlToken token = PropertyValueOf("el { text: \"\" }");
+
+            Assert.AreEqual(string.Empty, token.Content);
+        }
+
+        [TestMethod]
+        public void LeadingWhitespaceInAPropertyValueIsPreserved()
+        {
+            XnlToken token = PropertyValueOf("el { text: \"  coucou\" }");
+
+            Assert.AreEqual("  coucou", token.Content);
+        }
+
+        [TestMethod]
+        public void TrailingWhitespaceInAPropertyValueIsPreserved()
+        {
+            XnlToken token = PropertyValueOf("el { text: \"coucou  \" }");
+
+            Assert.AreEqual("coucou  ", token.Content);
+        }
+
+        [TestMethod]
+        public void APropertyValueStartsRightAfterItsOpeningQuote()
+        {
+            string source = "el { text: \"  coucou\" }";
+            XnlToken token = PropertyValueOf(source);
+
+            Assert.AreEqual(token.Content, source.Substring(token.Index, token.Content.Length));
+        }
     }
 }

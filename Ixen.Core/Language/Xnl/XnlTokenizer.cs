@@ -380,41 +380,33 @@ namespace Ixen.Core.Language.Xnl
         private bool ReadPropertyValue()
         {
             int index = _index;
-            char c = PeekNonSpaceChar();
+            int tokenIndex = _index + 1;
+            var sb = new StringBuilder();
+            bool terminated = false;
 
-            if (c != '"' && c != '\0')
+            while (true)
             {
-                int tokenIndex = _peekIndex;
-                var sb = new StringBuilder();
+                char c = PeekChar();
+
+                if (c == '"')
+                {
+                    terminated = true;
+                    break;
+                }
+
+                if (c == '\0' || c == '\r' || c == '\n')
+                {
+                    break;
+                }
+
                 sb.Append(c);
                 MoveCursor();
+            }
 
-                bool terminated = false;
-
-                while (true)
-                {
-                    c = PeekChar();
-
-                    if (c == '"')
-                    {
-                        terminated = true;
-                        break;
-                    }
-
-                    if (c == '\0' || c == '\r' || c == '\n')
-                    {
-                        break;
-                    }
-
-                    sb.Append(c);
-                    MoveCursor();
-                }
-
-                if (terminated)
-                {
-                    AddToken(tokenIndex, XnlTokenType.PropertyValue, sb.ToString());
-                    return true;
-                }
+            if (terminated)
+            {
+                AddToken(tokenIndex, XnlTokenType.PropertyValue, sb.ToString());
+                return true;
             }
 
             _index = index;

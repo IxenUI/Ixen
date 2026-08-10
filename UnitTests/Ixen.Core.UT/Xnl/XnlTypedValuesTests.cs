@@ -9,8 +9,8 @@ namespace Ixen.Core.UT.Xnl
     [TestClass]
     public class XnlTypedValuesTests
     {
-        private static XnlTestWidget Widget()
-            => (XnlTestWidget)new Component<TypedValuesView>().View.Children[0].Children[0];
+        private static XnlTestWidget Widget(int index = 0)
+            => (XnlTestWidget)new Component<TypedValuesView>().View.Children[0].Children[index];
 
         [TestMethod]
         public void TheDeclaredTypeIsInstantiated()
@@ -77,6 +77,24 @@ namespace Ixen.Core.UT.Xnl
         public void NullableValuesAreConverted()
         {
             Assert.AreEqual(7, Widget().Optional);
+        }
+
+        [TestMethod]
+        public void AnEmptyValueGivesAnEmptyString()
+        {
+            Assert.AreEqual(string.Empty, Widget(1).Label);
+        }
+
+        [TestMethod]
+        public void AnEmptyValueGivesNullOnANullableProperty()
+        {
+            Assert.IsNull(Widget(1).Optional);
+        }
+
+        [TestMethod]
+        public void WhitespaceInsideAValueIsPreserved()
+        {
+            Assert.AreEqual("  Coucou  ", Widget(2).Label);
         }
     }
 }
