@@ -1,4 +1,4 @@
-namespace Ixen.Core.Visual.Styles.Descriptors
+﻿namespace Ixen.Core.Visual.Styles.Descriptors
 {
     public class FontFamilyStyleDescriptor : StyleDescriptor
     {
@@ -10,7 +10,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         internal override string ToSource()
             => $"new {nameof(FontFamilyStyleDescriptor)} " +
                 "{ " +
-                    $"{nameof(Value)} = {(Value == null ? "null" : $"\"{Value}\"")} " +
+                    $"{nameof(Value)} = {SourceOf(Value)} " +
                 "}";
     }
 }

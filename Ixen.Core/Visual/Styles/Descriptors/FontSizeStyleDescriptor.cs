@@ -1,4 +1,4 @@
-namespace Ixen.Core.Visual.Styles.Descriptors
+﻿namespace Ixen.Core.Visual.Styles.Descriptors
 {
     public class FontSizeStyleDescriptor : StyleDescriptor
     {
@@ -12,7 +12,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         internal override string ToSource()
             => $"new {nameof(FontSizeStyleDescriptor)} " +
                 "{ " +
-                    $"{nameof(Value)} = {Value}f " +
+                    $"{nameof(Value)} = {SourceOf(Value)} " +
                 "}";
     }
 }

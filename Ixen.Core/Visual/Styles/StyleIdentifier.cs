@@ -14,6 +14,7 @@
         public const string COLOR = "color";
         public const string COLUMN_INDEX = "column-index";
         public const string COLUMN_TEMPLATE = "column-template";
+        public const string CORNER_RADIUS = "corner-radius";
         public const string FONT_FAMILY = "font-family";
         public const string FONT_SIZE = "font-size";
         public const string HEIGHT = "height";

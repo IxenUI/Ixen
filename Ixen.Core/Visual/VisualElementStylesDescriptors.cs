@@ -8,6 +8,7 @@ namespace Ixen.Core.Visual
         public BorderStyleDescriptor Border { get; set; } = new();
         public ColorStyleDescriptor Color { get; set; } = new();
         public ColumnTemplateStyleDescriptor ColumnTemplate { get; set; } = new();
+        public CornerRadiusStyleDescriptor CornerRadius { get; set; } = new();
         public FontFamilyStyleDescriptor FontFamily { get; set; } = new();
         public FontSizeStyleDescriptor FontSize { get; set; } = new();
         public HeightStyleDescriptor Height { get; set; } = new();

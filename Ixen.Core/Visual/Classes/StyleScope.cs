@@ -99,8 +99,6 @@ namespace Ixen.Core.Visual.Classes
             return segments;
         }
 
-        // Descendant matching: the segments must appear in order among the ancestors,
-        // but they do not have to be adjacent nor start at the root.
         internal static bool Matches(StyleScopeSegment[] segments, VisualElement element)
         {
             if (segments == null || segments.Length == 0)

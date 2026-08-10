@@ -15,7 +15,7 @@
             => $"new {nameof(WidthStyleDescriptor)} " +
                 "{ " +
                     $"{nameof(Unit)} = {nameof(SizeUnit)}.{Unit}, " +
-                    $"{nameof(Value)} = {Value} " +
+                    $"{nameof(Value)} = {SourceOf(Value)} " +
                 "}";
     }
 }

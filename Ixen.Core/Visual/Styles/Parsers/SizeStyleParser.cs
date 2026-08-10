@@ -1,4 +1,5 @@
 ﻿using Ixen.Core.Visual.Styles.Descriptors;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Ixen.Core.Visual.Styles.Parsers
@@ -28,8 +29,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 return true;
             }
 
-            float floatValue;
-            if (!float.TryParse(m.Groups[2].Value, out floatValue))
+            if (!float.TryParse(m.Groups[2].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out float floatValue))
             {
                 return false;
             }

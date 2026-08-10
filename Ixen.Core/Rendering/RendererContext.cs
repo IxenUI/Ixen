@@ -1,4 +1,5 @@
-﻿using SkiaSharp;
+﻿using Ixen.Core.Visual.Styles.Descriptors;
+using SkiaSharp;
 
 namespace Ixen.Core.Rendering
 {
@@ -6,6 +7,9 @@ namespace Ixen.Core.Rendering
     {
         private SKRect _clipRect = SKRect.Empty;
         private bool _hasSavedState;
+
+        private readonly SKRoundRect _roundRect = new();
+        private readonly SKPoint[] _radii = new SKPoint[4];
 
         internal SKCanvas SKCanvas { get; private set; }
 
@@ -87,6 +91,31 @@ namespace Ixen.Core.Rendering
             SKFont font = FontCache.Get(fontFamily, fontSize);
 
             SKCanvas.DrawText(text, x, top - font.Metrics.Ascent, SKTextAlign.Left, font, brush.SKPaint);
+        }
+
+        internal void FillRoundRectangle(float x, float y, float width, float height,
+            CornerRadiusStyleDescriptor radius, Brush brush)
+        {
+            SKCanvas.DrawRoundRect(BuildRoundRect(x, y, width, height, radius), brush.SKPaint);
+        }
+
+        internal void DrawRoundRectangle(float x, float y, float width, float height,
+            CornerRadiusStyleDescriptor radius, Pen pen)
+        {
+            SKCanvas.DrawRoundRect(BuildRoundRect(x, y, width, height, radius), pen.SKPaint);
+        }
+
+        private SKRoundRect BuildRoundRect(float x, float y, float width, float height,
+            CornerRadiusStyleDescriptor radius)
+        {
+            _radii[0] = new SKPoint(radius.TopLeft, radius.TopLeft);
+            _radii[1] = new SKPoint(radius.TopRight, radius.TopRight);
+            _radii[2] = new SKPoint(radius.BottomRight, radius.BottomRight);
+            _radii[3] = new SKPoint(radius.BottomLeft, radius.BottomLeft);
+
+            _roundRect.SetRectRadii(new SKRect(x, y, x + width, y + height), _radii);
+
+            return _roundRect;
         }
 
         public void FillRectangle(float x, float y, float width, float height, Brush brush)

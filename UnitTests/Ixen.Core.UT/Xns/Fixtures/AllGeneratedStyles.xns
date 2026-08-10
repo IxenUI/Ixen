@@ -1,0 +1,20 @@
+generated_root {
+    layout: row
+    width: ?
+    height: ?
+    background: #FF0000
+    border: #CCCCCC 1.5px inner
+    corner-radius: 8.5px 4px 2px 1px
+    color: #123456
+    font-family: Segoe UI
+    font-size: 13.5px
+    margin: 1.5px 2px
+    padding: 3px 4.25px 5px 6px
+    row-template: 1.5* 20.5px
+    column-template: 30% 2.5*
+
+    generated_child {
+        width: 30.5%
+        height: 20px
+    }
+}
