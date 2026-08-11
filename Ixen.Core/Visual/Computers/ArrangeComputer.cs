@@ -23,8 +23,8 @@ namespace Ixen.Core.Visual.Computers
             }
 
             bool isRow = type == LayoutType.Row;
-            float childX = element.X + element.PaddingLeft;
-            float childY = element.Y + element.PaddingTop;
+            float childX = element.X + element.PaddingLeft + element.BorderInsideLeft;
+            float childY = element.Y + element.PaddingTop + element.BorderInsideTop;
 
             foreach (VisualElement child in element.Children)
             {
@@ -51,9 +51,9 @@ namespace Ixen.Core.Visual.Computers
                 return;
             }
 
-            float originX = element.X + element.PaddingLeft;
+            float originX = element.X + element.PaddingLeft + element.BorderInsideLeft;
             float x = originX;
-            float y = element.Y + element.PaddingTop;
+            float y = element.Y + element.PaddingTop + element.BorderInsideTop;
             int column = 0;
             int row = 0;
 

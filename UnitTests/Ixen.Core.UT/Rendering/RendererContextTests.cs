@@ -63,8 +63,12 @@ namespace Ixen.Core.UT.Rendering
             {
                 surface.Render(canvas);
 
-                Assert.AreEqual(20, child.Width, "the child spans x 0..19");
-                Assert.AreNotEqual(0, bitmap.GetPixel(20, 5).Alpha,
+                Assert.AreEqual(20, child.Width, "the declared size is the bounds, border excluded");
+                Assert.AreEqual(4, child.X, "an outer border reserves its thickness, so the bounds start at 4");
+
+                Assert.AreEqual(0, bitmap.GetPixel(14, 14).Alpha,
+                    "the element has no background, so its own bounds stay empty");
+                Assert.AreNotEqual(0, bitmap.GetPixel(26, 12).Alpha,
                     "an outer border must be allowed to paint past the element's own bounds");
                 Assert.AreEqual(0, bitmap.GetPixel(BITMAP - 1, 5).Alpha,
                     "but nothing may paint outside the root");

@@ -33,7 +33,8 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
             if (radius.HasRadius)
             {
-                context.DrawRoundRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, radius, _pen);
+                context.DrawRoundRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight,
+                    radius, _pen, Descriptor.Type);
                 return;
             }
 

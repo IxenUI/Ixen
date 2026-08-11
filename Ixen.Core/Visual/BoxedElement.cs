@@ -7,11 +7,6 @@
         private float _marginBottom;
         private float _marginLeft;
 
-        private float _borderTop;
-        private float _borderRight;
-        private float _borderBottom;
-        private float _borderLeft;
-
         private float _paddingTop;
         private float _paddingRight;
         private float _paddingBottom;
@@ -41,29 +36,15 @@
             set => _marginLeft = value;
         }
 
-        internal float BorderTop
-        {
-            get => _borderTop;
-            set => _borderTop = value;
-        }
+        internal float BorderInsideTop { get; set; }
+        internal float BorderInsideRight { get; set; }
+        internal float BorderInsideBottom { get; set; }
+        internal float BorderInsideLeft { get; set; }
 
-        internal float BorderRight
-        {
-            get => _borderRight;
-            set => _borderRight = value;
-        }
-
-        internal float BorderBottom
-        {
-            get => _borderBottom;
-            set => _borderBottom = value;
-        }
-
-        internal float BorderLeft
-        {
-            get => _borderLeft;
-            set => _borderLeft = value;
-        }
+        internal float BorderOutsideTop { get; set; }
+        internal float BorderOutsideRight { get; set; }
+        internal float BorderOutsideBottom { get; set; }
+        internal float BorderOutsideLeft { get; set; }
 
         internal float PaddingTop
         {
@@ -92,18 +73,18 @@
         internal float BoxWidth
             => Width
                 + MarginLeft + MarginRight
-                + BorderLeft + BorderRight;
+                + BorderOutsideLeft + BorderOutsideRight;
 
         internal float BoxHeight
             => Height
                 + MarginTop + MarginBottom
-                + BorderTop + BorderBottom;
+                + BorderOutsideTop + BorderOutsideBottom;
 
         internal float ContentWidth
         {
             get
             {
-                float value = Width - HorizontalPadding;
+                float value = Width - HorizontalPadding - HorizontalBorderInside;
                 return value < 0 ? 0 : value;
             }
         }
@@ -112,10 +93,22 @@
         {
             get
             {
-                float value = Height - VerticalPadding;
+                float value = Height - VerticalPadding - VerticalBorderInside;
                 return value < 0 ? 0 : value;
             }
         }
+
+        internal float HorizontalBorderInside
+            => BorderInsideLeft + BorderInsideRight;
+
+        internal float VerticalBorderInside
+            => BorderInsideTop + BorderInsideBottom;
+
+        internal float HorizontalBorderOutside
+            => BorderOutsideLeft + BorderOutsideRight;
+
+        internal float VerticalBorderOutside
+            => BorderOutsideTop + BorderOutsideBottom;
 
         internal float HorizontalMargin
             => MarginLeft + MarginRight;
@@ -133,8 +126,8 @@
         {
             base.SetPosition
             (
-                x + MarginLeft + BorderLeft,
-                y + MarginTop + BorderTop
+                x + MarginLeft + BorderOutsideLeft,
+                y + MarginTop + BorderOutsideTop
             );
         }
     }

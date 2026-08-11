@@ -18,8 +18,10 @@ namespace Ixen.Core.Visual.Computers
 
         internal void Measure(VisualElement element, float availableWidth, float availableHeight, bool widthIsDefinite, bool heightIsDefinite)
         {
-            float contentWidth = Math.Max(0, availableWidth - element.HorizontalPadding);
-            float contentHeight = Math.Max(0, availableHeight - element.VerticalPadding);
+            ResolveBorders(element);
+
+            float contentWidth = Math.Max(0, availableWidth - element.HorizontalPadding - element.HorizontalBorderInside);
+            float contentHeight = Math.Max(0, availableHeight - element.VerticalPadding - element.VerticalBorderInside);
 
             bool isGrid = IsGrid(element);
 
@@ -42,11 +44,13 @@ namespace Ixen.Core.Visual.Computers
 
             element.Width = widthIsDefinite
                 ? availableWidth
-                : Math.Max(AggregateWidth(element, isGrid), textWidth) + element.HorizontalPadding;
+                : Math.Max(AggregateWidth(element, isGrid), textWidth)
+                    + element.HorizontalPadding + element.HorizontalBorderInside;
 
             element.Height = heightIsDefinite
                 ? availableHeight
-                : Math.Max(AggregateHeight(element, isGrid), textHeight) + element.VerticalPadding;
+                : Math.Max(AggregateHeight(element, isGrid), textHeight)
+                    + element.VerticalPadding + element.VerticalBorderInside;
         }
 
         private void MeasureText(VisualElement element, out float width, out float height)
@@ -78,6 +82,7 @@ namespace Ixen.Core.Visual.Computers
 
             foreach (VisualElement child in element.Children)
             {
+                ResolveBorders(child);
                 ResolveHorizontalSpacing(child, contentWidth);
                 ResolveVerticalSpacing(child, contentHeight);
             }
@@ -94,7 +99,9 @@ namespace Ixen.Core.Visual.Computers
                 if (IsFilling(mainStyle))
                 {
                     totalWeight += mainStyle.Value;
-                    pool -= isRow ? child.HorizontalMargin : child.VerticalMargin;
+                    pool -= isRow
+                        ? child.HorizontalMargin + child.HorizontalBorderOutside
+                        : child.VerticalMargin + child.VerticalBorderOutside;
                     continue;
                 }
 
@@ -130,11 +137,11 @@ namespace Ixen.Core.Visual.Computers
             SizeStyleDescriptor widthStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width);
             SizeStyleDescriptor heightStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Height);
 
-            ResolveAxis(widthStyle, contentWidth, child.HorizontalMargin, useMainShare && isRow, mainShare,
-                out float availableWidth, out bool widthIsDefinite);
+            ResolveAxis(widthStyle, contentWidth, child.HorizontalMargin + child.HorizontalBorderOutside,
+                useMainShare && isRow, mainShare, out float availableWidth, out bool widthIsDefinite);
 
-            ResolveAxis(heightStyle, contentHeight, child.VerticalMargin, useMainShare && !isRow, mainShare,
-                out float availableHeight, out bool heightIsDefinite);
+            ResolveAxis(heightStyle, contentHeight, child.VerticalMargin + child.VerticalBorderOutside,
+                useMainShare && !isRow, mainShare, out float availableHeight, out bool heightIsDefinite);
 
             Measure(child, availableWidth, availableHeight, widthIsDefinite, heightIsDefinite);
         }
@@ -182,6 +189,7 @@ namespace Ixen.Core.Visual.Computers
 
             foreach (VisualElement child in element.Children)
             {
+                ResolveBorders(child);
                 ResolveHorizontalSpacing(child, contentWidth);
                 ResolveVerticalSpacing(child, contentHeight);
             }
@@ -345,10 +353,12 @@ namespace Ixen.Core.Visual.Computers
         private void MeasureCell(VisualElement child, float cellWidth, float cellHeight,
             bool widthCellIsDefinite, bool heightCellIsDefinite)
         {
-            ResolveCellAxis(child.StylesHandlers.Width.Descriptor, cellWidth, child.HorizontalMargin,
+            ResolveCellAxis(child.StylesHandlers.Width.Descriptor, cellWidth,
+                child.HorizontalMargin + child.HorizontalBorderOutside,
                 widthCellIsDefinite, out float availableWidth, out bool widthIsDefinite);
 
-            ResolveCellAxis(child.StylesHandlers.Height.Descriptor, cellHeight, child.VerticalMargin,
+            ResolveCellAxis(child.StylesHandlers.Height.Descriptor, cellHeight,
+                child.VerticalMargin + child.VerticalBorderOutside,
                 heightCellIsDefinite, out float availableHeight, out bool heightIsDefinite);
 
             Measure(child, availableWidth, availableHeight, widthIsDefinite, heightIsDefinite);
@@ -477,6 +487,43 @@ namespace Ixen.Core.Visual.Computers
             }
 
             return sizeStyle;
+        }
+
+        private void ResolveBorders(VisualElement element)
+        {
+            BorderStyleDescriptor border = element.StylesHandlers.Border.Descriptor;
+            float thickness = border != null ? border.Thickness : 0;
+            float inside = 0;
+            float outside = 0;
+
+            if (thickness > 0)
+            {
+                switch (border.Type)
+                {
+                    case BorderType.Inner:
+                        inside = thickness;
+                        break;
+
+                    case BorderType.Outer:
+                        outside = thickness;
+                        break;
+
+                    default:
+                        inside = thickness / 2;
+                        outside = thickness / 2;
+                        break;
+                }
+            }
+
+            element.BorderInsideTop = inside;
+            element.BorderInsideRight = inside;
+            element.BorderInsideBottom = inside;
+            element.BorderInsideLeft = inside;
+
+            element.BorderOutsideTop = outside;
+            element.BorderOutsideRight = outside;
+            element.BorderOutsideBottom = outside;
+            element.BorderOutsideLeft = outside;
         }
 
         private void ResolveHorizontalSpacing(VisualElement element, float contentWidth)

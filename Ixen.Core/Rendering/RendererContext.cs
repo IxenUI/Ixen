@@ -107,10 +107,23 @@ namespace Ixen.Core.Rendering
         }
 
         internal void DrawRoundRectangle(float x, float y, float width, float height,
-            CornerRadiusStyleDescriptor radius, Pen pen)
+            CornerRadiusStyleDescriptor radius, Pen pen, BorderType type)
         {
+            float offset = 0;
+
+            if (type == BorderType.Inner)
+            {
+                offset = pen.Width / 2;
+            }
+            else if (type == BorderType.Outer)
+            {
+                offset = -pen.Width / 2;
+            }
+
             pen.Antialisasing = true;
-            SKCanvas.DrawRoundRect(BuildRoundRect(x, y, width, height, radius), pen.SKPaint);
+            SKCanvas.DrawRoundRect(
+                BuildRoundRect(x + offset, y + offset, width - offset * 2, height - offset * 2, radius),
+                pen.SKPaint);
         }
 
         private SKRoundRect BuildRoundRect(float x, float y, float width, float height,
