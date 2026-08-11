@@ -17,6 +17,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Ixen.Core\Ixen.Core.csproj" />
+	  <ProjectReference Include="..\Ixen.Platform\Ixen.Platform.csproj" />
 	</ItemGroup>
 
 </Project>

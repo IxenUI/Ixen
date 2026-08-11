@@ -14,4 +14,8 @@
 		<PackageReference Include="SkiaSharp" Version="4.151.1" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\Ixen.Core\Ixen.Core.csproj" />
+	</ItemGroup>
+
 </Project>

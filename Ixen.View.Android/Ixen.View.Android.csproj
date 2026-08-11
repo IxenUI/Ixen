@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net10.0-android</TargetFramework>
 		<SupportedOSPlatformVersion>21</SupportedOSPlatformVersion>
@@ -13,5 +13,6 @@
 	
 	<ItemGroup>
 		<ProjectReference Include="..\Ixen.Core\Ixen.Core.csproj" />
+		<ProjectReference Include="..\Ixen.Platform\Ixen.Platform.csproj" />
 	</ItemGroup>
 </Project>

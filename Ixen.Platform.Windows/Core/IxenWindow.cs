@@ -19,11 +19,13 @@ namespace Ixen.Platform.Windows
         private SKImageInfo _skImageInfo;
         private SKSurface _skSurface;
         private IxenSurface _ixenSurface;
+        private readonly IxenHost _host;
 
         public IxenWindow(IxenSurface ixenSurface)
         {
             _pixelBuffer = new PixelBuffer();
             _ixenSurface = ixenSurface;
+            _host = new IxenHost(ixenSurface, RequestRepaint);
             _onPaint = OnPaint;
             _onPointer = OnPointer;
             _windowPtr = WindowApi.CreateWindow(_ixenSurface.InitOptions.Title, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
@@ -42,37 +44,32 @@ namespace Ixen.Platform.Windows
             return WindowApi.ShowWindow(_windowPtr);
         }
 
+        private void RequestRepaint()
+            => WindowApi.InvalidateWindow(_windowPtr);
+
         private void OnPointer(int kind, int x, int y, int button)
         {
             switch ((NativePointerKind)kind)
             {
                 case NativePointerKind.Move:
-                    _ixenSurface.PointerMove(x, y);
+                    _host.PointerMove(x, y);
                     break;
 
                 case NativePointerKind.Down:
-                    _ixenSurface.PointerDown(x, y, ToButton(button));
+                    _host.PointerDown(x, y, ToButton(button));
                     break;
 
                 case NativePointerKind.Up:
-                    _ixenSurface.PointerUp(x, y, ToButton(button));
+                    _host.PointerUp(x, y, ToButton(button));
                     break;
 
                 case NativePointerKind.Leave:
-                    _ixenSurface.PointerLeaveSurface();
+                    _host.PointerLeave();
                     break;
 
                 case NativePointerKind.CaptureLost:
-                    _ixenSurface.PointerCaptureLost();
+                    _host.PointerCaptureLost();
                     break;
-
-                default:
-                    return;
-            }
-
-            if (_ixenSurface.IsDirty)
-            {
-                WindowApi.InvalidateWindow(_windowPtr);
             }
         }
 
@@ -97,7 +94,6 @@ namespace Ixen.Platform.Windows
         private void OnPaint(int width, int height)
         {
             _pixelBuffer.EnsureAlloc(width, height);
-            _ixenSurface.ComputeLayout(width, height);
             _skImageInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
             _painted = false;
 
@@ -107,7 +103,7 @@ namespace Ixen.Platform.Windows
                 {
                     if (_skSurface != null)
                     {
-                        _ixenSurface.Render(_skSurface.Canvas);
+                        _host.Paint(_skSurface.Canvas, width, height);
                         _painted = true;
                     }
                 }
