@@ -67,6 +67,9 @@ namespace Ixen.Core
             Root.ClearLayoutDirty();
         }
 
+        internal VisualElement HitTest(float x, float y)
+            => HitTester.HitTest(Root, x, y);
+
         internal void Render(SKCanvas canvas)
         {
             _rendererContext.BeginFrame(canvas);
