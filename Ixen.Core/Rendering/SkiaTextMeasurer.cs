@@ -21,5 +21,15 @@ namespace Ixen.Core.Rendering
             width = font.MeasureText(text);
             height = font.Spacing;
         }
+
+        public float GetLineHeight(string fontFamily, float fontSize)
+        {
+            if (fontSize <= 0)
+            {
+                return 0;
+            }
+
+            return FontCache.Get(fontFamily, fontSize).Spacing;
+        }
     }
 }

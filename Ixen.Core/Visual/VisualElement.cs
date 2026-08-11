@@ -9,6 +9,23 @@ namespace Ixen.Core.Visual
 
         private float[] _gridColumns;
         private float[] _gridRows;
+        private List<string> _textLines;
+
+        internal List<string> TextLines => _textLines;
+
+        internal List<string> EnsureTextLines()
+        {
+            if (_textLines == null)
+            {
+                _textLines = new List<string>();
+            }
+            else
+            {
+                _textLines.Clear();
+            }
+
+            return _textLines;
+        }
 
         internal float[] GridColumns => _gridColumns;
         internal float[] GridRows => _gridRows;

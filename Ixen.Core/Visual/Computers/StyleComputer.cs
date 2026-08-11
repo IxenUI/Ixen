@@ -159,6 +159,20 @@ namespace Ixen.Core.Visual.Computers
                 handlers.Padding = new PaddingStyleHandler(styles.Padding);
             }
 
+            if (handlers.TextAlign.Descriptor != styles.TextAlign)
+            {
+                handlers.TextAlign = styles.TextAlign != null
+                    ? new TextAlignStyleHandler(styles.TextAlign)
+                    : VisualElementStylesHandlers.DefaultTextAlign;
+            }
+
+            if (handlers.TextWrap.Descriptor != styles.TextWrap)
+            {
+                handlers.TextWrap = styles.TextWrap != null
+                    ? new TextWrapStyleHandler(styles.TextWrap)
+                    : VisualElementStylesHandlers.DefaultTextWrap;
+            }
+
             if (handlers.Width.Descriptor != styles.Width)
             {
                 handlers.Width = new WidthStyleHandler(styles.Width);
@@ -230,6 +244,14 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.ROW_TEMPLATE:
                     handlers.RowTemplate = new RowTemplateStyleHandler((RowTemplateStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.TEXT_ALIGN:
+                    handlers.TextAlign = new TextAlignStyleHandler((TextAlignStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.TEXT_WRAP:
+                    handlers.TextWrap = new TextWrapStyleHandler((TextWrapStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.WIDTH:

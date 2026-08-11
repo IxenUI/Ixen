@@ -24,7 +24,14 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(13, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(15, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+        }
+
+        [TestMethod]
+        public void TheTextStylesSurviveGeneration()
+        {
+            Assert.AreEqual(TextAlign.Right, Style<TextAlignStyleDescriptor>().Value);
+            Assert.AreEqual(TextWrap.NoWrap, Style<TextWrapStyleDescriptor>().Value);
         }
 
         [TestMethod]

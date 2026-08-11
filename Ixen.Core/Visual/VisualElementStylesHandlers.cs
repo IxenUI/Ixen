@@ -16,6 +16,8 @@ namespace Ixen.Core.Visual
         internal static readonly MarginStyleHandler DefaultMargin = new();
         internal static readonly PaddingStyleHandler DefaultPadding = new();
         internal static readonly RowTemplateStyleHandler DefaultRowTemplate = new();
+        internal static readonly TextAlignStyleHandler DefaultTextAlign = new();
+        internal static readonly TextWrapStyleHandler DefaultTextWrap = new();
         internal static readonly WidthStyleHandler DefaultWidth = new();
 
         public BackgroundStyleHandler Background { get; set; } = DefaultBackground;
@@ -30,6 +32,8 @@ namespace Ixen.Core.Visual
         public MarginStyleHandler Margin { get; set; } = DefaultMargin;
         public PaddingStyleHandler Padding { get; set; } = DefaultPadding;
         public RowTemplateStyleHandler RowTemplate { get; set; } = DefaultRowTemplate;
+        public TextAlignStyleHandler TextAlign { get; set; } = DefaultTextAlign;
+        public TextWrapStyleHandler TextWrap { get; set; } = DefaultTextWrap;
         public WidthStyleHandler Width { get; set; } = DefaultWidth;
     }
 }

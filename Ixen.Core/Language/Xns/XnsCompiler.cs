@@ -114,6 +114,12 @@ namespace Ixen.Core.Language.Xns
                 case StyleIdentifier.ROW_TEMPLATE:
                     return Validated(new RowTemplateStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
+                case StyleIdentifier.TEXT_ALIGN:
+                    return Validated(new TextAlignStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+
+                case StyleIdentifier.TEXT_WRAP:
+                    return Validated(new TextWrapStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+
                 case StyleIdentifier.WIDTH:
                     return Validated(new WidthStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 

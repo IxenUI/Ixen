@@ -23,6 +23,8 @@
         public const string PADDING = "padding";
         public const string ROW_INDEX = "row-index";
         public const string ROW_TEMPLATE = "row-template";
+        public const string TEXT_ALIGN = "text-align";
+        public const string TEXT_WRAP = "text-wrap";
         public const string WIDTH = "width";
     }
 }

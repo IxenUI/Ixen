@@ -34,13 +34,7 @@ namespace Ixen.Core.Visual.Computers
                 MeasureChildren(element, contentWidth, contentHeight);
             }
 
-            float textWidth = 0;
-            float textHeight = 0;
-
-            if (!widthIsDefinite || !heightIsDefinite)
-            {
-                MeasureText(element, out textWidth, out textHeight);
-            }
+            LayoutText(element, contentWidth, out float textWidth, out float textHeight);
 
             element.Width = widthIsDefinite
                 ? availableWidth
@@ -53,22 +47,104 @@ namespace Ixen.Core.Visual.Computers
                     + element.VerticalPadding + element.VerticalBorderInside;
         }
 
-        private void MeasureText(VisualElement element, out float width, out float height)
+        private void LayoutText(VisualElement element, float availableWidth, out float width, out float height)
         {
             width = 0;
             height = 0;
 
             if (_textMeasurer == null || string.IsNullOrEmpty(element.Text))
             {
+                element.TextLines?.Clear();
                 return;
             }
 
-            _textMeasurer.MeasureText(
-                element.Text,
-                element.StylesHandlers.FontFamily.Descriptor.Value,
-                element.StylesHandlers.FontSize.Descriptor.Value,
-                out width,
-                out height);
+            string fontFamily = element.StylesHandlers.FontFamily.Descriptor.Value;
+            float fontSize = element.StylesHandlers.FontSize.Descriptor.Value;
+            bool wrap = element.StylesHandlers.TextWrap.Descriptor.Value == TextWrap.Wrap;
+
+            List<string> lines = element.EnsureTextLines();
+
+            width = BuildLines(element.Text, fontFamily, fontSize, availableWidth, wrap, lines);
+            height = _textMeasurer.GetLineHeight(fontFamily, fontSize) * lines.Count;
+        }
+
+        private float BuildLines(string text, string fontFamily, float fontSize, float maxWidth,
+            bool wrap, List<string> lines)
+        {
+            float widest = 0;
+
+            if (text.IndexOf('\n') < 0)
+            {
+                AppendLine(text, fontFamily, fontSize, maxWidth, wrap, lines, ref widest);
+                return widest;
+            }
+
+            foreach (string hardLine in text.Split('\n'))
+            {
+                AppendLine(hardLine.TrimEnd('\r'), fontFamily, fontSize, maxWidth, wrap, lines, ref widest);
+            }
+
+            return widest;
+        }
+
+        private void AppendLine(string line, string fontFamily, float fontSize, float maxWidth,
+            bool wrap, List<string> lines, ref float widest)
+        {
+            if (!wrap)
+            {
+                AddLine(lines, line, fontFamily, fontSize, ref widest);
+                return;
+            }
+
+            int lineStart = 0;
+            int lastSpace = -1;
+            int index = 0;
+
+            while (index <= line.Length)
+            {
+                bool atEnd = index == line.Length;
+
+                if (!atEnd && line[index] != ' ' && line[index] != '\t')
+                {
+                    index++;
+                    continue;
+                }
+
+                _textMeasurer.MeasureText(line.Substring(lineStart, index - lineStart),
+                    fontFamily, fontSize, out float candidateWidth, out _);
+
+                if (candidateWidth > maxWidth && lastSpace > lineStart)
+                {
+                    AddLine(lines, line.Substring(lineStart, lastSpace - lineStart).TrimEnd(),
+                        fontFamily, fontSize, ref widest);
+
+                    lineStart = lastSpace + 1;
+                    lastSpace = -1;
+                    continue;
+                }
+
+                if (atEnd)
+                {
+                    break;
+                }
+
+                lastSpace = index;
+                index++;
+            }
+
+            AddLine(lines, line.Substring(lineStart), fontFamily, fontSize, ref widest);
+        }
+
+        private void AddLine(List<string> lines, string line, string fontFamily, float fontSize, ref float widest)
+        {
+            lines.Add(line);
+
+            _textMeasurer.MeasureText(line, fontFamily, fontSize, out float width, out _);
+
+            if (width > widest)
+            {
+                widest = width;
+            }
         }
 
         private void MeasureChildren(VisualElement element, float contentWidth, float contentHeight)

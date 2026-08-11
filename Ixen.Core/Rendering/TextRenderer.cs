@@ -1,4 +1,6 @@
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Styles.Descriptors;
+using System.Collections.Generic;
 
 namespace Ixen.Core.Rendering
 {
@@ -6,7 +8,9 @@ namespace Ixen.Core.Rendering
     {
         internal void Render(VisualElement element, RendererContext context)
         {
-            if (string.IsNullOrEmpty(element.Text))
+            List<string> lines = element.TextLines;
+
+            if (lines == null || lines.Count == 0)
             {
                 return;
             }
@@ -19,13 +23,27 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            context.DrawText(
-                element.Text,
-                element.X + element.PaddingLeft,
-                element.Y + element.PaddingTop,
-                handlers.FontFamily.Descriptor.Value,
-                fontSize,
-                handlers.Color.Brush);
+            string fontFamily = handlers.FontFamily.Descriptor.Value;
+            TextAlign align = handlers.TextAlign.Descriptor.Value;
+
+            float lineHeight = context.GetLineHeight(fontFamily, fontSize);
+            float contentLeft = element.X + element.PaddingLeft + element.BorderInsideLeft;
+            float contentWidth = element.ContentWidth;
+            float top = element.Y + element.PaddingTop + element.BorderInsideTop;
+
+            foreach (string line in lines)
+            {
+                float x = contentLeft;
+
+                if (align != TextAlign.Left)
+                {
+                    float slack = contentWidth - context.MeasureTextWidth(line, fontFamily, fontSize);
+                    x += align == TextAlign.Center ? slack / 2 : slack;
+                }
+
+                context.DrawText(line, x, top, fontFamily, fontSize, handlers.Color.Brush);
+                top += lineHeight;
+            }
         }
     }
 }

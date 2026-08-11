@@ -16,6 +16,8 @@ namespace Ixen.Core.Visual
         public MarginStyleDescriptor Margin { get; set; } = new();
         public PaddingStyleDescriptor Padding { get; set; } = new();
         public RowTemplateStyleDescriptor RowTemplate { get; set; } = new();
+        public TextAlignStyleDescriptor TextAlign { get; set; } = new();
+        public TextWrapStyleDescriptor TextWrap { get; set; } = new();
         public WidthStyleDescriptor Width { get; set; } = new();
     }
 }
