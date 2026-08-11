@@ -4,6 +4,7 @@ using Android.Util;
 using Android.Views;
 using Android.Widget;
 using Ixen.Core;
+using Ixen.Core.Components;
 using Ixen.Core.Input;
 using Ixen.Core.Visual;
 using Ixen.Platform;
@@ -96,6 +97,11 @@ namespace Ixen.View.Android
         {
             get => _host.Root;
             set => _host.Root = value;
+        }
+
+        public Component RootComponent
+        {
+            set => _host.Root = value?.GetVisualElement();
         }
     }
 }

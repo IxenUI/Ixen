@@ -1,6 +1,7 @@
 using Ixen.Core;
 using Ixen.Core.Input;
 using Ixen.Core.Visual;
+using IxenComponent = Ixen.Core.Components.Component;
 using Ixen.Platform;
 using SkiaSharp.Views.Desktop;
 using SkiaSharp.Views.WPF;
@@ -115,6 +116,24 @@ namespace Ixen.View.WPF
         {
             get => (VisualElement)GetValue(RootProperty);
             set => SetValue(RootProperty, value);
+        }
+
+        private static void OnRootComponentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            ((IxenView)d)._host.Root = ((IxenComponent)e.NewValue)?.GetVisualElement();
+        }
+
+        public static readonly DependencyProperty RootComponentProperty = DependencyProperty.Register
+        (
+            nameof(RootComponent),
+            typeof(IxenComponent), _type,
+            new FrameworkPropertyMetadata(null, OnRootComponentChanged)
+        );
+
+        public IxenComponent RootComponent
+        {
+            get => (IxenComponent)GetValue(RootComponentProperty);
+            set => SetValue(RootComponentProperty, value);
         }
     }
 }
