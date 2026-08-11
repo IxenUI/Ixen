@@ -24,8 +24,8 @@ namespace Ixen.Core.Rendering
             }
 
             string fontFamily = handlers.FontFamily.Descriptor.Value;
-            TextAlign align = handlers.TextAlign.Descriptor.Value;
-            TextVAlign valign = handlers.TextVAlign.Descriptor.Value;
+            TextAlign align = handlers.TextAlign.Descriptor.Horizontal;
+            TextVAlign valign = handlers.TextAlign.Descriptor.Vertical;
 
             float lineHeight = context.GetLineHeight(fontFamily, fontSize);
             float contentLeft = element.X + element.PaddingLeft + element.BorderInsideLeft;

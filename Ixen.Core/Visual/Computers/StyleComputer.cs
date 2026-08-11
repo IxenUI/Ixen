@@ -166,13 +166,6 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultTextAlign;
             }
 
-            if (handlers.TextVAlign.Descriptor != styles.TextVAlign)
-            {
-                handlers.TextVAlign = styles.TextVAlign != null
-                    ? new TextVAlignStyleHandler(styles.TextVAlign)
-                    : VisualElementStylesHandlers.DefaultTextVAlign;
-            }
-
             if (handlers.TextWrap.Descriptor != styles.TextWrap)
             {
                 handlers.TextWrap = styles.TextWrap != null
@@ -255,10 +248,6 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.TEXT_ALIGN:
                     handlers.TextAlign = new TextAlignStyleHandler((TextAlignStyleDescriptor)style);
-                    break;
-
-                case StyleIdentifier.TEXT_VALIGN:
-                    handlers.TextVAlign = new TextVAlignStyleHandler((TextVAlignStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.TEXT_WRAP:

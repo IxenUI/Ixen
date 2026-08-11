@@ -25,7 +25,7 @@ namespace Ixen.Core.UT.Text
 
             if (valign.HasValue)
             {
-                box.Styles.TextVAlign = new TextVAlignStyleDescriptor { Value = valign.Value };
+                box.Styles.TextAlign = new TextAlignStyleDescriptor { Vertical = valign.Value };
             }
 
             root.AddChild(box);
@@ -177,12 +177,12 @@ namespace Ixen.Core.UT.Text
             box.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = SIZE };
             box.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Content, Value = 1 };
             box.Styles.FontSize = new FontSizeStyleDescriptor { Value = 18 };
-            box.Styles.TextVAlign = new TextVAlignStyleDescriptor { Value = TextVAlign.Bottom };
+            box.Styles.TextAlign = new TextAlignStyleDescriptor { Vertical = TextVAlign.Bottom };
             root.AddChild(box);
 
             Extent(root, out int bottomFirst, out _);
 
-            box.Styles.TextVAlign = new TextVAlignStyleDescriptor { Value = TextVAlign.Top };
+            box.Styles.TextAlign = new TextAlignStyleDescriptor { Vertical = TextVAlign.Top };
             box.Invalidate();
 
             Extent(root, out int topFirst, out _);
@@ -193,21 +193,38 @@ namespace Ixen.Core.UT.Text
         [TestMethod]
         public void VerticalAlignmentComesThroughXns()
         {
-            var xnsSource = new XnsSource("label {\r\n    text-valign: middle\r\n}");
+            var xnsSource = new XnsSource("label {\r\n    text-align: middle\r\n}");
             ClassesSet set = xnsSource.Compile();
 
             Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
             Assert.AreEqual(TextVAlign.Middle,
-                set.Classes[0].Styles.OfType<TextVAlignStyleDescriptor>().Single().Value);
+                set.Classes[0].Styles.OfType<TextAlignStyleDescriptor>().Single().Vertical);
         }
 
         [TestMethod]
-        public void AnInvalidVerticalAlignmentIsReported()
+        public void BothAxesReachTheRendererFromOneDeclaration()
         {
-            var xnsSource = new XnsSource("label {\r\n    text-valign: centre\r\n}");
-            xnsSource.Compile();
+            var xnsSource = new XnsSource("box {\r\n    text-align: bottom center\r\n}");
+            ClassesSet set = xnsSource.Compile();
 
-            Assert.IsTrue(xnsSource.HasErrors, "'centre' is not a vertical alignment");
+            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
+
+            var registry = new StyleRegistry();
+            registry.Add(set);
+
+            VisualElement root = Host("Coucou", null, 120);
+            var surface = new IxenSurface(root) { Styles = registry };
+            root.Invalidate();
+            surface.ComputeLayout(SIZE, SIZE);
+
+            using (var bitmap = new SKBitmap(SIZE, SIZE))
+            using (var canvas = new SKCanvas(bitmap))
+            {
+                surface.Render(canvas);
+                PaintedRows(bitmap, out _, out int last);
+
+                Assert.IsTrue(last > 108, $"the vertical half should apply, text ended at {last}");
+            }
         }
     }
 }

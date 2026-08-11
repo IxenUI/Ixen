@@ -18,7 +18,7 @@ namespace Ixen.Core.UT.Text
             var root = new VisualElement { Name = "root" };
             root.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
             root.Styles.FontSize = new FontSizeStyleDescriptor { Value = 20 };
-            root.Styles.TextAlign = new TextAlignStyleDescriptor { Value = align };
+            root.Styles.TextAlign = new TextAlignStyleDescriptor { Horizontal = align };
             root.Text = text;
             return root;
         }
@@ -147,29 +147,94 @@ namespace Ixen.Core.UT.Text
             }
         }
 
+        private static TextAlignStyleDescriptor ParsedAlign(string value)
+        {
+            var xnsSource = new XnsSource($"label {{\r\n    text-align: {value}\r\n}}");
+            ClassesSet set = xnsSource.Compile();
+
+            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
+
+            return set.Classes[0].Styles.OfType<TextAlignStyleDescriptor>().Single();
+        }
+
+        private static bool IsRejected(string value)
+        {
+            var xnsSource = new XnsSource($"label {{\r\n    text-align: {value}\r\n}}");
+            xnsSource.Compile();
+            return xnsSource.HasErrors;
+        }
+
         [TestMethod]
         public void AlignmentAndWrapComeThroughXns()
         {
-            var xnsSource = new XnsSource("label {\r\n    text-align: center\r\n    text-wrap: nowrap\r\n}");
+            var xnsSource = new XnsSource("label {\r\n    text-align: center middle\r\n    text-wrap: nowrap\r\n}");
             ClassesSet set = xnsSource.Compile();
 
             Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
             Assert.AreEqual(2, set.Classes[0].Styles.Count);
 
             var align = set.Classes[0].Styles.OfType<TextAlignStyleDescriptor>().Single();
-            var wrap = set.Classes[0].Styles.OfType<TextWrapStyleDescriptor>().Single();
 
-            Assert.AreEqual(TextAlign.Center, align.Value);
-            Assert.AreEqual(TextWrap.NoWrap, wrap.Value);
+            Assert.AreEqual(TextAlign.Center, align.Horizontal);
+            Assert.AreEqual(TextVAlign.Middle, align.Vertical);
+            Assert.AreEqual(TextWrap.NoWrap,
+                set.Classes[0].Styles.OfType<TextWrapStyleDescriptor>().Single().Value);
         }
 
         [TestMethod]
-        public void AnInvalidAlignmentIsReported()
+        public void OneValueLeavesTheOtherAxisAtItsDefault()
         {
-            var xnsSource = new XnsSource("label {\r\n    text-align: middle\r\n}");
-            xnsSource.Compile();
+            TextAlignStyleDescriptor horizontal = ParsedAlign("right");
 
-            Assert.IsTrue(xnsSource.HasErrors, "'middle' is not a text alignment");
+            Assert.AreEqual(TextAlign.Right, horizontal.Horizontal);
+            Assert.AreEqual(TextVAlign.Top, horizontal.Vertical, "the vertical axis keeps its default");
+
+            TextAlignStyleDescriptor vertical = ParsedAlign("bottom");
+
+            Assert.AreEqual(TextAlign.Left, vertical.Horizontal, "the horizontal axis keeps its default");
+            Assert.AreEqual(TextVAlign.Bottom, vertical.Vertical);
+        }
+
+        [TestMethod]
+        public void TheTwoValuesMayComeInEitherOrder()
+        {
+            TextAlignStyleDescriptor first = ParsedAlign("bottom right");
+            TextAlignStyleDescriptor second = ParsedAlign("right bottom");
+
+            Assert.AreEqual(TextAlign.Right, first.Horizontal);
+            Assert.AreEqual(TextVAlign.Bottom, first.Vertical);
+            Assert.AreEqual(first.Horizontal, second.Horizontal);
+            Assert.AreEqual(first.Vertical, second.Vertical);
+        }
+
+        [TestMethod]
+        public void CenterIsHorizontalAndMiddleIsVertical()
+        {
+            TextAlignStyleDescriptor centered = ParsedAlign("center");
+
+            Assert.AreEqual(TextAlign.Center, centered.Horizontal);
+            Assert.AreEqual(TextVAlign.Top, centered.Vertical, "center alone must not touch the vertical axis");
+
+            TextAlignStyleDescriptor middled = ParsedAlign("middle");
+
+            Assert.AreEqual(TextAlign.Left, middled.Horizontal, "middle alone must not touch the horizontal axis");
+            Assert.AreEqual(TextVAlign.Middle, middled.Vertical);
+        }
+
+        [TestMethod]
+        public void TwoValuesOnTheSameAxisAreRejected()
+        {
+            Assert.IsTrue(IsRejected("left right"), "two horizontal values");
+            Assert.IsTrue(IsRejected("top bottom"), "two vertical values");
+            Assert.IsTrue(IsRejected("center center"), "the same value twice");
+        }
+
+        [TestMethod]
+        public void AnUnknownOrOverlongValueIsRejected()
+        {
+            Assert.IsTrue(IsRejected("centre"), "misspelled");
+            Assert.IsTrue(IsRejected("justify"), "not supported");
+            Assert.IsTrue(IsRejected("top center left"), "three values");
         }
 
         [TestMethod]

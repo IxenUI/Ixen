@@ -7,17 +7,26 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         Right
     }
 
+    public enum TextVAlign
+    {
+        Top,
+        Middle,
+        Bottom
+    }
+
     public class TextAlignStyleDescriptor : StyleDescriptor
     {
         internal override string Identifier => StyleIdentifier.TEXT_ALIGN;
 
-        public TextAlign Value { get; set; } = TextAlign.Left;
+        public TextAlign Horizontal { get; set; } = TextAlign.Left;
+        public TextVAlign Vertical { get; set; } = TextVAlign.Top;
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()
             => $"new {nameof(TextAlignStyleDescriptor)} " +
                 "{ " +
-                    $"{nameof(Value)} = {nameof(TextAlign)}.{Value} " +
+                    $"{nameof(Horizontal)} = {nameof(TextAlign)}.{Horizontal}, " +
+                    $"{nameof(Vertical)} = {nameof(TextVAlign)}.{Vertical} " +
                 "}";
     }
 }
