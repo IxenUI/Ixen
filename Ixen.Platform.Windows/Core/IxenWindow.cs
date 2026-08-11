@@ -1,4 +1,5 @@
 ﻿using Ixen.Core;
+using Ixen.Core.Input;
 using Ixen.Platform.Windows.NativeApi;
 using SkiaSharp;
 using System;
@@ -11,7 +12,10 @@ namespace Ixen.Platform.Windows
 
         private readonly PixelBuffer _pixelBuffer;
         private bool _painted;
-        
+
+        private readonly WindowApi.OnPaintCallBack _onPaint;
+        private readonly WindowApi.OnPointerCallBack _onPointer;
+
         private SKImageInfo _skImageInfo;
         private SKSurface _skSurface;
         private IxenSurface _ixenSurface;
@@ -20,6 +24,8 @@ namespace Ixen.Platform.Windows
         {
             _pixelBuffer = new PixelBuffer();
             _ixenSurface = ixenSurface;
+            _onPaint = OnPaint;
+            _onPointer = OnPointer;
             _windowPtr = WindowApi.CreateWindow(_ixenSurface.InitOptions.Title, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
@@ -30,9 +36,58 @@ namespace Ixen.Platform.Windows
 
         public int Show()
         {
-            WindowApi.RegisterPaintCallBack(_windowPtr, OnPaint);
+            WindowApi.RegisterPaintCallBack(_windowPtr, _onPaint);
+            WindowApi.RegisterPointerCallBack(_windowPtr, _onPointer);
 
             return WindowApi.ShowWindow(_windowPtr);
+        }
+
+        private void OnPointer(int kind, int x, int y, int button)
+        {
+            switch ((NativePointerKind)kind)
+            {
+                case NativePointerKind.Move:
+                    _ixenSurface.PointerMove(x, y);
+                    break;
+
+                case NativePointerKind.Down:
+                    _ixenSurface.PointerDown(x, y, ToButton(button));
+                    break;
+
+                case NativePointerKind.Up:
+                    _ixenSurface.PointerUp(x, y, ToButton(button));
+                    break;
+
+                case NativePointerKind.Leave:
+                    _ixenSurface.PointerLeaveSurface();
+                    break;
+
+                default:
+                    return;
+            }
+
+            if (_ixenSurface.IsDirty)
+            {
+                WindowApi.InvalidateWindow(_windowPtr);
+            }
+        }
+
+        private static PointerButton ToButton(int button)
+        {
+            switch ((NativePointerButton)button)
+            {
+                case NativePointerButton.Left:
+                    return PointerButton.Left;
+
+                case NativePointerButton.Middle:
+                    return PointerButton.Middle;
+
+                case NativePointerButton.Right:
+                    return PointerButton.Right;
+
+                default:
+                    return PointerButton.None;
+            }
         }
 
         private void OnPaint(int width, int height)

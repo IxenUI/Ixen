@@ -134,6 +134,31 @@ namespace Ixen.Core.Visual
             }
         }
 
+        public VisualElement FindByName(string name)
+        {
+            if (name == null)
+            {
+                return null;
+            }
+
+            if (Name == name)
+            {
+                return this;
+            }
+
+            foreach (VisualElement child in Children)
+            {
+                VisualElement found = child.FindByName(name);
+
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            return null;
+        }
+
         public void Invalidate()
         {
             MarkStylesDirty();

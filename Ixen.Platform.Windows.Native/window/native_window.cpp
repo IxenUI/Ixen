@@ -1,9 +1,20 @@
 #include "native_window.h"
 
 #include <windows.h>
+#include <windowsx.h>
 #include <iostream>
 #include <map>
 #include <string>
+
+#define IXEN_POINTER_MOVE 0
+#define IXEN_POINTER_DOWN 1
+#define IXEN_POINTER_UP 2
+#define IXEN_POINTER_LEAVE 3
+
+#define IXEN_BUTTON_NONE 0
+#define IXEN_BUTTON_LEFT 1
+#define IXEN_BUTTON_MIDDLE 2
+#define IXEN_BUTTON_RIGHT 3
 
 using namespace std;
 using namespace IxenWindowsNative;
@@ -88,6 +99,14 @@ void NativeWindow::SetTitle(LPCWSTR value)
     SetWindowTextW(_handle, value);
 }
 
+void NativeWindow::Invalidate()
+{
+    if (_handle)
+    {
+        InvalidateRect(_handle, nullptr, FALSE);
+    }
+}
+
 LRESULT NativeWindow::HandleDestroy()
 {
     PostQuitMessage(0);
@@ -119,6 +138,41 @@ LRESULT NativeWindow::HandlePaint()
     return 0;
 }
 
+LRESULT NativeWindow::HandlePointer(int kind, int button, LPARAM lParam)
+{
+    if (kind == IXEN_POINTER_MOVE && !_trackingMouse)
+    {
+        TRACKMOUSEEVENT tme = {};
+        tme.cbSize = sizeof(TRACKMOUSEEVENT);
+        tme.dwFlags = TME_LEAVE;
+        tme.hwndTrack = _handle;
+
+        if (TrackMouseEvent(&tme))
+        {
+            _trackingMouse = true;
+        }
+    }
+
+    if (_pointerCallBack != nullptr)
+    {
+        _pointerCallBack(kind, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), button);
+    }
+
+    return 0;
+}
+
+LRESULT NativeWindow::HandleMouseLeave()
+{
+    _trackingMouse = false;
+
+    if (_pointerCallBack != nullptr)
+    {
+        _pointerCallBack(IXEN_POINTER_LEAVE, 0, 0, IXEN_BUTTON_NONE);
+    }
+
+    return 0;
+}
+
 LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
@@ -129,6 +183,26 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
         return HandleDestroy();
     case WM_PAINT:
         return HandlePaint();
+
+    case WM_MOUSEMOVE:
+        return HandlePointer(IXEN_POINTER_MOVE, IXEN_BUTTON_NONE, lParam);
+    case WM_MOUSELEAVE:
+        return HandleMouseLeave();
+
+    case WM_LBUTTONDOWN:
+        return HandlePointer(IXEN_POINTER_DOWN, IXEN_BUTTON_LEFT, lParam);
+    case WM_LBUTTONUP:
+        return HandlePointer(IXEN_POINTER_UP, IXEN_BUTTON_LEFT, lParam);
+
+    case WM_MBUTTONDOWN:
+        return HandlePointer(IXEN_POINTER_DOWN, IXEN_BUTTON_MIDDLE, lParam);
+    case WM_MBUTTONUP:
+        return HandlePointer(IXEN_POINTER_UP, IXEN_BUTTON_MIDDLE, lParam);
+
+    case WM_RBUTTONDOWN:
+        return HandlePointer(IXEN_POINTER_DOWN, IXEN_BUTTON_RIGHT, lParam);
+    case WM_RBUTTONUP:
+        return HandlePointer(IXEN_POINTER_UP, IXEN_BUTTON_RIGHT, lParam);
     }
 
     return DefWindowProc(_handle, msg, wParam, lParam);

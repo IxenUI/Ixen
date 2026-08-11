@@ -60,3 +60,23 @@ void WA_RegisterPaintCallBack(NativeWindow* window, void __stdcall callBack(int,
 
     window->SetOnPaintCallBack(callBack);
 }
+
+void WA_RegisterPointerCallBack(NativeWindow* window, void __stdcall callBack(int, int, int, int))
+{
+    if (!window)
+    {
+        return;
+    }
+
+    window->SetOnPointerCallBack(callBack);
+}
+
+void WA_InvalidateWindow(NativeWindow* window)
+{
+    if (!window)
+    {
+        return;
+    }
+
+    window->Invalidate();
+}

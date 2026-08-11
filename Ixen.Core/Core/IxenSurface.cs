@@ -74,6 +74,11 @@ namespace Ixen.Core
 
         internal VisualElement HoveredElement => _pointerDispatcher.Hovered;
 
+        internal bool IsDirty => Root != null && Root.IsLayoutDirty;
+
+        internal void PointerLeaveSurface()
+            => _pointerDispatcher.LeaveSurface();
+
         internal void PointerMove(float x, float y)
             => _pointerDispatcher.Move(Root, x, y);
 

@@ -22,6 +22,12 @@ namespace Ixen.Core.Input
             Bubble(hit, new PointerEventArgs(x, y, PointerButton.None, hit), PointerEventKind.Move);
         }
 
+        internal void LeaveSurface()
+        {
+            UpdateHover(null, 0, 0);
+            _pressed = null;
+        }
+
         internal void Down(VisualElement root, float x, float y, PointerButton button)
         {
             VisualElement hit = HitTester.HitTest(root, x, y);

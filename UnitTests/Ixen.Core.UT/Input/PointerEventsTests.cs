@@ -338,6 +338,69 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void LeavingTheSurfaceClearsTheHoverAndThePress()
+        {
+            VisualElement root = Element("root");
+            VisualElement box = Box("box", 60, 60);
+            root.AddChild(box);
+            Watch(box, "box");
+
+            IxenSurface surface = Laid(root);
+
+            surface.PointerDown(30, 30, PointerButton.Left);
+            _log.Clear();
+
+            surface.PointerLeaveSurface();
+
+            Assert.AreEqual("leave:box", Log);
+            Assert.IsNull(surface.HoveredElement);
+
+            surface.PointerUp(30, 30, PointerButton.Left);
+
+            Assert.IsFalse(Log.Contains("click"),
+                "the press was cancelled when the pointer left the surface");
+        }
+
+        [TestMethod]
+        public void TheSurfaceReportsWhetherAHandlerDirtiedTheTree()
+        {
+            VisualElement root = Element("root");
+            VisualElement box = Box("box", 60, 60);
+            root.AddChild(box);
+
+            IxenSurface surface = Laid(root);
+
+            Assert.IsFalse(surface.IsDirty, "a fresh layout is clean");
+
+            surface.PointerMove(30, 30);
+
+            Assert.IsFalse(surface.IsDirty, "a move with no handler changes nothing");
+
+            box.PointerClick += (s, e) => box.Text = "changed";
+
+            surface.PointerDown(30, 30, PointerButton.Left);
+            surface.PointerUp(30, 30, PointerButton.Left);
+
+            Assert.IsTrue(surface.IsDirty, "the host uses this to decide whether to repaint");
+        }
+
+        [TestMethod]
+        public void AnElementCanBeFoundByName()
+        {
+            VisualElement root = Element("root");
+            VisualElement card = Box("card", 100, 100);
+            VisualElement label = Box("label", 40, 40);
+            card.AddChild(label);
+            root.AddChild(card);
+
+            Assert.AreSame(label, root.FindByName("label"));
+            Assert.AreSame(card, root.FindByName("card"));
+            Assert.AreSame(root, root.FindByName("root"));
+            Assert.IsNull(root.FindByName("nope"));
+            Assert.IsNull(root.FindByName(null));
+        }
+
+        [TestMethod]
         public void APointerOnNothingRaisesNothing()
         {
             VisualElement root = Element("root");
