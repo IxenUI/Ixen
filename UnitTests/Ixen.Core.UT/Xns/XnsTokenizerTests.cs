@@ -124,6 +124,65 @@ namespace Ixen.Core.UT.Xns
             Assert.AreEqual(".active", tokens.Where(t => t.Type == XnsTokenType.ClassName).Last().Content);
         }
 
+        private static string TokensOf(string source, XnsTokenType type)
+        {
+            var xnsSource = new XnsSource(source);
+            var tokens = xnsSource.Tokenize();
+
+            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
+
+            return string.Join("|", tokens.Where(t => t.Type == type).Select(t => t.Content));
+        }
+
+        private static string StyleValuesOf(string source) => TokensOf(source, XnsTokenType.StyleValue);
+        private static string StyleNamesOf(string source) => TokensOf(source, XnsTokenType.StyleName);
+
+        [TestMethod]
+        public void TwoStylesCanShareALine()
+        {
+            string source = "el {\r\n    width: 200px  height: 100px\r\n}";
+
+            Assert.AreEqual("width|height", StyleNamesOf(source));
+            Assert.AreEqual("200px|100px", StyleValuesOf(source));
+        }
+
+        [TestMethod]
+        public void AWholeBlockCanBeWrittenOnOneLine()
+        {
+            Assert.AreEqual("row|1*|50%", StyleValuesOf("el { layout: row width: 1* height: 50% }"));
+        }
+
+        [TestMethod]
+        public void AHyphenatedStyleNameEndsThePreviousValue()
+        {
+            Assert.AreEqual("12px|Verdana", StyleValuesOf("el { font-size: 12px font-family: Verdana }"));
+        }
+
+        [TestMethod]
+        public void AMultiPartValueIsNotCutByItsOwnWords()
+        {
+            Assert.AreEqual("#FF0000 2px inner|10px 20px",
+                StyleValuesOf("el {\r\n    border: #FF0000 2px inner\r\n    margin: 10px 20px\r\n}"));
+        }
+
+        [TestMethod]
+        public void AMultiPartValueSurvivesASiblingOnTheSameLine()
+        {
+            Assert.AreEqual("#FF0000 2px inner|200px",
+                StyleValuesOf("el { border: #FF0000 2px inner  width: 200px }"));
+        }
+
+        [TestMethod]
+        public void ANestedClassStillEndsTheValueBefore()
+        {
+            var xnsSource = new XnsSource("box {\r\n    width: 1* height: 1*\r\n    inner { width: 5px }\r\n}");
+            var tokens = xnsSource.Tokenize();
+
+            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
+            CollectionAssert.AreEqual(new[] { "box", "inner" },
+                tokens.Where(t => t.Type == XnsTokenType.ClassName).Select(t => t.Content).ToArray());
+        }
+
         [TestMethod]
         public void AContentUnitIsReadOutsideTheFirstPosition()
         {

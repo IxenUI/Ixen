@@ -253,6 +253,12 @@ namespace Ixen.Core.Language.Xns
                 while (true)
                 {
                     c = PeekChar();
+
+                    if ((c == ' ' || c == '\t') && StartsStyleName(_peekIndex))
+                    {
+                        break;
+                    }
+
                     if (char.IsLetterOrDigit(c) || c == '%' || c == '*' || c == '.' || c == '#' || c == '?'
                         || c == ' ' || c == '\t')
                     {
@@ -264,15 +270,47 @@ namespace Ixen.Core.Language.Xns
                     break;
                 }
 
-                if (sb.Length >= 1)
+                string value = sb.ToString().TrimEnd();
+
+                if (value.Length >= 1)
                 {
-                    AddToken(tokenIndex, XnsTokenType.StyleValue, sb.ToString());
+                    AddToken(tokenIndex, XnsTokenType.StyleValue, value);
                     return true;
                 }
             }
 
             _index = index;
             return false;
+        }
+
+        private bool StartsStyleName(int index)
+        {
+            string content = _source.Content;
+            int cursor = index;
+
+            while (cursor < content.Length && (content[cursor] == ' ' || content[cursor] == '\t'))
+            {
+                cursor++;
+            }
+
+            int nameStart = cursor;
+
+            while (cursor < content.Length && (char.IsLetter(content[cursor]) || content[cursor] == '-'))
+            {
+                cursor++;
+            }
+
+            if (cursor == nameStart)
+            {
+                return false;
+            }
+
+            while (cursor < content.Length && (content[cursor] == ' ' || content[cursor] == '\t'))
+            {
+                cursor++;
+            }
+
+            return cursor < content.Length && content[cursor] == ':';
         }
 
         protected override XnsTokenType GetCommentType() => XnsTokenType.Comment;
