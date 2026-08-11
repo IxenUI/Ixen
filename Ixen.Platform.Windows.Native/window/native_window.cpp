@@ -119,7 +119,11 @@ LRESULT NativeWindow::HandlePaint()
     auto hdc = BeginPaint(_handle, &ps);
 
     GetClientRect(_handle, &_clientRect);
-    FillRect(hdc, &_clientRect, (HBRUSH)(COLOR_WINDOW));
+
+    if (_pixelsBuffer == nullptr)
+    {
+        FillRect(hdc, &_clientRect, GetSysColorBrush(COLOR_WINDOW));
+    }
 
     if (_paintCallBack != nullptr)
     {
