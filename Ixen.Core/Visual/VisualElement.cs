@@ -1,9 +1,25 @@
-﻿using System.Collections.Generic;
+﻿using Ixen.Core.Input;
+using System;
+using System.Collections.Generic;
 
 namespace Ixen.Core.Visual
 {
     public class VisualElement : BoxedElement
     {
+        public event EventHandler<PointerEventArgs> PointerDown;
+        public event EventHandler<PointerEventArgs> PointerUp;
+        public event EventHandler<PointerEventArgs> PointerMove;
+        public event EventHandler<PointerEventArgs> PointerClick;
+        public event EventHandler<PointerEventArgs> PointerEnter;
+        public event EventHandler<PointerEventArgs> PointerLeave;
+
+        internal void RaisePointerDown(PointerEventArgs args) => PointerDown?.Invoke(this, args);
+        internal void RaisePointerUp(PointerEventArgs args) => PointerUp?.Invoke(this, args);
+        internal void RaisePointerMove(PointerEventArgs args) => PointerMove?.Invoke(this, args);
+        internal void RaisePointerClick(PointerEventArgs args) => PointerClick?.Invoke(this, args);
+        internal void RaisePointerEnter(PointerEventArgs args) => PointerEnter?.Invoke(this, args);
+        internal void RaisePointerLeave(PointerEventArgs args) => PointerLeave?.Invoke(this, args);
+
         internal int ChildIndex { get; set; }
         internal List<VisualElement> Children { get; private set; } = new();
 

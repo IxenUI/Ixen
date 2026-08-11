@@ -1,4 +1,5 @@
 ﻿using Ixen.Core.Components;
+using Ixen.Core.Input;
 using Ixen.Core.Rendering;
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
@@ -18,6 +19,7 @@ namespace Ixen.Core
         private ClippingComputer _clippingComputer = new();
         private RendererContext _rendererContext = new();
         private VisualRenderer _renderer = new();
+        private PointerDispatcher _pointerDispatcher = new();
 
         private VisualElement _root;
 
@@ -69,6 +71,17 @@ namespace Ixen.Core
 
         internal VisualElement HitTest(float x, float y)
             => HitTester.HitTest(Root, x, y);
+
+        internal VisualElement HoveredElement => _pointerDispatcher.Hovered;
+
+        internal void PointerMove(float x, float y)
+            => _pointerDispatcher.Move(Root, x, y);
+
+        internal void PointerDown(float x, float y, PointerButton button)
+            => _pointerDispatcher.Down(Root, x, y, button);
+
+        internal void PointerUp(float x, float y, PointerButton button)
+            => _pointerDispatcher.Up(Root, x, y, button);
 
         internal void Render(SKCanvas canvas)
         {
