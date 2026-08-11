@@ -25,11 +25,22 @@ namespace Ixen.Core.Rendering
 
             string fontFamily = handlers.FontFamily.Descriptor.Value;
             TextAlign align = handlers.TextAlign.Descriptor.Value;
+            TextVAlign valign = handlers.TextVAlign.Descriptor.Value;
 
             float lineHeight = context.GetLineHeight(fontFamily, fontSize);
             float contentLeft = element.X + element.PaddingLeft + element.BorderInsideLeft;
             float contentWidth = element.ContentWidth;
             float top = element.Y + element.PaddingTop + element.BorderInsideTop;
+
+            if (valign != TextVAlign.Top)
+            {
+                float verticalSlack = element.ContentHeight - lineHeight * lines.Count;
+
+                if (verticalSlack > 0)
+                {
+                    top += valign == TextVAlign.Middle ? verticalSlack / 2 : verticalSlack;
+                }
+            }
 
             foreach (string line in lines)
             {

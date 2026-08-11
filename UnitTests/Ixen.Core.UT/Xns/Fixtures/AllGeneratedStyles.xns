@@ -13,6 +13,7 @@ generated_root {
     row-template: 1.5* 20.5px
     column-template: 30% 2.5*
     text-align: right
+    text-valign: bottom
     text-wrap: nowrap
 
     generated_child {
