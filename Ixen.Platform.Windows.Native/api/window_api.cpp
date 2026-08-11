@@ -80,3 +80,13 @@ void WA_InvalidateWindow(NativeWindow* window)
 
     window->Invalidate();
 }
+
+unsigned int WA_GetWindowDpi(NativeWindow* window)
+{
+    if (!window)
+    {
+        return USER_DEFAULT_SCREEN_DPI;
+    }
+
+    return window->GetDpi();
+}

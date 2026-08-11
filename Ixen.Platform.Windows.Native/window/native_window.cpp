@@ -21,15 +21,80 @@ using namespace std;
 using namespace IxenWindowsNative;
 
 int NativeWindow::_windowNum = 0;
+bool NativeWindow::_dpiAwarenessSet = false;
 map<HWND, NativeWindow*> NativeWindow::_windowsByHandle;
+
+// Must run before any window or DC exists, otherwise Windows keeps the process
+// DPI-unaware and bitmap-stretches everything it draws.
+void NativeWindow::EnsureDpiAwareness()
+{
+    if (_dpiAwarenessSet)
+    {
+        return;
+    }
+
+    _dpiAwarenessSet = true;
+
+    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+}
+
+// The requested size is in logical units, like every other size in Ixen, so the
+// client area has to be grown by the window's own DPI once it exists.
+void NativeWindow::ApplyLogicalSize(int logicalWidth, int logicalHeight)
+{
+    UINT dpi = GetDpi();
+
+    RECT rect = { 0, 0,
+        MulDiv(logicalWidth, dpi, USER_DEFAULT_SCREEN_DPI),
+        MulDiv(logicalHeight, dpi, USER_DEFAULT_SCREEN_DPI) };
+
+    AdjustWindowRectExForDpi(&rect, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_WINDOWEDGE, dpi);
+
+    SetWindowPos(_handle, nullptr, 0, 0,
+        rect.right - rect.left,
+        rect.bottom - rect.top,
+        SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
+UINT NativeWindow::GetDpi()
+{
+    if (!_handle)
+    {
+        return USER_DEFAULT_SCREEN_DPI;
+    }
+
+    UINT dpi = GetDpiForWindow(_handle);
+
+    return dpi == 0 ? USER_DEFAULT_SCREEN_DPI : dpi;
+}
+
+LRESULT NativeWindow::HandleDpiChanged(LPARAM lParam)
+{
+    RECT* suggested = reinterpret_cast<RECT*>(lParam);
+
+    if (suggested != nullptr)
+    {
+        SetWindowPos(_handle, nullptr,
+            suggested->left, suggested->top,
+            suggested->right - suggested->left,
+            suggested->bottom - suggested->top,
+            SWP_NOZORDER | SWP_NOACTIVATE);
+    }
+
+    Invalidate();
+
+    return 0;
+}
 
 NativeWindow::NativeWindow(LPCWSTR title, int width, int height)
 {
-    string className = "IxenWindow#" + to_string(++_windowNum);
+    EnsureDpiAwareness();
+
+    wstring className = L"IxenWindow#" + to_wstring(++_windowNum);
 
     WNDCLASSEX wc = { 0 };
     wc.hInstance = nullptr;
-    wc.lpszClassName = (LPWSTR)(className.c_str());
+    wc.lpszClassName = className.c_str();
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
@@ -46,6 +111,7 @@ NativeWindow::NativeWindow(LPCWSTR title, int width, int height)
     if (_handle)
     {
         _windowsByHandle.insert({ _handle, this });
+        ApplyLogicalSize(width, height);
     }
 
     _bitmapInfoHeader = {};
@@ -215,6 +281,8 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
         return HandleMouseLeave();
     case WM_CAPTURECHANGED:
         return HandleCaptureLost();
+    case WM_DPICHANGED:
+        return HandleDpiChanged(lParam);
 
     case WM_LBUTTONDOWN:
         return HandlePointer(IXEN_POINTER_DOWN, IXEN_BUTTON_LEFT, lParam);

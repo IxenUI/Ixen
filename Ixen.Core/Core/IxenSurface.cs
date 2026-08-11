@@ -22,6 +22,26 @@ namespace Ixen.Core
         private PointerDispatcher _pointerDispatcher = new();
 
         private VisualElement _root;
+        private float _scale = 1;
+
+        // Device pixels per logical unit. Layout and input are always in logical units,
+        // so 100px means the same apparent size whatever the display density.
+        public float Scale
+        {
+            get => _scale;
+            set
+            {
+                float scale = value <= 0 ? 1 : value;
+
+                if (_scale == scale)
+                {
+                    return;
+                }
+
+                _scale = scale;
+                Root?.InvalidateLayout();
+            }
+        }
 
         public IxenSurfaceInitOptions InitOptions { get; private set; }
         public string Title { get; set; }
@@ -51,10 +71,13 @@ namespace Ixen.Core
 
         internal void ComputeLayout(int width, int height)
         {
-            bool viewPortChanged = _viewPort.Width != width || _viewPort.Height != height;
+            int logicalWidth = (int)(width / _scale);
+            int logicalHeight = (int)(height / _scale);
 
-            _viewPort.Width = width;
-            _viewPort.Height = height;
+            bool viewPortChanged = _viewPort.Width != logicalWidth || _viewPort.Height != logicalHeight;
+
+            _viewPort.Width = logicalWidth;
+            _viewPort.Height = logicalHeight;
 
             if (Root == null || (!viewPortChanged && !Root.IsLayoutDirty))
             {
@@ -62,7 +85,7 @@ namespace Ixen.Core
             }
 
             _styleComputer.Compute(Root, Styles ?? StyleRegistry.Default);
-            _measureComputer.Measure(Root, width, height, true, true);
+            _measureComputer.Measure(Root, logicalWidth, logicalHeight, true, true);
             _arrangeComputer.Arrange(Root, 0, 0);
             _clippingComputer.Compute(Root);
 
@@ -70,7 +93,7 @@ namespace Ixen.Core
         }
 
         internal VisualElement HitTest(float x, float y)
-            => HitTester.HitTest(Root, x, y);
+            => HitTester.HitTest(Root, ToLogical(x), ToLogical(y));
 
         internal VisualElement HoveredElement => _pointerDispatcher.Hovered;
         internal VisualElement CapturedElement => _pointerDispatcher.Captured;
@@ -85,18 +108,20 @@ namespace Ixen.Core
 
         private bool TrackStates => (Styles ?? StyleRegistry.Default).HasStateClasses;
 
+        private float ToLogical(float deviceValue) => deviceValue / _scale;
+
         internal void PointerMove(float x, float y)
-            => _pointerDispatcher.Move(Root, x, y, TrackStates);
+            => _pointerDispatcher.Move(Root, ToLogical(x), ToLogical(y), TrackStates);
 
         internal void PointerDown(float x, float y, PointerButton button)
-            => _pointerDispatcher.Down(Root, x, y, button, TrackStates);
+            => _pointerDispatcher.Down(Root, ToLogical(x), ToLogical(y), button, TrackStates);
 
         internal void PointerUp(float x, float y, PointerButton button)
-            => _pointerDispatcher.Up(Root, x, y, button, TrackStates);
+            => _pointerDispatcher.Up(Root, ToLogical(x), ToLogical(y), button, TrackStates);
 
         internal void Render(SKCanvas canvas)
         {
-            _rendererContext.BeginFrame(canvas);
+            _rendererContext.BeginFrame(canvas, _scale);
             _rendererContext.Clear(_clearColor);
 
             if (Root != null)

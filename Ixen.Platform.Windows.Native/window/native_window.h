@@ -12,8 +12,10 @@ namespace IxenWindowsNative
     {
     private:
         static int _windowNum;
+        static bool _dpiAwarenessSet;
         static map<HWND, NativeWindow*> _windowsByHandle;
         static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam);
+        static void EnsureDpiAwareness();
 
         HWND _handle = nullptr;
         void (*_paintCallBack)(int, int) = nullptr;
@@ -32,6 +34,8 @@ namespace IxenWindowsNative
         LRESULT HandlePointer(int kind, int button, LPARAM lParam);
         LRESULT HandleMouseLeave();
         LRESULT HandleCaptureLost();
+        LRESULT HandleDpiChanged(LPARAM lParam);
+        void ApplyLogicalSize(int logicalWidth, int logicalHeight);
 
     public:
         NativeWindow(LPCWSTR title, int width, int height);
@@ -42,6 +46,7 @@ namespace IxenWindowsNative
         LPWSTR GetTitle();
         void SetTitle(LPCWSTR value);
         void Invalidate();
+        UINT GetDpi();
 
         HWND GetHandle() { return _handle; }
         void SetPixelsBuffer(void* buffer) { _pixelsBuffer = buffer; }

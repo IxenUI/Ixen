@@ -13,10 +13,19 @@ namespace Ixen.Core.Rendering
 
         internal SKCanvas SKCanvas { get; private set; }
 
-        internal void BeginFrame(SKCanvas canvas)
+        internal void BeginFrame(SKCanvas canvas, float scale)
         {
             SKCanvas = canvas;
             _clipDepth = 0;
+
+            if (scale <= 0 || scale == 1)
+            {
+                return;
+            }
+
+            SKCanvas.Save();
+            _clipDepth++;
+            SKCanvas.Scale(scale);
         }
 
         internal void EndFrame()

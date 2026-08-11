@@ -91,8 +91,14 @@ namespace Ixen.Platform.Windows
             }
         }
 
+        private const float DEFAULT_DPI = 96f;
+
         private void OnPaint(int width, int height)
         {
+            // Re-read on every paint so moving the window between monitors of different
+            // density needs no extra callback: WM_DPICHANGED already forces a repaint.
+            _ixenSurface.Scale = WindowApi.GetWindowDpi(_windowPtr) / DEFAULT_DPI;
+
             _pixelBuffer.EnsureAlloc(width, height);
             _skImageInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
             _painted = false;
