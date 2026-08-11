@@ -7,29 +7,29 @@ namespace Ixen.Core.Rendering
     {
         internal static readonly SkiaTextMeasurer Default = new();
 
-        public void MeasureText(string text, string fontFamily, float fontSize, out float width, out float height)
+        public void MeasureText(string text, FontSpec font, out float width, out float height)
         {
-            if (string.IsNullOrEmpty(text) || fontSize <= 0)
+            if (string.IsNullOrEmpty(text) || font.Size <= 0)
             {
                 width = 0;
                 height = 0;
                 return;
             }
 
-            SKFont font = FontCache.Get(fontFamily, fontSize);
+            SKFont skFont = FontCache.Get(font);
 
-            width = font.MeasureText(text);
-            height = font.Spacing;
+            width = skFont.MeasureText(text);
+            height = skFont.Spacing;
         }
 
-        public float GetLineHeight(string fontFamily, float fontSize)
+        public float GetLineHeight(FontSpec font)
         {
-            if (fontSize <= 0)
+            if (font.Size <= 0)
             {
                 return 0;
             }
 
-            return FontCache.Get(fontFamily, fontSize).Spacing;
+            return FontCache.Get(font).Spacing;
         }
     }
 }

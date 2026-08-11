@@ -11,6 +11,8 @@ namespace Ixen.Core.Visual
         internal static readonly CornerRadiusStyleHandler DefaultCornerRadius = new();
         internal static readonly FontFamilyStyleHandler DefaultFontFamily = new();
         internal static readonly FontSizeStyleHandler DefaultFontSize = new();
+        internal static readonly FontStyleStyleHandler DefaultFontStyle = new();
+        internal static readonly FontWeightStyleHandler DefaultFontWeight = new();
         internal static readonly HeightStyleHandler DefaultHeight = new();
         internal static readonly LayoutStyleHandler DefaultLayout = new();
         internal static readonly MarginStyleHandler DefaultMargin = new();
@@ -27,6 +29,8 @@ namespace Ixen.Core.Visual
         public CornerRadiusStyleHandler CornerRadius { get; set; } = DefaultCornerRadius;
         public FontFamilyStyleHandler FontFamily { get; set; } = DefaultFontFamily;
         public FontSizeStyleHandler FontSize { get; set; } = DefaultFontSize;
+        public FontStyleStyleHandler FontStyle { get; set; } = DefaultFontStyle;
+        public FontWeightStyleHandler FontWeight { get; set; } = DefaultFontWeight;
         public HeightStyleHandler Height { get; set; } = DefaultHeight;
         public LayoutStyleHandler Layout { get; set; } = DefaultLayout;
         public MarginStyleHandler Margin { get; set; } = DefaultMargin;

@@ -24,7 +24,7 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(15, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(17, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
         }
 
         [TestMethod]
@@ -88,6 +88,8 @@ namespace Ixen.Core.UT.Xns
         {
             Assert.AreEqual("Segoe UI", Style<FontFamilyStyleDescriptor>().Value);
             Assert.AreEqual(13.5f, Style<FontSizeStyleDescriptor>().Value);
+            Assert.AreEqual(FontWeight.Bold, Style<FontWeightStyleDescriptor>().Value);
+            Assert.AreEqual(FontStyle.Italic, Style<FontStyleStyleDescriptor>().Value);
         }
 
         [TestMethod]

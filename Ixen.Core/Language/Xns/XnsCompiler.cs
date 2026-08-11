@@ -99,6 +99,12 @@ namespace Ixen.Core.Language.Xns
                 case StyleIdentifier.FONT_SIZE:
                     return Validated(new FontSizeStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
+                case StyleIdentifier.FONT_STYLE:
+                    return Validated(new FontStyleStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+
+                case StyleIdentifier.FONT_WEIGHT:
+                    return Validated(new FontWeightStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+
                 case StyleIdentifier.HEIGHT:
                     return Validated(new HeightStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 

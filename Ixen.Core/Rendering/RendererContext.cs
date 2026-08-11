@@ -1,4 +1,5 @@
-﻿using Ixen.Core.Visual.Styles.Descriptors;
+﻿using Ixen.Core.Visual;
+using Ixen.Core.Visual.Styles.Descriptors;
 using SkiaSharp;
 
 namespace Ixen.Core.Rendering
@@ -91,15 +92,15 @@ namespace Ixen.Core.Rendering
             SKCanvas.DrawRect(x, y, width, height, pen.SKPaint);
         }
 
-        internal float GetLineHeight(string fontFamily, float fontSize)
-            => FontCache.Get(fontFamily, fontSize).Spacing;
+        internal float GetLineHeight(FontSpec fontSpec)
+            => FontCache.Get(fontSpec).Spacing;
 
-        internal float MeasureTextWidth(string text, string fontFamily, float fontSize)
-            => FontCache.Get(fontFamily, fontSize).MeasureText(text);
+        internal float MeasureTextWidth(string text, FontSpec fontSpec)
+            => FontCache.Get(fontSpec).MeasureText(text);
 
-        internal void DrawText(string text, float x, float top, string fontFamily, float fontSize, Brush brush)
+        internal void DrawText(string text, float x, float top, FontSpec fontSpec, Brush brush)
         {
-            SKFont font = FontCache.Get(fontFamily, fontSize);
+            SKFont font = FontCache.Get(fontSpec);
 
             brush.Antialisasing = true;
             SKCanvas.DrawText(text, x, top - font.Metrics.Ascent, SKTextAlign.Left, font, brush.SKPaint);

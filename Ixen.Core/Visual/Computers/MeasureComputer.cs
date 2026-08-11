@@ -58,41 +58,39 @@ namespace Ixen.Core.Visual.Computers
                 return;
             }
 
-            string fontFamily = element.StylesHandlers.FontFamily.Descriptor.Value;
-            float fontSize = element.StylesHandlers.FontSize.Descriptor.Value;
+            FontSpec fontSpec = FontSpec.From(element.StylesHandlers);
             bool wrap = element.StylesHandlers.TextWrap.Descriptor.Value == TextWrap.Wrap;
 
             List<string> lines = element.EnsureTextLines();
 
-            width = BuildLines(element.Text, fontFamily, fontSize, availableWidth, wrap, lines);
-            height = _textMeasurer.GetLineHeight(fontFamily, fontSize) * lines.Count;
+            width = BuildLines(element.Text, fontSpec, availableWidth, wrap, lines);
+            height = _textMeasurer.GetLineHeight(fontSpec) * lines.Count;
         }
 
-        private float BuildLines(string text, string fontFamily, float fontSize, float maxWidth,
-            bool wrap, List<string> lines)
+        private float BuildLines(string text, FontSpec fontSpec, float maxWidth, bool wrap, List<string> lines)
         {
             float widest = 0;
 
             if (text.IndexOf('\n') < 0)
             {
-                AppendLine(text, fontFamily, fontSize, maxWidth, wrap, lines, ref widest);
+                AppendLine(text, fontSpec, maxWidth, wrap, lines, ref widest);
                 return widest;
             }
 
             foreach (string hardLine in text.Split('\n'))
             {
-                AppendLine(hardLine.TrimEnd('\r'), fontFamily, fontSize, maxWidth, wrap, lines, ref widest);
+                AppendLine(hardLine.TrimEnd('\r'), fontSpec, maxWidth, wrap, lines, ref widest);
             }
 
             return widest;
         }
 
-        private void AppendLine(string line, string fontFamily, float fontSize, float maxWidth,
+        private void AppendLine(string line, FontSpec fontSpec, float maxWidth,
             bool wrap, List<string> lines, ref float widest)
         {
             if (!wrap)
             {
-                AddLine(lines, line, fontFamily, fontSize, ref widest);
+                AddLine(lines, line, fontSpec, ref widest);
                 return;
             }
 
@@ -111,12 +109,12 @@ namespace Ixen.Core.Visual.Computers
                 }
 
                 _textMeasurer.MeasureText(line.Substring(lineStart, index - lineStart),
-                    fontFamily, fontSize, out float candidateWidth, out _);
+                    fontSpec, out float candidateWidth, out _);
 
                 if (candidateWidth > maxWidth && lastSpace > lineStart)
                 {
                     AddLine(lines, line.Substring(lineStart, lastSpace - lineStart).TrimEnd(),
-                        fontFamily, fontSize, ref widest);
+                        fontSpec, ref widest);
 
                     lineStart = lastSpace + 1;
                     lastSpace = -1;
@@ -132,14 +130,14 @@ namespace Ixen.Core.Visual.Computers
                 index++;
             }
 
-            AddLine(lines, line.Substring(lineStart), fontFamily, fontSize, ref widest);
+            AddLine(lines, line.Substring(lineStart), fontSpec, ref widest);
         }
 
-        private void AddLine(List<string> lines, string line, string fontFamily, float fontSize, ref float widest)
+        private void AddLine(List<string> lines, string line, FontSpec fontSpec, ref float widest)
         {
             lines.Add(line);
 
-            _textMeasurer.MeasureText(line, fontFamily, fontSize, out float width, out _);
+            _textMeasurer.MeasureText(line, fontSpec, out float width, out _);
 
             if (width > widest)
             {

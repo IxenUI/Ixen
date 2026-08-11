@@ -118,6 +118,20 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultFontSize;
             }
 
+            if (handlers.FontStyle.Descriptor != styles.FontStyle)
+            {
+                handlers.FontStyle = styles.FontStyle != null
+                    ? new FontStyleStyleHandler(styles.FontStyle)
+                    : VisualElementStylesHandlers.DefaultFontStyle;
+            }
+
+            if (handlers.FontWeight.Descriptor != styles.FontWeight)
+            {
+                handlers.FontWeight = styles.FontWeight != null
+                    ? new FontWeightStyleHandler(styles.FontWeight)
+                    : VisualElementStylesHandlers.DefaultFontWeight;
+            }
+
             if (handlers.CornerRadius.Descriptor != styles.CornerRadius)
             {
                 handlers.CornerRadius = styles.CornerRadius != null
@@ -224,6 +238,14 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.FONT_SIZE:
                     handlers.FontSize = new FontSizeStyleHandler((FontSizeStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.FONT_STYLE:
+                    handlers.FontStyle = new FontStyleStyleHandler((FontStyleStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.FONT_WEIGHT:
+                    handlers.FontWeight = new FontWeightStyleHandler((FontWeightStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.HEIGHT:

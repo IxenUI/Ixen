@@ -16,18 +16,17 @@ namespace Ixen.Core.Rendering
             }
 
             VisualElementStylesHandlers handlers = element.StylesHandlers;
-            float fontSize = handlers.FontSize.Descriptor.Value;
+            FontSpec fontSpec = FontSpec.From(handlers);
 
-            if (fontSize <= 0)
+            if (fontSpec.Size <= 0)
             {
                 return;
             }
 
-            string fontFamily = handlers.FontFamily.Descriptor.Value;
             TextAlign align = handlers.TextAlign.Descriptor.Horizontal;
             TextVAlign valign = handlers.TextAlign.Descriptor.Vertical;
 
-            float lineHeight = context.GetLineHeight(fontFamily, fontSize);
+            float lineHeight = context.GetLineHeight(fontSpec);
             float contentLeft = element.X + element.PaddingLeft + element.BorderInsideLeft;
             float contentWidth = element.ContentWidth;
             float top = element.Y + element.PaddingTop + element.BorderInsideTop;
@@ -48,11 +47,11 @@ namespace Ixen.Core.Rendering
 
                 if (align != TextAlign.Left)
                 {
-                    float slack = contentWidth - context.MeasureTextWidth(line, fontFamily, fontSize);
+                    float slack = contentWidth - context.MeasureTextWidth(line, fontSpec);
                     x += align == TextAlign.Center ? slack / 2 : slack;
                 }
 
-                context.DrawText(line, x, top, fontFamily, fontSize, handlers.Color.Brush);
+                context.DrawText(line, x, top, fontSpec, handlers.Color.Brush);
                 top += lineHeight;
             }
         }

@@ -11,6 +11,8 @@ namespace Ixen.Core.Visual
         public CornerRadiusStyleDescriptor CornerRadius { get; set; } = new();
         public FontFamilyStyleDescriptor FontFamily { get; set; } = new();
         public FontSizeStyleDescriptor FontSize { get; set; } = new();
+        public FontStyleStyleDescriptor FontStyle { get; set; } = new();
+        public FontWeightStyleDescriptor FontWeight { get; set; } = new();
         public HeightStyleDescriptor Height { get; set; } = new();
         public LayoutStyleDescriptor Layout { get; set; } = new();
         public MarginStyleDescriptor Margin { get; set; } = new();

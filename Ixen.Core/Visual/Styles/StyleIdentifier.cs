@@ -17,6 +17,8 @@
         public const string CORNER_RADIUS = "corner-radius";
         public const string FONT_FAMILY = "font-family";
         public const string FONT_SIZE = "font-size";
+        public const string FONT_STYLE = "font-style";
+        public const string FONT_WEIGHT = "font-weight";
         public const string HEIGHT = "height";
         public const string LAYOUT = "layout";
         public const string MARGIN = "margin";
