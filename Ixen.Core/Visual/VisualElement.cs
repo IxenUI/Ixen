@@ -134,6 +134,43 @@ namespace Ixen.Core.Visual
             }
         }
 
+        public List<string> States { get; private set; } = new();
+
+        public bool HasState(string name)
+            => name != null && States.Contains(name);
+
+        public void AddState(string name)
+        {
+            if (name == null || States.Contains(name))
+            {
+                return;
+            }
+
+            States.Add(name);
+            Invalidate();
+        }
+
+        public void RemoveState(string name)
+        {
+            if (name == null || !States.Remove(name))
+            {
+                return;
+            }
+
+            Invalidate();
+        }
+
+        public void ToggleState(string name, bool present)
+        {
+            if (present)
+            {
+                AddState(name);
+                return;
+            }
+
+            RemoveState(name);
+        }
+
         public bool HasClass(string name)
             => name != null && Classes.Contains(name);
 

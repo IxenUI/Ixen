@@ -14,15 +14,22 @@ namespace Ixen.Core.Visual.Classes
     {
         internal StyleScopeSegmentKind Kind { get; }
         internal string Value { get; }
+        internal string State { get; }
 
-        internal StyleScopeSegment(StyleScopeSegmentKind kind, string value)
+        internal StyleScopeSegment(StyleScopeSegmentKind kind, string value, string state)
         {
             Kind = kind;
             Value = value;
+            State = state;
         }
 
         internal bool Matches(VisualElement element)
         {
+            if (State != null && !element.HasState(State))
+            {
+                return false;
+            }
+
             switch (Kind)
             {
                 case StyleScopeSegmentKind.Class:
@@ -80,23 +87,40 @@ namespace Ixen.Core.Visual.Classes
 
             for (int i = 0; i < parts.Length; i++)
             {
-                string part = parts[i];
+                string part = SplitState(parts[i], out string state);
 
                 if (part[0] == '.')
                 {
-                    segments[i] = new StyleScopeSegment(StyleScopeSegmentKind.Class, part.Substring(1));
+                    segments[i] = new StyleScopeSegment(StyleScopeSegmentKind.Class, part.Substring(1), state);
                 }
                 else if (part[0] == '#')
                 {
-                    segments[i] = new StyleScopeSegment(StyleScopeSegmentKind.Type, part.Substring(1));
+                    segments[i] = new StyleScopeSegment(StyleScopeSegmentKind.Type, part.Substring(1), state);
                 }
                 else
                 {
-                    segments[i] = new StyleScopeSegment(StyleScopeSegmentKind.Name, part);
+                    segments[i] = new StyleScopeSegment(StyleScopeSegmentKind.Name, part, state);
                 }
             }
 
             return segments;
+        }
+
+        internal const char STATE_SEPARATOR = ':';
+
+        internal static string SplitState(string selector, out string state)
+        {
+            int separator = selector.IndexOf(STATE_SEPARATOR);
+
+            if (separator < 0)
+            {
+                state = null;
+                return selector;
+            }
+
+            state = selector.Substring(separator + 1);
+
+            return selector.Substring(0, separator);
         }
 
         internal static bool Matches(StyleScopeSegment[] segments, VisualElement element)

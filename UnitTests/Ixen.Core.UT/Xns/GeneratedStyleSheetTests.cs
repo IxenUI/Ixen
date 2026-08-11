@@ -94,6 +94,17 @@ namespace Ixen.Core.UT.Xns
         }
 
         [TestMethod]
+        public void APseudoClassSurvivesGeneration()
+        {
+            StyleClass stated = StyleRegistry.Default.GetScopedClass(
+                StyleClassTarget.ElementName, "generated_child:hover", null, "generated_root");
+
+            Assert.IsNotNull(stated, "the generated sheet must keep the state in the selector name");
+            Assert.AreEqual(SizeUnit.Pixels, stated.Styles.OfType<WidthStyleDescriptor>().Single().Unit);
+            Assert.IsTrue(StyleRegistry.Default.HasStateClasses, "and the registry must notice it");
+        }
+
+        [TestMethod]
         public void AFractionalPercentSurvivesGeneration()
         {
             StyleClass child = StyleRegistry.Default.GetScopedClass(

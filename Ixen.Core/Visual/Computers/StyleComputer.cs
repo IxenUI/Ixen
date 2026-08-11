@@ -38,19 +38,35 @@ namespace Ixen.Core.Visual.Computers
             VisualElementStylesHandlers handlers = element.StylesHandlers;
             bool scoped = registry.HasScopedClasses;
 
-            ApplyClass(handlers, registry.GetGlobalTypeClass(element.TypeName));
-            ApplyScopedClasses(handlers, registry, StyleClassTarget.ElementType, element.TypeName, element, scoped);
+            ApplySelector(handlers, registry, StyleClassTarget.ElementType, element.TypeName, element, scoped);
 
             foreach (string c in element.Classes)
             {
-                ApplyClass(handlers, registry.GetGlobalClass(c));
-                ApplyScopedClasses(handlers, registry, StyleClassTarget.ClassName, c, element, scoped);
+                ApplySelector(handlers, registry, StyleClassTarget.ClassName, c, element, scoped);
             }
 
-            if (element.Name != null)
+            ApplySelector(handlers, registry, StyleClassTarget.ElementName, element.Name, element, scoped);
+        }
+
+        // Within one family the bare selector is applied first, then its state variants,
+        // so `action:hover` can override `action` while families keep their own ranking.
+        private void ApplySelector(VisualElementStylesHandlers handlers, StyleRegistry registry,
+            StyleClassTarget target, string name, VisualElement element, bool scoped)
+        {
+            if (name == null)
             {
-                ApplyClass(handlers, registry.GetGlobalElementClass(element.Name));
-                ApplyScopedClasses(handlers, registry, StyleClassTarget.ElementName, element.Name, element, scoped);
+                return;
+            }
+
+            ApplyClass(handlers, registry.GetGlobal(target, name));
+            ApplyScopedClasses(handlers, registry, target, name, element, scoped);
+
+            for (int i = 0; i < element.States.Count; i++)
+            {
+                string stated = name + StyleScope.STATE_SEPARATOR + element.States[i];
+
+                ApplyClass(handlers, registry.GetGlobal(target, stated));
+                ApplyScopedClasses(handlers, registry, target, stated, element, scoped);
             }
         }
 

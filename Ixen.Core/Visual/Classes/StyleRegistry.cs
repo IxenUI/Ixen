@@ -26,6 +26,7 @@ namespace Ixen.Core.Visual.Classes
         private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), List<ScopedClass>> _scoped = new();
 
         private int _count;
+        private bool _hasStateClasses;
 
         public static StyleRegistry Default => _default.Value;
 
@@ -33,11 +34,22 @@ namespace Ixen.Core.Visual.Classes
 
         internal bool HasScopedClasses => _scoped.Count > 0;
 
+        internal bool HasStateClasses => _hasStateClasses;
+
+        private static bool DeclaresState(StyleClass styleClass)
+            => styleClass.Name.IndexOf(StyleScope.STATE_SEPARATOR) >= 0
+                || (styleClass.Scope != null && styleClass.Scope.IndexOf(StyleScope.STATE_SEPARATOR) >= 0);
+
         public void Add(StyleClass styleClass)
         {
             if (styleClass == null || styleClass.Name == null)
             {
                 return;
+            }
+
+            if (!_hasStateClasses && DeclaresState(styleClass))
+            {
+                _hasStateClasses = true;
             }
 
             var key = (styleClass.Target, styleClass.SheetScope, styleClass.Name);
@@ -97,7 +109,11 @@ namespace Ixen.Core.Visual.Classes
             _unscoped.Clear();
             _scoped.Clear();
             _count = 0;
+            _hasStateClasses = false;
         }
+
+        internal StyleClass GetGlobal(StyleClassTarget target, string name)
+            => GetUnscoped(target, null, name);
 
         internal StyleClass GetGlobalClass(string name)
             => GetUnscoped(StyleClassTarget.ClassName, null, name);

@@ -1,5 +1,6 @@
 using Ixen.Core.Input;
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
@@ -32,7 +33,11 @@ namespace Ixen.Core.UT.Input
 
         private static IxenSurface Laid(VisualElement root)
         {
-            var surface = new IxenSurface(root);
+            var surface = new IxenSurface(root)
+            {
+                Styles = new StyleRegistry()
+            };
+
             surface.ComputeLayout(VIEWPORT, VIEWPORT);
             return surface;
         }

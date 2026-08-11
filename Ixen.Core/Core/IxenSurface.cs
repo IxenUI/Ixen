@@ -81,16 +81,18 @@ namespace Ixen.Core
         internal bool IsDirty => Root != null && Root.IsLayoutDirty;
 
         internal void PointerLeaveSurface()
-            => _pointerDispatcher.LeaveSurface();
+            => _pointerDispatcher.LeaveSurface(TrackStates);
+
+        private bool TrackStates => (Styles ?? StyleRegistry.Default).HasStateClasses;
 
         internal void PointerMove(float x, float y)
-            => _pointerDispatcher.Move(Root, x, y);
+            => _pointerDispatcher.Move(Root, x, y, TrackStates);
 
         internal void PointerDown(float x, float y, PointerButton button)
-            => _pointerDispatcher.Down(Root, x, y, button);
+            => _pointerDispatcher.Down(Root, x, y, button, TrackStates);
 
         internal void PointerUp(float x, float y, PointerButton button)
-            => _pointerDispatcher.Up(Root, x, y, button);
+            => _pointerDispatcher.Up(Root, x, y, button, TrackStates);
 
         internal void Render(SKCanvas canvas)
         {

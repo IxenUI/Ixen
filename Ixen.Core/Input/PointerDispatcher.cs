@@ -5,8 +5,13 @@ namespace Ixen.Core.Input
 {
     internal class PointerDispatcher
     {
+        internal const string HOVER_STATE = "hover";
+        internal const string PRESSED_STATE = "pressed";
+
         private readonly List<VisualElement> _leftChain = new();
         private readonly List<VisualElement> _enteredChain = new();
+
+        private bool _trackStates;
 
         private VisualElement _hovered;
         private VisualElement _pressed;
@@ -16,8 +21,10 @@ namespace Ixen.Core.Input
         internal VisualElement Pressed => _pressed;
         internal VisualElement Captured => _captured;
 
-        internal void Move(VisualElement root, float x, float y)
+        internal void Move(VisualElement root, float x, float y, bool trackStates)
         {
+            _trackStates = trackStates;
+
             VisualElement hit = HitTester.HitTest(root, x, y);
 
             if (_captured != null)
@@ -31,12 +38,14 @@ namespace Ixen.Core.Input
             Bubble(hit, new PointerEventArgs(x, y, PointerButton.None, hit), PointerEventKind.Move);
         }
 
-        internal void LeaveSurface()
+        internal void LeaveSurface(bool trackStates)
         {
             if (_captured != null)
             {
                 return;
             }
+
+            _trackStates = trackStates;
 
             UpdateHover(null, 0, 0);
             _pressed = null;
@@ -45,11 +54,14 @@ namespace Ixen.Core.Input
         internal void ReleaseCapture()
         {
             _captured = null;
+            SetState(_pressed, PRESSED_STATE, false);
             _pressed = null;
         }
 
-        internal void Down(VisualElement root, float x, float y, PointerButton button)
+        internal void Down(VisualElement root, float x, float y, PointerButton button, bool trackStates)
         {
+            _trackStates = trackStates;
+
             VisualElement hit = HitTester.HitTest(root, x, y);
 
             UpdateHover(hit, x, y);
@@ -57,15 +69,21 @@ namespace Ixen.Core.Input
             _pressed = hit;
             _captured = hit;
 
+            SetState(hit, PRESSED_STATE, true);
+
             Bubble(hit, new PointerEventArgs(x, y, button, hit), PointerEventKind.Down);
         }
 
-        internal void Up(VisualElement root, float x, float y, PointerButton button)
+        internal void Up(VisualElement root, float x, float y, PointerButton button, bool trackStates)
         {
+            _trackStates = trackStates;
+
             VisualElement hit = HitTester.HitTest(root, x, y);
             VisualElement target = _captured ?? hit;
 
             _captured = null;
+
+            SetState(_pressed, PRESSED_STATE, false);
 
             UpdateHover(hit, x, y);
             Bubble(target, new PointerEventArgs(x, y, button, target), PointerEventKind.Up);
@@ -101,6 +119,16 @@ namespace Ixen.Core.Input
             }
 
             return null;
+        }
+
+        private void SetState(VisualElement element, string state, bool present)
+        {
+            if (!_trackStates || element == null)
+            {
+                return;
+            }
+
+            element.ToggleState(state, present);
         }
 
         private bool IsWithinCapture(VisualElement element)
@@ -198,6 +226,7 @@ namespace Ixen.Core.Input
 
                 for (int i = 0; i < _leftChain.Count - shared; i++)
                 {
+                    SetState(_leftChain[i], HOVER_STATE, false);
                     _leftChain[i].RaisePointerLeave(leaveArgs);
                 }
             }
@@ -208,6 +237,7 @@ namespace Ixen.Core.Input
 
                 for (int i = _enteredChain.Count - shared - 1; i >= 0; i--)
                 {
+                    SetState(_enteredChain[i], HOVER_STATE, true);
                     _enteredChain[i].RaisePointerEnter(enterArgs);
                 }
             }

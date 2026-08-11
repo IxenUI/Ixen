@@ -177,7 +177,7 @@ namespace Ixen.Core.Language.Xns
                 while (true)
                 {
                     c = PeekChar();
-                    if (char.IsLetterOrDigit(c) || c == '_' ||  c == '-')
+                    if (char.IsLetterOrDigit(c) || c == '_' ||  c == '-' || c == ':')
                     {
                         sb.Append(c);
                         MoveCursor();

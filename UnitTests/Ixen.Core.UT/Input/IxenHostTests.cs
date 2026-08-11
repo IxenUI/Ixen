@@ -1,5 +1,6 @@
 using Ixen.Core.Input;
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Ixen.Platform;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -29,7 +30,12 @@ namespace Ixen.Core.UT.Input
             _box.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
             root.AddChild(_box);
 
-            _host = new IxenHost(new IxenSurface(), () => _repaints++);
+            var surface = new IxenSurface
+            {
+                Styles = new StyleRegistry()
+            };
+
+            _host = new IxenHost(surface, () => _repaints++);
             _host.Root = root;
 
             Paint();

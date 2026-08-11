@@ -22,4 +22,8 @@ generated_root {
         width: 30.5%
         height: 20px
     }
+
+    generated_child:hover {
+        width: 5px
+    }
 }
