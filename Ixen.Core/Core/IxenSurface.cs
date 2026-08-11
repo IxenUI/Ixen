@@ -73,6 +73,10 @@ namespace Ixen.Core
             => HitTester.HitTest(Root, x, y);
 
         internal VisualElement HoveredElement => _pointerDispatcher.Hovered;
+        internal VisualElement CapturedElement => _pointerDispatcher.Captured;
+
+        internal void PointerCaptureLost()
+            => _pointerDispatcher.ReleaseCapture();
 
         internal bool IsDirty => Root != null && Root.IsLayoutDirty;
 

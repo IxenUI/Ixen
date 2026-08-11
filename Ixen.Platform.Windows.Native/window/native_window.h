@@ -31,6 +31,7 @@ namespace IxenWindowsNative
         LRESULT HandlePaint();
         LRESULT HandlePointer(int kind, int button, LPARAM lParam);
         LRESULT HandleMouseLeave();
+        LRESULT HandleCaptureLost();
 
     public:
         NativeWindow(LPCWSTR title, int width, int height);

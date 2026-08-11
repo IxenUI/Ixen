@@ -338,7 +338,7 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
-        public void LeavingTheSurfaceClearsTheHoverAndThePress()
+        public void LeavingTheSurfaceClearsTheHover()
         {
             VisualElement root = Element("root");
             VisualElement box = Box("box", 60, 60);
@@ -347,18 +347,13 @@ namespace Ixen.Core.UT.Input
 
             IxenSurface surface = Laid(root);
 
-            surface.PointerDown(30, 30, PointerButton.Left);
+            surface.PointerMove(30, 30);
             _log.Clear();
 
             surface.PointerLeaveSurface();
 
             Assert.AreEqual("leave:box", Log);
             Assert.IsNull(surface.HoveredElement);
-
-            surface.PointerUp(30, 30, PointerButton.Left);
-
-            Assert.IsFalse(Log.Contains("click"),
-                "the press was cancelled when the pointer left the surface");
         }
 
         [TestMethod]

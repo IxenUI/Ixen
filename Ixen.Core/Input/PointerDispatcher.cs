@@ -10,13 +10,22 @@ namespace Ixen.Core.Input
 
         private VisualElement _hovered;
         private VisualElement _pressed;
+        private VisualElement _captured;
 
         internal VisualElement Hovered => _hovered;
         internal VisualElement Pressed => _pressed;
+        internal VisualElement Captured => _captured;
 
         internal void Move(VisualElement root, float x, float y)
         {
             VisualElement hit = HitTester.HitTest(root, x, y);
+
+            if (_captured != null)
+            {
+                UpdateHover(CaptureHoverTarget(hit), x, y);
+                Bubble(_captured, new PointerEventArgs(x, y, PointerButton.None, _captured), PointerEventKind.Move);
+                return;
+            }
 
             UpdateHover(hit, x, y);
             Bubble(hit, new PointerEventArgs(x, y, PointerButton.None, hit), PointerEventKind.Move);
@@ -24,7 +33,18 @@ namespace Ixen.Core.Input
 
         internal void LeaveSurface()
         {
+            if (_captured != null)
+            {
+                return;
+            }
+
             UpdateHover(null, 0, 0);
+            _pressed = null;
+        }
+
+        internal void ReleaseCapture()
+        {
+            _captured = null;
             _pressed = null;
         }
 
@@ -35,6 +55,7 @@ namespace Ixen.Core.Input
             UpdateHover(hit, x, y);
 
             _pressed = hit;
+            _captured = hit;
 
             Bubble(hit, new PointerEventArgs(x, y, button, hit), PointerEventKind.Down);
         }
@@ -42,9 +63,12 @@ namespace Ixen.Core.Input
         internal void Up(VisualElement root, float x, float y, PointerButton button)
         {
             VisualElement hit = HitTester.HitTest(root, x, y);
+            VisualElement target = _captured ?? hit;
+
+            _captured = null;
 
             UpdateHover(hit, x, y);
-            Bubble(hit, new PointerEventArgs(x, y, button, hit), PointerEventKind.Up);
+            Bubble(target, new PointerEventArgs(x, y, button, target), PointerEventKind.Up);
 
             bool isClick = hit != null && hit == _pressed;
 
@@ -54,6 +78,55 @@ namespace Ixen.Core.Input
             {
                 Bubble(hit, new PointerEventArgs(x, y, button, hit), PointerEventKind.Click);
             }
+        }
+
+        private VisualElement CaptureHoverTarget(VisualElement hit)
+        {
+            if (hit == null)
+            {
+                return null;
+            }
+
+            if (IsWithinCapture(hit))
+            {
+                return hit;
+            }
+
+            for (VisualElement candidate = hit; candidate != null; candidate = candidate.Parent)
+            {
+                if (IsOnCaptureChain(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        private bool IsWithinCapture(VisualElement element)
+        {
+            for (VisualElement current = element; current != null; current = current.Parent)
+            {
+                if (current == _captured)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsOnCaptureChain(VisualElement element)
+        {
+            for (VisualElement current = _captured; current != null; current = current.Parent)
+            {
+                if (current == element)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void Bubble(VisualElement hit, PointerEventArgs args, PointerEventKind kind)

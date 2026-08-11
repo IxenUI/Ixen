@@ -62,6 +62,10 @@ namespace Ixen.Platform.Windows
                     _ixenSurface.PointerLeaveSurface();
                     break;
 
+                case NativePointerKind.CaptureLost:
+                    _ixenSurface.PointerCaptureLost();
+                    break;
+
                 default:
                     return;
             }

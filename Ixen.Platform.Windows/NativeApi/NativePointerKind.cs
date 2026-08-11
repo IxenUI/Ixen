@@ -5,7 +5,8 @@ namespace Ixen.Platform.Windows.NativeApi
         Move = 0,
         Down = 1,
         Up = 2,
-        Leave = 3
+        Leave = 3,
+        CaptureLost = 4
     }
 
     internal enum NativePointerButton

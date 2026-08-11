@@ -10,6 +10,7 @@
 #define IXEN_POINTER_DOWN 1
 #define IXEN_POINTER_UP 2
 #define IXEN_POINTER_LEAVE 3
+#define IXEN_POINTER_CAPTURELOST 4
 
 #define IXEN_BUTTON_NONE 0
 #define IXEN_BUTTON_LEFT 1
@@ -144,6 +145,11 @@ LRESULT NativeWindow::HandlePaint()
 
 LRESULT NativeWindow::HandlePointer(int kind, int button, LPARAM lParam)
 {
+    if (kind == IXEN_POINTER_DOWN)
+    {
+        SetCapture(_handle);
+    }
+
     if (kind == IXEN_POINTER_MOVE && !_trackingMouse)
     {
         TRACKMOUSEEVENT tme = {};
@@ -160,6 +166,21 @@ LRESULT NativeWindow::HandlePointer(int kind, int button, LPARAM lParam)
     if (_pointerCallBack != nullptr)
     {
         _pointerCallBack(kind, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), button);
+    }
+
+    if (kind == IXEN_POINTER_UP)
+    {
+        ReleaseCapture();
+    }
+
+    return 0;
+}
+
+LRESULT NativeWindow::HandleCaptureLost()
+{
+    if (_pointerCallBack != nullptr)
+    {
+        _pointerCallBack(IXEN_POINTER_CAPTURELOST, 0, 0, IXEN_BUTTON_NONE);
     }
 
     return 0;
@@ -192,6 +213,8 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
         return HandlePointer(IXEN_POINTER_MOVE, IXEN_BUTTON_NONE, lParam);
     case WM_MOUSELEAVE:
         return HandleMouseLeave();
+    case WM_CAPTURECHANGED:
+        return HandleCaptureLost();
 
     case WM_LBUTTONDOWN:
         return HandlePointer(IXEN_POINTER_DOWN, IXEN_BUTTON_LEFT, lParam);
