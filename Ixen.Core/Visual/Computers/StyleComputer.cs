@@ -180,6 +180,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultTextAlign;
             }
 
+            if (handlers.TextOverflow.Descriptor != styles.TextOverflow)
+            {
+                handlers.TextOverflow = styles.TextOverflow != null
+                    ? new TextOverflowStyleHandler(styles.TextOverflow)
+                    : VisualElementStylesHandlers.DefaultTextOverflow;
+            }
+
             if (handlers.TextWrap.Descriptor != styles.TextWrap)
             {
                 handlers.TextWrap = styles.TextWrap != null
@@ -270,6 +277,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.TEXT_ALIGN:
                     handlers.TextAlign = new TextAlignStyleHandler((TextAlignStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.TEXT_OVERFLOW:
+                    handlers.TextOverflow = new TextOverflowStyleHandler((TextOverflowStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.TEXT_WRAP:

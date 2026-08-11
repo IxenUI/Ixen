@@ -24,7 +24,7 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(17, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(18, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
         }
 
         [TestMethod]
@@ -35,6 +35,7 @@ namespace Ixen.Core.UT.Xns
             Assert.AreEqual(TextAlign.Right, align.Horizontal, "both axes must survive one declaration");
             Assert.AreEqual(TextVAlign.Bottom, align.Vertical);
             Assert.AreEqual(TextWrap.NoWrap, Style<TextWrapStyleDescriptor>().Value);
+            Assert.AreEqual(TextOverflow.Ellipsis, Style<TextOverflowStyleDescriptor>().Value);
         }
 
         [TestMethod]

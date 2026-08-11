@@ -6,6 +6,8 @@ namespace Ixen.Core.Visual.Computers
 {
     internal class MeasureComputer
     {
+        private const string ELLIPSIS = "\u2026";
+
         private static readonly SizeStyleDescriptor _fillTrack = new SizeStyleDescriptor { Unit = SizeUnit.Weight, Value = 1 };
         private static readonly SizeStyleDescriptor _contentTrack = new SizeStyleDescriptor { Unit = SizeUnit.Content, Value = 1 };
 
@@ -60,37 +62,39 @@ namespace Ixen.Core.Visual.Computers
 
             FontSpec fontSpec = FontSpec.From(element.StylesHandlers);
             bool wrap = element.StylesHandlers.TextWrap.Descriptor.Value == TextWrap.Wrap;
+            bool ellipsis = element.StylesHandlers.TextOverflow.Descriptor.Value == TextOverflow.Ellipsis;
 
             List<string> lines = element.EnsureTextLines();
 
-            width = BuildLines(element.Text, fontSpec, availableWidth, wrap, lines);
+            width = BuildLines(element.Text, fontSpec, availableWidth, wrap, ellipsis, lines);
             height = _textMeasurer.GetLineHeight(fontSpec) * lines.Count;
         }
 
-        private float BuildLines(string text, FontSpec fontSpec, float maxWidth, bool wrap, List<string> lines)
+        private float BuildLines(string text, FontSpec fontSpec, float maxWidth, bool wrap, bool ellipsis,
+            List<string> lines)
         {
             float widest = 0;
 
             if (text.IndexOf('\n') < 0)
             {
-                AppendLine(text, fontSpec, maxWidth, wrap, lines, ref widest);
+                AppendLine(text, fontSpec, maxWidth, wrap, ellipsis, lines, ref widest);
                 return widest;
             }
 
             foreach (string hardLine in text.Split('\n'))
             {
-                AppendLine(hardLine.TrimEnd('\r'), fontSpec, maxWidth, wrap, lines, ref widest);
+                AppendLine(hardLine.TrimEnd('\r'), fontSpec, maxWidth, wrap, ellipsis, lines, ref widest);
             }
 
             return widest;
         }
 
         private void AppendLine(string line, FontSpec fontSpec, float maxWidth,
-            bool wrap, List<string> lines, ref float widest)
+            bool wrap, bool ellipsis, List<string> lines, ref float widest)
         {
             if (!wrap)
             {
-                AddLine(lines, line, fontSpec, ref widest);
+                AddLine(lines, line, fontSpec, maxWidth, ellipsis, ref widest);
                 return;
             }
 
@@ -114,7 +118,7 @@ namespace Ixen.Core.Visual.Computers
                 if (candidateWidth > maxWidth && lastSpace > lineStart)
                 {
                     AddLine(lines, line.Substring(lineStart, lastSpace - lineStart).TrimEnd(),
-                        fontSpec, ref widest);
+                        fontSpec, maxWidth, ellipsis, ref widest);
 
                     lineStart = lastSpace + 1;
                     lastSpace = -1;
@@ -130,19 +134,57 @@ namespace Ixen.Core.Visual.Computers
                 index++;
             }
 
-            AddLine(lines, line.Substring(lineStart), fontSpec, ref widest);
+            AddLine(lines, line.Substring(lineStart), fontSpec, maxWidth, ellipsis, ref widest);
         }
 
-        private void AddLine(List<string> lines, string line, FontSpec fontSpec, ref float widest)
+        private void AddLine(List<string> lines, string line, FontSpec fontSpec, float maxWidth,
+            bool ellipsis, ref float widest)
         {
-            lines.Add(line);
-
             _textMeasurer.MeasureText(line, fontSpec, out float width, out _);
+
+            if (ellipsis && width > maxWidth)
+            {
+                line = Ellipsize(line, fontSpec, maxWidth);
+                _textMeasurer.MeasureText(line, fontSpec, out width, out _);
+            }
+
+            lines.Add(line);
 
             if (width > widest)
             {
                 widest = width;
             }
+        }
+
+        private string Ellipsize(string line, FontSpec fontSpec, float maxWidth)
+        {
+            _textMeasurer.MeasureText(ELLIPSIS, fontSpec, out float ellipsisWidth, out _);
+
+            if (ellipsisWidth > maxWidth)
+            {
+                return ELLIPSIS;
+            }
+
+            int low = 0;
+            int high = line.Length;
+
+            while (low < high)
+            {
+                int mid = (low + high + 1) / 2;
+
+                _textMeasurer.MeasureText(line.Substring(0, mid), fontSpec, out float width, out _);
+
+                if (width + ellipsisWidth <= maxWidth)
+                {
+                    low = mid;
+                }
+                else
+                {
+                    high = mid - 1;
+                }
+            }
+
+            return line.Substring(0, low).TrimEnd() + ELLIPSIS;
         }
 
         private void MeasureChildren(VisualElement element, float contentWidth, float contentHeight)
