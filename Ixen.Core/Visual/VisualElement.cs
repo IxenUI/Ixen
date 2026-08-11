@@ -134,6 +134,41 @@ namespace Ixen.Core.Visual
             }
         }
 
+        public bool HasClass(string name)
+            => name != null && Classes.Contains(name);
+
+        public void AddClass(string name)
+        {
+            if (name == null || Classes.Contains(name))
+            {
+                return;
+            }
+
+            Classes.Add(name);
+            Invalidate();
+        }
+
+        public void RemoveClass(string name)
+        {
+            if (name == null || !Classes.Remove(name))
+            {
+                return;
+            }
+
+            Invalidate();
+        }
+
+        public void ToggleClass(string name, bool present)
+        {
+            if (present)
+            {
+                AddClass(name);
+                return;
+            }
+
+            RemoveClass(name);
+        }
+
         public VisualElement FindByName(string name)
         {
             if (name == null)
