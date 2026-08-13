@@ -1,0 +1,9 @@
+bound_root {} [
+	bound_plain { text: "{Caption}" }
+	bound_mixed { text: "{Count} of {Total} done" }
+	bound_typed { focusable: "{IsEditable}" }
+	bound_expression { text: "{(Count * 2).ToString()}" }
+	bound_call { text: "{Describe(Count)}" }
+	bound_literal { text: "{{Caption}}" }
+	bound_nested { text: "{Inner.Name}" }
+]

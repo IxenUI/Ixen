@@ -29,6 +29,7 @@ namespace Ixen.Core.Components
             }
 
             OnInitialized();
+            ApplyBindings();
             Render();
 
             return element;
@@ -60,7 +61,16 @@ namespace Ixen.Core.Components
             }
 
             _isStateDirty = false;
+            ApplyBindings();
             Render();
+        }
+
+        private void ApplyBindings()
+        {
+            if (GetVisualElement() is IBoundView bound)
+            {
+                bound.Bind(this);
+            }
         }
     }
 
