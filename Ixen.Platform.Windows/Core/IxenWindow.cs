@@ -16,6 +16,7 @@ namespace Ixen.Platform.Windows
         private readonly WindowApi.OnPaintCallBack _onPaint;
         private readonly WindowApi.OnPointerCallBack _onPointer;
         private readonly WindowApi.OnKeyCallBack _onKey;
+        private readonly WindowApi.OnWheelCallBack _onWheel;
 
         private SKImageInfo _skImageInfo;
         private SKSurface _skSurface;
@@ -30,6 +31,7 @@ namespace Ixen.Platform.Windows
             _onPaint = OnPaint;
             _onPointer = OnPointer;
             _onKey = OnKey;
+            _onWheel = OnWheel;
             _windowPtr = WindowApi.CreateWindow(_ixenSurface.InitOptions.Title, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
@@ -43,9 +45,15 @@ namespace Ixen.Platform.Windows
             WindowApi.RegisterPaintCallBack(_windowPtr, _onPaint);
             WindowApi.RegisterPointerCallBack(_windowPtr, _onPointer);
             WindowApi.RegisterKeyCallBack(_windowPtr, _onKey);
+            WindowApi.RegisterWheelCallBack(_windowPtr, _onWheel);
 
             return WindowApi.ShowWindow(_windowPtr);
         }
+
+        private const float WHEEL_DELTA = 120f;
+
+        private void OnWheel(int x, int y, int deltaX, int deltaY)
+            => _host.PointerWheel(x, y, deltaX / WHEEL_DELTA, deltaY / WHEEL_DELTA);
 
         private void OnKey(int kind, int keyCode, int modifiers)
         {

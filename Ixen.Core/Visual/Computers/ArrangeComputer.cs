@@ -23,8 +23,8 @@ namespace Ixen.Core.Visual.Computers
             }
 
             bool isRow = type == LayoutType.Row;
-            float childX = element.X + element.PaddingLeft + element.BorderInsideLeft;
-            float childY = element.Y + element.PaddingTop + element.BorderInsideTop;
+            float childX = ContentOriginX(element);
+            float childY = ContentOriginY(element);
 
             foreach (VisualElement child in element.Children)
             {
@@ -41,6 +41,12 @@ namespace Ixen.Core.Visual.Computers
             }
         }
 
+        private static float ContentOriginX(VisualElement element)
+            => element.X + element.PaddingLeft + element.BorderInsideLeft - element.ScrollX;
+
+        private static float ContentOriginY(VisualElement element)
+            => element.Y + element.PaddingTop + element.BorderInsideTop - element.ScrollY;
+
         private void ArrangeGrid(VisualElement element)
         {
             float[] columns = element.GridColumns;
@@ -51,9 +57,9 @@ namespace Ixen.Core.Visual.Computers
                 return;
             }
 
-            float originX = element.X + element.PaddingLeft + element.BorderInsideLeft;
+            float originX = ContentOriginX(element);
             float x = originX;
-            float y = element.Y + element.PaddingTop + element.BorderInsideTop;
+            float y = ContentOriginY(element);
             int column = 0;
             int row = 0;
 

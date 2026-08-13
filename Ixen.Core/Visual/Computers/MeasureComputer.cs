@@ -38,15 +38,27 @@ namespace Ixen.Core.Visual.Computers
 
             LayoutText(element, contentWidth, out float textWidth, out float textHeight);
 
+            bool scrollable = element.Scrollable;
+
+            float aggregateWidth = widthIsDefinite && !scrollable ? 0 : AggregateWidth(element, isGrid);
+            float aggregateHeight = heightIsDefinite && !scrollable ? 0 : AggregateHeight(element, isGrid);
+
             element.Width = widthIsDefinite
                 ? availableWidth
-                : Math.Max(AggregateWidth(element, isGrid), textWidth)
+                : Math.Max(aggregateWidth, textWidth)
                     + element.HorizontalPadding + element.HorizontalBorderInside;
 
             element.Height = heightIsDefinite
                 ? availableHeight
-                : Math.Max(AggregateHeight(element, isGrid), textHeight)
+                : Math.Max(aggregateHeight, textHeight)
                     + element.VerticalPadding + element.VerticalBorderInside;
+
+            if (scrollable)
+            {
+                element.ScrollExtentWidth = Math.Max(aggregateWidth, textWidth);
+                element.ScrollExtentHeight = Math.Max(aggregateHeight, textHeight);
+                element.ClampScroll();
+            }
         }
 
         private void LayoutText(VisualElement element, float availableWidth, out float width, out float height)

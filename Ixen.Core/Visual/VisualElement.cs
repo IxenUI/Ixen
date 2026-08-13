@@ -12,6 +12,7 @@ namespace Ixen.Core.Visual
         public event EventHandler<PointerEventArgs> PointerClick;
         public event EventHandler<PointerEventArgs> PointerEnter;
         public event EventHandler<PointerEventArgs> PointerLeave;
+        public event EventHandler<WheelEventArgs> PointerWheel;
 
         internal void RaisePointerDown(PointerEventArgs args) => PointerDown?.Invoke(this, args);
         internal void RaisePointerUp(PointerEventArgs args) => PointerUp?.Invoke(this, args);
@@ -19,6 +20,7 @@ namespace Ixen.Core.Visual
         internal void RaisePointerClick(PointerEventArgs args) => PointerClick?.Invoke(this, args);
         internal void RaisePointerEnter(PointerEventArgs args) => PointerEnter?.Invoke(this, args);
         internal void RaisePointerLeave(PointerEventArgs args) => PointerLeave?.Invoke(this, args);
+        internal void RaisePointerWheel(WheelEventArgs args) => PointerWheel?.Invoke(this, args);
 
         public event EventHandler<KeyEventArgs> KeyDown;
         public event EventHandler<KeyEventArgs> KeyUp;
@@ -33,6 +35,85 @@ namespace Ixen.Core.Visual
         internal void RaiseLostFocus() => LostFocus?.Invoke(this, EventArgs.Empty);
 
         public bool Focusable { get; set; }
+        public bool Scrollable { get; set; }
+
+        private float _scrollX;
+        private float _scrollY;
+
+        public float ScrollX
+        {
+            get => _scrollX;
+            set => SetScroll(value, _scrollY);
+        }
+
+        public float ScrollY
+        {
+            get => _scrollY;
+            set => SetScroll(_scrollX, value);
+        }
+
+        internal float ScrollExtentWidth { get; set; }
+        internal float ScrollExtentHeight { get; set; }
+
+        internal float MaxScrollX
+        {
+            get
+            {
+                float value = ScrollExtentWidth - ContentWidth;
+                return value < 0 ? 0 : value;
+            }
+        }
+
+        internal float MaxScrollY
+        {
+            get
+            {
+                float value = ScrollExtentHeight - ContentHeight;
+                return value < 0 ? 0 : value;
+            }
+        }
+
+        public void ScrollBy(float deltaX, float deltaY)
+            => SetScroll(_scrollX + deltaX, _scrollY + deltaY);
+
+        private void SetScroll(float x, float y)
+        {
+            if (x < 0)
+            {
+                x = 0;
+            }
+
+            if (y < 0)
+            {
+                y = 0;
+            }
+
+            if (_scrollX == x && _scrollY == y)
+            {
+                return;
+            }
+
+            _scrollX = x;
+            _scrollY = y;
+
+            InvalidateLayout();
+        }
+
+        internal void ClampScroll()
+        {
+            _scrollX = Clamp(_scrollX, MaxScrollX);
+            _scrollY = Clamp(_scrollY, MaxScrollY);
+        }
+
+        private static float Clamp(float value, float max)
+        {
+            if (value < 0)
+            {
+                return 0;
+            }
+
+            return value > max ? max : value;
+        }
 
         internal int ChildIndex { get; set; }
         internal List<VisualElement> Children { get; private set; } = new();

@@ -8,6 +8,8 @@ namespace Ixen.Core.Input
         internal const string HOVER_STATE = "hover";
         internal const string PRESSED_STATE = "pressed";
 
+        private const float WHEEL_STEP = 48f;
+
         private readonly List<VisualElement> _leftChain = new();
         private readonly List<VisualElement> _enteredChain = new();
 
@@ -36,6 +38,59 @@ namespace Ixen.Core.Input
 
             UpdateHover(hit, x, y);
             Bubble(hit, new PointerEventArgs(x, y, PointerButton.None, hit), PointerEventKind.Move);
+        }
+
+        internal void Wheel(VisualElement root, float x, float y, float deltaX, float deltaY)
+        {
+            VisualElement hit = _captured ?? HitTester.HitTest(root, x, y);
+
+            if (hit == null)
+            {
+                return;
+            }
+
+            var args = new WheelEventArgs(x, y, deltaX, deltaY, hit);
+
+            for (VisualElement element = hit; element != null; element = element.Parent)
+            {
+                element.RaisePointerWheel(args);
+
+                if (args.Handled)
+                {
+                    return;
+                }
+            }
+
+            Scroll(hit, deltaX, deltaY);
+        }
+
+        private static void Scroll(VisualElement hit, float deltaX, float deltaY)
+        {
+            float offsetX = deltaX * WHEEL_STEP;
+            float offsetY = -deltaY * WHEEL_STEP;
+
+            for (VisualElement element = hit; element != null; element = element.Parent)
+            {
+                if (element.Scrollable && CanScroll(element, offsetX, offsetY))
+                {
+                    element.ScrollBy(offsetX, offsetY);
+                    return;
+                }
+            }
+        }
+
+        private static bool CanScroll(VisualElement element, float offsetX, float offsetY)
+            => CanScrollAxis(element.ScrollX, element.MaxScrollX, offsetX)
+                || CanScrollAxis(element.ScrollY, element.MaxScrollY, offsetY);
+
+        private static bool CanScrollAxis(float offset, float max, float delta)
+        {
+            if (delta < 0)
+            {
+                return offset > 0;
+            }
+
+            return delta > 0 && offset < max;
         }
 
         internal void LeaveSurface(bool trackStates)

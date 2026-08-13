@@ -39,6 +39,7 @@ namespace Ixen.View.WPF
             _skElement.MouseUp += OnMouseUp;
             _skElement.MouseLeave += OnMouseLeave;
             _skElement.LostMouseCapture += OnLostMouseCapture;
+            _skElement.MouseWheel += OnMouseWheel;
             _skElement.PreviewKeyDown += OnPreviewKeyDown;
             _skElement.PreviewKeyUp += OnPreviewKeyUp;
             _skElement.TextInput += OnTextInput;
@@ -54,6 +55,7 @@ namespace Ixen.View.WPF
             _skElement.MouseUp -= OnMouseUp;
             _skElement.MouseLeave -= OnMouseLeave;
             _skElement.LostMouseCapture -= OnLostMouseCapture;
+            _skElement.MouseWheel -= OnMouseWheel;
             _skElement.PreviewKeyDown -= OnPreviewKeyDown;
             _skElement.PreviewKeyUp -= OnPreviewKeyUp;
             _skElement.TextInput -= OnTextInput;
@@ -87,6 +89,14 @@ namespace Ixen.View.WPF
 
         private void OnMouseLeave(object sender, MouseEventArgs e)
             => _host.PointerLeave();
+
+        private const float WHEEL_DELTA = 120f;
+
+        private void OnMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            Point position = e.GetPosition(_skElement);
+            _host.PointerWheel((float)position.X, (float)position.Y, 0, e.Delta / WHEEL_DELTA);
+        }
 
         private void OnLostMouseCapture(object sender, MouseEventArgs e)
             => _host.PointerCaptureLost();

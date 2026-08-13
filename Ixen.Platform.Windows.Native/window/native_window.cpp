@@ -246,6 +246,23 @@ LRESULT NativeWindow::HandlePointer(int kind, int button, LPARAM lParam)
     return 0;
 }
 
+LRESULT NativeWindow::HandleWheel(WPARAM wParam, LPARAM lParam, bool horizontal)
+{
+    if (_wheelCallBack == nullptr)
+    {
+        return 0;
+    }
+
+    POINT point = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+    ScreenToClient(_handle, &point);
+
+    int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+
+    _wheelCallBack(point.x, point.y, horizontal ? delta : 0, horizontal ? 0 : delta);
+
+    return 0;
+}
+
 int NativeWindow::GetModifiers()
 {
     int modifiers = 0;
@@ -333,6 +350,11 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_SYSKEYUP:
         HandleKey(IXEN_KEY_UP, wParam);
         break;
+
+    case WM_MOUSEWHEEL:
+        return HandleWheel(wParam, lParam, false);
+    case WM_MOUSEHWHEEL:
+        return HandleWheel(wParam, lParam, true);
 
     case WM_LBUTTONDOWN:
         return HandlePointer(IXEN_POINTER_DOWN, IXEN_BUTTON_LEFT, lParam);

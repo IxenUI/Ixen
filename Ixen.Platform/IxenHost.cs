@@ -55,6 +55,12 @@ namespace Ixen.Platform
             RepaintIfDirty();
         }
 
+        public void PointerWheel(float x, float y, float deltaX, float deltaY)
+        {
+            _surface.PointerWheel(x, y, deltaX, deltaY);
+            RepaintIfDirty();
+        }
+
         public void PointerLeave()
         {
             _surface.PointerLeaveSurface();

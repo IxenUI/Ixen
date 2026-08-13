@@ -138,6 +138,9 @@ namespace Ixen.Core
         internal void PointerUp(float x, float y, PointerButton button)
             => _pointerDispatcher.Up(Root, ToLogical(x), ToLogical(y), button, TrackStates);
 
+        internal void PointerWheel(float x, float y, float deltaX, float deltaY)
+            => _pointerDispatcher.Wheel(Root, ToLogical(x), ToLogical(y), deltaX, deltaY);
+
         internal void Render(SKCanvas canvas)
         {
             _rendererContext.BeginFrame(canvas, _scale);
