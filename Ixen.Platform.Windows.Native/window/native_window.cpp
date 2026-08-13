@@ -12,6 +12,14 @@
 #define IXEN_POINTER_LEAVE 3
 #define IXEN_POINTER_CAPTURELOST 4
 
+#define IXEN_KEY_DOWN 0
+#define IXEN_KEY_UP 1
+#define IXEN_KEY_CHAR 2
+
+#define IXEN_MOD_SHIFT 1
+#define IXEN_MOD_CONTROL 2
+#define IXEN_MOD_ALT 4
+
 #define IXEN_BUTTON_NONE 0
 #define IXEN_BUTTON_LEFT 1
 #define IXEN_BUTTON_MIDDLE 2
@@ -24,8 +32,6 @@ int NativeWindow::_windowNum = 0;
 bool NativeWindow::_dpiAwarenessSet = false;
 map<HWND, NativeWindow*> NativeWindow::_windowsByHandle;
 
-// Must run before any window or DC exists, otherwise Windows keeps the process
-// DPI-unaware and bitmap-stretches everything it draws.
 void NativeWindow::EnsureDpiAwareness()
 {
     if (_dpiAwarenessSet)
@@ -38,8 +44,6 @@ void NativeWindow::EnsureDpiAwareness()
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 }
 
-// The requested size is in logical units, like every other size in Ixen, so the
-// client area has to be grown by the window's own DPI once it exists.
 void NativeWindow::ApplyLogicalSize(int logicalWidth, int logicalHeight)
 {
     UINT dpi = GetDpi();
@@ -242,6 +246,38 @@ LRESULT NativeWindow::HandlePointer(int kind, int button, LPARAM lParam)
     return 0;
 }
 
+int NativeWindow::GetModifiers()
+{
+    int modifiers = 0;
+
+    if (GetKeyState(VK_SHIFT) & 0x8000)
+    {
+        modifiers |= IXEN_MOD_SHIFT;
+    }
+
+    if (GetKeyState(VK_CONTROL) & 0x8000)
+    {
+        modifiers |= IXEN_MOD_CONTROL;
+    }
+
+    if (GetKeyState(VK_MENU) & 0x8000)
+    {
+        modifiers |= IXEN_MOD_ALT;
+    }
+
+    return modifiers;
+}
+
+LRESULT NativeWindow::HandleKey(int kind, WPARAM wParam)
+{
+    if (_keyCallBack != nullptr)
+    {
+        _keyCallBack(kind, (int)wParam, GetModifiers());
+    }
+
+    return 0;
+}
+
 LRESULT NativeWindow::HandleCaptureLost()
 {
     if (_pointerCallBack != nullptr)
@@ -283,6 +319,20 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
         return HandleCaptureLost();
     case WM_DPICHANGED:
         return HandleDpiChanged(lParam);
+
+    case WM_KEYDOWN:
+        return HandleKey(IXEN_KEY_DOWN, wParam);
+    case WM_KEYUP:
+        return HandleKey(IXEN_KEY_UP, wParam);
+    case WM_CHAR:
+        return HandleKey(IXEN_KEY_CHAR, wParam);
+
+    case WM_SYSKEYDOWN:
+        HandleKey(IXEN_KEY_DOWN, wParam);
+        break;
+    case WM_SYSKEYUP:
+        HandleKey(IXEN_KEY_UP, wParam);
+        break;
 
     case WM_LBUTTONDOWN:
         return HandlePointer(IXEN_POINTER_DOWN, IXEN_BUTTON_LEFT, lParam);

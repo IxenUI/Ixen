@@ -3,6 +3,7 @@ using Ixen.Core.Input;
 using Ixen.Core.Visual;
 using SkiaSharp;
 using System;
+using System.Text;
 
 namespace Ixen.Platform
 {
@@ -64,6 +65,79 @@ namespace Ixen.Platform
         {
             _surface.PointerCaptureLost();
             RepaintIfDirty();
+        }
+
+        public VisualElement FocusedElement => _surface.FocusedElement;
+
+        public void Focus(VisualElement element)
+        {
+            _surface.Focus(element);
+            RepaintIfDirty();
+        }
+
+        public void KeyDown(Key key, KeyModifiers modifiers)
+        {
+            _surface.KeyDown(key, modifiers);
+            RepaintIfDirty();
+        }
+
+        public void KeyUp(Key key, KeyModifiers modifiers)
+        {
+            _surface.KeyUp(key, modifiers);
+            RepaintIfDirty();
+        }
+
+        public void TextInput(string text)
+        {
+            string filtered = WithoutControlCharacters(text);
+
+            if (string.IsNullOrEmpty(filtered))
+            {
+                return;
+            }
+
+            _surface.TextInput(filtered);
+            RepaintIfDirty();
+        }
+
+        private static string WithoutControlCharacters(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return text;
+            }
+
+            int kept = 0;
+
+            foreach (char c in text)
+            {
+                if (!char.IsControl(c))
+                {
+                    kept++;
+                }
+            }
+
+            if (kept == text.Length)
+            {
+                return text;
+            }
+
+            if (kept == 0)
+            {
+                return null;
+            }
+
+            var builder = new StringBuilder(kept);
+
+            foreach (char c in text)
+            {
+                if (!char.IsControl(c))
+                {
+                    builder.Append(c);
+                }
+            }
+
+            return builder.ToString();
         }
 
         private void RepaintIfDirty()

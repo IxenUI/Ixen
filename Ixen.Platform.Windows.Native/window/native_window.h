@@ -20,6 +20,7 @@ namespace IxenWindowsNative
         HWND _handle = nullptr;
         void (*_paintCallBack)(int, int) = nullptr;
         void (*_pointerCallBack)(int, int, int, int) = nullptr;
+        void (*_keyCallBack)(int, int, int) = nullptr;
         void* _pixelsBuffer = nullptr;
 
         bool _trackingMouse = false;
@@ -35,6 +36,8 @@ namespace IxenWindowsNative
         LRESULT HandleMouseLeave();
         LRESULT HandleCaptureLost();
         LRESULT HandleDpiChanged(LPARAM lParam);
+        LRESULT HandleKey(int kind, WPARAM wParam);
+        static int GetModifiers();
         void ApplyLogicalSize(int logicalWidth, int logicalHeight);
 
     public:
@@ -52,6 +55,7 @@ namespace IxenWindowsNative
         void SetPixelsBuffer(void* buffer) { _pixelsBuffer = buffer; }
         void SetOnPaintCallBack(void __stdcall callback(int, int)) { _paintCallBack = callback; }
         void SetOnPointerCallBack(void __stdcall callback(int, int, int, int)) { _pointerCallBack = callback; }
+        void SetOnKeyCallBack(void __stdcall callback(int, int, int)) { _keyCallBack = callback; }
     };
 }
 

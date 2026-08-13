@@ -15,6 +15,7 @@ namespace Ixen.Platform.Windows
 
         private readonly WindowApi.OnPaintCallBack _onPaint;
         private readonly WindowApi.OnPointerCallBack _onPointer;
+        private readonly WindowApi.OnKeyCallBack _onKey;
 
         private SKImageInfo _skImageInfo;
         private SKSurface _skSurface;
@@ -28,6 +29,7 @@ namespace Ixen.Platform.Windows
             _host = new IxenHost(ixenSurface, RequestRepaint);
             _onPaint = OnPaint;
             _onPointer = OnPointer;
+            _onKey = OnKey;
             _windowPtr = WindowApi.CreateWindow(_ixenSurface.InitOptions.Title, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
@@ -40,8 +42,32 @@ namespace Ixen.Platform.Windows
         {
             WindowApi.RegisterPaintCallBack(_windowPtr, _onPaint);
             WindowApi.RegisterPointerCallBack(_windowPtr, _onPointer);
+            WindowApi.RegisterKeyCallBack(_windowPtr, _onKey);
 
             return WindowApi.ShowWindow(_windowPtr);
+        }
+
+        private void OnKey(int kind, int keyCode, int modifiers)
+        {
+            switch ((NativeKeyKind)kind)
+            {
+                case NativeKeyKind.Down:
+                    _host.KeyDown(NativeKeys.ToKey(keyCode), NativeKeys.ToModifiers(modifiers));
+                    break;
+
+                case NativeKeyKind.Up:
+                    _host.KeyUp(NativeKeys.ToKey(keyCode), NativeKeys.ToModifiers(modifiers));
+                    break;
+
+                case NativeKeyKind.Char:
+                    OnChar(keyCode);
+                    break;
+            }
+        }
+
+        private void OnChar(int keyCode)
+        {
+            _host.TextInput(((char)keyCode).ToString());
         }
 
         private void RequestRepaint()
@@ -95,8 +121,6 @@ namespace Ixen.Platform.Windows
 
         private void OnPaint(int width, int height)
         {
-            // Re-read on every paint so moving the window between monitors of different
-            // density needs no extra callback: WM_DPICHANGED already forces a repaint.
             _ixenSurface.Scale = WindowApi.GetWindowDpi(_windowPtr) / DEFAULT_DPI;
 
             _pixelBuffer.EnsureAlloc(width, height);

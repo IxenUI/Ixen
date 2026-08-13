@@ -29,6 +29,8 @@ namespace Ixen.View.WPF
 
             _skElement = new SKElement();
             _skElement.IgnorePixelScaling = true;
+            _skElement.Focusable = true;
+            _skElement.FocusVisualStyle = null;
             _host = new IxenHost(new IxenSurface(), _skElement.InvalidateVisual);
 
             _skElement.PaintSurface += OnPaintSurface;
@@ -37,6 +39,9 @@ namespace Ixen.View.WPF
             _skElement.MouseUp += OnMouseUp;
             _skElement.MouseLeave += OnMouseLeave;
             _skElement.LostMouseCapture += OnLostMouseCapture;
+            _skElement.PreviewKeyDown += OnPreviewKeyDown;
+            _skElement.PreviewKeyUp += OnPreviewKeyUp;
+            _skElement.TextInput += OnTextInput;
 
             AddChild(_skElement);
         }
@@ -49,6 +54,9 @@ namespace Ixen.View.WPF
             _skElement.MouseUp -= OnMouseUp;
             _skElement.MouseLeave -= OnMouseLeave;
             _skElement.LostMouseCapture -= OnLostMouseCapture;
+            _skElement.PreviewKeyDown -= OnPreviewKeyDown;
+            _skElement.PreviewKeyUp -= OnPreviewKeyUp;
+            _skElement.TextInput -= OnTextInput;
         }
 
         private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
@@ -65,6 +73,7 @@ namespace Ixen.View.WPF
             Point position = e.GetPosition(_skElement);
 
             _skElement.CaptureMouse();
+            _skElement.Focus();
             _host.PointerDown((float)position.X, (float)position.Y, ToButton(e.ChangedButton));
         }
 
@@ -81,6 +90,25 @@ namespace Ixen.View.WPF
 
         private void OnLostMouseCapture(object sender, MouseEventArgs e)
             => _host.PointerCaptureLost();
+
+        private void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            _host.KeyDown(WpfKeys.ToKey(RealKey(e)), WpfKeys.ToModifiers(Keyboard.Modifiers));
+
+            if (e.Key == System.Windows.Input.Key.Tab)
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void OnPreviewKeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+            => _host.KeyUp(WpfKeys.ToKey(RealKey(e)), WpfKeys.ToModifiers(Keyboard.Modifiers));
+
+        private static System.Windows.Input.Key RealKey(System.Windows.Input.KeyEventArgs e)
+            => e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;
+
+        private void OnTextInput(object sender, TextCompositionEventArgs e)
+            => _host.TextInput(e.Text);
 
         private static PointerButton ToButton(MouseButton button)
         {

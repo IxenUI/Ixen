@@ -20,6 +20,20 @@ namespace Ixen.Core.Visual
         internal void RaisePointerEnter(PointerEventArgs args) => PointerEnter?.Invoke(this, args);
         internal void RaisePointerLeave(PointerEventArgs args) => PointerLeave?.Invoke(this, args);
 
+        public event EventHandler<KeyEventArgs> KeyDown;
+        public event EventHandler<KeyEventArgs> KeyUp;
+        public event EventHandler<TextInputEventArgs> TextInput;
+        public event EventHandler<EventArgs> GotFocus;
+        public event EventHandler<EventArgs> LostFocus;
+
+        internal void RaiseKeyDown(KeyEventArgs args) => KeyDown?.Invoke(this, args);
+        internal void RaiseKeyUp(KeyEventArgs args) => KeyUp?.Invoke(this, args);
+        internal void RaiseTextInput(TextInputEventArgs args) => TextInput?.Invoke(this, args);
+        internal void RaiseGotFocus() => GotFocus?.Invoke(this, EventArgs.Empty);
+        internal void RaiseLostFocus() => LostFocus?.Invoke(this, EventArgs.Empty);
+
+        public bool Focusable { get; set; }
+
         internal int ChildIndex { get; set; }
         internal List<VisualElement> Children { get; private set; } = new();
 

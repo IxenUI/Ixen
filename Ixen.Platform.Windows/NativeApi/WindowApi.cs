@@ -9,6 +9,7 @@ namespace Ixen.Platform.Windows.NativeApi
 
         public delegate void OnPaintCallBack(int width, int height);
         public delegate void OnPointerCallBack(int kind, int x, int y, int button);
+        public delegate void OnKeyCallBack(int kind, int keyCode, int modifiers);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr CreateWindow([MarshalAs(UnmanagedType.LPWStr)] string title, int width, int height);
@@ -31,6 +32,9 @@ namespace Ixen.Platform.Windows.NativeApi
 
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterPointerCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterPointerCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnPointerCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterKeyCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterKeyCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnKeyCallBack callback);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_InvalidateWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern void InvalidateWindow(IntPtr windowPtr);

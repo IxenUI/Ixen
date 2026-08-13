@@ -13,6 +13,7 @@ IXEN_API_ENTRY void WA_SetWindowTitle(NativeWindow* window, LPCWSTR value);
 IXEN_API_ENTRY void WA_SetWindowPixelsBuffer(NativeWindow* window, void* buffer);
 IXEN_API_ENTRY void WA_RegisterPaintCallBack(NativeWindow* window, void __stdcall callBack(int, int));
 IXEN_API_ENTRY void WA_RegisterPointerCallBack(NativeWindow* window, void __stdcall callBack(int, int, int, int));
+IXEN_API_ENTRY void WA_RegisterKeyCallBack(NativeWindow* window, void __stdcall callBack(int, int, int));
 IXEN_API_ENTRY void WA_InvalidateWindow(NativeWindow* window);
 IXEN_API_ENTRY unsigned int WA_GetWindowDpi(NativeWindow* window);
 

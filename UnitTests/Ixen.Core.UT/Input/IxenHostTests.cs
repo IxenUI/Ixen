@@ -129,6 +129,44 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void KeysAndTextAreRoutedThroughToTheFocusedElement()
+        {
+            _box.Focusable = true;
+            _host.Focus(_box);
+
+            Key seenKey = Key.None;
+            string seenText = null;
+            _box.KeyDown += (s, e) => seenKey = e.Key;
+            _box.TextInput += (s, e) => seenText = e.Text;
+
+            _host.KeyDown(Key.A, KeyModifiers.Control);
+            _host.TextInput("a");
+
+            Assert.AreSame(_box, _host.FocusedElement);
+            Assert.AreEqual(Key.A, seenKey);
+            Assert.AreEqual("a", seenText);
+        }
+
+        [TestMethod]
+        public void ControlCharactersAreNotTextInput()
+        {
+            _box.Focusable = true;
+            _host.Focus(_box);
+
+            string seen = null;
+            _box.TextInput += (s, e) => seen = e.Text;
+
+            _host.TextInput("\b");
+            _host.TextInput("\r");
+
+            Assert.IsNull(seen, "Backspace and Enter reach handlers through KeyDown, not as text");
+
+            _host.TextInput("a\tb");
+
+            Assert.AreEqual("ab", seen, "a mixed string keeps only its printable characters");
+        }
+
+        [TestMethod]
         public void ACaptureLostIsRoutedAndCancelsThePress()
         {
             _box.PointerClick += (s, e) => _box.Text = "clicked";

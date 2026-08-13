@@ -48,8 +48,6 @@ namespace Ixen.Core.Visual.Computers
             ApplySelector(handlers, registry, StyleClassTarget.ElementName, element.Name, element, scoped);
         }
 
-        // Within one family the bare selector is applied first, then its state variants,
-        // so `action:hover` can override `action` while families keep their own ranking.
         private void ApplySelector(VisualElementStylesHandlers handlers, StyleRegistry registry,
             StyleClassTarget target, string name, VisualElement element, bool scoped)
         {

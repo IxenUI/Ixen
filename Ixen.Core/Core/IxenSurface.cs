@@ -20,12 +20,11 @@ namespace Ixen.Core
         private RendererContext _rendererContext = new();
         private VisualRenderer _renderer = new();
         private PointerDispatcher _pointerDispatcher = new();
+        private KeyboardDispatcher _keyboardDispatcher = new();
 
         private VisualElement _root;
         private float _scale = 1;
 
-        // Device pixels per logical unit. Layout and input are always in logical units,
-        // so 100px means the same apparent size whatever the display density.
         public float Scale
         {
             get => _scale;
@@ -106,6 +105,23 @@ namespace Ixen.Core
         internal void PointerLeaveSurface()
             => _pointerDispatcher.LeaveSurface(TrackStates);
 
+        internal VisualElement FocusedElement => _keyboardDispatcher.Focused;
+
+        internal void Focus(VisualElement element)
+            => _keyboardDispatcher.Focus(element, TrackStates);
+
+        internal void MoveFocus(bool backwards)
+            => _keyboardDispatcher.MoveFocus(Root, backwards, TrackStates);
+
+        internal void KeyDown(Key key, KeyModifiers modifiers)
+            => _keyboardDispatcher.KeyDown(Root, key, modifiers, TrackStates);
+
+        internal void KeyUp(Key key, KeyModifiers modifiers)
+            => _keyboardDispatcher.KeyUp(Root, key, modifiers, TrackStates);
+
+        internal void TextInput(string text)
+            => _keyboardDispatcher.TextInput(Root, text, TrackStates);
+
         private bool TrackStates => (Styles ?? StyleRegistry.Default).HasStateClasses;
 
         private float ToLogical(float deviceValue) => deviceValue / _scale;
@@ -114,7 +130,10 @@ namespace Ixen.Core
             => _pointerDispatcher.Move(Root, ToLogical(x), ToLogical(y), TrackStates);
 
         internal void PointerDown(float x, float y, PointerButton button)
-            => _pointerDispatcher.Down(Root, ToLogical(x), ToLogical(y), button, TrackStates);
+        {
+            _pointerDispatcher.Down(Root, ToLogical(x), ToLogical(y), button, TrackStates);
+            _keyboardDispatcher.FocusFromPointer(_pointerDispatcher.Pressed, TrackStates);
+        }
 
         internal void PointerUp(float x, float y, PointerButton button)
             => _pointerDispatcher.Up(Root, ToLogical(x), ToLogical(y), button, TrackStates);
