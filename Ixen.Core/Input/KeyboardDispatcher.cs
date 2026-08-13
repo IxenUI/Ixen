@@ -54,6 +54,8 @@ namespace Ixen.Core.Input
                     return;
                 }
             }
+
+            Focus(null, trackStates);
         }
 
         internal void KeyDown(VisualElement root, Key key, KeyModifiers modifiers, bool trackStates)

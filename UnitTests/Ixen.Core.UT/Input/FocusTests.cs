@@ -163,7 +163,7 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
-        public void ADownOnNothingFocusableLeavesFocusAlone()
+        public void ADownOnNothingFocusableClearsTheFocus()
         {
             VisualElement root = Element("root");
             VisualElement input = Box("input", 40, 40, true);
@@ -172,11 +172,28 @@ namespace Ixen.Core.UT.Input
 
             IxenSurface surface = Laid(root);
             surface.Focus(input);
+            Watch(input, "input");
 
             surface.PointerDown(20, 60, PointerButton.Left);
 
-            Assert.AreSame(input, surface.FocusedElement,
-                "clicking empty space must not silently kill focus");
+            Assert.IsNull(surface.FocusedElement,
+                "clicking a plain element takes the focus away from the field");
+            Assert.AreEqual("lost:input", Log);
+        }
+
+        [TestMethod]
+        public void ADownOnNothingAtAllClearsTheFocus()
+        {
+            VisualElement root = Element("root");
+            VisualElement input = Box("input", 40, 40, true);
+            root.AddChild(input);
+
+            IxenSurface surface = Laid(root);
+            surface.Focus(input);
+
+            surface.PointerDown(VIEWPORT + 10, VIEWPORT + 10, PointerButton.Left);
+
+            Assert.IsNull(surface.FocusedElement);
         }
 
         [TestMethod]
