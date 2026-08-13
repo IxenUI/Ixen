@@ -37,6 +37,8 @@
     <AdditionalFiles Include="Layout\Anchored\AnchoredLayoutTest1View.xnl" />
     <AdditionalFiles Include="Layout\Dock\DockLayoutTest1Styles.xns" />
     <AdditionalFiles Include="Layout\Dock\DockLayoutTest1View.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\CounterView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\HostView.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\TypedView.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\TypedValuesView.xnl" />
     <AdditionalFiles Include="Xns\Fixtures\AllGeneratedStyles.xns" />

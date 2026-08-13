@@ -1,10 +1,67 @@
-﻿using Ixen.Core.Visual;
+using Ixen.Core.Visual;
+using System;
 
 namespace Ixen.Core.Components
 {
     public abstract class Component
     {
+        private bool _initialized;
+        private bool _isStateDirty;
+
         internal abstract VisualElement GetVisualElement();
+
+        internal bool IsStateDirty => _isStateDirty;
+
+        public VisualElement Initialize()
+        {
+            VisualElement element = GetVisualElement();
+
+            if (_initialized)
+            {
+                return element;
+            }
+
+            _initialized = true;
+
+            if (element != null)
+            {
+                element.Owner = this;
+            }
+
+            OnInitialized();
+            Render();
+
+            return element;
+        }
+
+        protected virtual void OnInitialized()
+        { }
+
+        protected virtual void Render()
+        { }
+
+        protected void SetState(Action change)
+        {
+            change?.Invoke();
+            SetState();
+        }
+
+        protected void SetState()
+        {
+            _isStateDirty = true;
+            GetVisualElement()?.InvalidateLayout();
+        }
+
+        internal void RenderIfDirty()
+        {
+            if (!_isStateDirty)
+            {
+                return;
+            }
+
+            _isStateDirty = false;
+            Render();
+        }
     }
 
     public class Component<TView> : Component

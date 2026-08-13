@@ -65,7 +65,7 @@ namespace Ixen.Core
         }
 
         public IxenSurface (Component mainComponent, IxenSurfaceInitOptions initOptions = null)
-            : this(mainComponent.GetVisualElement(), initOptions)
+            : this(mainComponent.Initialize(), initOptions)
         { }
 
         internal void ComputeLayout(int width, int height)
@@ -83,12 +83,23 @@ namespace Ixen.Core
                 return;
             }
 
+            RenderComponents(Root);
             _styleComputer.Compute(Root, Styles ?? StyleRegistry.Default);
             _measureComputer.Measure(Root, logicalWidth, logicalHeight, true, true);
             _arrangeComputer.Arrange(Root, 0, 0);
             _clippingComputer.Compute(Root);
 
             Root.ClearLayoutDirty();
+        }
+
+        private static void RenderComponents(VisualElement element)
+        {
+            element.Owner?.RenderIfDirty();
+
+            foreach (VisualElement child in element.Children)
+            {
+                RenderComponents(child);
+            }
         }
 
         internal VisualElement HitTest(float x, float y)

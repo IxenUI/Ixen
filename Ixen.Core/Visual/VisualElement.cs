@@ -58,6 +58,8 @@ namespace Ixen.Core.Visual
         internal float LayoutOffsetX { get; set; }
         internal float LayoutOffsetY { get; set; }
 
+        internal Components.Component Owner { get; set; }
+
         internal float MaxScrollX
         {
             get

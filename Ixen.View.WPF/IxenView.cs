@@ -158,7 +158,7 @@ namespace Ixen.View.WPF
 
         private static void OnRootComponentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            ((IxenView)d)._host.Root = ((IxenComponent)e.NewValue)?.GetVisualElement();
+            ((IxenView)d)._host.Root = ((IxenComponent)e.NewValue)?.Initialize();
         }
 
         public static readonly DependencyProperty RootComponentProperty = DependencyProperty.Register

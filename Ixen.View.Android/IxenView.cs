@@ -101,7 +101,7 @@ namespace Ixen.View.Android
 
         public Component RootComponent
         {
-            set => _host.Root = value?.GetVisualElement();
+            set => _host.Root = value?.Initialize();
         }
     }
 }

@@ -18,6 +18,7 @@ namespace Ixen.Generators.Xnl
     {
         private const string DEFAULT_ELEMENT_TYPE = "VisualElement";
         private const string VISUAL_ELEMENT_METADATA_NAME = "Ixen.Core.Visual.VisualElement";
+        private const string COMPONENT_METADATA_NAME = "Ixen.Core.Components.Component";
         private const string CLASS_PROPERTY = "class";
 
         public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -42,6 +43,7 @@ namespace Ixen.Generators.Xnl
             Debug.WriteLine("Execute Ixen XNL code generator");
 
             INamedTypeSymbol visualElementSymbol = compilation.GetTypeByMetadataName(VISUAL_ELEMENT_METADATA_NAME);
+            INamedTypeSymbol componentSymbol = compilation.GetTypeByMetadataName(COMPONENT_METADATA_NAME);
 
             foreach ((string name, string content, string path) in texts)
             {
@@ -70,9 +72,11 @@ namespace Ixen.Generators.Xnl
                 sb.AppendLine($"\t\tpublic {name}() ");
                 sb.AppendLine("\t\t{");
 
+                var resolver = new TypeResolver(compilation, visualElementSymbol, componentSymbol);
+
                 foreach (XnlNode child in node.Children)
                 {
-                    AddDeclaration(sb, child, 3, compilation, visualElementSymbol, diagnostics);
+                    AddDeclaration(sb, child, 3, resolver, diagnostics);
                     sb.AppendLine($"\t\t\tAddChild({Identifier(child)});");
                 }
 
@@ -89,31 +93,38 @@ namespace Ixen.Generators.Xnl
         static string Identifier(XnlNode node)
             => node.Name != null ? $"el{node.Id}_{node.Name}" : $"el{node.Id}";
 
-        static void AddDeclaration(StringBuilder sb, XnlNode node, int tabLevel, Compilation compilation,
-            INamedTypeSymbol visualElementSymbol, List<LanguageError> diagnostics)
+        static void AddDeclaration(StringBuilder sb, XnlNode node, int tabLevel, TypeResolver resolver,
+            List<LanguageError> diagnostics)
         {
             string tabs = new string('\t', tabLevel);
             string nodeId = Identifier(node);
-            INamedTypeSymbol elementSymbol = ResolveElementType(node, compilation, visualElementSymbol, diagnostics,
-                out bool useDeclaredType);
 
-            string elementType = useDeclaredType ? node.Type : DEFAULT_ELEMENT_TYPE;
+            ResolvedType resolved = resolver.Resolve(node, diagnostics);
 
-            sb.AppendLine($"{tabs}var {nodeId} = new {elementType}();");
-
-            if (node.Name != null)
+            if (resolved.IsComponent)
             {
-                sb.AppendLine($"{tabs}{nodeId}.Name = \"{node.Name}\";");
+                AddComponentDeclaration(sb, node, tabs, nodeId, resolved, diagnostics);
             }
-
-            if (node.Type != null)
+            else
             {
-                sb.AppendLine($"{tabs}{nodeId}.TypeName = \"{node.Type}\";");
-            }
+                string elementType = resolved.UseDeclaredType ? node.Type : DEFAULT_ELEMENT_TYPE;
 
-            foreach (XnlNodeParameter param in node.Properties)
-            {
-                AddProperty(sb, tabs, nodeId, param, elementSymbol, diagnostics);
+                sb.AppendLine($"{tabs}var {nodeId} = new {elementType}();");
+
+                if (node.Name != null)
+                {
+                    sb.AppendLine($"{tabs}{nodeId}.Name = \"{node.Name}\";");
+                }
+
+                if (node.Type != null)
+                {
+                    sb.AppendLine($"{tabs}{nodeId}.TypeName = \"{node.Type}\";");
+                }
+
+                foreach (XnlNodeParameter param in node.Properties)
+                {
+                    AddProperty(sb, tabs, nodeId, param, resolved.Symbol, diagnostics);
+                }
             }
 
             if (node.Children.Count > 0)
@@ -123,7 +134,7 @@ namespace Ixen.Generators.Xnl
 
             foreach (XnlNode child in node.Children)
             {
-                AddDeclaration(sb, child, tabLevel, compilation, visualElementSymbol, diagnostics);
+                AddDeclaration(sb, child, tabLevel, resolver, diagnostics);
                 sb.AppendLine($"{tabs}{nodeId}.AddChild({Identifier(child)});");
                 sb.AppendLine();
             }
@@ -131,53 +142,151 @@ namespace Ixen.Generators.Xnl
             sb.AppendLine();
         }
 
-        static INamedTypeSymbol ResolveElementType(XnlNode node, Compilation compilation,
-            INamedTypeSymbol visualElementSymbol, List<LanguageError> diagnostics, out bool useDeclaredType)
+        static void AddComponentDeclaration(StringBuilder sb, XnlNode node, string tabs, string nodeId,
+            ResolvedType resolved, List<LanguageError> diagnostics)
         {
-            if (node.Type == null)
+            string componentId = $"{nodeId}_component";
+
+            sb.AppendLine($"{tabs}var {componentId} = new global::{resolved.Symbol.ToDisplayString()}();");
+
+            foreach (XnlNodeParameter param in node.Properties)
             {
-                useDeclaredType = false;
-                return visualElementSymbol;
+                if (param.Name == CLASS_PROPERTY)
+                {
+                    continue;
+                }
+
+                AddProperty(sb, tabs, componentId, param, resolved.Symbol, diagnostics);
             }
 
-            INamedTypeSymbol symbol = compilation.GetTypeByMetadataName($"Ixen.Core.Visual.{node.Type}")
-                ?? compilation.GetTypeByMetadataName($"Ixen.Core.{node.Type}")
-                ?? compilation.GetTypeByMetadataName($"Ixen.Views.{node.Type}")
-                ?? compilation.GetTypeByMetadataName(node.Type);
+            sb.AppendLine($"{tabs}var {nodeId} = {componentId}.Initialize();");
 
-            if (symbol == null)
+            if (node.Name != null)
             {
-                useDeclaredType = true;
-                return null;
+                sb.AppendLine($"{tabs}{nodeId}.Name = \"{node.Name}\";");
             }
 
-            if (visualElementSymbol != null && !DerivesFrom(symbol, visualElementSymbol))
+            foreach (XnlNodeParameter param in node.Properties)
             {
+                if (param.Name != CLASS_PROPERTY)
+                {
+                    continue;
+                }
+
+                sb.AppendLine($"{tabs}{nodeId}.Classes.Add({StringLiteral(param.Value)});");
+            }
+        }
+
+        struct ResolvedType
+        {
+            internal INamedTypeSymbol Symbol;
+            internal bool UseDeclaredType;
+            internal bool IsComponent;
+        }
+
+        class TypeResolver
+        {
+            private readonly Compilation _compilation;
+            private readonly INamedTypeSymbol _visualElementSymbol;
+            private readonly INamedTypeSymbol _componentSymbol;
+
+            internal TypeResolver(Compilation compilation, INamedTypeSymbol visualElementSymbol,
+                INamedTypeSymbol componentSymbol)
+            {
+                _compilation = compilation;
+                _visualElementSymbol = visualElementSymbol;
+                _componentSymbol = componentSymbol;
+            }
+
+            internal ResolvedType Resolve(XnlNode node, List<LanguageError> diagnostics)
+            {
+                if (node.Type == null)
+                {
+                    return new ResolvedType { Symbol = _visualElementSymbol };
+                }
+
+                INamedTypeSymbol symbol = _compilation.GetTypeByMetadataName($"Ixen.Core.Visual.{node.Type}")
+                    ?? _compilation.GetTypeByMetadataName($"Ixen.Core.{node.Type}")
+                    ?? _compilation.GetTypeByMetadataName($"Ixen.Views.{node.Type}")
+                    ?? _compilation.GetTypeByMetadataName(node.Type);
+
+                if (symbol != null && IsVisualElement(symbol))
+                {
+                    return Instantiable(node, symbol, diagnostics)
+                        ? new ResolvedType { Symbol = symbol, UseDeclaredType = true }
+                        : new ResolvedType();
+                }
+
+                INamedTypeSymbol component = FindComponent(node, diagnostics);
+
+                if (component != null)
+                {
+                    return Instantiable(node, component, diagnostics)
+                        ? new ResolvedType { Symbol = component, UseDeclaredType = true, IsComponent = true }
+                        : new ResolvedType();
+                }
+
+                if (symbol == null)
+                {
+                    return new ResolvedType { UseDeclaredType = true };
+                }
+
                 diagnostics.Add(new LanguageError(
                     LanguageErrorCode.INVALID_ELEMENT_TYPE,
-                    $"'{node.Type}' is not a VisualElement, so it cannot be used as an XNL element type.",
+                    $"'{node.Type}' is neither a VisualElement nor a Component, so it cannot be used as an XNL element type.",
                     node.TypeIndex,
                     node.Type.Length));
 
-                useDeclaredType = false;
-                return null;
+                return new ResolvedType();
             }
 
-            if (symbol.IsAbstract || !symbol.InstanceConstructors.Any(c =>
-                    c.Parameters.Length == 0 && c.DeclaredAccessibility == Accessibility.Public))
+            private bool IsVisualElement(INamedTypeSymbol symbol)
+                => _visualElementSymbol == null || DerivesFrom(symbol, _visualElementSymbol);
+
+            private INamedTypeSymbol FindComponent(XnlNode node, List<LanguageError> diagnostics)
             {
+                if (_componentSymbol == null)
+                {
+                    return null;
+                }
+
+                List<INamedTypeSymbol> candidates = _compilation
+                    .GetSymbolsWithName(name => name == node.Type, SymbolFilter.Type)
+                    .OfType<INamedTypeSymbol>()
+                    .Where(s => DerivesFrom(s, _componentSymbol))
+                    .OrderBy(s => s.ToDisplayString(), StringComparer.Ordinal)
+                    .ToList();
+
+                if (candidates.Count > 1)
+                {
+                    diagnostics.Add(new LanguageError(
+                        LanguageErrorCode.INVALID_ELEMENT_TYPE,
+                        $"'{node.Type}' matches several components ({string.Join(", ", candidates.Select(c => c.ToDisplayString()))}). Rename one of them.",
+                        node.TypeIndex,
+                        node.Type.Length));
+
+                    return null;
+                }
+
+                return candidates.FirstOrDefault();
+            }
+
+            private bool Instantiable(XnlNode node, INamedTypeSymbol symbol, List<LanguageError> diagnostics)
+            {
+                if (!symbol.IsAbstract && symbol.InstanceConstructors.Any(c =>
+                        c.Parameters.Length == 0 && c.DeclaredAccessibility == Accessibility.Public))
+                {
+                    return true;
+                }
+
                 diagnostics.Add(new LanguageError(
                     LanguageErrorCode.INVALID_ELEMENT_TYPE,
                     $"'{node.Type}' has no public parameterless constructor, so XNL cannot instantiate it.",
                     node.TypeIndex,
                     node.Type.Length));
 
-                useDeclaredType = false;
-                return null;
+                return false;
             }
-
-            useDeclaredType = true;
-            return symbol;
         }
 
         static bool DerivesFrom(INamedTypeSymbol symbol, INamedTypeSymbol baseSymbol)

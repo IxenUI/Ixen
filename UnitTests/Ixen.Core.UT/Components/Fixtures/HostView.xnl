@@ -1,0 +1,4 @@
+host_root {} [
+	first<CounterComponent> { caption: "A" step: "2" }
+	second<CounterComponent> { caption: "B" class: "boxed" }
+]
