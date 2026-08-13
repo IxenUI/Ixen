@@ -8,12 +8,23 @@ namespace Ixen.Core.Visual.Computers
         {
             element.SetPosition(x, y);
 
-            LayoutStyleDescriptor layoutStyle = element.StylesHandlers.Layout.Descriptor;
-            LayoutType type = layoutStyle != null ? layoutStyle.Type : LayoutType.Column;
+            LayoutType type = MeasureComputer.LayoutTypeOf(element);
 
             if (type == LayoutType.Grid)
             {
                 ArrangeGrid(element);
+                return;
+            }
+
+            if (type == LayoutType.Absolute || type == LayoutType.Dock)
+            {
+                ArrangePlaced(element, ContentOriginX(element), ContentOriginY(element));
+                return;
+            }
+
+            if (type == LayoutType.Fixed)
+            {
+                ArrangePlaced(element, 0, 0);
                 return;
             }
 
@@ -38,6 +49,14 @@ namespace Ixen.Core.Visual.Computers
                 {
                     childY += child.BoxHeight;
                 }
+            }
+        }
+
+        private void ArrangePlaced(VisualElement element, float originX, float originY)
+        {
+            foreach (VisualElement child in element.Children)
+            {
+                Arrange(child, originX + child.LayoutOffsetX, originY + child.LayoutOffsetY);
             }
         }
 

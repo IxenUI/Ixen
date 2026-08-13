@@ -1,0 +1,6 @@
+shell_dock_test1 {} [
+	dheader {}
+	dfooter {}
+	dsidebar {}
+	dbody {}
+]

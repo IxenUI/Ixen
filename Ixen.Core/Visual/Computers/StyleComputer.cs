@@ -212,6 +212,33 @@ namespace Ixen.Core.Visual.Computers
             {
                 handlers.Width = new WidthStyleHandler(styles.Width);
             }
+
+            if (handlers.Left.Descriptor != styles.Left)
+            {
+                handlers.Left = new LeftStyleHandler(styles.Left);
+            }
+
+            if (handlers.Top.Descriptor != styles.Top)
+            {
+                handlers.Top = new TopStyleHandler(styles.Top);
+            }
+
+            if (handlers.Right.Descriptor != styles.Right)
+            {
+                handlers.Right = new RightStyleHandler(styles.Right);
+            }
+
+            if (handlers.Bottom.Descriptor != styles.Bottom)
+            {
+                handlers.Bottom = new BottomStyleHandler(styles.Bottom);
+            }
+
+            if (handlers.Dock.Descriptor != styles.Dock)
+            {
+                handlers.Dock = styles.Dock != null
+                    ? new DockStyleHandler(styles.Dock)
+                    : VisualElementStylesHandlers.DefaultDock;
+            }
         }
 
         private static bool IsPainting(BackgroundStyleDescriptor descriptor)
@@ -275,6 +302,26 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.LAYOUT:
                     handlers.Layout = new LayoutStyleHandler((LayoutStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.LEFT:
+                    handlers.Left = new LeftStyleHandler((LeftStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.TOP:
+                    handlers.Top = new TopStyleHandler((TopStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.RIGHT:
+                    handlers.Right = new RightStyleHandler((RightStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.BOTTOM:
+                    handlers.Bottom = new BottomStyleHandler((BottomStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.DOCK:
+                    handlers.Dock = new DockStyleHandler((DockStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.MARGIN:

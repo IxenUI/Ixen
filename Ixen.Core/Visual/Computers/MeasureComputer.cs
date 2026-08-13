@@ -13,6 +13,9 @@ namespace Ixen.Core.Visual.Computers
 
         private readonly ITextMeasurer _textMeasurer;
 
+        private float _viewportWidth;
+        private float _viewportHeight;
+
         internal MeasureComputer(ITextMeasurer textMeasurer)
         {
             _textMeasurer = textMeasurer;
@@ -20,28 +23,48 @@ namespace Ixen.Core.Visual.Computers
 
         internal void Measure(VisualElement element, float availableWidth, float availableHeight, bool widthIsDefinite, bool heightIsDefinite)
         {
+            if (element.Parent == null)
+            {
+                _viewportWidth = availableWidth;
+                _viewportHeight = availableHeight;
+            }
+
             ResolveBorders(element);
 
             float contentWidth = Math.Max(0, availableWidth - element.HorizontalPadding - element.HorizontalBorderInside);
             float contentHeight = Math.Max(0, availableHeight - element.VerticalPadding - element.VerticalBorderInside);
 
-            bool isGrid = IsGrid(element);
+            LayoutType type = LayoutTypeOf(element);
 
-            if (isGrid)
+            switch (type)
             {
-                MeasureGrid(element, contentWidth, contentHeight);
-            }
-            else
-            {
-                MeasureChildren(element, contentWidth, contentHeight);
+                case LayoutType.Grid:
+                    MeasureGrid(element, contentWidth, contentHeight);
+                    break;
+
+                case LayoutType.Absolute:
+                    MeasureAnchored(element, contentWidth, contentHeight);
+                    break;
+
+                case LayoutType.Fixed:
+                    MeasureAnchored(element, _viewportWidth, _viewportHeight);
+                    break;
+
+                case LayoutType.Dock:
+                    MeasureDock(element, contentWidth, contentHeight);
+                    break;
+
+                default:
+                    MeasureChildren(element, contentWidth, contentHeight);
+                    break;
             }
 
             LayoutText(element, contentWidth, out float textWidth, out float textHeight);
 
             bool scrollable = element.Scrollable;
 
-            float aggregateWidth = widthIsDefinite && !scrollable ? 0 : AggregateWidth(element, isGrid);
-            float aggregateHeight = heightIsDefinite && !scrollable ? 0 : AggregateHeight(element, isGrid);
+            float aggregateWidth = widthIsDefinite && !scrollable ? 0 : AggregateWidth(element, type);
+            float aggregateHeight = heightIsDefinite && !scrollable ? 0 : AggregateHeight(element, type);
 
             element.Width = widthIsDefinite
                 ? availableWidth
@@ -525,11 +548,21 @@ namespace Ixen.Core.Visual.Computers
             return total;
         }
 
-        private float AggregateWidth(VisualElement element, bool isGrid)
+        private float AggregateWidth(VisualElement element, LayoutType type)
         {
-            if (isGrid)
+            if (type == LayoutType.Grid)
             {
                 return Sum(element.GridColumns);
+            }
+
+            if (type == LayoutType.Fixed)
+            {
+                return 0;
+            }
+
+            if (type == LayoutType.Absolute || type == LayoutType.Dock)
+            {
+                return PlacedExtentWidth(element);
             }
 
             float total = 0;
@@ -550,11 +583,21 @@ namespace Ixen.Core.Visual.Computers
             return total;
         }
 
-        private float AggregateHeight(VisualElement element, bool isGrid)
+        private float AggregateHeight(VisualElement element, LayoutType type)
         {
-            if (isGrid)
+            if (type == LayoutType.Grid)
             {
                 return Sum(element.GridRows);
+            }
+
+            if (type == LayoutType.Fixed)
+            {
+                return 0;
+            }
+
+            if (type == LayoutType.Absolute || type == LayoutType.Dock)
+            {
+                return PlacedExtentHeight(element);
             }
 
             float total = 0;
@@ -575,17 +618,245 @@ namespace Ixen.Core.Visual.Computers
             return total;
         }
 
-        private static bool IsRow(VisualElement element)
+        private void MeasureAnchored(VisualElement element, float contentWidth, float contentHeight)
         {
-            LayoutStyleDescriptor layoutStyle = element.StylesHandlers.Layout.Descriptor;
-            return layoutStyle != null && layoutStyle.Type == LayoutType.Row;
+            if (element.Children.Count == 0)
+            {
+                return;
+            }
+
+            foreach (VisualElement child in element.Children)
+            {
+                ResolveBorders(child);
+                ResolveHorizontalSpacing(child, contentWidth);
+                ResolveVerticalSpacing(child, contentHeight);
+            }
+
+            foreach (VisualElement child in element.Children)
+            {
+                ResolveAnchor(child.StylesHandlers.Left.Descriptor, contentWidth, out float left, out bool hasLeft);
+                ResolveAnchor(child.StylesHandlers.Right.Descriptor, contentWidth, out float right, out bool hasRight);
+                ResolveAnchor(child.StylesHandlers.Top.Descriptor, contentHeight, out float top, out bool hasTop);
+                ResolveAnchor(child.StylesHandlers.Bottom.Descriptor, contentHeight, out float bottom, out bool hasBottom);
+
+                float horizontalSpacing = child.HorizontalMargin + child.HorizontalBorderOutside;
+                float verticalSpacing = child.VerticalMargin + child.VerticalBorderOutside;
+
+                ResolveAnchoredAxis(GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width),
+                    contentWidth, horizontalSpacing, left, right,
+                    out float availableWidth, out bool widthIsDefinite);
+
+                ResolveAnchoredAxis(GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Height),
+                    contentHeight, verticalSpacing, top, bottom,
+                    out float availableHeight, out bool heightIsDefinite);
+
+                Measure(child, availableWidth, availableHeight, widthIsDefinite, heightIsDefinite);
+
+                child.LayoutOffsetX = AnchoredOffset(left, right, hasLeft, hasRight, contentWidth, child.BoxWidth);
+                child.LayoutOffsetY = AnchoredOffset(top, bottom, hasTop, hasBottom, contentHeight, child.BoxHeight);
+            }
         }
 
-        private static bool IsGrid(VisualElement element)
+        private void ResolveAnchor(OffsetStyleDescriptor style, float contentAvailable, out float value, out bool isSet)
+        {
+            if (style == null || style.Unit == SizeUnit.Unset)
+            {
+                value = 0;
+                isSet = false;
+                return;
+            }
+
+            value = style.Unit == SizeUnit.Percents
+                ? (contentAvailable / 100) * style.Value
+                : style.Value;
+
+            isSet = true;
+        }
+
+        private void ResolveAnchoredAxis(SizeStyleDescriptor style, float contentAvailable, float spacing,
+            float from, float to, out float available, out bool isDefinite)
+        {
+            switch (style.Unit)
+            {
+                case SizeUnit.Pixels:
+                    available = style.Value;
+                    isDefinite = true;
+                    return;
+
+                case SizeUnit.Percents:
+                    available = (contentAvailable / 100) * style.Value;
+                    isDefinite = true;
+                    return;
+
+                case SizeUnit.Content:
+                    available = Math.Max(0, contentAvailable - from - to - spacing);
+                    isDefinite = false;
+                    return;
+
+                default:
+                    available = Math.Max(0, contentAvailable - from - to - spacing);
+                    isDefinite = true;
+                    return;
+            }
+        }
+
+        private float AnchoredOffset(float from, float to, bool hasFrom, bool hasTo, float contentAvailable, float boxSize)
+        {
+            if (hasFrom)
+            {
+                return from;
+            }
+
+            if (hasTo)
+            {
+                return contentAvailable - to - boxSize;
+            }
+
+            return 0;
+        }
+
+        private void MeasureDock(VisualElement element, float contentWidth, float contentHeight)
+        {
+            if (element.Children.Count == 0)
+            {
+                return;
+            }
+
+            foreach (VisualElement child in element.Children)
+            {
+                ResolveBorders(child);
+                ResolveHorizontalSpacing(child, contentWidth);
+                ResolveVerticalSpacing(child, contentHeight);
+            }
+
+            float left = 0;
+            float top = 0;
+            float right = contentWidth;
+            float bottom = contentHeight;
+
+            foreach (VisualElement child in element.Children)
+            {
+                float bandWidth = Math.Max(0, right - left);
+                float bandHeight = Math.Max(0, bottom - top);
+
+                ResolveDockAxis(GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width),
+                    contentWidth, bandWidth, child.HorizontalMargin + child.HorizontalBorderOutside,
+                    out float availableWidth, out bool widthIsDefinite);
+
+                ResolveDockAxis(GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Height),
+                    contentHeight, bandHeight, child.VerticalMargin + child.VerticalBorderOutside,
+                    out float availableHeight, out bool heightIsDefinite);
+
+                Measure(child, availableWidth, availableHeight, widthIsDefinite, heightIsDefinite);
+
+                switch (child.StylesHandlers.Dock.Descriptor.Side)
+                {
+                    case DockSide.Left:
+                        child.LayoutOffsetX = left;
+                        child.LayoutOffsetY = top;
+                        left += child.BoxWidth;
+                        break;
+
+                    case DockSide.Right:
+                        right -= child.BoxWidth;
+                        child.LayoutOffsetX = right;
+                        child.LayoutOffsetY = top;
+                        break;
+
+                    case DockSide.Top:
+                        child.LayoutOffsetX = left;
+                        child.LayoutOffsetY = top;
+                        top += child.BoxHeight;
+                        break;
+
+                    case DockSide.Bottom:
+                        bottom -= child.BoxHeight;
+                        child.LayoutOffsetX = left;
+                        child.LayoutOffsetY = bottom;
+                        break;
+
+                    default:
+                        child.LayoutOffsetX = left;
+                        child.LayoutOffsetY = top;
+                        left = right;
+                        top = bottom;
+                        break;
+                }
+            }
+        }
+
+        private void ResolveDockAxis(SizeStyleDescriptor style, float contentAvailable, float band, float spacing,
+            out float available, out bool isDefinite)
+        {
+            switch (style.Unit)
+            {
+                case SizeUnit.Pixels:
+                    available = style.Value;
+                    isDefinite = true;
+                    return;
+
+                case SizeUnit.Percents:
+                    available = (contentAvailable / 100) * style.Value;
+                    isDefinite = true;
+                    return;
+
+                case SizeUnit.Content:
+                    available = Math.Max(0, band - spacing);
+                    isDefinite = false;
+                    return;
+
+                default:
+                    available = Math.Max(0, band - spacing);
+                    isDefinite = true;
+                    return;
+            }
+        }
+
+        private float PlacedExtentWidth(VisualElement element)
+        {
+            float total = 0;
+
+            foreach (VisualElement child in element.Children)
+            {
+                float edge = child.LayoutOffsetX + child.BoxWidth;
+
+                if (edge > total)
+                {
+                    total = edge;
+                }
+            }
+
+            return total;
+        }
+
+        private float PlacedExtentHeight(VisualElement element)
+        {
+            float total = 0;
+
+            foreach (VisualElement child in element.Children)
+            {
+                float edge = child.LayoutOffsetY + child.BoxHeight;
+
+                if (edge > total)
+                {
+                    total = edge;
+                }
+            }
+
+            return total;
+        }
+
+        internal static LayoutType LayoutTypeOf(VisualElement element)
         {
             LayoutStyleDescriptor layoutStyle = element.StylesHandlers.Layout.Descriptor;
-            return layoutStyle != null && layoutStyle.Type == LayoutType.Grid;
+            return layoutStyle != null ? layoutStyle.Type : LayoutType.Column;
         }
+
+        private static bool IsRow(VisualElement element)
+            => LayoutTypeOf(element) == LayoutType.Row;
+
+        private static bool IsGrid(VisualElement element)
+            => LayoutTypeOf(element) == LayoutType.Grid;
 
         private static bool IsFilling(SizeStyleDescriptor style)
             => style.Unit == SizeUnit.Weight || style.Unit == SizeUnit.Unset;

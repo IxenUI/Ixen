@@ -55,6 +55,9 @@ namespace Ixen.Core.Visual
         internal float ScrollExtentWidth { get; set; }
         internal float ScrollExtentHeight { get; set; }
 
+        internal float LayoutOffsetX { get; set; }
+        internal float LayoutOffsetY { get; set; }
+
         internal float MaxScrollX
         {
             get

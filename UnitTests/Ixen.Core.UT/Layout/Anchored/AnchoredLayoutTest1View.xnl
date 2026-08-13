@@ -1,0 +1,5 @@
+canvas_anchored_test1 {} [
+	acorner {}
+	atoast {}
+	abar {}
+]

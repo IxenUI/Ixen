@@ -111,6 +111,21 @@ namespace Ixen.Core.Language.Xns
                 case StyleIdentifier.LAYOUT:
                     return Validated(new LayoutStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
+                case StyleIdentifier.LEFT:
+                    return Validated(new LeftStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+
+                case StyleIdentifier.TOP:
+                    return Validated(new TopStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+
+                case StyleIdentifier.RIGHT:
+                    return Validated(new RightStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+
+                case StyleIdentifier.BOTTOM:
+                    return Validated(new BottomStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+
+                case StyleIdentifier.DOCK:
+                    return Validated(new DockStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+
                 case StyleIdentifier.MARGIN:
                     return Validated(new MarginStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 

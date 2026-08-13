@@ -1,0 +1,26 @@
+canvas_anchored_test1 {
+    layout: absolute
+    width: 300px
+    height: 200px
+
+    acorner {
+        left: 30px
+        top: 15px
+        width: 40px
+        height: 20px
+    }
+
+    atoast {
+        right: 20px
+        bottom: 10px
+        width: 100px
+        height: 40px
+    }
+
+    abar {
+        left: 10px
+        right: 20px
+        bottom: 0px
+        height: 40px
+    }
+}
