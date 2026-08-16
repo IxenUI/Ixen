@@ -76,100 +76,28 @@ namespace Ixen.Core.Language.Xns
 
         private StyleDescriptor ToStyleDescriptor(XnsStyle xnsStyle, List<LanguageError> errors)
         {
-            switch (xnsStyle.Name.ToLower())
+            StyleDefinition definition = StyleDefinitions.Find(xnsStyle.Name);
+
+            if (definition == null)
             {
-                case StyleIdentifier.BACKGROUND:
-                    return Validated(new BackgroundStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+                errors.Add(new LanguageError(
+                    LanguageErrorCode.UNKNOWN_STYLE,
+                    $"Unknown style property '{xnsStyle.Name}'.",
+                    xnsStyle.NameIndex,
+                    xnsStyle.Name?.Length ?? 0));
 
-                case StyleIdentifier.BORDER:
-                    return Validated(new BorderStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.COLOR:
-                    return Validated(new ColorStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.COLUMN_TEMPLATE:
-                    return Validated(new ColumnTemplateStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.CORNER_RADIUS:
-                    return Validated(new CornerRadiusStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.FONT_FAMILY:
-                    return Validated(new FontFamilyStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.FONT_SIZE:
-                    return Validated(new FontSizeStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.FONT_STYLE:
-                    return Validated(new FontStyleStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.FONT_WEIGHT:
-                    return Validated(new FontWeightStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.HEIGHT:
-                    return Validated(new HeightStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.LAYOUT:
-                    return Validated(new LayoutStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.LEFT:
-                    return Validated(new LeftStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.TOP:
-                    return Validated(new TopStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.RIGHT:
-                    return Validated(new RightStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.BOTTOM:
-                    return Validated(new BottomStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.CURSOR:
-                    return Validated(new CursorStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.TRANSITION:
-                    return Validated(new TransitionStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.DOCK:
-                    return Validated(new DockStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.MARGIN:
-                    return Validated(new MarginStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.PADDING:
-                    return Validated(new PaddingStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.ROW_TEMPLATE:
-                    return Validated(new RowTemplateStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.TEXT_ALIGN:
-                    return Validated(new TextAlignStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.TEXT_OVERFLOW:
-                    return Validated(new TextOverflowStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.TEXT_WRAP:
-                    return Validated(new TextWrapStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                case StyleIdentifier.WIDTH:
-                    return Validated(new WidthStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
-
-                default:
-                    errors.Add(new LanguageError(
-                        LanguageErrorCode.UNKNOWN_STYLE,
-                        $"Unknown style property '{xnsStyle.Name}'.",
-                        xnsStyle.NameIndex,
-                        xnsStyle.Name?.Length ?? 0));
-                    return null;
+                return null;
             }
-        }
 
-        private StyleDescriptor Validated<TParser>(TParser parser, System.Func<TParser, StyleDescriptor> selector,
-            XnsStyle xnsStyle, List<LanguageError> errors)
-            where TParser : StyleParser
+            return Validated(definition, xnsStyle, errors);
+        }
+        private StyleDescriptor Validated(StyleDefinition definition, XnsStyle xnsStyle, List<LanguageError> errors)
         {
+            StyleParser parser = definition.CreateParser(xnsStyle.Value);
+
             if (parser.IsValid)
             {
-                return selector(parser);
+                return definition.DescriptorOf(parser);
             }
 
             errors.Add(new LanguageError(

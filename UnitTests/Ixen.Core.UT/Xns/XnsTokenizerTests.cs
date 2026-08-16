@@ -192,5 +192,22 @@ namespace Ixen.Core.UT.Xns
             Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
             Assert.AreEqual("100px ? 1*", tokens.Single(t => t.Type == XnsTokenType.StyleValue).Content);
         }
+
+        [TestMethod]
+        public void AHyphenatedValueIsReadWhole()
+        {
+            var xnsSource = new XnsSource("box {\r\n    cursor: ew-resize\r\n}");
+            var tokens = xnsSource.Tokenize();
+
+            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
+            Assert.AreEqual("ew-resize", tokens.Single(t => t.Type == XnsTokenType.StyleValue).Content);
+        }
+
+        [TestMethod]
+        public void AHyphenatedValueDoesNotSwallowTheNextStyle()
+        {
+            Assert.AreEqual("ew-resize|200px",
+                StyleValuesOf("el { cursor: ew-resize  width: 200px }"));
+        }
     }
 }

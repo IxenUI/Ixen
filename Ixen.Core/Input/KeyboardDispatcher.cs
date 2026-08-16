@@ -1,11 +1,11 @@
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Styles;
 using System.Collections.Generic;
 
 namespace Ixen.Core.Input
 {
     internal class KeyboardDispatcher
     {
-        internal const string FOCUS_STATE = "focus";
 
         private readonly List<VisualElement> _focusables = new();
 
@@ -194,7 +194,7 @@ namespace Ixen.Core.Input
                 return;
             }
 
-            element.ToggleState(FOCUS_STATE, present);
+            element.ToggleState(StyleStates.FOCUS, present);
         }
     }
 }

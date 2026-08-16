@@ -1,4 +1,5 @@
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Styles;
 using System;
 using System.Collections.Generic;
 
@@ -6,8 +7,6 @@ namespace Ixen.Core.Input
 {
     internal class PointerDispatcher
     {
-        internal const string HOVER_STATE = "hover";
-        internal const string PRESSED_STATE = "pressed";
 
         private const float WHEEL_STEP = 48f;
         private const float DRAG_THRESHOLD = 4f;
@@ -135,7 +134,7 @@ namespace Ixen.Core.Input
             _captured = null;
             CancelLongPress();
             EndDrag(_lastDragX, _lastDragY);
-            SetState(_pressed, PRESSED_STATE, false);
+            SetState(_pressed, StyleStates.PRESSED, false);
             _pressed = null;
         }
 
@@ -157,7 +156,7 @@ namespace Ixen.Core.Input
             _lastDragY = y;
             _dragging = false;
 
-            SetState(hit, PRESSED_STATE, true);
+            SetState(hit, StyleStates.PRESSED, true);
 
             Bubble(hit, new PointerEventArgs(x, y, button, hit), PointerEventKind.Down);
 
@@ -267,7 +266,7 @@ namespace Ixen.Core.Input
 
             _captured = null;
 
-            SetState(_pressed, PRESSED_STATE, false);
+            SetState(_pressed, StyleStates.PRESSED, false);
 
             UpdateHover(hit, x, y);
             Bubble(target, new PointerEventArgs(x, y, button, target), PointerEventKind.Up);
@@ -440,7 +439,7 @@ namespace Ixen.Core.Input
 
                 for (int i = 0; i < _leftChain.Count - shared; i++)
                 {
-                    SetState(_leftChain[i], HOVER_STATE, false);
+                    SetState(_leftChain[i], StyleStates.HOVER, false);
                     _leftChain[i].RaisePointerLeave(leaveArgs);
                 }
             }
@@ -451,7 +450,7 @@ namespace Ixen.Core.Input
 
                 for (int i = _enteredChain.Count - shared - 1; i >= 0; i--)
                 {
-                    SetState(_enteredChain[i], HOVER_STATE, true);
+                    SetState(_enteredChain[i], StyleStates.HOVER, true);
                     _enteredChain[i].RaisePointerEnter(enterArgs);
                 }
             }
