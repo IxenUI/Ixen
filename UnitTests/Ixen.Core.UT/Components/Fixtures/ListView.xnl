@@ -1,6 +1,6 @@
 list_root {} [
 	list_header { text: "{Title}" }
-	row { each: "{Items}" class: "row" } [
+	row { each: "{Items}" key: "{row.Id}" class: "row" } [
 		row_name { text: "{row.Name}" }
 		row_detail { text: "{row.Count} left" }
 	]

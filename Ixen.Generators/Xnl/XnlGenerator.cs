@@ -22,6 +22,7 @@ namespace Ixen.Generators.Xnl
         private const string COMPONENT_TYPE_NAME = "Component";
         private const string CLASS_PROPERTY = "class";
         private const string EACH_PROPERTY = "each";
+        private const string KEY_PROPERTY = "key";
 
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
@@ -167,11 +168,33 @@ namespace Ixen.Generators.Xnl
 
             string instances = repeat.Instances;
             string item = ItemVariable(repeat.Node);
+            string key = ValueOf(repeat.Node, KEY_PROPERTY);
 
             sb.AppendLine();
             sb.AppendLine($"\t\t\tvar {instances}_source = {source};");
-            sb.AppendLine($"\t\t\tRepeater.Sync({repeat.ParentId}, {instances}, {repeat.Offset}, " +
-                $"{instances}_source == null ? 0 : {instances}_source.Count, Create_{instances});");
+            sb.AppendLine($"\t\t\tint {instances}_count = {instances}_source == null ? 0 : {instances}_source.Count;");
+
+            if (key == null)
+            {
+                sb.AppendLine($"\t\t\tRepeater.Sync({repeat.ParentId}, {instances}, {repeat.Offset}, " +
+                    $"{instances}_count, Create_{instances});");
+            }
+            else
+            {
+                string prefix = repeat.Instances.Substring(0, repeat.Instances.Length - "_items".Length);
+
+                sb.AppendLine($"\t\t\t{prefix}_next.Clear();");
+                sb.AppendLine();
+                sb.AppendLine($"\t\t\tfor (int i = 0; i < {instances}_count; i++)");
+                sb.AppendLine("\t\t\t{");
+                sb.AppendLine($"\t\t\t\tvar {item} = {instances}_source[i];");
+                sb.AppendLine($"\t\t\t\t{prefix}_next.Add({XnlBindings.BuildExpression(XnlBindings.Parse(key), file.ModelMembers)});");
+                sb.AppendLine("\t\t\t}");
+                sb.AppendLine();
+                sb.AppendLine($"\t\t\tRepeater.SyncKeyed({repeat.ParentId}, {instances}, {prefix}_keys, " +
+                    $"{prefix}_next, {repeat.Offset}, Create_{instances});");
+            }
+
             sb.AppendLine();
             sb.AppendLine($"\t\t\tfor (int i = 0; i < {instances}.Count; i++)");
             sb.AppendLine("\t\t\t{");
@@ -189,7 +212,7 @@ namespace Ixen.Generators.Xnl
         {
             foreach (XnlNodeParameter param in node.Properties)
             {
-                if (param.Name == CLASS_PROPERTY || param.Name == EACH_PROPERTY)
+                if (param.Name == CLASS_PROPERTY || param.Name == EACH_PROPERTY || param.Name == KEY_PROPERTY)
                 {
                     continue;
                 }
@@ -350,6 +373,15 @@ namespace Ixen.Generators.Xnl
                     file.Field("global::System.Collections.Generic.List<VisualElement>",
                         $"{Identifier(child)}_items", "new global::System.Collections.Generic.List<VisualElement>()");
 
+                    if (ValueOf(child, KEY_PROPERTY) != null)
+                    {
+                        file.Field("global::System.Collections.Generic.List<object>",
+                            $"{Identifier(child)}_keys", "new global::System.Collections.Generic.List<object>()");
+
+                        file.Field("global::System.Collections.Generic.List<object>",
+                            $"{Identifier(child)}_next", "new global::System.Collections.Generic.List<object>()");
+                    }
+
                     continue;
                 }
 
@@ -378,11 +410,13 @@ namespace Ixen.Generators.Xnl
             return sb.ToString();
         }
 
-        static string SourceOfEach(XnlNode node)
+        static string SourceOfEach(XnlNode node) => ValueOf(node, EACH_PROPERTY);
+
+        static string ValueOf(XnlNode node, string name)
         {
             foreach (XnlNodeParameter param in node.Properties)
             {
-                if (param.Name == EACH_PROPERTY)
+                if (param.Name == name)
                 {
                     return param.Value;
                 }
@@ -619,7 +653,7 @@ namespace Ixen.Generators.Xnl
                 return;
             }
 
-            if (param.Name == EACH_PROPERTY)
+            if (param.Name == EACH_PROPERTY || param.Name == KEY_PROPERTY)
             {
                 return;
             }

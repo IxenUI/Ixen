@@ -6,6 +6,7 @@ namespace Ixen.Core.UT.Components.Fixtures
 {
     public class ListItem
     {
+        public int Id { get; set; }
         public string Name { get; set; }
         public int Count { get; set; }
     }

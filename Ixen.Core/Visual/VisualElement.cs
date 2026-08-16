@@ -346,6 +346,35 @@ namespace Ixen.Core.Visual
             ComputeChildrenIndexes();
         }
 
+        internal void Adopt(VisualElement element)
+        {
+            element.Parent = this;
+            element.Invalidate();
+            element.AttachHost(Host);
+        }
+
+        internal void Release(VisualElement element)
+        {
+            element.Parent = null;
+            element.DetachHost();
+        }
+
+        internal void SpliceChildren(int offset, int removeCount, List<VisualElement> insert)
+        {
+            if (removeCount > 0)
+            {
+                Children.RemoveRange(offset, removeCount);
+            }
+
+            if (insert != null && insert.Count > 0)
+            {
+                Children.InsertRange(offset, insert);
+            }
+
+            ComputeChildrenIndexes();
+            InvalidateLayout();
+        }
+
         public void InsertChild(int index, VisualElement element)
         {
             element.Parent = this;
