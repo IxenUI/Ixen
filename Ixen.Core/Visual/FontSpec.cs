@@ -18,10 +18,14 @@ namespace Ixen.Core.Visual
         }
 
         internal static FontSpec From(VisualElementStylesHandlers handlers)
-            => new FontSpec(
+        {
+            float size = handlers.FontSize.Descriptor.Value;
+
+            return new FontSpec(
                 handlers.FontFamily.Descriptor.Value,
-                handlers.FontSize.Descriptor.Value,
+                size > 0 ? size : FontSizeStyleDescriptor.DEFAULT_SIZE,
                 handlers.FontWeight.Descriptor.Value == FontWeight.Bold,
                 handlers.FontStyle.Descriptor.Value == FontStyle.Italic);
+        }
     }
 }

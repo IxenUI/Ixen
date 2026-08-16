@@ -2,6 +2,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 {
     public enum FontStyle
     {
+        Unset,
         Normal,
         Italic
     }
@@ -10,7 +11,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
     {
         internal override string Identifier => StyleIdentifier.FONT_STYLE;
 
-        public FontStyle Value { get; set; } = FontStyle.Normal;
+        public FontStyle Value { get; set; } = FontStyle.Unset;
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()

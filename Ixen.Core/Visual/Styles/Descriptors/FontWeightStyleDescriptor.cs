@@ -2,6 +2,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 {
     public enum FontWeight
     {
+        Unset,
         Normal,
         Bold
     }
@@ -10,7 +11,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
     {
         internal override string Identifier => StyleIdentifier.FONT_WEIGHT;
 
-        public FontWeight Value { get; set; } = FontWeight.Normal;
+        public FontWeight Value { get; set; } = FontWeight.Unset;
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()

@@ -171,17 +171,9 @@ namespace Ixen.Core
 
         private static CursorKind CursorAt(VisualElement element)
         {
-            for (VisualElement current = element; current != null; current = current.Parent)
-            {
-                CursorStyleDescriptor descriptor = current.StylesHandlers?.Cursor?.Descriptor;
+            CursorKind resolved = element?.StylesHandlers?.Cursor?.Descriptor?.Value ?? CursorKind.Unset;
 
-                if (descriptor != null && descriptor.Value != CursorKind.Unset)
-                {
-                    return descriptor.Value;
-                }
-            }
-
-            return CursorKind.Default;
+            return resolved == CursorKind.Unset ? CursorKind.Default : resolved;
         }
 
         internal void PointerLeaveSurface()

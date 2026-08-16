@@ -17,6 +17,7 @@ namespace Ixen.Core.Visual.Computers
             {
                 ApplyBaseStyle(element);
                 ApplyClasses(element, registry);
+                Inherit(element);
                 SyncTransitions(element);
 
                 element.MustRefreshStyles = false;
@@ -110,6 +111,49 @@ namespace Ixen.Core.Visual.Computers
             }
         }
 
+        private void Inherit(VisualElement element)
+        {
+            VisualElement parent = element.Parent;
+
+            if (parent == null)
+            {
+                return;
+            }
+
+            VisualElementStylesHandlers handlers = element.StylesHandlers;
+            VisualElementStylesHandlers from = parent.StylesHandlers;
+
+            if (handlers.Color.Descriptor.Value == null)
+            {
+                handlers.Color = from.Color;
+            }
+
+            if (handlers.FontFamily.Descriptor.Value == null)
+            {
+                handlers.FontFamily = from.FontFamily;
+            }
+
+            if (handlers.FontSize.Descriptor.Value <= 0)
+            {
+                handlers.FontSize = from.FontSize;
+            }
+
+            if (handlers.FontWeight.Descriptor.Value == FontWeight.Unset)
+            {
+                handlers.FontWeight = from.FontWeight;
+            }
+
+            if (handlers.FontStyle.Descriptor.Value == FontStyle.Unset)
+            {
+                handlers.FontStyle = from.FontStyle;
+            }
+
+            if (handlers.Cursor.Descriptor.Value == CursorKind.Unset)
+            {
+                handlers.Cursor = from.Cursor;
+            }
+        }
+
         private void SyncTransitions(VisualElement element)
         {
             VisualElementStylesHandlers handlers = element.StylesHandlers;
@@ -171,35 +215,35 @@ namespace Ixen.Core.Visual.Computers
 
             if (handlers.Color.Descriptor != styles.Color)
             {
-                handlers.Color = styles.Color != null
+                handlers.Color = styles.Color != null && styles.Color.Value != null
                     ? new ColorStyleHandler(styles.Color)
                     : VisualElementStylesHandlers.DefaultColor;
             }
 
             if (handlers.FontFamily.Descriptor != styles.FontFamily)
             {
-                handlers.FontFamily = styles.FontFamily != null
+                handlers.FontFamily = styles.FontFamily != null && styles.FontFamily.Value != null
                     ? new FontFamilyStyleHandler(styles.FontFamily)
                     : VisualElementStylesHandlers.DefaultFontFamily;
             }
 
             if (handlers.FontSize.Descriptor != styles.FontSize)
             {
-                handlers.FontSize = styles.FontSize != null
+                handlers.FontSize = styles.FontSize != null && styles.FontSize.Value > 0
                     ? new FontSizeStyleHandler(styles.FontSize)
                     : VisualElementStylesHandlers.DefaultFontSize;
             }
 
             if (handlers.FontStyle.Descriptor != styles.FontStyle)
             {
-                handlers.FontStyle = styles.FontStyle != null
+                handlers.FontStyle = styles.FontStyle != null && styles.FontStyle.Value != FontStyle.Unset
                     ? new FontStyleStyleHandler(styles.FontStyle)
                     : VisualElementStylesHandlers.DefaultFontStyle;
             }
 
             if (handlers.FontWeight.Descriptor != styles.FontWeight)
             {
-                handlers.FontWeight = styles.FontWeight != null
+                handlers.FontWeight = styles.FontWeight != null && styles.FontWeight.Value != FontWeight.Unset
                     ? new FontWeightStyleHandler(styles.FontWeight)
                     : VisualElementStylesHandlers.DefaultFontWeight;
             }
@@ -300,7 +344,7 @@ namespace Ixen.Core.Visual.Computers
 
             if (handlers.Cursor.Descriptor != styles.Cursor)
             {
-                handlers.Cursor = styles.Cursor != null
+                handlers.Cursor = styles.Cursor != null && styles.Cursor.Value != CursorKind.Unset
                     ? new CursorStyleHandler(styles.Cursor)
                     : VisualElementStylesHandlers.DefaultCursor;
             }

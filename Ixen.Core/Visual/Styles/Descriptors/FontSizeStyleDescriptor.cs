@@ -6,7 +6,7 @@
 
         internal override string Identifier => StyleIdentifier.FONT_SIZE;
 
-        public float Value { get; set; } = DEFAULT_SIZE;
+        public float Value { get; set; } = 0;
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()
