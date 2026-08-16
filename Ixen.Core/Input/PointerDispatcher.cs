@@ -13,6 +13,7 @@ namespace Ixen.Core.Input
         private const float DRAG_THRESHOLD = 4f;
         private const float DOUBLE_CLICK_DISTANCE = 4f;
         private const long DOUBLE_CLICK_DELAY = 500;
+        private const int LONG_PRESS_DELAY = 500;
 
         private readonly List<VisualElement> _leftChain = new();
         private readonly List<VisualElement> _enteredChain = new();
@@ -35,7 +36,11 @@ namespace Ixen.Core.Input
         private float _lastClickX;
         private float _lastClickY;
 
+        private IDisposable _longPress;
+        private bool _longPressHandled;
+
         internal ITimeSource TimeSource { get; set; } = SystemTimeSource.Instance;
+        internal IScheduler Scheduler { get; set; }
 
         internal VisualElement Hovered => _hovered;
         internal VisualElement Pressed => _pressed;
@@ -128,6 +133,7 @@ namespace Ixen.Core.Input
         internal void ReleaseCapture()
         {
             _captured = null;
+            CancelLongPress();
             EndDrag(_lastDragX, _lastDragY);
             SetState(_pressed, PRESSED_STATE, false);
             _pressed = null;
@@ -154,6 +160,40 @@ namespace Ixen.Core.Input
             SetState(hit, PRESSED_STATE, true);
 
             Bubble(hit, new PointerEventArgs(x, y, button, hit), PointerEventKind.Down);
+
+            StartLongPress(x, y, button);
+        }
+
+        private void StartLongPress(float x, float y, PointerButton button)
+        {
+            _longPressHandled = false;
+
+            if (Scheduler == null || _pressed == null)
+            {
+                return;
+            }
+
+            VisualElement pressed = _pressed;
+
+            _longPress = Scheduler.Schedule(LONG_PRESS_DELAY, false, () =>
+            {
+                _longPress = null;
+
+                if (_pressed != pressed)
+                {
+                    return;
+                }
+
+                var args = new PointerEventArgs(x, y, button, pressed);
+                Bubble(pressed, args, PointerEventKind.LongPress);
+                _longPressHandled = args.Handled;
+            });
+        }
+
+        private void CancelLongPress()
+        {
+            _longPress?.Dispose();
+            _longPress = null;
         }
 
         private void UpdateDrag(float x, float y)
@@ -171,6 +211,7 @@ namespace Ixen.Core.Input
                 }
 
                 _dragging = true;
+                CancelLongPress();
                 RaiseDrag(x, y, PointerEventKind.DragStart);
                 return;
             }
@@ -231,9 +272,10 @@ namespace Ixen.Core.Input
             UpdateHover(hit, x, y);
             Bubble(target, new PointerEventArgs(x, y, button, target), PointerEventKind.Up);
 
+            CancelLongPress();
             EndDrag(x, y);
 
-            bool isClick = hit != null && hit == _pressed;
+            bool isClick = hit != null && hit == _pressed && !_longPressHandled;
 
             _pressed = null;
 
@@ -333,6 +375,10 @@ namespace Ixen.Core.Input
 
                     case PointerEventKind.DoubleClick:
                         element.RaisePointerDoubleClick(args);
+                        break;
+
+                    case PointerEventKind.LongPress:
+                        element.RaisePointerLongPress(args);
                         break;
 
                     case PointerEventKind.DragStart:

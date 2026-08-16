@@ -7,6 +7,7 @@ namespace Ixen.Core.Input
         Move,
         Click,
         DoubleClick,
+        LongPress,
         DragStart,
         Drag,
         DragEnd

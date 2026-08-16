@@ -27,7 +27,7 @@ namespace Ixen.Platform.Windows
         {
             _pixelBuffer = new PixelBuffer();
             _ixenSurface = ixenSurface;
-            _host = new IxenHost(ixenSurface, RequestRepaint);
+            _host = new IxenHost(ixenSurface, RequestRepaint, new MessageScheduler());
             _onPaint = OnPaint;
             _onPointer = OnPointer;
             _onKey = OnKey;

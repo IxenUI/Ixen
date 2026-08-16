@@ -24,6 +24,7 @@ namespace Ixen.Core
 
         private VisualElement _root;
         private float _scale = 1;
+        private bool _visualDirty;
 
         public float Scale
         {
@@ -111,7 +112,14 @@ namespace Ixen.Core
         internal void PointerCaptureLost()
             => _pointerDispatcher.ReleaseCapture();
 
-        internal bool IsDirty => Root != null && Root.IsLayoutDirty;
+        internal bool IsDirty => _visualDirty || (Root != null && Root.IsLayoutDirty);
+
+        internal void InvalidateVisual() => _visualDirty = true;
+
+        internal IScheduler Scheduler
+        {
+            set => _pointerDispatcher.Scheduler = value;
+        }
 
         internal void PointerLeaveSurface()
             => _pointerDispatcher.LeaveSurface(TrackStates);
@@ -159,6 +167,7 @@ namespace Ixen.Core
 
         internal void Render(SKCanvas canvas)
         {
+            _visualDirty = false;
             _rendererContext.BeginFrame(canvas, _scale);
             _rendererContext.Clear(_clearColor);
 

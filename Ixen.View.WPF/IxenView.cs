@@ -31,7 +31,7 @@ namespace Ixen.View.WPF
             _skElement.IgnorePixelScaling = true;
             _skElement.Focusable = true;
             _skElement.FocusVisualStyle = null;
-            _host = new IxenHost(new IxenSurface(), _skElement.InvalidateVisual);
+            _host = new IxenHost(new IxenSurface(), _skElement.InvalidateVisual, new DispatcherScheduler());
 
             _skElement.PaintSurface += OnPaintSurface;
             _skElement.MouseMove += OnMouseMove;

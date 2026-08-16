@@ -12,10 +12,34 @@ namespace Ixen.Platform
         private readonly IxenSurface _surface;
         private readonly Action _requestRepaint;
 
-        public IxenHost(IxenSurface surface, Action requestRepaint)
+        public IxenHost(IxenSurface surface, Action requestRepaint, IScheduler scheduler = null)
         {
             _surface = surface ?? throw new ArgumentNullException(nameof(surface));
             _requestRepaint = requestRepaint;
+
+            if (scheduler != null)
+            {
+                _surface.Scheduler = new HostScheduler(this, scheduler);
+            }
+        }
+
+        private sealed class HostScheduler : IScheduler
+        {
+            private readonly IxenHost _host;
+            private readonly IScheduler _inner;
+
+            internal HostScheduler(IxenHost host, IScheduler inner)
+            {
+                _host = host;
+                _inner = inner;
+            }
+
+            public IDisposable Schedule(int delayMilliseconds, bool repeat, Action callback)
+                => _inner.Schedule(delayMilliseconds, repeat, () =>
+                {
+                    callback();
+                    _host.RepaintIfDirty();
+                });
         }
 
         public IxenSurface Surface => _surface;
