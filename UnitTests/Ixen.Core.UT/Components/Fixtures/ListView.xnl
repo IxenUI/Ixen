@@ -1,0 +1,8 @@
+list_root {} [
+	list_header { text: "{Title}" }
+	row { each: "{Items}" class: "row" } [
+		row_name { text: "{row.Name}" }
+		row_detail { text: "{row.Count} left" }
+	]
+	list_footer { text: "end" }
+]

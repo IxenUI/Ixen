@@ -21,6 +21,7 @@ namespace Ixen.Generators.Xnl
         private const string COMPONENT_METADATA_NAME = "Ixen.Core.Components.Component";
         private const string COMPONENT_TYPE_NAME = "Component";
         private const string CLASS_PROPERTY = "class";
+        private const string EACH_PROPERTY = "each";
 
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
@@ -72,11 +73,7 @@ namespace Ixen.Generators.Xnl
 
                 var body = new StringBuilder();
 
-                foreach (XnlNode child in node.Children)
-                {
-                    AddDeclaration(body, child, 3, file);
-                    body.AppendLine($"\t\t\tAddChild({Identifier(child)});");
-                }
+                AddChildren(body, node, "this", 3, file);
 
                 var sb = new StringBuilder();
 
@@ -91,9 +88,11 @@ namespace Ixen.Generators.Xnl
                 sb.AppendLine($"\tpublic class {name} : {bases}");
                 sb.AppendLine("\t{");
 
-                foreach ((string type, string variable) in file.Fields)
+                foreach ((string type, string variable, string initializer) in file.Fields)
                 {
-                    sb.AppendLine($"\t\tprivate readonly {type} {variable};");
+                    sb.AppendLine(initializer == null
+                        ? $"\t\tprivate readonly {type} {variable};"
+                        : $"\t\tprivate readonly {type} {variable} = {initializer};");
                 }
 
                 if (file.Fields.Count > 0)
@@ -120,16 +119,27 @@ namespace Ixen.Generators.Xnl
         static string Identifier(XnlNode node)
             => node.Name != null ? $"el{node.Id}_{node.Name}" : $"el{node.Id}";
 
+        class Repeat
+        {
+            internal XnlNode Node;
+            internal string ParentId;
+            internal string Offset;
+            internal string Instances;
+        }
+
         class FileContext
         {
             internal readonly TypeResolver Resolver;
             internal readonly List<LanguageError> Diagnostics;
             internal readonly HashSet<int> BoundNodes = new HashSet<int>();
-            internal readonly List<(string type, string variable)> Fields = new List<(string, string)>();
+            internal readonly List<(string type, string variable, string initializer)> Fields
+                = new List<(string, string, string)>();
             internal readonly List<string> Bindings = new List<string>();
+            internal readonly List<Repeat> Repeaters = new List<Repeat>();
 
             internal INamedTypeSymbol Model;
             internal HashSet<string> ModelMembers;
+            internal bool SkipBindings;
 
             internal FileContext(TypeResolver resolver, List<LanguageError> diagnostics)
             {
@@ -137,19 +147,88 @@ namespace Ixen.Generators.Xnl
                 Diagnostics = diagnostics;
             }
 
-            internal bool HasBindings => BoundNodes.Count > 0;
-            internal bool CanBind => Bindings.Count > 0 && Model != null;
+            internal bool HasBindings => BoundNodes.Count > 0 || Repeaters.Count > 0;
+            internal bool CanBind => (Bindings.Count > 0 || Repeaters.Count > 0) && Model != null;
 
             internal bool IsBound(XnlNode node) => BoundNodes.Contains(node.Id);
 
-            internal void Field(string type, string variable) => Fields.Add((type, variable));
+            internal void Field(string type, string variable, string initializer = null)
+                => Fields.Add((type, variable, initializer));
+        }
+
+        static string ItemVariable(XnlNode node)
+            => node.Name ?? "item";
+
+        static void AddRepeatBinding(StringBuilder sb, Repeat repeat, FileContext file)
+        {
+            string source = XnlBindings.Qualify(
+                XnlBindings.LiteralText(XnlBindings.Parse(repeat.Node.Properties
+                    .First(p => p.Name == EACH_PROPERTY).Value)), file.ModelMembers);
+
+            string instances = repeat.Instances;
+            string item = ItemVariable(repeat.Node);
+
+            sb.AppendLine();
+            sb.AppendLine($"\t\t\tvar {instances}_source = {source};");
+            sb.AppendLine($"\t\t\tRepeater.Sync({repeat.ParentId}, {instances}, {repeat.Offset}, " +
+                $"{instances}_source == null ? 0 : {instances}_source.Count, Create_{instances});");
+            sb.AppendLine();
+            sb.AppendLine($"\t\t\tfor (int i = 0; i < {instances}.Count; i++)");
+            sb.AppendLine("\t\t\t{");
+            sb.AppendLine($"\t\t\t\tvar {item} = {instances}_source[i];");
+            sb.AppendLine($"\t\t\t\tvar {item}_element = {instances}[i];");
+
+            var itemMembers = new HashSet<string>();
+            AddRepeatItemBindings(sb, repeat.Node, $"{item}_element", item, itemMembers, file);
+
+            sb.AppendLine("\t\t\t}");
+        }
+
+        static void AddRepeatItemBindings(StringBuilder sb, XnlNode node, string path, string item,
+            HashSet<string> members, FileContext file)
+        {
+            foreach (XnlNodeParameter param in node.Properties)
+            {
+                if (param.Name == CLASS_PROPERTY || param.Name == EACH_PROPERTY)
+                {
+                    continue;
+                }
+
+                List<BindingPart> parts = XnlBindings.Parse(param.Value);
+
+                if (!XnlBindings.IsBinding(parts))
+                {
+                    continue;
+                }
+
+                sb.AppendLine($"\t\t\t\t{path}.{ToPropertyName(param.Name)} = " +
+                    $"{XnlBindings.BuildExpression(parts, file.ModelMembers)};");
+            }
+
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                AddRepeatItemBindings(sb, node.Children[i], $"{path}.Children[{i}]", item, members, file);
+            }
+        }
+
+        static void AddRepeatFactory(StringBuilder sb, Repeat repeat, FileContext file)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"\t\tprivate VisualElement Create_{repeat.Instances}()");
+            sb.AppendLine("\t\t{");
+
+            AddDeclaration(sb, repeat.Node, 3, file, skipBindings: true);
+
+            sb.AppendLine($"\t\t\treturn {Identifier(repeat.Node)};");
+            sb.AppendLine("\t\t}");
         }
 
         static void CollectBoundNodes(XnlNode node, FileContext file)
         {
             foreach (XnlNodeParameter param in node.Properties)
             {
-                if (param.Name != CLASS_PROPERTY && XnlBindings.HasBinding(param.Value))
+                if (param.Name != CLASS_PROPERTY && param.Name != EACH_PROPERTY
+                    && XnlBindings.HasBinding(param.Value))
                 {
                     file.BoundNodes.Add(node.Id);
                     break;
@@ -158,6 +237,12 @@ namespace Ixen.Generators.Xnl
 
             foreach (XnlNode child in node.Children)
             {
+                if (SourceOfEach(child) != null)
+                {
+                    file.BoundNodes.Add(node.Id);
+                    continue;
+                }
+
                 CollectBoundNodes(child, file);
             }
         }
@@ -180,17 +265,30 @@ namespace Ixen.Generators.Xnl
                 sb.AppendLine($"\t\t\t{binding}");
             }
 
+            foreach (Repeat repeat in file.Repeaters)
+            {
+                AddRepeatBinding(sb, repeat, file);
+            }
+
             sb.AppendLine("\t\t}");
+
+            foreach (Repeat repeat in file.Repeaters)
+            {
+                AddRepeatFactory(sb, repeat, file);
+            }
             sb.AppendLine();
             sb.AppendLine($"\t\tvoid IBoundView.Bind(object {XnlBindings.MODEL_PARAMETER})");
             sb.AppendLine($"\t\t\t=> Bind(({modelType}){XnlBindings.MODEL_PARAMETER});");
         }
 
-        static void AddDeclaration(StringBuilder sb, XnlNode node, int tabLevel, FileContext file)
+        static void AddDeclaration(StringBuilder sb, XnlNode node, int tabLevel, FileContext file,
+            bool skipBindings = false)
         {
             string tabs = new string('\t', tabLevel);
             string nodeId = Identifier(node);
-            bool bound = file.IsBound(node);
+            bool bound = !skipBindings && file.IsBound(node);
+
+            file.SkipBindings = skipBindings;
 
             ResolvedType resolved = file.Resolver.Resolve(node, file.Diagnostics);
 
@@ -225,14 +323,72 @@ namespace Ixen.Generators.Xnl
                 sb.AppendLine();
             }
 
-            foreach (XnlNode child in node.Children)
-            {
-                AddDeclaration(sb, child, tabLevel, file);
-                sb.AppendLine($"{tabs}{nodeId}.AddChild({Identifier(child)});");
-                sb.AppendLine();
-            }
+            AddChildren(sb, node, nodeId, tabLevel, file);
 
             sb.AppendLine();
+        }
+
+        static void AddChildren(StringBuilder sb, XnlNode node, string parentId, int tabLevel, FileContext file)
+        {
+            string tabs = new string('\t', tabLevel);
+            var repeaters = new List<string>();
+            int statics = 0;
+
+            foreach (XnlNode child in node.Children)
+            {
+                if (SourceOfEach(child) != null)
+                {
+                    file.Repeaters.Add(new Repeat
+                    {
+                        Node = child,
+                        ParentId = parentId,
+                        Offset = OffsetExpression(statics, repeaters),
+                        Instances = $"{Identifier(child)}_items"
+                    });
+
+                    repeaters.Add($"{Identifier(child)}_items");
+                    file.Field("global::System.Collections.Generic.List<VisualElement>",
+                        $"{Identifier(child)}_items", "new global::System.Collections.Generic.List<VisualElement>()");
+
+                    continue;
+                }
+
+                AddDeclaration(sb, child, tabLevel, file);
+                sb.AppendLine($"{tabs}{parentId}.AddChild({Identifier(child)});");
+                sb.AppendLine();
+
+                statics++;
+            }
+        }
+
+        static string OffsetExpression(int statics, List<string> repeaters)
+        {
+            if (repeaters.Count == 0)
+            {
+                return statics.ToString(CultureInfo.InvariantCulture);
+            }
+
+            var sb = new StringBuilder(statics.ToString(CultureInfo.InvariantCulture));
+
+            foreach (string instances in repeaters)
+            {
+                sb.Append(" + ").Append(instances).Append(".Count");
+            }
+
+            return sb.ToString();
+        }
+
+        static string SourceOfEach(XnlNode node)
+        {
+            foreach (XnlNodeParameter param in node.Properties)
+            {
+                if (param.Name == EACH_PROPERTY)
+                {
+                    return param.Value;
+                }
+            }
+
+            return null;
         }
 
         static string Declarator(FileContext file, bool bound, string type, string variable)
@@ -463,6 +619,11 @@ namespace Ixen.Generators.Xnl
                 return;
             }
 
+            if (param.Name == EACH_PROPERTY)
+            {
+                return;
+            }
+
             string propertyName = ToPropertyName(param.Name);
 
             List<BindingPart> parts = XnlBindings.Parse(param.Value);
@@ -505,6 +666,11 @@ namespace Ixen.Generators.Xnl
             if (!bound)
             {
                 sb.AppendLine($"{tabs}{nodeId}.{propertyName} = {StringLiteral(value)};");
+                return;
+            }
+
+            if (file.SkipBindings)
+            {
                 return;
             }
 

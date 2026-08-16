@@ -346,6 +346,33 @@ namespace Ixen.Core.Visual
             ComputeChildrenIndexes();
         }
 
+        public void InsertChild(int index, VisualElement element)
+        {
+            element.Parent = this;
+            element.Invalidate();
+            element.AttachHost(Host);
+
+            Children.Insert(index < 0 || index > Children.Count ? Children.Count : index, element);
+            ComputeChildrenIndexes();
+        }
+
+        public void RemoveChildAt(int index)
+        {
+            if (index < 0 || index >= Children.Count)
+            {
+                return;
+            }
+
+            VisualElement element = Children[index];
+
+            Children.RemoveAt(index);
+            element.Parent = null;
+            element.DetachHost();
+
+            InvalidateLayout();
+            ComputeChildrenIndexes();
+        }
+
         public void RemoveChild(VisualElement element)
         {
             if (Children.Remove(element))
