@@ -60,7 +60,7 @@ namespace Ixen.Core.Rendering
 
             if (element is TextField field)
             {
-                RenderField(field, lines[0], context, handlers, fontSpec);
+                RenderField(field, lines, context, handlers, fontSpec);
                 return;
             }
 
@@ -97,15 +97,15 @@ namespace Ixen.Core.Rendering
             }
         }
 
-        private void RenderField(TextField field, string value, RendererContext context,
+        private void RenderField(TextField field, List<string> lines, RendererContext context,
             VisualElementStylesHandlers handlers, FontSpec fontSpec)
         {
             float contentLeft = field.X + field.PaddingLeft + field.BorderInsideLeft;
             float contentTop = field.Y + field.PaddingTop + field.BorderInsideTop;
             float lineHeight = context.GetLineHeight(fontSpec);
-            float top = contentTop;
+            float top = contentTop - field.ScrollY;
 
-            if (handlers.TextAlign.Descriptor.Vertical != TextVAlign.Top)
+            if (!field.Multiline && handlers.TextAlign.Descriptor.Vertical != TextVAlign.Top)
             {
                 float slack = field.ContentHeight - lineHeight;
 
@@ -118,33 +118,70 @@ namespace Ixen.Core.Rendering
             context.PushClip(contentLeft, contentTop, field.ContentWidth, field.ContentHeight, null);
 
             float x = contentLeft - field.ContentOffset;
+            int selectionStart = field.SelectionStart;
+            int selectionEnd = selectionStart + field.SelectionLength;
 
-            if (field.SelectionLength > 0)
+            for (int line = 0; line < lines.Count; line++)
             {
-                float from = field.OffsetAt(field.SelectionStart);
-                float to = field.OffsetAt(field.SelectionStart + field.SelectionLength);
+                float lineTop = top + line * lineHeight;
 
-                context.FillRectangle(x + from, top, to - from, lineHeight,
-                    SelectionBrush(handlers.Color.Brush.Color));
-            }
+                if (field.SelectionLength > 0)
+                {
+                    RenderSelection(field, line, selectionStart, selectionEnd, x, lineTop, lineHeight,
+                        context, handlers);
+                }
 
-            if (field.ShowsPlaceholder)
-            {
-                context.DrawText(field.Placeholder, x, top, fontSpec,
-                    DimmedBrush(handlers.Color.Brush.Color));
-            }
-            else
-            {
-                context.DrawText(value, x, top, fontSpec, handlers.Color.Brush);
+                if (field.ShowsPlaceholder)
+                {
+                    context.DrawText(field.Placeholder, x, lineTop, fontSpec,
+                        DimmedBrush(handlers.Color.Brush.Color));
+                }
+                else
+                {
+                    context.DrawText(lines[line], x, lineTop, fontSpec, handlers.Color.Brush);
+                }
             }
 
             if (field.CaretVisible && field.IsFocused)
             {
-                context.FillRectangle(x + field.OffsetAt(field.CaretIndex), top, 1, lineHeight,
-                    handlers.Color.Brush);
+                context.FillRectangle(
+                    x + field.OffsetAt(field.CaretIndex),
+                    top + field.LineAt(field.CaretIndex) * lineHeight,
+                    1, lineHeight, handlers.Color.Brush);
             }
 
             context.PopClip();
+        }
+
+        private void RenderSelection(TextField field, int line, int selectionStart, int selectionEnd,
+            float x, float top, float lineHeight, RendererContext context, VisualElementStylesHandlers handlers)
+        {
+            int lineStart = field.LineStart(line);
+            int lineEnd = field.LineEnd(line);
+
+            int from = System.Math.Max(selectionStart, lineStart);
+            int to = System.Math.Min(selectionEnd, lineEnd);
+
+            if (to < from)
+            {
+                return;
+            }
+
+            float left = field.OffsetAt(from);
+            float right = field.OffsetAt(to);
+
+            if (selectionEnd > lineEnd && line + 1 < field.LineCount)
+            {
+                right += lineHeight / 3;
+            }
+
+            if (right <= left)
+            {
+                return;
+            }
+
+            context.FillRectangle(x + left, top, right - left, lineHeight,
+                SelectionBrush(handlers.Color.Brush.Color));
         }
     }
 }

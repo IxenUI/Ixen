@@ -80,7 +80,7 @@ namespace Ixen.Core.Visual.Computers
 
             if (element is TextField field)
             {
-                ClampFieldOffset(field);
+                ClampFieldOffset(field, textWidth);
             }
 
             if (element.HasChrome)
@@ -218,21 +218,47 @@ namespace Ixen.Core.Visual.Computers
             string value = field.DisplayText;
             FontSpec fontSpec = FontSpec.From(field.StylesHandlers);
 
-            lines.Add(value);
-
             float[] offsets = EnsureCaretOffsets(field, value.Length + 1);
-            offsets[0] = 0;
+            int[] starts = EnsureLineStarts(field, value, out int lineCount);
 
-            for (int i = 1; i <= value.Length; i++)
+            offsets[0] = 0;
+            starts[0] = 0;
+
+            int line = 0;
+            int lineStart = 0;
+
+            width = 0;
+
+            bool breaks = field.Multiline;
+
+            for (int i = 0; i < value.Length; i++)
             {
-                _textMeasurer.MeasureText(value.Substring(0, i), fontSpec, out float prefix, out _);
-                offsets[i] = prefix;
+                if (breaks && value[i] == '\n')
+                {
+                    lines.Add(value.Substring(lineStart, i - lineStart));
+                    width = Math.Max(width, offsets[i]);
+
+                    line++;
+                    starts[line] = i + 1;
+                    lineStart = i + 1;
+                    offsets[i + 1] = 0;
+                    continue;
+                }
+
+                _textMeasurer.MeasureText(value.Substring(lineStart, i + 1 - lineStart), fontSpec,
+                    out float prefix, out _);
+
+                offsets[i + 1] = prefix;
             }
 
-            field.CaretOffsetCount = value.Length + 1;
+            lines.Add(value.Substring(lineStart));
+            width = Math.Max(width, offsets[value.Length]);
 
-            width = offsets[value.Length];
-            height = _textMeasurer.GetLineHeight(fontSpec);
+            field.CaretOffsetCount = value.Length + 1;
+            field.LineCount = lineCount;
+            field.LineHeight = _textMeasurer.GetLineHeight(fontSpec);
+
+            height = field.LineHeight * lineCount;
 
             if (!field.ShowsPlaceholder)
             {
@@ -241,6 +267,24 @@ namespace Ixen.Core.Visual.Computers
 
             _textMeasurer.MeasureText(field.Placeholder, fontSpec, out float placeholder, out _);
             width = Math.Max(width, placeholder);
+        }
+
+        private static int[] EnsureLineStarts(TextField field, string value, out int lineCount)
+        {
+            lineCount = 1;
+
+            if (field.Multiline)
+            {
+                foreach (char c in value)
+                {
+                    if (c == '\n')
+                    {
+                        lineCount++;
+                    }
+                }
+            }
+
+            return field.EnsureLineStarts(lineCount);
         }
 
         private static float[] EnsureCaretOffsets(TextField field, int count)
@@ -253,7 +297,7 @@ namespace Ixen.Core.Visual.Computers
             return field.CaretOffsets;
         }
 
-        private static void ClampFieldOffset(TextField field)
+        private static void ClampFieldOffset(TextField field, float textWidth)
         {
             float contentWidth = field.ContentWidth;
             float caret = field.OffsetAt(field.CaretIndex);
@@ -269,10 +313,33 @@ namespace Ixen.Core.Visual.Computers
                 offset = caret;
             }
 
-            float extent = field.CaretOffsetCount > 0 ? field.OffsetAt(field.CaretOffsetCount - 1) : 0;
-            float max = Math.Max(0, extent - contentWidth);
+            float max = Math.Max(0, textWidth - contentWidth);
 
             field.ContentOffset = Math.Max(0, Math.Min(offset, max));
+
+            ScrollCaretIntoView(field);
+        }
+
+        private static void ScrollCaretIntoView(TextField field)
+        {
+            if (!field.Multiline || !field.CaretMoved || field.LineHeight <= 0)
+            {
+                return;
+            }
+
+            field.CaretMoved = false;
+
+            float top = field.LineAt(field.CaretIndex) * field.LineHeight;
+            float bottom = top + field.LineHeight;
+
+            if (bottom - field.ScrollY > field.ContentHeight)
+            {
+                field.ScrollY = bottom - field.ContentHeight;
+            }
+            else if (top - field.ScrollY < 0)
+            {
+                field.ScrollY = top;
+            }
         }
 
         private float BuildLines(string text, FontSpec fontSpec, float maxWidth, bool wrap, bool ellipsis,

@@ -34,6 +34,63 @@ namespace Ixen.Core.Visual
         internal float[] CaretOffsets { get; set; }
         internal int CaretOffsetCount { get; set; }
         internal float ContentOffset { get; set; }
+
+        private int[] _lineStarts;
+        private float _desiredColumn = -1;
+
+        internal int LineCount { get; set; }
+        internal float LineHeight { get; set; }
+        internal bool CaretMoved { get; set; }
+
+        public bool Multiline { get; set; }
+
+        internal int[] EnsureLineStarts(int count)
+        {
+            if (_lineStarts == null || _lineStarts.Length < count)
+            {
+                _lineStarts = new int[count];
+            }
+
+            return _lineStarts;
+        }
+
+        internal int LineAt(int index)
+        {
+            if (_lineStarts == null || LineCount <= 1)
+            {
+                return 0;
+            }
+
+            for (int line = LineCount - 1; line > 0; line--)
+            {
+                if (index >= _lineStarts[line])
+                {
+                    return line;
+                }
+            }
+
+            return 0;
+        }
+
+        internal int LineStart(int line)
+        {
+            if (_lineStarts == null || line <= 0)
+            {
+                return 0;
+            }
+
+            return line >= LineCount ? _lineStarts[LineCount - 1] : _lineStarts[line];
+        }
+
+        internal int LineEnd(int line)
+        {
+            if (line + 1 >= LineCount)
+            {
+                return Value.Length;
+            }
+
+            return Math.Max(LineStart(line), LineStart(line + 1) - 1);
+        }
         internal bool CaretVisible { get; set; } = true;
         internal bool IsFocused { get; private set; }
 
@@ -244,6 +301,8 @@ namespace Ixen.Core.Visual
             _caret = Clamp(caret, length);
             _anchor = Clamp(anchor, length);
             _coalescing = false;
+            _desiredColumn = -1;
+            CaretMoved = true;
 
             InvalidateLayout();
         }
@@ -404,12 +463,39 @@ namespace Ixen.Core.Visual
                     MoveCaret(NextIndex(args), extend);
                     break;
 
+                case Key.Up:
+                    if (!Multiline)
+                    {
+                        return;
+                    }
+
+                    MoveByLine(-1, extend);
+                    break;
+
+                case Key.Down:
+                    if (!Multiline)
+                    {
+                        return;
+                    }
+
+                    MoveByLine(1, extend);
+                    break;
+
+                case Key.Enter:
+                    if (!Multiline)
+                    {
+                        return;
+                    }
+
+                    Insert("\n");
+                    break;
+
                 case Key.Home:
-                    MoveCaret(0, extend);
+                    MoveCaret(args.HasModifier(KeyModifiers.Control) ? 0 : LineStart(LineAt(_caret)), extend);
                     break;
 
                 case Key.End:
-                    MoveCaret(Value.Length, extend);
+                    MoveCaret(args.HasModifier(KeyModifiers.Control) ? Value.Length : LineEnd(LineAt(_caret)), extend);
                     break;
 
                 case Key.A:
@@ -506,44 +592,34 @@ namespace Ixen.Core.Visual
         private void MoveCaret(int index, bool extend)
             => Select(index, extend ? _anchor : index);
 
-        private void OnPointerDown(object sender, PointerEventArgs args)
+        private void MoveByLine(int delta, bool extend)
         {
-            int index = IndexAt(args.X);
+            int line = LineAt(_caret);
+            int target = line + delta;
 
-            Select(index, index);
-            args.Handled = true;
-        }
-
-        private void OnPointerDrag(object sender, DragEventArgs args)
-        {
-            Select(IndexAt(args.X), _anchor);
-            args.Handled = true;
-        }
-
-        private void OnPointerDoubleClick(object sender, PointerEventArgs args)
-        {
-            int index = IndexAt(args.X);
-
-            Select(WordEnd(index), WordStart(index));
-            args.Handled = true;
-        }
-
-        internal int IndexAt(float surfaceX)
-        {
-            float[] offsets = CaretOffsets;
-
-            if (offsets == null || CaretOffsetCount == 0)
+            if (target < 0 || target >= LineCount)
             {
-                return 0;
+                MoveCaret(delta < 0 ? 0 : Value.Length, extend);
+                return;
             }
 
-            float local = surfaceX - (X + PaddingLeft + BorderInsideLeft) + ContentOffset;
-            int best = 0;
-            float bestDistance = Math.Abs(local - offsets[0]);
+            float column = _desiredColumn < 0 ? OffsetAt(_caret) : _desiredColumn;
+            int index = IndexInLine(target, column);
 
-            for (int i = 1; i < CaretOffsetCount; i++)
+            MoveCaret(index, extend);
+            _desiredColumn = column;
+        }
+
+        private int IndexInLine(int line, float column)
+        {
+            int from = LineStart(line);
+            int to = LineEnd(line);
+            int best = from;
+            float bestDistance = Math.Abs(column - OffsetAt(from));
+
+            for (int i = from + 1; i <= to; i++)
             {
-                float distance = Math.Abs(local - offsets[i]);
+                float distance = Math.Abs(column - OffsetAt(i));
 
                 if (distance >= bestDistance)
                 {
@@ -555,6 +631,57 @@ namespace Ixen.Core.Visual
             }
 
             return best;
+        }
+
+        private void OnPointerDown(object sender, PointerEventArgs args)
+        {
+            int index = IndexAt(args.X, args.Y);
+
+            Select(index, index);
+            args.Handled = true;
+        }
+
+        private void OnPointerDrag(object sender, DragEventArgs args)
+        {
+            Select(IndexAt(args.X, args.Y), _anchor);
+            args.Handled = true;
+        }
+
+        private void OnPointerDoubleClick(object sender, PointerEventArgs args)
+        {
+            int index = IndexAt(args.X, args.Y);
+
+            Select(WordEnd(index), WordStart(index));
+            args.Handled = true;
+        }
+
+        internal int IndexAt(float surfaceX, float surfaceY)
+        {
+            if (CaretOffsets == null || CaretOffsetCount == 0)
+            {
+                return 0;
+            }
+
+            float column = surfaceX - (X + PaddingLeft + BorderInsideLeft) + ContentOffset;
+
+            if (!Multiline || LineCount <= 1 || LineHeight <= 0)
+            {
+                return IndexInLine(0, column);
+            }
+
+            float local = surfaceY - (Y + PaddingTop + BorderInsideTop) + ScrollY;
+            int line = (int)(local / LineHeight);
+
+            if (line < 0)
+            {
+                line = 0;
+            }
+            else if (line >= LineCount)
+            {
+                line = LineCount - 1;
+            }
+
+            return IndexInLine(line, column);
         }
 
         internal float OffsetAt(int index)
