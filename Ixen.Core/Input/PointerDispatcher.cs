@@ -1,4 +1,5 @@
 using Ixen.Core.Visual;
+using System;
 using System.Collections.Generic;
 
 namespace Ixen.Core.Input
@@ -9,6 +10,9 @@ namespace Ixen.Core.Input
         internal const string PRESSED_STATE = "pressed";
 
         private const float WHEEL_STEP = 48f;
+        private const float DRAG_THRESHOLD = 4f;
+        private const float DOUBLE_CLICK_DISTANCE = 4f;
+        private const long DOUBLE_CLICK_DELAY = 500;
 
         private readonly List<VisualElement> _leftChain = new();
         private readonly List<VisualElement> _enteredChain = new();
@@ -18,6 +22,20 @@ namespace Ixen.Core.Input
         private VisualElement _hovered;
         private VisualElement _pressed;
         private VisualElement _captured;
+
+        private PointerButton _pressedButton;
+        private float _pressX;
+        private float _pressY;
+        private float _lastDragX;
+        private float _lastDragY;
+        private bool _dragging;
+
+        private VisualElement _lastClicked;
+        private long _lastClickTime;
+        private float _lastClickX;
+        private float _lastClickY;
+
+        internal ITimeSource TimeSource { get; set; } = SystemTimeSource.Instance;
 
         internal VisualElement Hovered => _hovered;
         internal VisualElement Pressed => _pressed;
@@ -33,6 +51,7 @@ namespace Ixen.Core.Input
             {
                 UpdateHover(CaptureHoverTarget(hit), x, y);
                 Bubble(_captured, new PointerEventArgs(x, y, PointerButton.None, _captured), PointerEventKind.Move);
+                UpdateDrag(x, y);
                 return;
             }
 
@@ -109,6 +128,7 @@ namespace Ixen.Core.Input
         internal void ReleaseCapture()
         {
             _captured = null;
+            EndDrag(_lastDragX, _lastDragY);
             SetState(_pressed, PRESSED_STATE, false);
             _pressed = null;
         }
@@ -124,9 +144,77 @@ namespace Ixen.Core.Input
             _pressed = hit;
             _captured = hit;
 
+            _pressedButton = button;
+            _pressX = x;
+            _pressY = y;
+            _lastDragX = x;
+            _lastDragY = y;
+            _dragging = false;
+
             SetState(hit, PRESSED_STATE, true);
 
             Bubble(hit, new PointerEventArgs(x, y, button, hit), PointerEventKind.Down);
+        }
+
+        private void UpdateDrag(float x, float y)
+        {
+            if (_pressed == null)
+            {
+                return;
+            }
+
+            if (!_dragging)
+            {
+                if (Math.Abs(x - _pressX) < DRAG_THRESHOLD && Math.Abs(y - _pressY) < DRAG_THRESHOLD)
+                {
+                    return;
+                }
+
+                _dragging = true;
+                RaiseDrag(x, y, PointerEventKind.DragStart);
+                return;
+            }
+
+            RaiseDrag(x, y, PointerEventKind.Drag);
+        }
+
+        private void EndDrag(float x, float y)
+        {
+            if (!_dragging)
+            {
+                return;
+            }
+
+            _dragging = false;
+            RaiseDrag(x, y, PointerEventKind.DragEnd);
+        }
+
+        private void RaiseDrag(float x, float y, PointerEventKind kind)
+        {
+            var args = new DragEventArgs(x, y, _pressedButton, _pressed,
+                x - _lastDragX, y - _lastDragY, x - _pressX, y - _pressY);
+
+            _lastDragX = x;
+            _lastDragY = y;
+
+            Bubble(_pressed, args, kind);
+        }
+
+        private bool IsDoubleClick(VisualElement hit, float x, float y)
+        {
+            long now = TimeSource.Milliseconds;
+
+            bool doubled = hit == _lastClicked
+                && now - _lastClickTime <= DOUBLE_CLICK_DELAY
+                && Math.Abs(x - _lastClickX) <= DOUBLE_CLICK_DISTANCE
+                && Math.Abs(y - _lastClickY) <= DOUBLE_CLICK_DISTANCE;
+
+            _lastClicked = doubled ? null : hit;
+            _lastClickTime = now;
+            _lastClickX = x;
+            _lastClickY = y;
+
+            return doubled;
         }
 
         internal void Up(VisualElement root, float x, float y, PointerButton button, bool trackStates)
@@ -143,13 +231,22 @@ namespace Ixen.Core.Input
             UpdateHover(hit, x, y);
             Bubble(target, new PointerEventArgs(x, y, button, target), PointerEventKind.Up);
 
+            EndDrag(x, y);
+
             bool isClick = hit != null && hit == _pressed;
 
             _pressed = null;
 
-            if (isClick)
+            if (!isClick)
             {
-                Bubble(hit, new PointerEventArgs(x, y, button, hit), PointerEventKind.Click);
+                return;
+            }
+
+            Bubble(hit, new PointerEventArgs(x, y, button, hit), PointerEventKind.Click);
+
+            if (IsDoubleClick(hit, x, y))
+            {
+                Bubble(hit, new PointerEventArgs(x, y, button, hit), PointerEventKind.DoubleClick);
             }
         }
 
@@ -232,6 +329,22 @@ namespace Ixen.Core.Input
 
                     case PointerEventKind.Click:
                         element.RaisePointerClick(args);
+                        break;
+
+                    case PointerEventKind.DoubleClick:
+                        element.RaisePointerDoubleClick(args);
+                        break;
+
+                    case PointerEventKind.DragStart:
+                        element.RaisePointerDragStart((DragEventArgs)args);
+                        break;
+
+                    case PointerEventKind.Drag:
+                        element.RaisePointerDrag((DragEventArgs)args);
+                        break;
+
+                    case PointerEventKind.DragEnd:
+                        element.RaisePointerDragEnd((DragEventArgs)args);
                         break;
                 }
 

@@ -13,6 +13,10 @@ namespace Ixen.Core.Visual
         public event EventHandler<PointerEventArgs> PointerEnter;
         public event EventHandler<PointerEventArgs> PointerLeave;
         public event EventHandler<WheelEventArgs> PointerWheel;
+        public event EventHandler<PointerEventArgs> PointerDoubleClick;
+        public event EventHandler<DragEventArgs> PointerDragStart;
+        public event EventHandler<DragEventArgs> PointerDrag;
+        public event EventHandler<DragEventArgs> PointerDragEnd;
 
         internal void RaisePointerDown(PointerEventArgs args) => PointerDown?.Invoke(this, args);
         internal void RaisePointerUp(PointerEventArgs args) => PointerUp?.Invoke(this, args);
@@ -21,6 +25,10 @@ namespace Ixen.Core.Visual
         internal void RaisePointerEnter(PointerEventArgs args) => PointerEnter?.Invoke(this, args);
         internal void RaisePointerLeave(PointerEventArgs args) => PointerLeave?.Invoke(this, args);
         internal void RaisePointerWheel(WheelEventArgs args) => PointerWheel?.Invoke(this, args);
+        internal void RaisePointerDoubleClick(PointerEventArgs args) => PointerDoubleClick?.Invoke(this, args);
+        internal void RaisePointerDragStart(DragEventArgs args) => PointerDragStart?.Invoke(this, args);
+        internal void RaisePointerDrag(DragEventArgs args) => PointerDrag?.Invoke(this, args);
+        internal void RaisePointerDragEnd(DragEventArgs args) => PointerDragEnd?.Invoke(this, args);
 
         public event EventHandler<KeyEventArgs> KeyDown;
         public event EventHandler<KeyEventArgs> KeyUp;

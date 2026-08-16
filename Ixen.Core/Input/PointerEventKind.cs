@@ -5,6 +5,10 @@ namespace Ixen.Core.Input
         Down,
         Up,
         Move,
-        Click
+        Click,
+        DoubleClick,
+        DragStart,
+        Drag,
+        DragEnd
     }
 }
