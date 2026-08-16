@@ -1,5 +1,6 @@
 using Ixen.Core.Input;
 using System;
+using System.Collections.Generic;
 
 namespace Ixen.Core.Visual
 {
@@ -7,14 +8,35 @@ namespace Ixen.Core.Visual
     {
         public event EventHandler<EventArgs> TextChanged;
 
+        public const char DEFAULT_PASSWORD_CHAR = '\u25CF';
+
+        private const int UNDO_LIMIT = 100;
+
         private int _caret;
         private int _anchor;
+
+        private char _passwordChar;
+        private string _placeholder;
+
+        private readonly List<Snapshot> _undo = new List<Snapshot>();
+        private readonly List<Snapshot> _redo = new List<Snapshot>();
+
+        private bool _editing;
+        private bool _coalescing;
+
+        private struct Snapshot
+        {
+            internal string Text;
+            internal int Caret;
+            internal int Anchor;
+        }
 
         internal float[] CaretOffsets { get; set; }
         internal int CaretOffsetCount { get; set; }
         internal float ContentOffset { get; set; }
         internal bool CaretVisible { get; set; } = true;
         internal bool IsFocused { get; set; }
+        internal IClipboard Clipboard { get; set; }
 
         public TextField()
         {
@@ -34,6 +56,121 @@ namespace Ixen.Core.Visual
             {
                 base.Text = value;
                 ClampCaret();
+
+                if (_editing)
+                {
+                    return;
+                }
+
+                _undo.Clear();
+                _redo.Clear();
+                _coalescing = false;
+            }
+        }
+
+        public char PasswordChar
+        {
+            get => _passwordChar;
+            set
+            {
+                if (_passwordChar == value)
+                {
+                    return;
+                }
+
+                _passwordChar = value;
+                InvalidateLayout();
+            }
+        }
+
+        public bool Password
+        {
+            get => IsMasked;
+            set
+            {
+                if (value == IsMasked)
+                {
+                    return;
+                }
+
+                PasswordChar = value ? DEFAULT_PASSWORD_CHAR : '\0';
+            }
+        }
+
+        public string Placeholder
+        {
+            get => _placeholder;
+            set
+            {
+                if (_placeholder == value)
+                {
+                    return;
+                }
+
+                _placeholder = value;
+                InvalidateLayout();
+            }
+        }
+
+        internal bool IsMasked => _passwordChar != '\0';
+
+        internal string DisplayText
+            => IsMasked ? new string(_passwordChar, Value.Length) : Value;
+
+        internal bool ShowsPlaceholder
+            => Value.Length == 0 && !string.IsNullOrEmpty(_placeholder);
+
+        public bool CanUndo => _undo.Count > 0;
+        public bool CanRedo => _redo.Count > 0;
+
+        public void Undo() => Step(_undo, _redo);
+
+        public void Redo() => Step(_redo, _undo);
+
+        private void Step(List<Snapshot> from, List<Snapshot> to)
+        {
+            if (from.Count == 0)
+            {
+                return;
+            }
+
+            Snapshot snapshot = from[from.Count - 1];
+            from.RemoveAt(from.Count - 1);
+
+            to.Add(Current());
+            Apply(snapshot);
+
+            _coalescing = false;
+            TextChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        private Snapshot Current()
+            => new Snapshot { Text = Value, Caret = _caret, Anchor = _anchor };
+
+        private void Apply(Snapshot snapshot)
+        {
+            _editing = true;
+            Text = snapshot.Text;
+            _editing = false;
+
+            _caret = Clamp(snapshot.Caret, Value.Length);
+            _anchor = Clamp(snapshot.Anchor, Value.Length);
+        }
+
+        private void PushUndo(bool coalesce)
+        {
+            if (coalesce && _coalescing)
+            {
+                return;
+            }
+
+            _undo.Add(Current());
+            _redo.Clear();
+            _coalescing = coalesce;
+
+            if (_undo.Count > UNDO_LIMIT)
+            {
+                _undo.RemoveAt(0);
             }
         }
 
@@ -57,11 +194,58 @@ namespace Ixen.Core.Visual
 
             _caret = Clamp(caret, length);
             _anchor = Clamp(anchor, length);
+            _coalescing = false;
 
             InvalidateLayout();
         }
 
         public void SelectAll() => Select(Value.Length, 0);
+
+        public void Copy()
+        {
+            if (Clipboard != null && SelectionLength > 0 && !IsMasked)
+            {
+                Clipboard.SetText(SelectedText);
+            }
+        }
+
+        public void Cut()
+        {
+            if (Clipboard == null || SelectionLength == 0 || IsMasked)
+            {
+                return;
+            }
+
+            Copy();
+            Delete(false);
+        }
+
+        public void Paste()
+        {
+            string text = Clipboard?.GetText();
+
+            if (string.IsNullOrEmpty(text))
+            {
+                return;
+            }
+
+            Insert(Printable(text));
+        }
+
+        private static string Printable(string text)
+        {
+            var builder = new System.Text.StringBuilder(text.Length);
+
+            foreach (char c in text)
+            {
+                if (!char.IsControl(c))
+                {
+                    builder.Append(c);
+                }
+            }
+
+            return builder.ToString();
+        }
 
         public void Insert(string text)
         {
@@ -74,7 +258,8 @@ namespace Ixen.Core.Visual
             int start = SelectionStart;
             int length = SelectionLength;
 
-            Replace(value.Substring(0, start) + text + value.Substring(start + length), start + text.Length);
+            Replace(value.Substring(0, start) + text + value.Substring(start + length), start + text.Length,
+                text.Length == 1 && length == 0 && !char.IsWhiteSpace(text[0]));
         }
 
         public void Delete(bool forward)
@@ -104,12 +289,20 @@ namespace Ixen.Core.Visual
             }
         }
 
-        private void Replace(string value, int caret)
+        private void Replace(string value, int caret, bool coalesce = false)
         {
+            PushUndo(coalesce);
+
             _caret = caret;
             _anchor = caret;
 
+            _editing = true;
             Text = value;
+            _editing = false;
+
+            _caret = Clamp(caret, Value.Length);
+            _anchor = _caret;
+
             TextChanged?.Invoke(this, EventArgs.Empty);
         }
 
@@ -174,6 +367,59 @@ namespace Ixen.Core.Visual
                     }
 
                     SelectAll();
+                    break;
+
+                case Key.C:
+                    if (!args.HasModifier(KeyModifiers.Control))
+                    {
+                        return;
+                    }
+
+                    Copy();
+                    break;
+
+                case Key.X:
+                    if (!args.HasModifier(KeyModifiers.Control))
+                    {
+                        return;
+                    }
+
+                    Cut();
+                    break;
+
+                case Key.V:
+                    if (!args.HasModifier(KeyModifiers.Control))
+                    {
+                        return;
+                    }
+
+                    Paste();
+                    break;
+
+                case Key.Z:
+                    if (!args.HasModifier(KeyModifiers.Control))
+                    {
+                        return;
+                    }
+
+                    if (args.HasModifier(KeyModifiers.Shift))
+                    {
+                        Redo();
+                    }
+                    else
+                    {
+                        Undo();
+                    }
+
+                    break;
+
+                case Key.Y:
+                    if (!args.HasModifier(KeyModifiers.Control))
+                    {
+                        return;
+                    }
+
+                    Redo();
                     break;
 
                 default:

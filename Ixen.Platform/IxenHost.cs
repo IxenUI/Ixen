@@ -12,7 +12,8 @@ namespace Ixen.Platform
         private readonly IxenSurface _surface;
         private readonly Action _requestRepaint;
 
-        public IxenHost(IxenSurface surface, Action requestRepaint, IScheduler scheduler = null)
+        public IxenHost(IxenSurface surface, Action requestRepaint, IScheduler scheduler = null,
+            IClipboard clipboard = null)
         {
             _surface = surface ?? throw new ArgumentNullException(nameof(surface));
             _requestRepaint = requestRepaint;
@@ -20,6 +21,11 @@ namespace Ixen.Platform
             if (scheduler != null)
             {
                 _surface.Scheduler = new HostScheduler(this, scheduler);
+            }
+
+            if (clipboard != null)
+            {
+                _surface.Clipboard = clipboard;
             }
         }
 

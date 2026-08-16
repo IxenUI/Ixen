@@ -127,7 +127,7 @@ namespace Ixen.Core.Visual.Computers
                 return;
             }
 
-            string value = field.Text ?? string.Empty;
+            string value = field.DisplayText;
             FontSpec fontSpec = FontSpec.From(field.StylesHandlers);
 
             lines.Add(value);
@@ -145,6 +145,14 @@ namespace Ixen.Core.Visual.Computers
 
             width = offsets[value.Length];
             height = _textMeasurer.GetLineHeight(fontSpec);
+
+            if (!field.ShowsPlaceholder)
+            {
+                return;
+            }
+
+            _textMeasurer.MeasureText(field.Placeholder, fontSpec, out float placeholder, out _);
+            width = Math.Max(width, placeholder);
         }
 
         private static float[] EnsureCaretOffsets(TextField field, int count)

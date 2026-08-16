@@ -7,6 +7,14 @@ using System.Collections.Generic;
 
 namespace Ixen.Core.UT.Input
 {
+    internal class FakeClipboard : IClipboard
+    {
+        internal string Text;
+
+        public string GetText() => Text;
+        public void SetText(string text) => Text = text;
+    }
+
     [TestClass]
     public class TextFieldTests
     {
@@ -309,6 +317,268 @@ namespace Ixen.Core.UT.Input
 
             Assert.IsTrue(_surface.IsDirty);
             Assert.IsFalse(_root.IsLayoutDirty, "blinking is a repaint, not a layout");
+        }
+
+        [TestMethod]
+        public void CopyAndPasteGoThroughTheClipboard()
+        {
+            var clipboard = new FakeClipboard();
+            _surface.Clipboard = clipboard;
+            _surface.Focus(_field);
+
+            _field.Text = "hello world";
+            _field.Select(5, 0);
+            Layout();
+
+            Press(Key.C, KeyModifiers.Control);
+
+            Assert.AreEqual("hello", clipboard.Text);
+            Assert.AreEqual("hello world", _field.Text, "a copy changes nothing");
+
+            _field.CaretIndex = 11;
+            Press(Key.V, KeyModifiers.Control);
+
+            Assert.AreEqual("hello worldhello", _field.Text);
+        }
+
+        [TestMethod]
+        public void CutCopiesAndRemoves()
+        {
+            var clipboard = new FakeClipboard();
+            _surface.Clipboard = clipboard;
+            _surface.Focus(_field);
+
+            _field.Text = "hello world";
+            _field.Select(0, 6);
+            Layout();
+
+            Press(Key.X, KeyModifiers.Control);
+
+            Assert.AreEqual("hello ", clipboard.Text);
+            Assert.AreEqual("world", _field.Text);
+            Assert.AreEqual(0, _field.CaretIndex);
+        }
+
+        [TestMethod]
+        public void PastingReplacesTheSelectionAndDropsControlCharacters()
+        {
+            var clipboard = new FakeClipboard { Text = "one\r\ntwo" };
+            _surface.Clipboard = clipboard;
+            _surface.Focus(_field);
+
+            _field.Text = "[xx]";
+            _field.Select(1, 3);
+            Layout();
+
+            Press(Key.V, KeyModifiers.Control);
+
+            Assert.AreEqual("[onetwo]", _field.Text, "a field is single-line, so newlines are dropped");
+        }
+
+        [TestMethod]
+        public void WithNoClipboardTheShortcutsDoNothing()
+        {
+            _surface.Focus(_field);
+            _field.Text = "hello";
+            _field.SelectAll();
+            Layout();
+
+            Press(Key.C, KeyModifiers.Control);
+            Press(Key.X, KeyModifiers.Control);
+            Press(Key.V, KeyModifiers.Control);
+
+            Assert.AreEqual("hello", _field.Text, "a host with no clipboard keeps every other edit");
+        }
+
+        [TestMethod]
+        public void CopyingNothingLeavesTheClipboardAlone()
+        {
+            var clipboard = new FakeClipboard { Text = "kept" };
+            _surface.Clipboard = clipboard;
+            _surface.Focus(_field);
+
+            _field.Text = "hello";
+            _field.CaretIndex = 2;
+            Layout();
+
+            Press(Key.C, KeyModifiers.Control);
+
+            Assert.AreEqual("kept", clipboard.Text);
+        }
+
+        [TestMethod]
+        public void APlaceholderShowsOnlyWhileTheValueIsEmpty()
+        {
+            _field.Placeholder = "your name";
+
+            Assert.IsTrue(_field.ShowsPlaceholder);
+
+            _surface.Focus(_field);
+            Type("a");
+
+            Assert.IsFalse(_field.ShowsPlaceholder, "it is about the value, not the focus");
+
+            Press(Key.Backspace);
+
+            Assert.IsTrue(_field.ShowsPlaceholder);
+        }
+
+        [TestMethod]
+        public void APasswordFieldMasksItsValueButKeepsIt()
+        {
+            _field.Text = "secret";
+            _field.PasswordChar = '*';
+            Layout();
+
+            Assert.AreEqual("secret", _field.Text, "the value itself is untouched");
+            Assert.AreEqual("******", _field.DisplayText);
+            Assert.AreEqual("******", _field.TextLines[0], "what is drawn is the mask");
+        }
+
+        [TestMethod]
+        public void ThePasswordSwitchUsesTheBulletAndAnyCharacterStillWorks()
+        {
+            _field.Text = "secret";
+            _field.Password = true;
+            Layout();
+
+            Assert.AreEqual(new string(TextField.DEFAULT_PASSWORD_CHAR, 6), _field.DisplayText);
+            Assert.AreEqual('\u25CF', _field.PasswordChar, "the default mask is a bullet");
+
+            _field.PasswordChar = '#';
+            Layout();
+
+            Assert.AreEqual("######", _field.DisplayText);
+            Assert.IsTrue(_field.Password, "the switch reads the character, it does not shadow it");
+
+            _field.Password = false;
+
+            Assert.AreEqual("secret", _field.DisplayText);
+            Assert.AreEqual('\0', _field.PasswordChar);
+        }
+
+        [TestMethod]
+        public void APasswordFieldCannotBeCopied()
+        {
+            var clipboard = new FakeClipboard { Text = "kept" };
+            _surface.Clipboard = clipboard;
+            _surface.Focus(_field);
+
+            _field.Text = "secret";
+            _field.PasswordChar = '*';
+            _field.SelectAll();
+            Layout();
+
+            Press(Key.C, KeyModifiers.Control);
+            Press(Key.X, KeyModifiers.Control);
+
+            Assert.AreEqual("kept", clipboard.Text, "a masked value never leaves the field");
+            Assert.AreEqual("secret", _field.Text, "and cutting it is refused too");
+        }
+
+        [TestMethod]
+        public void UndoRestoresTheTextAndTheCaret()
+        {
+            _surface.Focus(_field);
+            _field.Text = "hello";
+            _field.CaretIndex = 5;
+            Layout();
+
+            Press(Key.Backspace);
+
+            Assert.AreEqual("hell", _field.Text);
+
+            Press(Key.Z, KeyModifiers.Control);
+
+            Assert.AreEqual("hello", _field.Text);
+            Assert.AreEqual(5, _field.CaretIndex);
+        }
+
+        [TestMethod]
+        public void TypingARunCollapsesIntoOneUndoStep()
+        {
+            _surface.Focus(_field);
+
+            Type("a");
+            Type("b");
+            Type("c");
+
+            Press(Key.Z, KeyModifiers.Control);
+
+            Assert.AreEqual(string.Empty, _field.Text, "a run of characters undoes in one go");
+        }
+
+        [TestMethod]
+        public void ASpaceAndACaretMoveBreakTheRun()
+        {
+            _surface.Focus(_field);
+
+            Type("ab");
+            Type(" ");
+            Type("cd");
+
+            Press(Key.Z, KeyModifiers.Control);
+
+            Assert.AreEqual("ab ", _field.Text);
+
+            Press(Key.Z, KeyModifiers.Control);
+
+            Assert.AreEqual("ab", _field.Text, "the space is its own step");
+        }
+
+        [TestMethod]
+        public void RedoPutsItBack()
+        {
+            _surface.Focus(_field);
+            Type("hello");
+
+            Press(Key.Z, KeyModifiers.Control);
+            Assert.AreEqual(string.Empty, _field.Text);
+
+            Press(Key.Y, KeyModifiers.Control);
+            Assert.AreEqual("hello", _field.Text);
+
+            Press(Key.Z, KeyModifiers.Control);
+            Press(Key.Z, KeyModifiers.Shift | KeyModifiers.Control);
+            Assert.AreEqual("hello", _field.Text, "Ctrl+Shift+Z redoes too");
+        }
+
+        [TestMethod]
+        public void AnEditAfterAnUndoDropsTheRedo()
+        {
+            _surface.Focus(_field);
+            Type("ab");
+
+            Press(Key.Z, KeyModifiers.Control);
+            Type("c");
+
+            Assert.IsFalse(_field.CanRedo);
+            Assert.AreEqual("c", _field.Text);
+        }
+
+        [TestMethod]
+        public void AssigningTextResetsTheHistory()
+        {
+            _surface.Focus(_field);
+            Type("typed");
+
+            Assert.IsTrue(_field.CanUndo);
+
+            _field.Text = "assigned";
+
+            Assert.IsFalse(_field.CanUndo, "an assignment is a new baseline, not an undoable edit");
+        }
+
+        [TestMethod]
+        public void UndoingWithNoHistoryDoesNothing()
+        {
+            _surface.Focus(_field);
+            _field.Text = "hello";
+            Layout();
+
+            Press(Key.Z, KeyModifiers.Control);
+
+            Assert.AreEqual("hello", _field.Text);
         }
 
         [TestMethod]

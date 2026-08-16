@@ -7,9 +7,13 @@ namespace Ixen.Core.Rendering
     internal class TextRenderer
     {
         private const byte SELECTION_ALPHA = 0x40;
+        private const byte PLACEHOLDER_ALPHA = 0x80;
 
         private Brush _selectionBrush;
         private Color _selectionSource;
+
+        private Brush _dimmedBrush;
+        private Color _dimmedSource;
 
         private Brush SelectionBrush(Color source)
         {
@@ -22,6 +26,19 @@ namespace Ixen.Core.Rendering
             _selectionBrush = new Brush(source.WithAlpha(SELECTION_ALPHA));
 
             return _selectionBrush;
+        }
+
+        private Brush DimmedBrush(Color source)
+        {
+            if (_dimmedBrush != null && _dimmedSource.Equals(source))
+            {
+                return _dimmedBrush;
+            }
+
+            _dimmedSource = source;
+            _dimmedBrush = new Brush(source.WithAlpha(PLACEHOLDER_ALPHA));
+
+            return _dimmedBrush;
         }
 
         internal void Render(VisualElement element, RendererContext context)
@@ -111,7 +128,15 @@ namespace Ixen.Core.Rendering
                     SelectionBrush(handlers.Color.Brush.Color));
             }
 
-            context.DrawText(value, x, top, fontSpec, handlers.Color.Brush);
+            if (field.ShowsPlaceholder)
+            {
+                context.DrawText(field.Placeholder, x, top, fontSpec,
+                    DimmedBrush(handlers.Color.Brush.Color));
+            }
+            else
+            {
+                context.DrawText(value, x, top, fontSpec, handlers.Color.Brush);
+            }
 
             if (field.CaretVisible && field.IsFocused)
             {

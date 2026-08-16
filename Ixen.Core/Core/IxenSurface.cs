@@ -122,8 +122,22 @@ namespace Ixen.Core
         private const int CARET_BLINK_DELAY = 530;
 
         private IScheduler _scheduler;
+        private IClipboard _clipboard;
         private IDisposable _caretBlink;
         private TextField _caretField;
+
+        internal IClipboard Clipboard
+        {
+            set
+            {
+                _clipboard = value;
+
+                if (_caretField != null)
+                {
+                    _caretField.Clipboard = value;
+                }
+            }
+        }
 
         internal IScheduler Scheduler
         {
@@ -154,6 +168,7 @@ namespace Ixen.Core
 
             _caretField.IsFocused = true;
             _caretField.CaretVisible = true;
+            _caretField.Clipboard = _clipboard;
 
             InvalidateVisual();
 
