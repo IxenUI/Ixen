@@ -31,40 +31,35 @@ namespace Ixen.Core.Visual.Computers
 
             ResolveBorders(element);
 
-            float contentWidth = Math.Max(0, availableWidth - element.HorizontalPadding - element.HorizontalBorderInside);
-            float contentHeight = Math.Max(0, availableHeight - element.VerticalPadding - element.VerticalBorderInside);
+            bool scrollable = element.Scrollable;
+
+            if (scrollable)
+            {
+                element.ScrollbarGutterWidth = 0;
+                element.ScrollbarGutterHeight = 0;
+            }
 
             LayoutType type = LayoutTypeOf(element);
 
-            switch (type)
-            {
-                case LayoutType.Grid:
-                    MeasureGrid(element, contentWidth, contentHeight);
-                    break;
+            float contentWidth = ContentSize(element, availableWidth, true);
+            float contentHeight = ContentSize(element, availableHeight, false);
 
-                case LayoutType.Absolute:
-                    MeasureAnchored(element, contentWidth, contentHeight);
-                    break;
-
-                case LayoutType.Fixed:
-                    MeasureAnchored(element, _viewportWidth, _viewportHeight);
-                    break;
-
-                case LayoutType.Dock:
-                    MeasureDock(element, contentWidth, contentHeight);
-                    break;
-
-                default:
-                    MeasureChildren(element, contentWidth, contentHeight);
-                    break;
-            }
-
-            LayoutText(element, contentWidth, out float textWidth, out float textHeight);
-
-            bool scrollable = element.Scrollable;
+            MeasureContent(element, type, contentWidth, contentHeight, out float textWidth, out float textHeight);
 
             float aggregateWidth = widthIsDefinite && !scrollable ? 0 : AggregateWidth(element, type);
             float aggregateHeight = heightIsDefinite && !scrollable ? 0 : AggregateHeight(element, type);
+
+            if (scrollable && ReserveGutters(element, aggregateWidth, aggregateHeight,
+                textWidth, textHeight, contentWidth, contentHeight))
+            {
+                contentWidth = ContentSize(element, availableWidth, true);
+                contentHeight = ContentSize(element, availableHeight, false);
+
+                MeasureContent(element, type, contentWidth, contentHeight, out textWidth, out textHeight);
+
+                aggregateWidth = AggregateWidth(element, type);
+                aggregateHeight = AggregateHeight(element, type);
+            }
 
             element.Width = widthIsDefinite
                 ? availableWidth
@@ -92,6 +87,61 @@ namespace Ixen.Core.Visual.Computers
             {
                 MeasureScrollbars(element, scrollable);
             }
+        }
+
+        private float ContentSize(VisualElement element, float available, bool horizontal)
+        {
+            float taken = horizontal
+                ? element.HorizontalPadding + element.HorizontalBorderInside + element.ScrollbarGutterWidth
+                : element.VerticalPadding + element.VerticalBorderInside + element.ScrollbarGutterHeight;
+
+            return Math.Max(0, available - taken);
+        }
+
+        private void MeasureContent(VisualElement element, LayoutType type, float contentWidth, float contentHeight,
+            out float textWidth, out float textHeight)
+        {
+            switch (type)
+            {
+                case LayoutType.Grid:
+                    MeasureGrid(element, contentWidth, contentHeight);
+                    break;
+
+                case LayoutType.Absolute:
+                    MeasureAnchored(element, contentWidth, contentHeight);
+                    break;
+
+                case LayoutType.Fixed:
+                    MeasureAnchored(element, _viewportWidth, _viewportHeight);
+                    break;
+
+                case LayoutType.Dock:
+                    MeasureDock(element, contentWidth, contentHeight);
+                    break;
+
+                default:
+                    MeasureChildren(element, contentWidth, contentHeight);
+                    break;
+            }
+
+            LayoutText(element, contentWidth, out textWidth, out textHeight);
+        }
+
+        private bool ReserveGutters(VisualElement element, float aggregateWidth, float aggregateHeight,
+            float textWidth, float textHeight, float contentWidth, float contentHeight)
+        {
+            float vertical = Math.Max(aggregateHeight, textHeight) > contentHeight ? Scrollbar.THICKNESS : 0;
+            float horizontal = Math.Max(aggregateWidth, textWidth) > contentWidth ? Scrollbar.THICKNESS : 0;
+
+            if (element.ScrollbarGutterWidth == vertical && element.ScrollbarGutterHeight == horizontal)
+            {
+                return false;
+            }
+
+            element.ScrollbarGutterWidth = vertical;
+            element.ScrollbarGutterHeight = horizontal;
+
+            return true;
         }
 
         private void MeasureScrollbars(VisualElement element, bool scrollable)

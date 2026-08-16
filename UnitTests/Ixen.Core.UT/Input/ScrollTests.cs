@@ -50,7 +50,8 @@ namespace Ixen.Core.UT.Input
 
             for (int i = 0; i < childCount; i++)
             {
-                VisualElement item = Box($"item{i}", 100, 40);
+                VisualElement item = Element($"item{i}");
+                item.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 40 };
                 viewport.AddChild(item);
 
                 first = first ?? item;
@@ -165,11 +166,18 @@ namespace Ixen.Core.UT.Input
             VisualElement outer = Box("outer", 100, 100);
             outer.Scrollable = true;
 
-            VisualElement inner = Box("inner", 100, 60);
+            VisualElement inner = Element("inner");
+            inner.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 60 };
             inner.Scrollable = true;
-            inner.AddChild(Box("innerContent", 100, 40));
 
-            outer.AddChildren(inner, Box("filler", 100, 200));
+            VisualElement innerContent = Element("innerContent");
+            innerContent.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 40 };
+            inner.AddChild(innerContent);
+
+            VisualElement filler = Element("filler");
+            filler.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 200 };
+
+            outer.AddChildren(inner, filler);
             root.AddChild(outer);
 
             IxenSurface surface = Laid(root);
@@ -189,7 +197,13 @@ namespace Ixen.Core.UT.Input
             VisualElement viewport = Box("viewport", 100, 100);
             viewport.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Row };
             viewport.Scrollable = true;
-            viewport.AddChildren(Box("a", 80, 100), Box("b", 80, 100));
+            VisualElement a = Element("a");
+            a.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
+
+            VisualElement b = Element("b");
+            b.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
+
+            viewport.AddChildren(a, b);
             root.AddChild(viewport);
 
             IxenSurface surface = Laid(root);

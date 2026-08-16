@@ -80,11 +80,14 @@
                 + MarginTop + MarginBottom
                 + BorderOutsideTop + BorderOutsideBottom;
 
+        internal float ScrollbarGutterWidth { get; set; }
+        internal float ScrollbarGutterHeight { get; set; }
+
         internal float ContentWidth
         {
             get
             {
-                float value = Width - HorizontalPadding - HorizontalBorderInside;
+                float value = Width - HorizontalPadding - HorizontalBorderInside - ScrollbarGutterWidth;
                 return value < 0 ? 0 : value;
             }
         }
@@ -93,7 +96,7 @@
         {
             get
             {
-                float value = Height - VerticalPadding - VerticalBorderInside;
+                float value = Height - VerticalPadding - VerticalBorderInside - ScrollbarGutterHeight;
                 return value < 0 ? 0 : value;
             }
         }

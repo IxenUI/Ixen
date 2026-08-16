@@ -14,6 +14,14 @@ namespace Ixen.Core.UT.Input
         private VisualElement _viewport;
         private IxenSurface _surface;
 
+        private static VisualElement Row(string name, float height)
+        {
+            var element = new VisualElement { Name = name };
+            element.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
+            element.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = height };
+            return element;
+        }
+
         private static VisualElement Box(string name, float width, float height)
         {
             var element = new VisualElement { Name = name };
@@ -34,7 +42,7 @@ namespace Ixen.Core.UT.Input
 
             for (int i = 0; i < 5; i++)
             {
-                _viewport.AddChild(Box($"item{i}", 100, 40));
+                _viewport.AddChild(Row($"item{i}", 40));
             }
 
             root.AddChild(_viewport);
@@ -218,7 +226,7 @@ namespace Ixen.Core.UT.Input
         {
             VisualElement small = Box("small", 100, 2 * Scrollbar.THICKNESS);
             small.Scrollable = true;
-            small.AddChild(Box("tall", 100, 200));
+            small.AddChild(Row("tall", 200));
 
             var root = new VisualElement { Name = "root" };
             root.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
