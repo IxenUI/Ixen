@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31919.166
+# Visual Studio Version 18
+VisualStudioVersion = 18.8.12105.206 oobstable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ixen.Core", "Ixen.Core\Ixen.Core.csproj", "{CE0D7D46-CD08-4C86-BD59-E36563E8F98D}"
 EndProject
@@ -14,8 +14,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnitTests", "UnitTests", "{7217EBAA-6731-4F4C-AA8B-FD2892EE04DA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ixen.Core.UT", "UnitTests\Ixen.Core.UT\Ixen.Core.UT.csproj", "{962BF660-0B37-434A-9D48-DB60844C1966}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ixen.View.WPF", "Ixen.View.WPF\Ixen.View.WPF.csproj", "{44519A2B-FED0-4E84-AA10-56FC9390A91C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ixen.View.Android", "Ixen.View.Android\Ixen.View.Android.csproj", "{91DAF25F-484C-4A3C-BDAC-3EBF1BEE7178}"
 EndProject
@@ -91,18 +89,6 @@ Global
 		{962BF660-0B37-434A-9D48-DB60844C1966}.Release|x64.Build.0 = Release|Any CPU
 		{962BF660-0B37-434A-9D48-DB60844C1966}.Release|x86.ActiveCfg = Release|Any CPU
 		{962BF660-0B37-434A-9D48-DB60844C1966}.Release|x86.Build.0 = Release|Any CPU
-		{44519A2B-FED0-4E84-AA10-56FC9390A91C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{44519A2B-FED0-4E84-AA10-56FC9390A91C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{44519A2B-FED0-4E84-AA10-56FC9390A91C}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{44519A2B-FED0-4E84-AA10-56FC9390A91C}.Debug|x64.Build.0 = Debug|Any CPU
-		{44519A2B-FED0-4E84-AA10-56FC9390A91C}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{44519A2B-FED0-4E84-AA10-56FC9390A91C}.Debug|x86.Build.0 = Debug|Any CPU
-		{44519A2B-FED0-4E84-AA10-56FC9390A91C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{44519A2B-FED0-4E84-AA10-56FC9390A91C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{44519A2B-FED0-4E84-AA10-56FC9390A91C}.Release|x64.ActiveCfg = Release|Any CPU
-		{44519A2B-FED0-4E84-AA10-56FC9390A91C}.Release|x64.Build.0 = Release|Any CPU
-		{44519A2B-FED0-4E84-AA10-56FC9390A91C}.Release|x86.ActiveCfg = Release|Any CPU
-		{44519A2B-FED0-4E84-AA10-56FC9390A91C}.Release|x86.Build.0 = Release|Any CPU
 		{91DAF25F-484C-4A3C-BDAC-3EBF1BEE7178}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{91DAF25F-484C-4A3C-BDAC-3EBF1BEE7178}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{91DAF25F-484C-4A3C-BDAC-3EBF1BEE7178}.Debug|x64.ActiveCfg = Debug|Any CPU
