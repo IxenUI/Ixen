@@ -24,7 +24,13 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(19, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(20, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+        }
+
+        [TestMethod]
+        public void TheCursorSurvivesGeneration()
+        {
+            Assert.AreEqual(CursorKind.Hand, Style<CursorStyleDescriptor>().Value);
         }
 
         [TestMethod]

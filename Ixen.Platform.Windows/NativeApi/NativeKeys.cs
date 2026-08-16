@@ -9,6 +9,23 @@ namespace Ixen.Platform.Windows.NativeApi
         Char = 2
     }
 
+    internal static class NativeCursors
+    {
+        internal static int ToNative(Ixen.Core.Visual.Styles.Descriptors.CursorKind kind)
+        {
+            switch (kind)
+            {
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.Hand: return 1;
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.Text: return 2;
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.Wait: return 3;
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.Crosshair: return 4;
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.ResizeHorizontal: return 5;
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.ResizeVertical: return 6;
+                default: return 0;
+            }
+        }
+    }
+
     internal static class NativeKeys
     {
         private const int MOD_SHIFT = 1;

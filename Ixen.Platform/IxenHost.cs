@@ -1,6 +1,7 @@
 using Ixen.Core;
 using Ixen.Core.Input;
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Styles.Descriptors;
 using SkiaSharp;
 using System;
 using System.Text;
@@ -13,10 +14,15 @@ namespace Ixen.Platform
         private readonly Action _requestRepaint;
 
         public IxenHost(IxenSurface surface, Action requestRepaint, IScheduler scheduler = null,
-            IClipboard clipboard = null)
+            IClipboard clipboard = null, Action<CursorKind> setCursor = null)
         {
             _surface = surface ?? throw new ArgumentNullException(nameof(surface));
             _requestRepaint = requestRepaint;
+
+            if (setCursor != null)
+            {
+                _surface.CursorSetter = setCursor;
+            }
 
             if (scheduler != null)
             {

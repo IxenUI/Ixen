@@ -4,6 +4,7 @@ using Ixen.Core.Rendering;
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Computers;
+using Ixen.Core.Visual.Styles.Descriptors;
 using SkiaSharp;
 using System;
 
@@ -140,8 +141,54 @@ namespace Ixen.Core
             }
         }
 
+        private Action<CursorKind> _cursorSetter;
+        private CursorKind _cursor = CursorKind.Default;
+
+        internal Action<CursorKind> CursorSetter
+        {
+            set
+            {
+                _cursorSetter = value;
+                _cursor = CursorKind.Unset;
+                SyncCursor();
+            }
+        }
+
+        internal CursorKind Cursor => _cursor;
+
+        private void SyncCursor()
+        {
+            CursorKind resolved = CursorAt(_pointerDispatcher.Hovered);
+
+            if (resolved == _cursor)
+            {
+                return;
+            }
+
+            _cursor = resolved;
+            _cursorSetter?.Invoke(resolved);
+        }
+
+        private static CursorKind CursorAt(VisualElement element)
+        {
+            for (VisualElement current = element; current != null; current = current.Parent)
+            {
+                CursorStyleDescriptor descriptor = current.StylesHandlers?.Cursor?.Descriptor;
+
+                if (descriptor != null && descriptor.Value != CursorKind.Unset)
+                {
+                    return descriptor.Value;
+                }
+            }
+
+            return CursorKind.Default;
+        }
+
         internal void PointerLeaveSurface()
-            => _pointerDispatcher.LeaveSurface(TrackStates);
+        {
+            _pointerDispatcher.LeaveSurface(TrackStates);
+            SyncCursor();
+        }
 
         internal VisualElement FocusedElement => _keyboardDispatcher.Focused;
 
@@ -165,12 +212,16 @@ namespace Ixen.Core
         private float ToLogical(float deviceValue) => deviceValue / _scale;
 
         internal void PointerMove(float x, float y)
-            => _pointerDispatcher.Move(Root, ToLogical(x), ToLogical(y), TrackStates);
+        {
+            _pointerDispatcher.Move(Root, ToLogical(x), ToLogical(y), TrackStates);
+            SyncCursor();
+        }
 
         internal void PointerDown(float x, float y, PointerButton button)
         {
             _pointerDispatcher.Down(Root, ToLogical(x), ToLogical(y), button, TrackStates);
             _keyboardDispatcher.FocusFromPointer(_pointerDispatcher.Pressed, TrackStates);
+            SyncCursor();
         }
 
         internal void PointerUp(float x, float y, PointerButton button)

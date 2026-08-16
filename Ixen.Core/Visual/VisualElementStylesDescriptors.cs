@@ -10,6 +10,7 @@ namespace Ixen.Core.Visual
         public ColorStyleDescriptor Color { get; set; } = new();
         public ColumnTemplateStyleDescriptor ColumnTemplate { get; set; } = new();
         public CornerRadiusStyleDescriptor CornerRadius { get; set; } = new();
+        public CursorStyleDescriptor Cursor { get; set; } = new();
         public DockStyleDescriptor Dock { get; set; } = new();
         public FontFamilyStyleDescriptor FontFamily { get; set; } = new();
         public FontSizeStyleDescriptor FontSize { get; set; } = new();

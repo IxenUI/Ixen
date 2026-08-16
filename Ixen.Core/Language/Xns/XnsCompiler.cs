@@ -123,6 +123,9 @@ namespace Ixen.Core.Language.Xns
                 case StyleIdentifier.BOTTOM:
                     return Validated(new BottomStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 
+                case StyleIdentifier.CURSOR:
+                    return Validated(new CursorStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
+
                 case StyleIdentifier.TRANSITION:
                     return Validated(new TransitionStyleParser(xnsStyle.Value), p => p.Descriptor, xnsStyle, errors);
 

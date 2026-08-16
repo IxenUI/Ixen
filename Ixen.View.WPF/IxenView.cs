@@ -32,7 +32,7 @@ namespace Ixen.View.WPF
             _skElement.Focusable = true;
             _skElement.FocusVisualStyle = null;
             _host = new IxenHost(new IxenSurface(), _skElement.InvalidateVisual,
-                new DispatcherScheduler(), new WpfClipboard());
+                new DispatcherScheduler(), new WpfClipboard(), SetCursor);
 
             _skElement.PaintSurface += OnPaintSurface;
             _skElement.MouseMove += OnMouseMove;
@@ -120,6 +120,40 @@ namespace Ixen.View.WPF
 
         private void OnTextInput(object sender, TextCompositionEventArgs e)
             => _host.TextInput(e.Text);
+
+        private void SetCursor(Ixen.Core.Visual.Styles.Descriptors.CursorKind kind)
+        {
+            switch (kind)
+            {
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.Hand:
+                    _skElement.Cursor = Cursors.Hand;
+                    break;
+
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.Text:
+                    _skElement.Cursor = Cursors.IBeam;
+                    break;
+
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.Wait:
+                    _skElement.Cursor = Cursors.Wait;
+                    break;
+
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.Crosshair:
+                    _skElement.Cursor = Cursors.Cross;
+                    break;
+
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.ResizeHorizontal:
+                    _skElement.Cursor = Cursors.SizeWE;
+                    break;
+
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.ResizeVertical:
+                    _skElement.Cursor = Cursors.SizeNS;
+                    break;
+
+                default:
+                    _skElement.Cursor = Cursors.Arrow;
+                    break;
+            }
+        }
 
         private static PointerButton ToButton(MouseButton button)
         {

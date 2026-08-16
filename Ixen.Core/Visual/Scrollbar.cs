@@ -71,6 +71,7 @@ namespace Ixen.Core.Visual
 
             Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Absolute };
             Styles.Background = new BackgroundStyleDescriptor { Color = "#08000000" };
+            Styles.Cursor = new CursorStyleDescriptor { Value = CursorKind.Default };
             Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = THICKNESS };
             Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = THICKNESS };
 

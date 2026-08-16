@@ -101,6 +101,16 @@ void WA_InvalidateWindow(NativeWindow* window)
     window->Invalidate();
 }
 
+void WA_SetWindowCursor(NativeWindow* window, int kind)
+{
+    if (!window)
+    {
+        return;
+    }
+
+    window->SetCursorKind(kind);
+}
+
 unsigned int WA_GetWindowDpi(NativeWindow* window)
 {
     if (!window)

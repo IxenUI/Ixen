@@ -10,6 +10,7 @@ namespace Ixen.Core.Visual
         internal static readonly ColorStyleHandler DefaultColor = new();
         internal static readonly ColumnTemplateStyleHandler DefaultColumnTemplate = new();
         internal static readonly CornerRadiusStyleHandler DefaultCornerRadius = new();
+        internal static readonly CursorStyleHandler DefaultCursor = new();
         internal static readonly DockStyleHandler DefaultDock = new();
         internal static readonly FontFamilyStyleHandler DefaultFontFamily = new();
         internal static readonly FontSizeStyleHandler DefaultFontSize = new();
@@ -35,6 +36,7 @@ namespace Ixen.Core.Visual
         public ColorStyleHandler Color { get; set; } = DefaultColor;
         public ColumnTemplateStyleHandler ColumnTemplate { get; set; } = DefaultColumnTemplate;
         public CornerRadiusStyleHandler CornerRadius { get; set; } = DefaultCornerRadius;
+        public CursorStyleHandler Cursor { get; set; } = DefaultCursor;
         public DockStyleHandler Dock { get; set; } = DefaultDock;
         public FontFamilyStyleHandler FontFamily { get; set; } = DefaultFontFamily;
         public FontSizeStyleHandler FontSize { get; set; } = DefaultFontSize;

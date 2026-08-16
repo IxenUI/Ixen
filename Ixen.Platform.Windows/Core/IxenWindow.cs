@@ -27,7 +27,8 @@ namespace Ixen.Platform.Windows
         {
             _pixelBuffer = new PixelBuffer();
             _ixenSurface = ixenSurface;
-            _host = new IxenHost(ixenSurface, RequestRepaint, new MessageScheduler(), new WindowsClipboard());
+            _host = new IxenHost(ixenSurface, RequestRepaint, new MessageScheduler(), new WindowsClipboard(),
+                SetCursor);
             _onPaint = OnPaint;
             _onPointer = OnPointer;
             _onKey = OnKey;
@@ -80,6 +81,9 @@ namespace Ixen.Platform.Windows
 
         private void RequestRepaint()
             => WindowApi.InvalidateWindow(_windowPtr);
+
+        private void SetCursor(Ixen.Core.Visual.Styles.Descriptors.CursorKind kind)
+            => WindowApi.SetWindowCursor(_windowPtr, NativeCursors.ToNative(kind));
 
         private void OnPointer(int kind, int x, int y, int button)
         {

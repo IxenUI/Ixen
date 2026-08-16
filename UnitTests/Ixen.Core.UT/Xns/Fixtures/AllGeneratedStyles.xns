@@ -18,6 +18,7 @@ generated_root {
     text-overflow: ellipsis
     text-wrap: nowrap
     transition: background 150ms color 0.2s
+    cursor: hand
 
     generated_child {
         width: 30.5%

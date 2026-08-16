@@ -1,4 +1,5 @@
 using Ixen.Core.Input;
+using Ixen.Core.Visual.Styles.Descriptors;
 using System;
 using System.Collections.Generic;
 
@@ -99,6 +100,7 @@ namespace Ixen.Core.Visual
         public TextField()
         {
             Focusable = true;
+            Styles.Cursor = new CursorStyleDescriptor { Value = CursorKind.Text };
 
             TextInput += OnTextInput;
             KeyDown += OnKeyDown;

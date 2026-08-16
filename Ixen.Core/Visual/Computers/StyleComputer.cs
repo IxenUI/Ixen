@@ -298,6 +298,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultDock;
             }
 
+            if (handlers.Cursor.Descriptor != styles.Cursor)
+            {
+                handlers.Cursor = styles.Cursor != null
+                    ? new CursorStyleHandler(styles.Cursor)
+                    : VisualElementStylesHandlers.DefaultCursor;
+            }
+
             if (handlers.Transition.Descriptor != styles.Transition)
             {
                 handlers.Transition = styles.Transition != null
@@ -383,6 +390,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.BOTTOM:
                     handlers.Bottom = new BottomStyleHandler((BottomStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.CURSOR:
+                    handlers.Cursor = new CursorStyleHandler((CursorStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.TRANSITION:

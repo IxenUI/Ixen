@@ -20,6 +20,14 @@
 #define IXEN_MOD_CONTROL 2
 #define IXEN_MOD_ALT 4
 
+#define IXEN_CURSOR_DEFAULT 0
+#define IXEN_CURSOR_HAND 1
+#define IXEN_CURSOR_TEXT 2
+#define IXEN_CURSOR_WAIT 3
+#define IXEN_CURSOR_CROSSHAIR 4
+#define IXEN_CURSOR_RESIZE_H 5
+#define IXEN_CURSOR_RESIZE_V 6
+
 #define IXEN_BUTTON_NONE 0
 #define IXEN_BUTTON_LEFT 1
 #define IXEN_BUTTON_MIDDLE 2
@@ -101,7 +109,7 @@ NativeWindow::NativeWindow(LPCWSTR title, int width, int height)
     wc.lpszClassName = className.c_str();
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
-    wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+    wc.hCursor = nullptr;
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = &WindowProc;
 
@@ -263,6 +271,42 @@ LRESULT NativeWindow::HandleWheel(WPARAM wParam, LPARAM lParam, bool horizontal)
     return 0;
 }
 
+void NativeWindow::SetCursorKind(int kind)
+{
+    LPCWSTR name = IDC_ARROW;
+
+    switch (kind)
+    {
+    case IXEN_CURSOR_HAND: name = IDC_HAND; break;
+    case IXEN_CURSOR_TEXT: name = IDC_IBEAM; break;
+    case IXEN_CURSOR_WAIT: name = IDC_WAIT; break;
+    case IXEN_CURSOR_CROSSHAIR: name = IDC_CROSS; break;
+    case IXEN_CURSOR_RESIZE_H: name = IDC_SIZEWE; break;
+    case IXEN_CURSOR_RESIZE_V: name = IDC_SIZENS; break;
+    }
+
+    _cursor = LoadCursor(nullptr, name);
+
+    POINT point = {};
+
+    if (GetCursorPos(&point) && WindowFromPoint(point) == _handle)
+    {
+        SetCursor(_cursor);
+    }
+}
+
+LRESULT NativeWindow::HandleSetCursor(LPARAM lParam)
+{
+    if (LOWORD(lParam) != HTCLIENT)
+    {
+        return DefWindowProc(_handle, WM_SETCURSOR, (WPARAM)_handle, lParam);
+    }
+
+    SetCursor(_cursor != nullptr ? _cursor : LoadCursor(nullptr, IDC_ARROW));
+
+    return TRUE;
+}
+
 int NativeWindow::GetModifiers()
 {
     int modifiers = 0;
@@ -350,6 +394,9 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_SYSKEYUP:
         HandleKey(IXEN_KEY_UP, wParam);
         break;
+
+    case WM_SETCURSOR:
+        return HandleSetCursor(lParam);
 
     case WM_MOUSEWHEEL:
         return HandleWheel(wParam, lParam, false);
