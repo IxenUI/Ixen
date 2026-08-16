@@ -82,12 +82,23 @@ namespace Ixen.Core.Visual.Computers
                 element.ScrollExtentHeight = Math.Max(aggregateHeight, textHeight);
                 element.ClampScroll();
             }
+
+            if (element is TextField field)
+            {
+                ClampFieldOffset(field);
+            }
         }
 
         private void LayoutText(VisualElement element, float availableWidth, out float width, out float height)
         {
             width = 0;
             height = 0;
+
+            if (element is TextField field)
+            {
+                LayoutField(field, out width, out height);
+                return;
+            }
 
             if (_textMeasurer == null || string.IsNullOrEmpty(element.Text))
             {
@@ -103,6 +114,69 @@ namespace Ixen.Core.Visual.Computers
 
             width = BuildLines(element.Text, fontSpec, availableWidth, wrap, ellipsis, lines);
             height = _textMeasurer.GetLineHeight(fontSpec) * lines.Count;
+        }
+
+        private void LayoutField(TextField field, out float width, out float height)
+        {
+            List<string> lines = field.EnsureTextLines();
+
+            if (_textMeasurer == null)
+            {
+                width = 0;
+                height = 0;
+                return;
+            }
+
+            string value = field.Text ?? string.Empty;
+            FontSpec fontSpec = FontSpec.From(field.StylesHandlers);
+
+            lines.Add(value);
+
+            float[] offsets = EnsureCaretOffsets(field, value.Length + 1);
+            offsets[0] = 0;
+
+            for (int i = 1; i <= value.Length; i++)
+            {
+                _textMeasurer.MeasureText(value.Substring(0, i), fontSpec, out float prefix, out _);
+                offsets[i] = prefix;
+            }
+
+            field.CaretOffsetCount = value.Length + 1;
+
+            width = offsets[value.Length];
+            height = _textMeasurer.GetLineHeight(fontSpec);
+        }
+
+        private static float[] EnsureCaretOffsets(TextField field, int count)
+        {
+            if (field.CaretOffsets == null || field.CaretOffsets.Length < count)
+            {
+                field.CaretOffsets = new float[count];
+            }
+
+            return field.CaretOffsets;
+        }
+
+        private static void ClampFieldOffset(TextField field)
+        {
+            float contentWidth = field.ContentWidth;
+            float caret = field.OffsetAt(field.CaretIndex);
+            float offset = field.ContentOffset;
+
+            if (caret - offset > contentWidth)
+            {
+                offset = caret - contentWidth;
+            }
+
+            if (caret - offset < 0)
+            {
+                offset = caret;
+            }
+
+            float extent = field.CaretOffsetCount > 0 ? field.OffsetAt(field.CaretOffsetCount - 1) : 0;
+            float max = Math.Max(0, extent - contentWidth);
+
+            field.ContentOffset = Math.Max(0, Math.Min(offset, max));
         }
 
         private float BuildLines(string text, FontSpec fontSpec, float maxWidth, bool wrap, bool ellipsis,

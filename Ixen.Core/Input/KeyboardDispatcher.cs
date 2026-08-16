@@ -13,6 +13,7 @@ namespace Ixen.Core.Input
         private VisualElement _focused;
 
         internal VisualElement Focused => _focused;
+        internal System.Action<VisualElement> FocusChanged { get; set; }
 
         internal void Focus(VisualElement element, bool trackStates)
         {
@@ -42,6 +43,8 @@ namespace Ixen.Core.Input
                 SetState(element, true);
                 element.RaiseGotFocus();
             }
+
+            FocusChanged?.Invoke(element);
         }
 
         internal void FocusFromPointer(VisualElement hit, bool trackStates)

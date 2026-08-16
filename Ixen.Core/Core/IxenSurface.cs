@@ -5,6 +5,7 @@ using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Computers;
 using SkiaSharp;
+using System;
 
 namespace Ixen.Core
 {
@@ -63,6 +64,8 @@ namespace Ixen.Core
             Root = root ?? new();
             Root.SetPosition(0, 0);
             Title = InitOptions.Title;
+
+            _keyboardDispatcher.FocusChanged = OnFocusChanged;
         }
 
         public IxenSurface (Component mainComponent, IxenSurfaceInitOptions initOptions = null)
@@ -116,9 +119,49 @@ namespace Ixen.Core
 
         internal void InvalidateVisual() => _visualDirty = true;
 
+        private const int CARET_BLINK_DELAY = 530;
+
+        private IScheduler _scheduler;
+        private IDisposable _caretBlink;
+        private TextField _caretField;
+
         internal IScheduler Scheduler
         {
-            set => _pointerDispatcher.Scheduler = value;
+            set
+            {
+                _scheduler = value;
+                _pointerDispatcher.Scheduler = value;
+            }
+        }
+
+        private void OnFocusChanged(VisualElement focused)
+        {
+            if (_caretField != null)
+            {
+                _caretField.IsFocused = false;
+                _caretField.CaretVisible = true;
+            }
+
+            _caretBlink?.Dispose();
+            _caretBlink = null;
+            _caretField = focused as TextField;
+
+            if (_caretField == null)
+            {
+                InvalidateVisual();
+                return;
+            }
+
+            _caretField.IsFocused = true;
+            _caretField.CaretVisible = true;
+
+            InvalidateVisual();
+
+            _caretBlink = _scheduler?.Schedule(CARET_BLINK_DELAY, true, () =>
+            {
+                _caretField.CaretVisible = !_caretField.CaretVisible;
+                InvalidateVisual();
+            });
         }
 
         internal void PointerLeaveSurface()
@@ -133,13 +176,30 @@ namespace Ixen.Core
             => _keyboardDispatcher.MoveFocus(Root, backwards, TrackStates);
 
         internal void KeyDown(Key key, KeyModifiers modifiers)
-            => _keyboardDispatcher.KeyDown(Root, key, modifiers, TrackStates);
+        {
+            _keyboardDispatcher.KeyDown(Root, key, modifiers, TrackStates);
+            ResetCaretBlink();
+        }
 
         internal void KeyUp(Key key, KeyModifiers modifiers)
             => _keyboardDispatcher.KeyUp(Root, key, modifiers, TrackStates);
 
         internal void TextInput(string text)
-            => _keyboardDispatcher.TextInput(Root, text, TrackStates);
+        {
+            _keyboardDispatcher.TextInput(Root, text, TrackStates);
+            ResetCaretBlink();
+        }
+
+        private void ResetCaretBlink()
+        {
+            if (_caretField == null || _caretField.CaretVisible)
+            {
+                return;
+            }
+
+            _caretField.CaretVisible = true;
+            InvalidateVisual();
+        }
 
         private bool TrackStates => (Styles ?? StyleRegistry.Default).HasStateClasses;
 

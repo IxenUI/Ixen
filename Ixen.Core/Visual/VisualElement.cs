@@ -183,7 +183,7 @@ namespace Ixen.Core.Visual
 
         private string _text;
 
-        public string Text
+        public virtual string Text
         {
             get => _text;
             set

@@ -25,6 +25,9 @@ namespace Ixen.Core
         }
 
 
+        public Color WithAlpha(byte alpha)
+            => new Color(SKColor.Red, SKColor.Green, SKColor.Blue, alpha);
+
         public string ToRGBHexColor()
         {
             return $"#{SKColor.Red.ToString("X2")}{SKColor.Green.ToString("X2")}{SKColor.Blue.ToString("X2")}";
