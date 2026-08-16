@@ -3,7 +3,7 @@ using System;
 
 namespace Ixen.Core.Components
 {
-    public abstract class Component
+    public abstract class Component : IBoundModel
     {
         private bool _initialized;
         private bool _isStateDirty;
@@ -52,6 +52,8 @@ namespace Ixen.Core.Components
             _isStateDirty = true;
             GetVisualElement()?.InvalidateLayout();
         }
+
+        void IBoundModel.SetState() => SetState();
 
         internal void RenderIfDirty()
         {

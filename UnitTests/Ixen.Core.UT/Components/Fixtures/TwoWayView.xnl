@@ -1,0 +1,8 @@
+two_way_root {} [
+	two_way_field<TextField> { text: "[Name]" }
+	two_way_nested<TextField> { text: "[Inner.Label]" }
+	two_way_readonly<TextField> { text: "{Echo}" }
+	two_way_echo { text: "{Echo}" }
+	two_way_escaped { text: "[[Name]]" }
+	two_way_partial { text: "see [1] below" }
+]

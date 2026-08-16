@@ -40,6 +40,22 @@ namespace Ixen.Core.Language.Xnl
                 {
                     names.Add(ToXnlName(property.Name));
                 }
+
+                var events = new HashSet<string>(StringComparer.Ordinal);
+
+                foreach (EventInfo handler in type.GetEvents(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    events.Add(handler.Name);
+                    names.Add(ToXnlName(handler.Name));
+                }
+
+                foreach (string alias in XnlEvents.Aliases)
+                {
+                    if (events.Contains(XnlEvents.Resolve(alias, null)))
+                    {
+                        names.Add(alias);
+                    }
+                }
             }
 
             names.Sort(StringComparer.Ordinal);

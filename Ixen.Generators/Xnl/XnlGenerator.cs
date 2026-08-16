@@ -20,6 +20,8 @@ namespace Ixen.Generators.Xnl
         private const string VISUAL_ELEMENT_METADATA_NAME = "Ixen.Core.Visual.VisualElement";
         private const string COMPONENT_METADATA_NAME = "Ixen.Core.Components.Component";
         private const string COMPONENT_TYPE_NAME = "Component";
+        private const string BOUND_MODEL_METADATA_NAME = "Ixen.Core.Components.IBoundModel";
+        private const string CHANGED_SUFFIX = "Changed";
         private const string CLASS_PROPERTY = "class";
         private const string EACH_PROPERTY = "each";
         private const string KEY_PROPERTY = "key";
@@ -89,6 +91,11 @@ namespace Ixen.Generators.Xnl
                 sb.AppendLine($"\tpublic class {name} : {bases}");
                 sb.AppendLine("\t{");
 
+                if (file.HasModelField)
+                {
+                    sb.AppendLine($"\t\tprivate global::{file.Model.ToDisplayString()} {XnlBindings.MODEL_FIELD};");
+                }
+
                 foreach ((string type, string variable, string initializer) in file.Fields)
                 {
                     sb.AppendLine(initializer == null
@@ -96,7 +103,7 @@ namespace Ixen.Generators.Xnl
                         : $"\t\tprivate readonly {type} {variable} = {initializer};");
                 }
 
-                if (file.Fields.Count > 0)
+                if (file.Fields.Count > 0 || file.HasModelField)
                 {
                     sb.AppendLine();
                 }
@@ -141,6 +148,8 @@ namespace Ixen.Generators.Xnl
             internal INamedTypeSymbol Model;
             internal HashSet<string> ModelMembers;
             internal bool SkipBindings;
+            internal string RepeatItem;
+            internal int ModelUses;
 
             internal FileContext(TypeResolver resolver, List<LanguageError> diagnostics)
             {
@@ -149,7 +158,11 @@ namespace Ixen.Generators.Xnl
             }
 
             internal bool HasBindings => BoundNodes.Count > 0 || Repeaters.Count > 0;
-            internal bool CanBind => (Bindings.Count > 0 || Repeaters.Count > 0) && Model != null;
+
+            internal bool CanBind
+                => (Bindings.Count > 0 || Repeaters.Count > 0 || ModelUses > 0) && Model != null;
+
+            internal bool HasModelField => ModelUses > 0 && Model != null;
 
             internal bool IsBound(XnlNode node) => BoundNodes.Contains(node.Id);
 
@@ -169,6 +182,8 @@ namespace Ixen.Generators.Xnl
             string instances = repeat.Instances;
             string item = ItemVariable(repeat.Node);
             string key = ValueOf(repeat.Node, KEY_PROPERTY);
+
+            file.RepeatItem = item;
 
             sb.AppendLine();
             sb.AppendLine($"\t\t\tvar {instances}_source = {source};");
@@ -205,15 +220,33 @@ namespace Ixen.Generators.Xnl
             AddRepeatItemBindings(sb, repeat.Node, $"{item}_element", item, itemMembers, file);
 
             sb.AppendLine("\t\t\t}");
+
+            file.RepeatItem = null;
         }
 
         static void AddRepeatItemBindings(StringBuilder sb, XnlNode node, string path, string item,
             HashSet<string> members, FileContext file)
         {
+            INamedTypeSymbol symbol = file.Resolver.Resolve(node, new List<LanguageError>()).Symbol;
+
             foreach (XnlNodeParameter param in node.Properties)
             {
                 if (param.Name == CLASS_PROPERTY || param.Name == EACH_PROPERTY || param.Name == KEY_PROPERTY)
                 {
+                    continue;
+                }
+
+                string propertyName = ToPropertyName(param.Name);
+
+                if (XnlBindings.TwoWayPath(param.Value) != null)
+                {
+                    file.Diagnostics.Add(new LanguageError(
+                        LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                        $"'{param.Name}' cannot be a two-way binding inside a repeated node: the write-back is wired " +
+                        $"once when the element is created, where '{item}' is not in scope.",
+                        param.ValueIndex,
+                        param.Value?.Length ?? 0));
+
                     continue;
                 }
 
@@ -224,7 +257,21 @@ namespace Ixen.Generators.Xnl
                     continue;
                 }
 
-                sb.AppendLine($"\t\t\t\t{path}.{ToPropertyName(param.Name)} = " +
+                if (symbol != null
+                    && FindSettableProperty(symbol, propertyName, out string _) == null
+                    && FindEvent(symbol, XnlEvents.Resolve(param.Name, propertyName)) != null)
+                {
+                    file.Diagnostics.Add(new LanguageError(
+                        LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                        $"'{param.Name}' is an event and cannot be bound inside a repeated node: the handler is wired " +
+                        $"once when the element is created, where '{item}' is not in scope.",
+                        param.ValueIndex,
+                        param.Value?.Length ?? 0));
+
+                    continue;
+                }
+
+                sb.AppendLine($"\t\t\t\t{path}.{propertyName} = " +
                     $"{XnlBindings.BuildExpression(parts, file.ModelMembers)};");
             }
 
@@ -240,7 +287,11 @@ namespace Ixen.Generators.Xnl
             sb.AppendLine($"\t\tprivate VisualElement Create_{repeat.Instances}()");
             sb.AppendLine("\t\t{");
 
+            file.RepeatItem = ItemVariable(repeat.Node);
+
             AddDeclaration(sb, repeat.Node, 3, file, skipBindings: true);
+
+            file.RepeatItem = null;
 
             sb.AppendLine($"\t\t\treturn {Identifier(repeat.Node)};");
             sb.AppendLine("\t\t}");
@@ -282,6 +333,12 @@ namespace Ixen.Generators.Xnl
             sb.AppendLine();
             sb.AppendLine($"\t\tpublic void Bind({modelType} {XnlBindings.MODEL_PARAMETER})");
             sb.AppendLine("\t\t{");
+
+            if (file.HasModelField)
+            {
+                sb.AppendLine($"\t\t\t{XnlBindings.MODEL_FIELD} = {XnlBindings.MODEL_PARAMETER};");
+                sb.AppendLine();
+            }
 
             foreach (string binding in file.Bindings)
             {
@@ -660,9 +717,38 @@ namespace Ixen.Generators.Xnl
 
             string propertyName = ToPropertyName(param.Name);
 
-            List<BindingPart> parts = XnlBindings.Parse(param.Value);
-            bool bound = XnlBindings.IsBinding(parts);
-            string value = bound ? param.Value : XnlBindings.LiteralText(parts);
+            string twoWayPath = XnlBindings.TwoWayPath(param.Value);
+            bool twoWay = twoWayPath != null;
+
+            List<BindingPart> parts = twoWay
+                ? XnlBindings.PathParts(twoWayPath)
+                : XnlBindings.Parse(param.Value);
+
+            bool bound = twoWay || XnlBindings.IsBinding(parts);
+            string value = bound ? param.Value : XnlBindings.Unescaped(XnlBindings.LiteralText(parts));
+
+            if (!twoWay && !XnlBindings.IsEscaped(param.Value) && XnlBindings.Inner(param.Value) != null)
+            {
+                diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                    $"'{XnlBindings.Inner(param.Value)}' is not an assignable member path, so this is not a two-way "
+                        + "binding. Double the brackets to mean literal text.",
+                    param.ValueIndex,
+                    param.Value?.Length ?? 0));
+
+                return;
+            }
+
+            if (elementSymbol == null && twoWay)
+            {
+                diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                    $"a two-way binding needs an element type the generator can resolve, and '{param.Name}' is on one it cannot.",
+                    param.ValueIndex,
+                    param.Value?.Length ?? 0));
+
+                return;
+            }
 
             if (elementSymbol != null)
             {
@@ -670,9 +756,17 @@ namespace Ixen.Generators.Xnl
 
                 if (property == null)
                 {
+                    string eventName = XnlEvents.Resolve(param.Name, propertyName);
+
+                    if (FindEvent(elementSymbol, eventName) != null)
+                    {
+                        AddAction(sb, tabs, nodeId, eventName, param, parts, bound, file);
+                        return;
+                    }
+
                     diagnostics.Add(new LanguageError(
                         LanguageErrorCode.INVALID_PROPERTY,
-                        $"'{param.Name}' does not map to a usable property on '{elementSymbol.Name}': {reason}",
+                        $"'{param.Name}' does not map to a usable property or event on '{elementSymbol.Name}': {reason}",
                         param.NameIndex,
                         param.Name.Length));
 
@@ -695,6 +789,11 @@ namespace Ixen.Generators.Xnl
                     sb.AppendLine($"{tabs}{nodeId}.{propertyName} = {literal};");
                     return;
                 }
+
+                if (twoWay && !AddWriteBack(sb, tabs, nodeId, propertyName, property, elementSymbol, param, parts, file))
+                {
+                    return;
+                }
             }
 
             if (!bound)
@@ -709,6 +808,112 @@ namespace Ixen.Generators.Xnl
             }
 
             AddBinding(nodeId, propertyName, param, parts, file);
+        }
+
+        static void AddAction(StringBuilder sb, string tabs, string nodeId, string eventName,
+            XnlNodeParameter param, List<BindingPart> parts, bool bound, FileContext file)
+        {
+            if (!bound || parts.Count != 1)
+            {
+                file.Diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                    $"'{param.Name}' is an event, so its value must be a single binding expression such as \"{{OnClick()}}\".",
+                    param.ValueIndex,
+                    param.Value?.Length ?? 0));
+
+                return;
+            }
+
+            if (file.RepeatItem != null)
+            {
+                return;
+            }
+
+            if (file.Model == null)
+            {
+                file.Diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                    $"'{param.Value}' binds to a component, but no single component uses this view.",
+                    param.ValueIndex,
+                    param.Value?.Length ?? 0));
+
+                return;
+            }
+
+            string expression = XnlBindings.Qualify(parts[0].Text, file.ModelMembers, XnlBindings.MODEL_FIELD);
+
+            file.ModelUses++;
+
+            sb.AppendLine($"{tabs}{nodeId}.{eventName} += (sender, e) => {{ if ({XnlBindings.MODEL_FIELD} != null) " +
+                $"{{ {expression}; }} }};");
+        }
+
+        static bool AddWriteBack(StringBuilder sb, string tabs, string nodeId, string propertyName,
+            IPropertySymbol property, INamedTypeSymbol elementSymbol, XnlNodeParameter param,
+            List<BindingPart> parts, FileContext file)
+        {
+            if (file.RepeatItem != null)
+            {
+                return false;
+            }
+
+            string path = parts[0].Text;
+
+            if (!XnlBindings.IsMemberPath(path))
+            {
+                file.Diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                    $"'{path}' cannot be assigned to, so it cannot be a two-way binding. Use a plain member path such as \"[Name]\".",
+                    param.ValueIndex,
+                    param.Value?.Length ?? 0));
+
+                return false;
+            }
+
+            if (property.GetMethod == null || property.GetMethod.DeclaredAccessibility != Accessibility.Public)
+            {
+                file.Diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                    $"'{propertyName}' has no public getter, so a two-way binding cannot read its value back.",
+                    param.ValueIndex,
+                    param.Value?.Length ?? 0));
+
+                return false;
+            }
+
+            string eventName = propertyName + CHANGED_SUFFIX;
+
+            if (FindEvent(elementSymbol, eventName) == null)
+            {
+                file.Diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                    $"a two-way binding on '{param.Name}' needs a public '{eventName}' event on '{elementSymbol.Name}' to know when the value changed, and there is none.",
+                    param.ValueIndex,
+                    param.Value?.Length ?? 0));
+
+                return false;
+            }
+
+            if (file.Model == null)
+            {
+                file.Diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                    $"'{param.Value}' binds to a component, but no single component uses this view.",
+                    param.ValueIndex,
+                    param.Value?.Length ?? 0));
+
+                return false;
+            }
+
+            string target = XnlBindings.Qualify(path, file.ModelMembers, XnlBindings.MODEL_FIELD);
+
+            file.ModelUses++;
+
+            sb.AppendLine($"{tabs}{nodeId}.{eventName} += (sender, e) => {{ if ({XnlBindings.MODEL_FIELD} != null) " +
+                $"{{ {target} = {nodeId}.{propertyName}; " +
+                $"((global::{BOUND_MODEL_METADATA_NAME}){XnlBindings.MODEL_FIELD}).SetState(); }} }};");
+
+            return true;
         }
 
         static void AddBinding(string nodeId, string propertyName, XnlNodeParameter param,
@@ -756,7 +961,24 @@ namespace Ixen.Generators.Xnl
                 return property;
             }
 
-            reason = $"no property named '{propertyName}' was found.";
+            reason = $"no property or event named '{propertyName}' was found.";
+            return null;
+        }
+
+        static IEventSymbol FindEvent(INamedTypeSymbol type, string eventName)
+        {
+            for (INamedTypeSymbol current = type; current != null; current = current.BaseType)
+            {
+                IEventSymbol handler = current.GetMembers(eventName)
+                    .OfType<IEventSymbol>()
+                    .FirstOrDefault();
+
+                if (handler != null)
+                {
+                    return handler.DeclaredAccessibility == Accessibility.Public ? handler : null;
+                }
+            }
+
             return null;
         }
 

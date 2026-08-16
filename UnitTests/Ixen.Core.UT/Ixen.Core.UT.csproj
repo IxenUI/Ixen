@@ -41,6 +41,8 @@
     <AdditionalFiles Include="Components\Fixtures\ListView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\CounterView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\HostView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\ActionView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\TwoWayView.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\UnicodeView.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\UnicodeStyles.xns" />
     <AdditionalFiles Include="Xnl\Fixtures\TypedView.xnl" />

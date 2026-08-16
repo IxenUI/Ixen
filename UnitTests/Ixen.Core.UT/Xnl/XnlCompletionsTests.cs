@@ -75,6 +75,30 @@ namespace Ixen.Core.UT.Xnl
         }
 
         [TestMethod]
+        public void EventsAreProposedAlongsideProperties()
+        {
+            string[] items = At("header { cl| }").Items.ToArray();
+
+            CollectionAssert.Contains(items, "click");
+            CollectionAssert.Contains(items, "pointer-click", "the alias and the real name both work");
+        }
+
+        [TestMethod]
+        public void AnEventDeclaredByASubclassIsProposed()
+        {
+            string[] items = At("field<TextField> { text-ch| }").Items.ToArray();
+
+            CollectionAssert.Contains(items, "text-changed");
+        }
+
+        [TestMethod]
+        public void AnEventValueProposesNothing()
+        {
+            Assert.AreEqual(XnlCompletionKind.None, At("header { click: \"|\" }").Kind,
+                "the expression is C#, and the model is not visible from here");
+        }
+
+        [TestMethod]
         public void ABooleanPropertyProposesItsTwoValues()
         {
             XnlCompletionContext context = At("header { focusable: \"|\" }");
@@ -135,10 +159,10 @@ namespace Ixen.Core.UT.Xnl
                         continue;
                     }
 
-                    string propertyName = ToPropertyName(name);
+                    string member = XnlEvents.Resolve(name, ToPropertyName(name));
 
-                    Assert.IsNotNull(type.GetProperty(propertyName),
-                        $"{typeName}: '{name}' does not map back to '{propertyName}'");
+                    Assert.IsTrue(type.GetProperty(member) != null || type.GetEvent(member) != null,
+                        $"{typeName}: '{name}' does not map back to '{member}'");
                 }
             }
         }
@@ -149,7 +173,15 @@ namespace Ixen.Core.UT.Xnl
             string[] items = XnlTypes.PropertiesOf(XnlTypes.Find("VisualElement")).ToArray();
 
             CollectionAssert.AreEqual(
-                new[] { "class", "each", "focusable", "id", "key", "name", "scroll-x", "scroll-y", "scrollable", "text", "type-name" },
+                new[]
+                {
+                    "class", "click", "double-click", "drag", "drag-end", "drag-start", "each", "focusable",
+                    "got-focus", "id", "key", "key-down", "key-up", "long-press", "lost-focus", "name",
+                    "pointer-click", "pointer-double-click", "pointer-down", "pointer-drag", "pointer-drag-end",
+                    "pointer-drag-start", "pointer-enter", "pointer-leave", "pointer-long-press", "pointer-move",
+                    "pointer-up", "pointer-wheel", "scroll-x", "scroll-y", "scrollable", "text", "text-input",
+                    "type-name", "wheel"
+                },
                 items,
                 "Classes and Styles have public setters but no XNL value can be converted to them: " + string.Join(", ", items));
         }

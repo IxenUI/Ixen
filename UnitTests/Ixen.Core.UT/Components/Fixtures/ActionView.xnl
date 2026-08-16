@@ -1,0 +1,7 @@
+action_root {} [
+	action_button { text: "{Caption}" click: "{Increment()}" }
+	action_aliased { double-click: "{Add(5)}" }
+	action_direct { pointer-long-press: "{Reset()}" }
+	action_with_args { pointer-down: "{Track(e.X, e.Y)}" }
+	action_field<TextField> { text-changed: "{Capture()}" }
+]

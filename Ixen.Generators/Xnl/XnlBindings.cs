@@ -14,9 +14,91 @@ namespace Ixen.Generators.Xnl
     internal static class XnlBindings
     {
         internal const string MODEL_PARAMETER = "model";
+        internal const string MODEL_FIELD = "_model";
+
+        internal const char TWO_WAY_OPEN = '[';
+        internal const char TWO_WAY_CLOSE = ']';
 
         internal static bool HasBinding(string value)
-            => IsBinding(Parse(value));
+            => TwoWayPath(value) != null || IsBinding(Parse(value));
+
+        internal static string TwoWayPath(string value)
+        {
+            string inner = Bracketed(value);
+
+            return inner != null && IsMemberPath(inner) ? inner : null;
+        }
+
+        internal static string Inner(string value) => Bracketed(value);
+
+        internal static bool IsEscaped(string value)
+        {
+            string inner = Bracketed(value);
+
+            return inner != null && inner.Length >= 2
+                && inner[0] == TWO_WAY_OPEN && inner[inner.Length - 1] == TWO_WAY_CLOSE;
+        }
+
+        internal static string Unescaped(string value)
+            => IsEscaped(value) ? Bracketed(value) : value;
+
+        internal static List<BindingPart> PathParts(string path)
+        {
+            return new List<BindingPart>
+            {
+                new BindingPart { IsExpression = true, Text = path }
+            };
+        }
+
+        private static string Bracketed(string value)
+        {
+            string trimmed = value == null ? null : value.Trim();
+
+            if (trimmed == null || trimmed.Length < 3
+                || trimmed[0] != TWO_WAY_OPEN || trimmed[trimmed.Length - 1] != TWO_WAY_CLOSE)
+            {
+                return null;
+            }
+
+            return trimmed.Substring(1, trimmed.Length - 2).Trim();
+        }
+
+        internal static bool IsMemberPath(string expression)
+        {
+            if (string.IsNullOrEmpty(expression))
+            {
+                return false;
+            }
+
+            bool expectStart = true;
+
+            foreach (char c in expression)
+            {
+                if (expectStart)
+                {
+                    if (!IsIdentifierStart(c))
+                    {
+                        return false;
+                    }
+
+                    expectStart = false;
+                    continue;
+                }
+
+                if (c == '.')
+                {
+                    expectStart = true;
+                    continue;
+                }
+
+                if (!IsIdentifierPart(c))
+                {
+                    return false;
+                }
+            }
+
+            return !expectStart;
+        }
 
         internal static bool IsBinding(List<BindingPart> parts)
         {
@@ -179,11 +261,12 @@ namespace Ixen.Generators.Xnl
             return value.Length - 1;
         }
 
-        internal static string BuildExpression(List<BindingPart> parts, HashSet<string> memberNames)
+        internal static string BuildExpression(List<BindingPart> parts, HashSet<string> memberNames,
+            string prefix = MODEL_PARAMETER)
         {
             if (parts.Count == 1 && parts[0].IsExpression)
             {
-                return Qualify(parts[0].Text, memberNames);
+                return Qualify(parts[0].Text, memberNames, prefix);
             }
 
             var sb = new StringBuilder("$\"");
@@ -192,7 +275,7 @@ namespace Ixen.Generators.Xnl
             {
                 if (part.IsExpression)
                 {
-                    sb.Append('{').Append(Qualify(part.Text, memberNames)).Append('}');
+                    sb.Append('{').Append(Qualify(part.Text, memberNames, prefix)).Append('}');
                     continue;
                 }
 
@@ -204,7 +287,8 @@ namespace Ixen.Generators.Xnl
             return sb.Append('"').ToString();
         }
 
-        internal static string Qualify(string expression, HashSet<string> memberNames)
+        internal static string Qualify(string expression, HashSet<string> memberNames,
+            string prefix = MODEL_PARAMETER)
         {
             if (string.IsNullOrEmpty(expression))
             {
@@ -255,7 +339,7 @@ namespace Ixen.Generators.Xnl
 
                 if (!memberAccess && memberNames.Contains(identifier))
                 {
-                    sb.Append(MODEL_PARAMETER).Append('.');
+                    sb.Append(prefix).Append('.');
                 }
 
                 sb.Append(identifier);
