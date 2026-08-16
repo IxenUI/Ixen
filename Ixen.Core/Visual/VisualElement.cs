@@ -283,7 +283,33 @@ namespace Ixen.Core.Visual
         internal void DetachHost() => AttachHost(null);
 
         internal virtual void OnHostChanged()
-        { }
+        {
+            if (Host == null)
+            {
+                _animations?.Stop();
+            }
+        }
+
+        private ElementAnimations _animations;
+
+        internal bool HasAnimations => _animations != null;
+
+        internal ElementAnimations Animations
+            => _animations ?? (_animations = new ElementAnimations(this));
+
+        internal Rendering.Brush AnimatedBrush(string identifier)
+        {
+            ColorTransition transition = _animations?.For(identifier);
+
+            return transition != null && transition.HasValue ? transition.Brush : null;
+        }
+
+        internal Rendering.Pen AnimatedPen(string identifier, Rendering.Pen source)
+        {
+            ColorTransition transition = _animations?.For(identifier);
+
+            return transition != null && transition.HasValue ? transition.PenLike(source) : null;
+        }
 
         internal void AddChrome(VisualElement element)
         {

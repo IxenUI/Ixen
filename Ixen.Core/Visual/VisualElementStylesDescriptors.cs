@@ -26,6 +26,7 @@ namespace Ixen.Core.Visual
         public TextOverflowStyleDescriptor TextOverflow { get; set; } = new();
         public TextWrapStyleDescriptor TextWrap { get; set; } = new();
         public TopStyleDescriptor Top { get; set; } = new();
+        public TransitionStyleDescriptor Transition { get; set; } = new();
         public WidthStyleDescriptor Width { get; set; } = new();
     }
 }

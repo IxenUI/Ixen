@@ -17,6 +17,7 @@ generated_root {
     text-align: right bottom
     text-overflow: ellipsis
     text-wrap: nowrap
+    transition: background 150ms color 0.2s
 
     generated_child {
         width: 30.5%

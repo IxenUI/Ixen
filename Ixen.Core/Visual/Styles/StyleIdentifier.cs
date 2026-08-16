@@ -34,6 +34,7 @@
         public const string TEXT_OVERFLOW = "text-overflow";
         public const string TEXT_WRAP = "text-wrap";
         public const string TOP = "top";
+        public const string TRANSITION = "transition";
         public const string WIDTH = "width";
     }
 }

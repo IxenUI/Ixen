@@ -21,17 +21,20 @@ namespace Ixen.Core.Visual.Styles.Handlers
             _brush = new Brush(_color);
         }
 
+        internal Color Color => _color;
+
         internal override void Render(VisualElement element, RendererContext context)
         {
             CornerRadiusStyleDescriptor radius = element.StylesHandlers.CornerRadius.Descriptor;
+            Brush brush = element.AnimatedBrush(StyleIdentifier.BACKGROUND) ?? _brush;
 
             if (radius.HasRadius)
             {
-                context.FillRoundRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, radius, _brush);
+                context.FillRoundRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, radius, brush);
                 return;
             }
 
-            context.FillRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, _brush);
+            context.FillRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight, brush);
         }
     }
 }

@@ -2,6 +2,7 @@
 using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Ixen.Core.Visual.Styles.Handlers;
+using System;
 using System.Collections.Generic;
 
 namespace Ixen.Core.Visual.Computers
@@ -16,6 +17,7 @@ namespace Ixen.Core.Visual.Computers
             {
                 ApplyBaseStyle(element);
                 ApplyClasses(element, registry);
+                SyncTransitions(element);
 
                 element.MustRefreshStyles = false;
             }
@@ -106,6 +108,52 @@ namespace Ixen.Core.Visual.Computers
             {
                 ApplyStyle(handlers, style);
             }
+        }
+
+        private void SyncTransitions(VisualElement element)
+        {
+            VisualElementStylesHandlers handlers = element.StylesHandlers;
+            TransitionStyleDescriptor transitions = handlers.Transition.Descriptor;
+
+            bool declared = transitions != null && transitions.Durations.Count > 0;
+
+            if (!declared && !element.HasAnimations)
+            {
+                return;
+            }
+
+            Retarget(element, transitions, StyleIdentifier.BACKGROUND, handlers.Background.Color);
+            Retarget(element, transitions, StyleIdentifier.COLOR, handlers.Color.Brush.Color);
+            Retarget(element, transitions, StyleIdentifier.BORDER, handlers.Border.Color);
+
+            element.Animations.Sync();
+        }
+
+        private void Retarget(VisualElement element, TransitionStyleDescriptor transitions,
+            string identifier, Color target)
+        {
+            ColorTransition transition = element.Animations.For(identifier);
+
+            if (!transition.HasValue)
+            {
+                transition.Jump(target);
+                return;
+            }
+
+            if (transition.To.Equals(target))
+            {
+                return;
+            }
+
+            int duration = transitions == null ? 0 : transitions.DurationOf(identifier);
+
+            if (duration <= 0)
+            {
+                transition.Jump(target);
+                return;
+            }
+
+            transition.Start(target, Math.Max(1, duration / ElementAnimations.TICK));
         }
 
         private void ApplyBaseStyle(VisualElement element)
@@ -249,6 +297,13 @@ namespace Ixen.Core.Visual.Computers
                     ? new DockStyleHandler(styles.Dock)
                     : VisualElementStylesHandlers.DefaultDock;
             }
+
+            if (handlers.Transition.Descriptor != styles.Transition)
+            {
+                handlers.Transition = styles.Transition != null
+                    ? new TransitionStyleHandler(styles.Transition)
+                    : VisualElementStylesHandlers.DefaultTransition;
+            }
         }
 
         private static bool IsPainting(BackgroundStyleDescriptor descriptor)
@@ -328,6 +383,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.BOTTOM:
                     handlers.Bottom = new BottomStyleHandler((BottomStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.TRANSITION:
+                    handlers.Transition = new TransitionStyleHandler((TransitionStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.DOCK:

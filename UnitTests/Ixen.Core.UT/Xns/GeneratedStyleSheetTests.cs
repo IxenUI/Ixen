@@ -24,7 +24,17 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(18, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(19, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+        }
+
+        [TestMethod]
+        public void TheTransitionSurvivesGeneration()
+        {
+            TransitionStyleDescriptor transition = Style<TransitionStyleDescriptor>();
+
+            Assert.AreEqual(150, transition.DurationOf(StyleIdentifier.BACKGROUND));
+            Assert.AreEqual(200, transition.DurationOf(StyleIdentifier.COLOR), "0.2s is 200ms");
+            Assert.AreEqual(0, transition.DurationOf(StyleIdentifier.BORDER), "what is not declared does not animate");
         }
 
         [TestMethod]

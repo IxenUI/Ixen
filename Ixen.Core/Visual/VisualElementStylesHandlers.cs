@@ -26,6 +26,7 @@ namespace Ixen.Core.Visual
         internal static readonly TextOverflowStyleHandler DefaultTextOverflow = new();
         internal static readonly TextWrapStyleHandler DefaultTextWrap = new();
         internal static readonly TopStyleHandler DefaultTop = new();
+        internal static readonly TransitionStyleHandler DefaultTransition = new();
         internal static readonly WidthStyleHandler DefaultWidth = new();
 
         public BackgroundStyleHandler Background { get; set; } = DefaultBackground;
@@ -50,6 +51,7 @@ namespace Ixen.Core.Visual
         public TextOverflowStyleHandler TextOverflow { get; set; } = DefaultTextOverflow;
         public TextWrapStyleHandler TextWrap { get; set; } = DefaultTextWrap;
         public TopStyleHandler Top { get; set; } = DefaultTop;
+        public TransitionStyleHandler Transition { get; set; } = DefaultTransition;
         public WidthStyleHandler Width { get; set; } = DefaultWidth;
     }
 }

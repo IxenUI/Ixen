@@ -25,6 +25,16 @@ namespace Ixen.Core
         }
 
 
+        internal static Color Lerp(Color from, Color to, float progress)
+            => new Color(
+                Mix(from.SKColor.Red, to.SKColor.Red, progress),
+                Mix(from.SKColor.Green, to.SKColor.Green, progress),
+                Mix(from.SKColor.Blue, to.SKColor.Blue, progress),
+                Mix(from.SKColor.Alpha, to.SKColor.Alpha, progress));
+
+        private static byte Mix(byte from, byte to, float progress)
+            => (byte)(from + (to - from) * progress);
+
         public Color WithAlpha(byte alpha)
             => new Color(SKColor.Red, SKColor.Green, SKColor.Blue, alpha);
 
