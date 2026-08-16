@@ -29,6 +29,19 @@ namespace Ixen.Core.Visual
                 }
             }
 
+            if (element.HasChrome)
+            {
+                for (int i = element.Chrome.Count - 1; i >= 0; i--)
+                {
+                    VisualElement chrome = HitTest(element.Chrome[i], x, y);
+
+                    if (chrome != null)
+                    {
+                        return chrome;
+                    }
+                }
+            }
+
             for (int i = element.Children.Count - 1; i >= 0; i--)
             {
                 VisualElement hit = HitTest(element.Children[i], x, y);

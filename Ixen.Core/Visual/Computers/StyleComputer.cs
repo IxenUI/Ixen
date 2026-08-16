@@ -24,6 +24,16 @@ namespace Ixen.Core.Visual.Computers
             {
                 Compute(child, registry);
             }
+
+            if (!element.HasChrome)
+            {
+                return;
+            }
+
+            foreach (VisualElement chrome in element.Chrome)
+            {
+                Compute(chrome, registry);
+            }
         }
 
         // priority order :

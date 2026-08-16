@@ -10,6 +10,16 @@
             {
                 Compute(child);
             }
+
+            if (!element.HasChrome)
+            {
+                return;
+            }
+
+            foreach (VisualElement chrome in element.Chrome)
+            {
+                Compute(chrome);
+            }
         }
 
         private void ComputeElementClip(VisualElement element)

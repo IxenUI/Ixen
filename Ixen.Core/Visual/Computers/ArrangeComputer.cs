@@ -8,6 +8,8 @@ namespace Ixen.Core.Visual.Computers
         {
             element.SetPosition(x, y);
 
+            ArrangeChrome(element);
+
             LayoutType type = MeasureComputer.LayoutTypeOf(element);
 
             if (type == LayoutType.Grid)
@@ -49,6 +51,19 @@ namespace Ixen.Core.Visual.Computers
                 {
                     childY += child.BoxHeight;
                 }
+            }
+        }
+
+        private void ArrangeChrome(VisualElement element)
+        {
+            if (!element.HasChrome)
+            {
+                return;
+            }
+
+            foreach (VisualElement chrome in element.Chrome)
+            {
+                Arrange(chrome, element.X + chrome.LayoutOffsetX, element.Y + chrome.LayoutOffsetY);
             }
         }
 

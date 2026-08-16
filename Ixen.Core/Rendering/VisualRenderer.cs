@@ -15,7 +15,7 @@ namespace Ixen.Core.Rendering
 
             RenderElement(element, context);
 
-            if (element.Children.Count == 0)
+            if (element.Children.Count == 0 && !element.HasChrome)
             {
                 return;
             }
@@ -26,6 +26,14 @@ namespace Ixen.Core.Rendering
             foreach (VisualElement child in element.Children)
             {
                 Render(child, context, viewPort);
+            }
+
+            if (element.HasChrome)
+            {
+                foreach (VisualElement chrome in element.Chrome)
+                {
+                    Render(chrome, context, viewPort);
+                }
             }
 
             context.PopClip();

@@ -45,7 +45,30 @@ namespace Ixen.Core.Visual
         internal void RaiseLostFocus() => LostFocus?.Invoke(this, EventArgs.Empty);
 
         public bool Focusable { get; set; }
-        public bool Scrollable { get; set; }
+
+        private bool _scrollable;
+
+        public bool Scrollable
+        {
+            get => _scrollable;
+            set
+            {
+                if (_scrollable == value)
+                {
+                    return;
+                }
+
+                _scrollable = value;
+
+                if (value)
+                {
+                    EnsureScrollbar(true);
+                    EnsureScrollbar(false);
+                }
+
+                InvalidateLayout();
+            }
+        }
 
         private float _scrollX;
         private float _scrollY;
@@ -204,6 +227,42 @@ namespace Ixen.Core.Visual
         public VisualElementStylesDescriptors Styles { get; set; } = new();
         internal VisualElementStylesHandlers StylesHandlers { get; set; } = new();
         public List<string> Classes { get; set; } = new ();
+
+        private List<VisualElement> _chrome;
+
+        internal List<VisualElement> Chrome => _chrome;
+        internal bool HasChrome => _chrome != null && _chrome.Count > 0;
+
+        internal Scrollbar EnsureScrollbar(bool vertical)
+        {
+            if (_chrome != null)
+            {
+                foreach (VisualElement element in _chrome)
+                {
+                    if (element is Scrollbar existing && existing.IsVertical == vertical)
+                    {
+                        return existing;
+                    }
+                }
+            }
+
+            var bar = new Scrollbar(vertical);
+            AddChrome(bar);
+
+            return bar;
+        }
+
+        internal void AddChrome(VisualElement element)
+        {
+            if (_chrome == null)
+            {
+                _chrome = new List<VisualElement>();
+            }
+
+            element.Parent = this;
+            element.MarkStylesDirty();
+            _chrome.Add(element);
+        }
 
         public void AddChild(VisualElement element)
         {

@@ -87,6 +87,44 @@ namespace Ixen.Core.Visual.Computers
             {
                 ClampFieldOffset(field);
             }
+
+            if (element.HasChrome)
+            {
+                MeasureScrollbars(element, scrollable);
+            }
+        }
+
+        private void MeasureScrollbars(VisualElement element, bool scrollable)
+        {
+            bool vertical = scrollable && element.MaxScrollY > 0;
+            bool horizontal = scrollable && element.MaxScrollX > 0;
+
+            float thickness = Scrollbar.THICKNESS;
+            float width = element.ActualWidth - (vertical ? thickness : 0);
+            float height = element.ActualHeight - (horizontal ? thickness : 0);
+
+            foreach (VisualElement chrome in element.Chrome)
+            {
+                if (!(chrome is Scrollbar bar))
+                {
+                    continue;
+                }
+
+                if (bar.IsVertical ? !vertical : !horizontal)
+                {
+                    bar.Hide();
+                }
+                else if (bar.IsVertical)
+                {
+                    bar.Layout(element, element.ActualWidth - thickness, 0, Math.Max(0, height), thickness);
+                }
+                else
+                {
+                    bar.Layout(element, 0, element.ActualHeight - thickness, Math.Max(0, width), thickness);
+                }
+
+                Measure(bar, bar.Styles.Width.Value, bar.Styles.Height.Value, true, true);
+            }
         }
 
         private void LayoutText(VisualElement element, float availableWidth, out float width, out float height)
