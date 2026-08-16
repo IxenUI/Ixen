@@ -252,6 +252,39 @@ namespace Ixen.Core.Visual
             return bar;
         }
 
+        public IElementHost Host { get; private set; }
+
+        internal void AttachHost(IElementHost host)
+        {
+            if (Host == host)
+            {
+                return;
+            }
+
+            Host = host;
+            OnHostChanged();
+
+            foreach (VisualElement child in Children)
+            {
+                child.AttachHost(host);
+            }
+
+            if (_chrome == null)
+            {
+                return;
+            }
+
+            foreach (VisualElement chrome in _chrome)
+            {
+                chrome.AttachHost(host);
+            }
+        }
+
+        internal void DetachHost() => AttachHost(null);
+
+        internal virtual void OnHostChanged()
+        { }
+
         internal void AddChrome(VisualElement element)
         {
             if (_chrome == null)
@@ -261,6 +294,7 @@ namespace Ixen.Core.Visual
 
             element.Parent = this;
             element.MarkStylesDirty();
+            element.AttachHost(Host);
             _chrome.Add(element);
         }
 
@@ -268,6 +302,7 @@ namespace Ixen.Core.Visual
         {
             element.Parent = this;
             element.Invalidate();
+            element.AttachHost(Host);
             Children.Add(element);
             ComputeChildrenIndexes();
         }
@@ -278,6 +313,7 @@ namespace Ixen.Core.Visual
             {
                 element.Parent = this;
                 element.Invalidate();
+                element.AttachHost(Host);
                 Children.Add(element);
             }
 
@@ -289,6 +325,7 @@ namespace Ixen.Core.Visual
             if (Children.Remove(element))
             {
                 element.Parent = null;
+                element.DetachHost();
                 InvalidateLayout();
             }
 

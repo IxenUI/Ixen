@@ -9,7 +9,7 @@ using System;
 
 namespace Ixen.Core
 {
-    public sealed class IxenSurface
+    public sealed class IxenSurface : IElementHost
     {
         private static Color _clearColor = Color.Transparent;
 
@@ -53,7 +53,9 @@ namespace Ixen.Core
             get => _root;
             set
             {
+                _root?.DetachHost();
                 _root = value;
+                _root?.AttachHost(this);
                 _root?.Invalidate();
             }
         }
@@ -64,8 +66,6 @@ namespace Ixen.Core
             Root = root ?? new();
             Root.SetPosition(0, 0);
             Title = InitOptions.Title;
-
-            _keyboardDispatcher.FocusChanged = OnFocusChanged;
         }
 
         public IxenSurface (Component mainComponent, IxenSurfaceInitOptions initOptions = null)
@@ -109,6 +109,8 @@ namespace Ixen.Core
         internal VisualElement HitTest(float x, float y)
             => HitTester.HitTest(Root, ToLogical(x), ToLogical(y));
 
+        public VisualElement PressedElement => _pointerDispatcher.Pressed;
+
         internal VisualElement HoveredElement => _pointerDispatcher.Hovered;
         internal VisualElement CapturedElement => _pointerDispatcher.Captured;
 
@@ -117,66 +119,25 @@ namespace Ixen.Core
 
         internal bool IsDirty => _visualDirty || (Root != null && Root.IsLayoutDirty);
 
-        internal void InvalidateVisual() => _visualDirty = true;
-
-        private const int CARET_BLINK_DELAY = 530;
+        public void InvalidateVisual() => _visualDirty = true;
 
         private IScheduler _scheduler;
         private IClipboard _clipboard;
-        private IDisposable _caretBlink;
-        private TextField _caretField;
 
-        internal IClipboard Clipboard
+        public IClipboard Clipboard
         {
-            set
-            {
-                _clipboard = value;
-
-                if (_caretField != null)
-                {
-                    _caretField.Clipboard = value;
-                }
-            }
+            get => _clipboard;
+            set => _clipboard = value;
         }
 
-        internal IScheduler Scheduler
+        public IScheduler Scheduler
         {
+            get => _scheduler;
             set
             {
                 _scheduler = value;
                 _pointerDispatcher.Scheduler = value;
             }
-        }
-
-        private void OnFocusChanged(VisualElement focused)
-        {
-            if (_caretField != null)
-            {
-                _caretField.IsFocused = false;
-                _caretField.CaretVisible = true;
-            }
-
-            _caretBlink?.Dispose();
-            _caretBlink = null;
-            _caretField = focused as TextField;
-
-            if (_caretField == null)
-            {
-                InvalidateVisual();
-                return;
-            }
-
-            _caretField.IsFocused = true;
-            _caretField.CaretVisible = true;
-            _caretField.Clipboard = _clipboard;
-
-            InvalidateVisual();
-
-            _caretBlink = _scheduler?.Schedule(CARET_BLINK_DELAY, true, () =>
-            {
-                _caretField.CaretVisible = !_caretField.CaretVisible;
-                InvalidateVisual();
-            });
         }
 
         internal void PointerLeaveSurface()
@@ -191,30 +152,13 @@ namespace Ixen.Core
             => _keyboardDispatcher.MoveFocus(Root, backwards, TrackStates);
 
         internal void KeyDown(Key key, KeyModifiers modifiers)
-        {
-            _keyboardDispatcher.KeyDown(Root, key, modifiers, TrackStates);
-            ResetCaretBlink();
-        }
+            => _keyboardDispatcher.KeyDown(Root, key, modifiers, TrackStates);
 
         internal void KeyUp(Key key, KeyModifiers modifiers)
             => _keyboardDispatcher.KeyUp(Root, key, modifiers, TrackStates);
 
         internal void TextInput(string text)
-        {
-            _keyboardDispatcher.TextInput(Root, text, TrackStates);
-            ResetCaretBlink();
-        }
-
-        private void ResetCaretBlink()
-        {
-            if (_caretField == null || _caretField.CaretVisible)
-            {
-                return;
-            }
-
-            _caretField.CaretVisible = true;
-            InvalidateVisual();
-        }
+            => _keyboardDispatcher.TextInput(Root, text, TrackStates);
 
         private bool TrackStates => (Styles ?? StyleRegistry.Default).HasStateClasses;
 

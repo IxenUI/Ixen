@@ -31,9 +31,13 @@ namespace Ixen.Core.UT.Input
             return element;
         }
 
+        private FakeScheduler _scheduler;
+
         [TestInitialize]
         public void Setup()
         {
+            _scheduler = new FakeScheduler();
+
             var root = new VisualElement { Name = "root" };
             root.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
 
@@ -47,7 +51,12 @@ namespace Ixen.Core.UT.Input
 
             root.AddChild(_viewport);
 
-            _surface = new IxenSurface(root) { Styles = new StyleRegistry() };
+            _surface = new IxenSurface(root)
+            {
+                Styles = new StyleRegistry(),
+                Scheduler = _scheduler
+            };
+
             Layout();
         }
 
@@ -243,6 +252,57 @@ namespace Ixen.Core.UT.Input
                     Assert.IsFalse(bar.Thumb.IsVoidOrInvalid, "but the thumb still works");
                 }
             }
+        }
+
+        [TestMethod]
+        public void HoldingAnArrowRepeats()
+        {
+            Scrollbar bar = Bar();
+
+            _surface.PointerDown(bar.End.X + 2, bar.End.Y + 2, PointerButton.Left);
+
+            Assert.AreEqual(Scrollbar.STEP, _viewport.ScrollY, "the first step is immediate");
+
+            _scheduler.FireAll();
+            Assert.AreEqual(2 * Scrollbar.STEP, _viewport.ScrollY, "then the delay fires the second");
+
+            _scheduler.FireAll();
+            Assert.AreEqual(3 * Scrollbar.STEP, _viewport.ScrollY, "and the repeat keeps going");
+        }
+
+        [TestMethod]
+        public void TheRepeatStopsWhenTheButtonIsReleased()
+        {
+            Scrollbar bar = Bar();
+
+            _surface.PointerDown(bar.End.X + 2, bar.End.Y + 2, PointerButton.Left);
+            _scheduler.FireAll();
+
+            float scrolled = _viewport.ScrollY;
+
+            _surface.PointerUp(bar.End.X + 2, bar.End.Y + 2, PointerButton.Left);
+            _scheduler.FireAll();
+            _scheduler.FireAll();
+
+            Assert.AreEqual(scrolled, _viewport.ScrollY, "a released arrow stops stepping");
+        }
+
+        [TestMethod]
+        public void ARepeatCannotOutliveAStolenCapture()
+        {
+            Scrollbar bar = Bar();
+
+            _surface.PointerDown(bar.End.X + 2, bar.End.Y + 2, PointerButton.Left);
+            _scheduler.FireAll();
+
+            float scrolled = _viewport.ScrollY;
+
+            _surface.PointerCaptureLost();
+            _scheduler.FireAll();
+            _scheduler.FireAll();
+
+            Assert.AreEqual(scrolled, _viewport.ScrollY,
+                "the repeat checks the pressed element rather than trusting an Up that never came");
         }
 
         [TestMethod]

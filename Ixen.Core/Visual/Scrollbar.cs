@@ -1,5 +1,6 @@
 using Ixen.Core.Input;
 using Ixen.Core.Visual.Styles.Descriptors;
+using System;
 
 namespace Ixen.Core.Visual
 {
@@ -79,14 +80,66 @@ namespace Ixen.Core.Visual
 
             AddChildren(Start, End, Thumb);
 
-            Start.PointerClick += (sender, args) => Step(-1, args);
-            End.PointerClick += (sender, args) => Step(1, args);
+            Start.PointerDown += (sender, args) => Press(Start, -1, args);
+            End.PointerDown += (sender, args) => Press(End, 1, args);
 
             Thumb.PointerDragStart += OnThumbDrag;
             Thumb.PointerDrag += OnThumbDrag;
         }
 
-        private void Step(float direction, PointerEventArgs args)
+        private const int REPEAT_DELAY = 400;
+        private const int REPEAT_INTERVAL = 60;
+
+        private IDisposable _repeat;
+
+        private void Press(ScrollbarButton button, float direction, PointerEventArgs args)
+        {
+            Step(direction);
+            args.Handled = true;
+
+            _repeat?.Dispose();
+            _repeat = Host?.Scheduler?.Schedule(REPEAT_DELAY, false, () => StartRepeat(button, direction));
+        }
+
+        private void StartRepeat(ScrollbarButton button, float direction)
+        {
+            if (!IsHeld(button))
+            {
+                return;
+            }
+
+            Step(direction);
+
+            _repeat = Host?.Scheduler?.Schedule(REPEAT_INTERVAL, true, () =>
+            {
+                if (!IsHeld(button))
+                {
+                    StopRepeat();
+                    return;
+                }
+
+                Step(direction);
+            });
+        }
+
+        private bool IsHeld(ScrollbarButton button)
+            => Host != null && Host.PressedElement == button;
+
+        private void StopRepeat()
+        {
+            _repeat?.Dispose();
+            _repeat = null;
+        }
+
+        internal override void OnHostChanged()
+        {
+            if (Host == null)
+            {
+                StopRepeat();
+            }
+        }
+
+        private void Step(float direction)
         {
             if (Parent == null)
             {
@@ -101,8 +154,6 @@ namespace Ixen.Core.Visual
             {
                 Parent.ScrollBy(direction * STEP, 0);
             }
-
-            args.Handled = true;
         }
 
         private void OnThumbDrag(object sender, DragEventArgs args)

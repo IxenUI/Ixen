@@ -35,8 +35,9 @@ namespace Ixen.Core.Visual
         internal int CaretOffsetCount { get; set; }
         internal float ContentOffset { get; set; }
         internal bool CaretVisible { get; set; } = true;
-        internal bool IsFocused { get; set; }
-        internal IClipboard Clipboard { get; set; }
+        internal bool IsFocused { get; private set; }
+
+        internal IClipboard Clipboard => Host?.Clipboard;
 
         public TextField()
         {
@@ -47,6 +48,54 @@ namespace Ixen.Core.Visual
             PointerDown += OnPointerDown;
             PointerDrag += OnPointerDrag;
             PointerDoubleClick += OnPointerDoubleClick;
+            GotFocus += (sender, args) => StartBlink();
+            LostFocus += (sender, args) => StopBlink();
+        }
+
+        private const int BLINK_DELAY = 530;
+
+        private IDisposable _blink;
+
+        private void StartBlink()
+        {
+            IsFocused = true;
+            ShowCaret();
+
+            _blink = Host?.Scheduler?.Schedule(BLINK_DELAY, true, () =>
+            {
+                CaretVisible = !CaretVisible;
+                Host?.InvalidateVisual();
+            });
+        }
+
+        private void StopBlink()
+        {
+            IsFocused = false;
+            CaretVisible = true;
+
+            _blink?.Dispose();
+            _blink = null;
+
+            Host?.InvalidateVisual();
+        }
+
+        private void ShowCaret()
+        {
+            if (CaretVisible)
+            {
+                return;
+            }
+
+            CaretVisible = true;
+            Host?.InvalidateVisual();
+        }
+
+        internal override void OnHostChanged()
+        {
+            if (Host == null)
+            {
+                StopBlink();
+            }
         }
 
         public override string Text
@@ -327,12 +376,15 @@ namespace Ixen.Core.Visual
         private void OnTextInput(object sender, TextInputEventArgs args)
         {
             Insert(args.Text);
+            ShowCaret();
             args.Handled = true;
         }
 
         private void OnKeyDown(object sender, KeyEventArgs args)
         {
             bool extend = args.HasModifier(KeyModifiers.Shift);
+
+            ShowCaret();
 
             switch (args.Key)
             {

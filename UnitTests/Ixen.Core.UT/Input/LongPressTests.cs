@@ -33,10 +33,17 @@ namespace Ixen.Core.UT.Input
         {
             foreach (Entry entry in Scheduled.ToArray())
             {
-                if (!entry.Cancelled)
+                if (entry.Cancelled)
                 {
-                    entry.Callback();
+                    continue;
                 }
+
+                if (!entry.Repeat)
+                {
+                    entry.Cancelled = true;
+                }
+
+                entry.Callback();
             }
         }
 
