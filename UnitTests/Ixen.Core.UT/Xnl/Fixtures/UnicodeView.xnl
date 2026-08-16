@@ -1,0 +1,3 @@
+unicode_root {} [
+	label { text: "café ● 日本" }
+]

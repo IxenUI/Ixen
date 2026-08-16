@@ -1,0 +1,6 @@
+unicode_root {
+    label {
+        font-family: Ségoe
+        width: 120px
+    }
+}

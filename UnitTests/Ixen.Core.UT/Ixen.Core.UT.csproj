@@ -40,6 +40,8 @@
     <AdditionalFiles Include="Components\Fixtures\BoundView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\CounterView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\HostView.xnl" />
+    <AdditionalFiles Include="Xnl\Fixtures\UnicodeView.xnl" />
+    <AdditionalFiles Include="Xnl\Fixtures\UnicodeStyles.xns" />
     <AdditionalFiles Include="Xnl\Fixtures\TypedView.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\TypedValuesView.xnl" />
     <AdditionalFiles Include="Xns\Fixtures\AllGeneratedStyles.xns" />
