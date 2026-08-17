@@ -103,17 +103,21 @@ namespace Ixen.Core.Language.Base
         public IEnumerable<TToken> GetTokens() => _tokens;
         public IEnumerable<TToken> GetTokens(int indexFrom, int indexTo) => _tokens.Where
         (
-            t => (t.Index >= indexFrom || t.Index + t.Content.Length >= indexFrom)
+            t => (t.Index >= indexFrom || t.Index + t.Length >= indexFrom)
                && t.Index <= indexTo
         );
 
         public abstract List<TToken> Tokenize();
 
         protected void AddToken(int index, TTokenType type, string content)
+            => AddToken(index, type, content, content?.Length ?? 0);
+
+        protected void AddToken(int index, TTokenType type, string content, int length)
             => _tokens.Add(new TToken
             {
                 Index = index,
                 Content = content,
+                Length = length,
                 Type = type
             });
 
@@ -122,6 +126,7 @@ namespace Ixen.Core.Language.Base
             {
                 Index = index,
                 Content = content,
+                Length = content?.Length ?? 0,
                 Message = message,
                 ErrorType = type
             });

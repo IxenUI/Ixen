@@ -115,6 +115,39 @@ namespace Ixen.Core.UT.Xnl
         }
 
         [TestMethod]
+        public void ACodeTokenSpansItsWholeSourceText()
+        {
+            const string source = "root {} [\r\n\t@if (V) {\r\n\t\tel {}\r\n\t@} else {\r\n\t\tb {}\r\n\t@}\r\n]";
+
+            foreach (XnlToken token in Tokens(source))
+            {
+                if (token.Type != XnlTokenType.CodeRegionBegin && token.Type != XnlTokenType.CodeRegionEnd
+                    && token.Type != XnlTokenType.CodeStatement)
+                {
+                    continue;
+                }
+
+                string slice = source.Substring(token.Index, token.Length);
+                char last = slice[slice.Length - 1];
+
+                Assert.IsTrue(last == '{' || last == '}' || last == ';',
+                    $"'{slice}' must run to its own terminator, or the editor colours it short");
+
+                Assert.IsTrue(slice[0] == '@' || slice.StartsWith("else"),
+                    $"'{slice}' must start at the marker");
+            }
+        }
+
+        [TestMethod]
+        public void EveryOtherTokenKeepsContentAsItsLength()
+        {
+            foreach (XnlToken token in Tokens("el<TextField> { text: \"a\" }"))
+            {
+                Assert.AreEqual(token.Content.Length, token.Length, token.Content);
+            }
+        }
+
+        [TestMethod]
         public void AKeyClauseIsPartOfTheHeader()
         {
             List<XnlToken> tokens = Tokens(

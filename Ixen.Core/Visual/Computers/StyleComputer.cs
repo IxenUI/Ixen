@@ -381,6 +381,34 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultDock;
             }
 
+            if (handlers.ColumnIndex.Descriptor != styles.ColumnIndex)
+            {
+                handlers.ColumnIndex = styles.ColumnIndex != null
+                    ? new ColumnIndexStyleHandler(styles.ColumnIndex)
+                    : VisualElementStylesHandlers.DefaultColumnIndex;
+            }
+
+            if (handlers.RowIndex.Descriptor != styles.RowIndex)
+            {
+                handlers.RowIndex = styles.RowIndex != null
+                    ? new RowIndexStyleHandler(styles.RowIndex)
+                    : VisualElementStylesHandlers.DefaultRowIndex;
+            }
+
+            if (handlers.ColumnSpan.Descriptor != styles.ColumnSpan)
+            {
+                handlers.ColumnSpan = styles.ColumnSpan != null
+                    ? new ColumnSpanStyleHandler(styles.ColumnSpan)
+                    : VisualElementStylesHandlers.DefaultColumnSpan;
+            }
+
+            if (handlers.RowSpan.Descriptor != styles.RowSpan)
+            {
+                handlers.RowSpan = styles.RowSpan != null
+                    ? new RowSpanStyleHandler(styles.RowSpan)
+                    : VisualElementStylesHandlers.DefaultRowSpan;
+            }
+
             if (handlers.Cursor.Descriptor != styles.Cursor)
             {
                 handlers.Cursor = styles.Cursor != null && styles.Cursor.Value != CursorKind.Unset
@@ -485,6 +513,22 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.DOCK:
                     handlers.Dock = new DockStyleHandler((DockStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.COLUMN_INDEX:
+                    handlers.ColumnIndex = new ColumnIndexStyleHandler((ColumnIndexStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.ROW_INDEX:
+                    handlers.RowIndex = new RowIndexStyleHandler((RowIndexStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.COLUMN_SPAN:
+                    handlers.ColumnSpan = new ColumnSpanStyleHandler((ColumnSpanStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.ROW_SPAN:
+                    handlers.RowSpan = new RowSpanStyleHandler((RowSpanStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.MARGIN:

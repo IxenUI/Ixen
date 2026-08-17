@@ -17,7 +17,7 @@ generated_root {
     text-align: right bottom
     text-overflow: ellipsis
     text-wrap: nowrap
-    transition: background 150ms color 0.2s
+    transition: background 150ms color 0.2s 30ms ease-out
     cursor: hand
 
     generated_child {
@@ -28,6 +28,10 @@ generated_root {
         right: 3px
         bottom: 4.25px
         dock: right
+        column-index: 1
+        row-index: 2
+        column-span: 2
+        row-span: 3
     }
 
     generated_child:hover {

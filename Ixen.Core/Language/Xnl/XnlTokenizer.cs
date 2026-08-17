@@ -347,7 +347,7 @@ namespace Ixen.Core.Language.Xnl
             }
 
             MoveCursor();
-            AddToken(tokenIndex, XnlTokenType.CodeRegionEnd, "@}");
+            AddToken(tokenIndex, XnlTokenType.CodeRegionEnd, "@}", _index - tokenIndex + 1);
             return true;
         }
 
@@ -374,7 +374,8 @@ namespace Ixen.Core.Language.Xnl
 
             AddToken(tokenIndex,
                 terminator == '{' ? XnlTokenType.CodeRegionBegin : XnlTokenType.CodeStatement,
-                sb.ToString().Trim());
+                sb.ToString().Trim(),
+                _index - tokenIndex + 1);
 
             return true;
         }
@@ -410,7 +411,9 @@ namespace Ixen.Core.Language.Xnl
                 return false;
             }
 
-            AddToken(tokenIndex, XnlTokenType.CodeRegionBegin, sb.ToString().Trim());
+            AddToken(tokenIndex, XnlTokenType.CodeRegionBegin, sb.ToString().Trim(),
+                _index - tokenIndex + 1);
+
             return true;
         }
 

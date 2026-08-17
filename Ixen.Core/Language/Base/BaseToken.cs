@@ -4,6 +4,7 @@
     {
         public int Index { get; set; }
         public string Content { get; set; }
+        public int Length { get; set; }
         public string Message { get; set; }
         public abstract bool IsError { get; }
     }

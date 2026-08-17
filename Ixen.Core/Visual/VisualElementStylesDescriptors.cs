@@ -8,6 +8,8 @@ namespace Ixen.Core.Visual
         public BorderStyleDescriptor Border { get; set; } = new();
         public BottomStyleDescriptor Bottom { get; set; } = new();
         public ColorStyleDescriptor Color { get; set; } = new();
+        public ColumnIndexStyleDescriptor ColumnIndex { get; set; } = new();
+        public ColumnSpanStyleDescriptor ColumnSpan { get; set; } = new();
         public ColumnTemplateStyleDescriptor ColumnTemplate { get; set; } = new();
         public CornerRadiusStyleDescriptor CornerRadius { get; set; } = new();
         public CursorStyleDescriptor Cursor { get; set; } = new();
@@ -22,6 +24,8 @@ namespace Ixen.Core.Visual
         public MarginStyleDescriptor Margin { get; set; } = new();
         public PaddingStyleDescriptor Padding { get; set; } = new();
         public RightStyleDescriptor Right { get; set; } = new();
+        public RowIndexStyleDescriptor RowIndex { get; set; } = new();
+        public RowSpanStyleDescriptor RowSpan { get; set; } = new();
         public RowTemplateStyleDescriptor RowTemplate { get; set; } = new();
         public TextAlignStyleDescriptor TextAlign { get; set; } = new();
         public TextOverflowStyleDescriptor TextOverflow { get; set; } = new();

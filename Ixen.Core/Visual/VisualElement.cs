@@ -156,6 +156,11 @@ namespace Ixen.Core.Visual
         internal int ChildIndex { get; set; }
         internal List<VisualElement> Children { get; private set; } = new();
 
+        internal int GridColumn { get; set; }
+        internal int GridRow { get; set; }
+        internal int GridColumnSpan { get; set; } = 1;
+        internal int GridRowSpan { get; set; } = 1;
+
         private float[] _gridColumns;
         private float[] _gridRows;
         private List<string> _textLines;

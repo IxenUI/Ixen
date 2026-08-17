@@ -92,30 +92,31 @@ namespace Ixen.Core.Visual.Computers
             }
 
             float originX = ContentOriginX(element);
-            float x = originX;
-            float y = ContentOriginY(element);
-            int column = 0;
-            int row = 0;
+            float originY = ContentOriginY(element);
 
             foreach (VisualElement child in element.Children)
             {
-                if (column == columns.Length)
+                if (child.GridColumn >= columns.Length || child.GridRow >= rows.Length)
                 {
-                    column = 0;
-                    x = originX;
-                    y += rows[row];
-                    row++;
-
-                    if (row == rows.Length)
-                    {
-                        return;
-                    }
+                    continue;
                 }
 
-                Arrange(child, x, y);
-                x += columns[column];
-                column++;
+                Arrange(child,
+                    originX + Offset(columns, child.GridColumn),
+                    originY + Offset(rows, child.GridRow));
             }
+        }
+
+        private static float Offset(float[] tracks, int index)
+        {
+            float offset = 0;
+
+            for (int i = 0; i < index && i < tracks.Length; i++)
+            {
+                offset += tracks[i];
+            }
+
+            return offset;
         }
     }
 }

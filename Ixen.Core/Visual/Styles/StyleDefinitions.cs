@@ -53,6 +53,18 @@ namespace Ixen.Core.Visual.Styles
                 Define(StyleIdentifier.DOCK, v => new DockStyleParser(v),
                     p => ((DockStyleParser)p).Descriptor, new[] { "left", "top", "right", "bottom", "fill" }),
 
+                Define(StyleIdentifier.COLUMN_INDEX, v => new ColumnIndexStyleParser(v),
+                    p => ((ColumnIndexStyleParser)p).Descriptor, new[] { GridIndexStyleParser.AUTO }),
+
+                Define(StyleIdentifier.ROW_INDEX, v => new RowIndexStyleParser(v),
+                    p => ((RowIndexStyleParser)p).Descriptor, new[] { GridIndexStyleParser.AUTO }),
+
+                Define(StyleIdentifier.COLUMN_SPAN, v => new ColumnSpanStyleParser(v),
+                    p => ((ColumnSpanStyleParser)p).Descriptor),
+
+                Define(StyleIdentifier.ROW_SPAN, v => new RowSpanStyleParser(v),
+                    p => ((RowSpanStyleParser)p).Descriptor),
+
                 Define(StyleIdentifier.FONT_FAMILY, v => new FontFamilyStyleParser(v),
                     p => ((FontFamilyStyleParser)p).Descriptor),
 

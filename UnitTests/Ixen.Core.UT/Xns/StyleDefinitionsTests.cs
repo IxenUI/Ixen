@@ -63,9 +63,9 @@ namespace Ixen.Core.UT.Xns
                 .ToList();
 
             CollectionAssert.AreEquivalent(
-                new[] { StyleIdentifier.COLUMN_INDEX, StyleIdentifier.ROW_INDEX },
+                new string[0],
                 missing,
-                "only the two index identifiers have no parser; anything else missing is a style XNS silently rejects");
+                "every public identifier now has a parser; anything missing is a style XNS silently rejects");
         }
 
         [TestMethod]
@@ -89,7 +89,7 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void TheNamesAreWhatTheDocumentationClaims()
         {
-            Assert.AreEqual(25, StyleDefinitions.All.Count,
+            Assert.AreEqual(29, StyleDefinitions.All.Count,
                 string.Join(", ", StyleDefinitions.All.Select(d => d.Name)));
         }
     }

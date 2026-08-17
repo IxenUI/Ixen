@@ -587,7 +587,7 @@ namespace Ixen.Core.Visual.Computers
             List<SizeStyleDescriptor> rowTemplate = element.StylesHandlers.ColumnTemplate.Descriptor.Value;
 
             int columnCount = columnTemplate.Count > 0 ? columnTemplate.Count : 1;
-            int rowCount = (element.Children.Count + columnCount - 1) / columnCount;
+            int rowCount = PlaceCells(element, columnCount);
 
             float[] columns = element.EnsureGridColumns(columnCount);
             float[] rows = element.EnsureGridRows(rowCount);
@@ -598,9 +598,148 @@ namespace Ixen.Core.Visual.Computers
             foreach (VisualElement child in element.Children)
             {
                 MeasureCell(child,
-                    columns[child.ChildIndex % columnCount],
-                    rows[child.ChildIndex / columnCount],
+                    Extent(columns, child.GridColumn, child.GridColumnSpan),
+                    Extent(rows, child.GridRow, child.GridRowSpan),
                     true, true);
+            }
+        }
+
+        private static float Extent(float[] tracks, int start, int span)
+        {
+            float extent = 0;
+
+            for (int i = start; i < start + span && i < tracks.Length; i++)
+            {
+                extent += tracks[i];
+            }
+
+            return extent;
+        }
+
+        private static int PlaceCells(VisualElement element, int columnCount)
+        {
+            var taken = new List<bool[]>();
+            int rowCount = 0;
+
+            foreach (VisualElement child in element.Children)
+            {
+                child.GridColumnSpan = Clamp(child.StylesHandlers.ColumnSpan.Descriptor.Value, columnCount);
+                child.GridRowSpan = Math.Max(1, child.StylesHandlers.RowSpan.Descriptor.Value);
+            }
+
+            foreach (VisualElement child in element.Children)
+            {
+                GridIndexStyleDescriptor columnStyle = child.StylesHandlers.ColumnIndex.Descriptor;
+                GridIndexStyleDescriptor rowStyle = child.StylesHandlers.RowIndex.Descriptor;
+
+                if (columnStyle.IsAuto && rowStyle.IsAuto)
+                {
+                    continue;
+                }
+
+                int column = columnStyle.IsAuto ? 0 : Math.Min(columnStyle.Value, columnCount - 1);
+                int row = rowStyle.IsAuto ? 0 : rowStyle.Value;
+
+                if (columnStyle.IsAuto)
+                {
+                    column = FirstFreeColumn(taken, row, columnCount, child.GridColumnSpan);
+                }
+
+                Occupy(taken, column, row, child.GridColumnSpan, child.GridRowSpan, columnCount);
+
+                child.GridColumn = column;
+                child.GridRow = row;
+
+                rowCount = Math.Max(rowCount, row + child.GridRowSpan);
+            }
+
+            int cursor = 0;
+
+            foreach (VisualElement child in element.Children)
+            {
+                if (!child.StylesHandlers.ColumnIndex.Descriptor.IsAuto
+                    || !child.StylesHandlers.RowIndex.Descriptor.IsAuto)
+                {
+                    continue;
+                }
+
+                while (!Fits(taken, cursor % columnCount, cursor / columnCount, child.GridColumnSpan, columnCount))
+                {
+                    cursor++;
+                }
+
+                int column = cursor % columnCount;
+                int row = cursor / columnCount;
+
+                Occupy(taken, column, row, child.GridColumnSpan, child.GridRowSpan, columnCount);
+
+                child.GridColumn = column;
+                child.GridRow = row;
+
+                rowCount = Math.Max(rowCount, row + child.GridRowSpan);
+                cursor += child.GridColumnSpan;
+            }
+
+            return Math.Max(1, rowCount);
+        }
+
+        private static int Clamp(int span, int columnCount)
+            => Math.Min(Math.Max(1, span), columnCount);
+
+        private static bool[] RowOf(List<bool[]> taken, int row, int columnCount)
+        {
+            while (taken.Count <= row)
+            {
+                taken.Add(new bool[columnCount]);
+            }
+
+            return taken[row];
+        }
+
+        private static bool Fits(List<bool[]> taken, int column, int row, int span, int columnCount)
+        {
+            if (column + span > columnCount)
+            {
+                return false;
+            }
+
+            bool[] cells = RowOf(taken, row, columnCount);
+
+            for (int i = column; i < column + span; i++)
+            {
+                if (cells[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static int FirstFreeColumn(List<bool[]> taken, int row, int columnCount, int span)
+        {
+            for (int column = 0; column + span <= columnCount; column++)
+            {
+                if (Fits(taken, column, row, span, columnCount))
+                {
+                    return column;
+                }
+            }
+
+            return 0;
+        }
+
+        private static void Occupy(List<bool[]> taken, int column, int row, int columnSpan, int rowSpan,
+            int columnCount)
+        {
+            for (int r = row; r < row + rowSpan; r++)
+            {
+                bool[] cells = RowOf(taken, r, columnCount);
+
+                for (int c = column; c < column + columnSpan && c < columnCount; c++)
+                {
+                    cells[c] = true;
+                }
             }
         }
 
@@ -701,7 +840,7 @@ namespace Ixen.Core.Visual.Computers
 
             foreach (VisualElement child in element.Children)
             {
-                if (child.ChildIndex % columnCount != column)
+                if (child.GridColumn != column || child.GridColumnSpan > 1)
                 {
                     continue;
                 }
@@ -723,12 +862,12 @@ namespace Ixen.Core.Visual.Computers
 
             foreach (VisualElement child in element.Children)
             {
-                if (child.ChildIndex / columns.Length != row)
+                if (child.GridRow != row || child.GridRowSpan > 1)
                 {
                     continue;
                 }
 
-                MeasureCell(child, columns[child.ChildIndex % columns.Length], available, true, false);
+                MeasureCell(child, Extent(columns, child.GridColumn, child.GridColumnSpan), available, true, false);
 
                 if (child.BoxHeight > extent)
                 {

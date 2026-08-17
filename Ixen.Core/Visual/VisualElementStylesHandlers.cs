@@ -8,6 +8,8 @@ namespace Ixen.Core.Visual
         internal static readonly BorderStyleHandler DefaultBorder = new();
         internal static readonly BottomStyleHandler DefaultBottom = new();
         internal static readonly ColorStyleHandler DefaultColor = new();
+        internal static readonly ColumnIndexStyleHandler DefaultColumnIndex = new();
+        internal static readonly ColumnSpanStyleHandler DefaultColumnSpan = new();
         internal static readonly ColumnTemplateStyleHandler DefaultColumnTemplate = new();
         internal static readonly CornerRadiusStyleHandler DefaultCornerRadius = new();
         internal static readonly CursorStyleHandler DefaultCursor = new();
@@ -22,6 +24,8 @@ namespace Ixen.Core.Visual
         internal static readonly MarginStyleHandler DefaultMargin = new();
         internal static readonly PaddingStyleHandler DefaultPadding = new();
         internal static readonly RightStyleHandler DefaultRight = new();
+        internal static readonly RowIndexStyleHandler DefaultRowIndex = new();
+        internal static readonly RowSpanStyleHandler DefaultRowSpan = new();
         internal static readonly RowTemplateStyleHandler DefaultRowTemplate = new();
         internal static readonly TextAlignStyleHandler DefaultTextAlign = new();
         internal static readonly TextOverflowStyleHandler DefaultTextOverflow = new();
@@ -34,6 +38,8 @@ namespace Ixen.Core.Visual
         public BorderStyleHandler Border { get; set; } = DefaultBorder;
         public BottomStyleHandler Bottom { get; set; } = DefaultBottom;
         public ColorStyleHandler Color { get; set; } = DefaultColor;
+        public ColumnIndexStyleHandler ColumnIndex { get; set; } = DefaultColumnIndex;
+        public ColumnSpanStyleHandler ColumnSpan { get; set; } = DefaultColumnSpan;
         public ColumnTemplateStyleHandler ColumnTemplate { get; set; } = DefaultColumnTemplate;
         public CornerRadiusStyleHandler CornerRadius { get; set; } = DefaultCornerRadius;
         public CursorStyleHandler Cursor { get; set; } = DefaultCursor;
@@ -48,6 +54,8 @@ namespace Ixen.Core.Visual
         public MarginStyleHandler Margin { get; set; } = DefaultMargin;
         public PaddingStyleHandler Padding { get; set; } = DefaultPadding;
         public RightStyleHandler Right { get; set; } = DefaultRight;
+        public RowIndexStyleHandler RowIndex { get; set; } = DefaultRowIndex;
+        public RowSpanStyleHandler RowSpan { get; set; } = DefaultRowSpan;
         public RowTemplateStyleHandler RowTemplate { get; set; } = DefaultRowTemplate;
         public TextAlignStyleHandler TextAlign { get; set; } = DefaultTextAlign;
         public TextOverflowStyleHandler TextOverflow { get; set; } = DefaultTextOverflow;

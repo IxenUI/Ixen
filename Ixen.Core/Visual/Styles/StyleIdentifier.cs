@@ -8,6 +8,8 @@
         internal const string SIZE = "size";
         internal const string SPACE = "space";
         internal const string SIZE_TEMPLATE = "size-template";
+        internal const string GRID_INDEX = "grid-index";
+        internal const string GRID_SPAN = "grid-span";
 
         // Actual properties
         public const string BACKGROUND = "background";
@@ -15,6 +17,7 @@
         public const string BOTTOM = "bottom";
         public const string COLOR = "color";
         public const string COLUMN_INDEX = "column-index";
+        public const string COLUMN_SPAN = "column-span";
         public const string COLUMN_TEMPLATE = "column-template";
         public const string CORNER_RADIUS = "corner-radius";
         public const string CURSOR = "cursor";
@@ -30,6 +33,7 @@
         public const string PADDING = "padding";
         public const string RIGHT = "right";
         public const string ROW_INDEX = "row-index";
+        public const string ROW_SPAN = "row-span";
         public const string ROW_TEMPLATE = "row-template";
         public const string TEXT_ALIGN = "text-align";
         public const string TEXT_OVERFLOW = "text-overflow";
