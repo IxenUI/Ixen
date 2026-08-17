@@ -19,5 +19,13 @@ nested_root {} [
 			@}
 		]
 	@}
+	@foreach (var row in Items) {
+		@var label = row.Name + "!";
+		computed { text: "{label}" }
+		computed_host {} [
+			@string deep = label + "?";
+			computed_deep { text: "{deep}" }
+		]
+	@}
 	nested_after { text: "after" }
 ]

@@ -26,8 +26,8 @@ namespace Ixen.Generators.Xnl
         private const string IN_KEYWORD = "in";
         private const string KEY_KEYWORD = "key";
         private const string FOR_KEYWORD = "for";
+        private const string WHILE_KEYWORD = "while";
         private const string ELSE_KEYWORD = "else";
-        private const string VAR_KEYWORD = "var";
         private const string CHANGED_SUFFIX = "Changed";
         private const string CLASS_PROPERTY = "class";
         private const string EACH_PROPERTY = "each";
@@ -161,13 +161,13 @@ namespace Ixen.Generators.Xnl
             internal readonly List<(string type, string field)> Handlers = new List<(string, string)>();
             internal readonly List<(string field, string body)> Assignments = new List<(string, string)>();
             internal List<XnlNode> Body = new List<XnlNode>();
+            internal readonly List<(int before, string statement)> Statements = new List<(int, string)>();
 
             internal string Condition;
             internal string Guard;
             internal string Test;
             internal bool ClosesChain;
             internal string Declaration;
-            internal string Item;
             internal string Source;
             internal string Key;
             internal string Loop;
@@ -193,7 +193,6 @@ namespace Ixen.Generators.Xnl
 
             internal INamedTypeSymbol Model;
             internal HashSet<string> ModelMembers;
-            internal string RepeatItem;
             internal Region CurrentRow;
             internal HashSet<int> RowFields;
             internal int ModelUses;
@@ -265,7 +264,7 @@ namespace Ixen.Generators.Xnl
 
                 var block = new StringBuilder();
 
-                AddRowBindings(block, region, rowVar, null, file, tabLevel + 1);
+                AddRowBindings(block, region, rowVar, file, tabLevel + 1);
 
                 if (block.Length == 0)
                 {
@@ -314,7 +313,7 @@ namespace Ixen.Generators.Xnl
 
             var loop = new StringBuilder();
 
-            AddRowBindings(loop, region, rowVar, region.Item, file, tabLevel + 1);
+            AddRowBindings(loop, region, rowVar, file, tabLevel + 1);
 
             if (loop.Length == 0)
             {
@@ -330,14 +329,24 @@ namespace Ixen.Generators.Xnl
             sb.AppendLine($"{tabs}}}");
         }
 
-        static void AddRowBindings(StringBuilder sb, Region region, string rowVar, string item, FileContext file,
-            int tabLevel)
+        static void AddRowBindings(StringBuilder sb, Region region, string rowVar, FileContext file, int tabLevel)
         {
             string tabs = new string('\t', tabLevel);
 
-            for (int k = 0; k < region.Body.Count; k++)
+            for (int k = 0; k <= region.Body.Count; k++)
             {
-                AddRegionBindings(sb, region.Body[k], rowVar, item, file, tabLevel);
+                foreach ((int before, string statement) in region.Statements)
+                {
+                    if (before == k)
+                    {
+                        sb.AppendLine($"{tabs}{statement}");
+                    }
+                }
+
+                if (k < region.Body.Count)
+                {
+                    AddRegionBindings(sb, region.Body[k], rowVar, file, tabLevel);
+                }
             }
 
             foreach ((string field, string body) in region.Assignments)
@@ -383,7 +392,7 @@ namespace Ixen.Generators.Xnl
                 $"{counter} + 1, _ => new {region.RowType}());");
             sb.AppendLine($"{inner}var {rowVar} = {rows}[{counter}];");
 
-            AddRowBindings(sb, region, rowVar, region.Item, file, tabLevel + 1);
+            AddRowBindings(sb, region, rowVar, file, tabLevel + 1);
 
             sb.AppendLine($"{inner}{counter}++;");
             sb.AppendLine($"{tabs}}}");
@@ -415,8 +424,7 @@ namespace Ixen.Generators.Xnl
             }
         }
 
-        static void AddRegionBindings(StringBuilder sb, XnlNode node, string rowVar, string item, FileContext file,
-            int tabLevel)
+        static void AddRegionBindings(StringBuilder sb, XnlNode node, string rowVar, FileContext file, int tabLevel)
         {
             string tabs = new string('\t', tabLevel);
             string path = $"{rowVar}.{Identifier(node)}";
@@ -453,18 +461,29 @@ namespace Ixen.Generators.Xnl
 
             foreach (XnlNode child in node.Children)
             {
-                if (child.IsCode)
+                if (child.IsStatement)
+                {
+                    string statement = StatementOf(child, file);
+
+                    if (statement != null)
+                    {
+                        sb.AppendLine($"{tabs}{statement}");
+                    }
+
+                    continue;
+                }
+
+                if (child.IsRegion)
                 {
                     continue;
                 }
 
-                AddRegionBindings(sb, child, rowVar, item, file, tabLevel);
+                AddRegionBindings(sb, child, rowVar, file, tabLevel);
             }
         }
 
         static void AddRowClass(StringBuilder sb, Region region, FileContext file)
         {
-            string previousItem = file.RepeatItem;
             Region previousRow = file.CurrentRow;
             HashSet<int> previousFields = file.RowFields;
 
@@ -475,7 +494,6 @@ namespace Ixen.Generators.Xnl
                 CollectRowFields(node, rowFields);
             }
 
-            file.RepeatItem = region.Item;
             file.CurrentRow = region;
             file.RowFields = rowFields;
 
@@ -486,7 +504,6 @@ namespace Ixen.Generators.Xnl
                 AddDeclaration(body, node, 4, file, skipBindings: true, forceField: true);
             }
 
-            file.RepeatItem = previousItem;
             file.CurrentRow = previousRow;
             file.RowFields = previousFields;
 
@@ -700,37 +717,48 @@ namespace Ixen.Generators.Xnl
 
         static void AddStatement(XnlNode node, FileContext file)
         {
-            string code = (node.Code ?? string.Empty).Trim();
-
             if (file.InFactory)
             {
-                file.Diagnostics.Add(new LanguageError(
-                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
-                    "a code statement cannot appear inside a code region yet.",
-                    node.CodeIndex,
-                    code.Length + 1));
-
                 return;
             }
 
-            int equals = code.IndexOf('=');
+            string statement = StatementOf(node, file);
 
-            if (!StartsWithKeyword(code, VAR_KEYWORD) || equals < 0
-                || LastIdentifier(code.Substring(0, equals)) == null)
+            if (statement != null)
+            {
+                file.Bind(statement);
+            }
+        }
+
+        static string StatementOf(XnlNode node, FileContext file)
+        {
+            string code = (node.Code ?? string.Empty).Trim();
+            int equals = code.IndexOf('=');
+            string declaration = equals < 0 ? null : code.Substring(0, equals).TrimEnd();
+            string name = declaration == null ? null : LastIdentifier(declaration);
+
+            if (name == null || !DeclaresLocal(declaration, name))
             {
                 file.Diagnostics.Add(new LanguageError(
                     LanguageErrorCode.INVALID_PROPERTY_VALUE,
-                    $"'@{code};' is not a supported code statement: only '@var name = expression;' exists today.",
+                    $"'@{code};' is not a supported code statement: only a local declaration such as "
+                        + "'@var name = expression;' exists today.",
                     node.CodeIndex,
                     code.Length + 1));
 
-                return;
+                return null;
             }
 
-            string declaration = code.Substring(0, equals).TrimEnd();
             string initializer = XnlBindings.Qualify(code.Substring(equals + 1).Trim(), file.ModelMembers);
 
-            file.Bind($"{declaration} = {initializer};");
+            return $"{declaration} = {initializer};";
+        }
+
+        static bool DeclaresLocal(string declaration, string name)
+        {
+            int start = declaration.Length - name.Length;
+
+            return start > 0 && char.IsWhiteSpace(declaration[start - 1]);
         }
 
         static Region AddRegion(XnlNode node, string parentId, int statics, List<string> regions, FileContext file,
@@ -760,11 +788,12 @@ namespace Ixen.Generators.Xnl
             {
                 if (body.IsStatement)
                 {
-                    file.Diagnostics.Add(new LanguageError(
-                        LanguageErrorCode.INVALID_PROPERTY_VALUE,
-                        "a code statement cannot appear inside a code region yet.",
-                        body.CodeIndex,
-                        body.Code.Length + 1));
+                    string statement = StatementOf(body, file);
+
+                    if (statement != null)
+                    {
+                        region.Statements.Add((region.Body.Count, statement));
+                    }
 
                     continue;
                 }
@@ -856,6 +885,17 @@ namespace Ixen.Generators.Xnl
                     return false;
                 }
             }
+            else if (StartsWithKeyword(code, WHILE_KEYWORD))
+            {
+                file.Diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                    "'@while' cannot terminate: a region body holds elements, never statements, so nothing in it can "
+                        + "advance the condition. Use '@for' with a counter.",
+                    node.CodeIndex,
+                    code.Length + 1));
+
+                return false;
+            }
             else if (StartsWithKeyword(code, FOR_KEYWORD))
             {
                 string rest = code.Substring(FOR_KEYWORD.Length).Trim();
@@ -876,7 +916,6 @@ namespace Ixen.Generators.Xnl
 
                     region.Kind = RegionKind.For;
                     region.Loop = $"{FOR_KEYWORD} {header}";
-                    region.Item = LastIdentifier(FirstClause(header)) ?? "the loop variable";
 
                     return true;
                 }
@@ -935,15 +974,6 @@ namespace Ixen.Generators.Xnl
             return false;
         }
 
-        static string FirstClause(string header)
-        {
-            int semicolon = header.IndexOf(';');
-            string clause = semicolon < 0 ? header : header.Substring(0, semicolon);
-            int equals = clause.IndexOf('=');
-
-            return equals < 0 ? clause : clause.Substring(0, equals);
-        }
-
         static bool ParseForEach(string code, Region region, FileContext file, XnlNode node, out bool reported)
         {
             reported = false;
@@ -986,7 +1016,6 @@ namespace Ixen.Generators.Xnl
 
             region.Kind = RegionKind.ForEach;
             region.Declaration = declaration;
-            region.Item = item;
             region.Source = source;
 
             return true;

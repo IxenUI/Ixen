@@ -177,6 +177,40 @@ namespace Ixen.Core.UT.Components
         }
 
         [TestMethod]
+        public void AVarInsideALoopIsComputedPerIteration()
+        {
+            var component = new NestedComponent { Items = Two() };
+
+            CollectionAssert.AreEqual(
+                new[] { "one!", "two!" },
+                component.Initialize()
+                    .FindByName("nested_root")
+                    .Children
+                    .Where(c => c.Name == "computed")
+                    .Select(c => c.Text)
+                    .ToArray(),
+                "the statement is emitted inside the loop, before the binding that reads it");
+        }
+
+        [TestMethod]
+        public void ATypedDeclarationDeeperInTheBodyStillSeesWhatCameBefore()
+        {
+            var component = new NestedComponent { Items = Two() };
+
+            CollectionAssert.AreEqual(
+                new[] { "one!?", "two!?" },
+                component.Initialize()
+                    .FindByName("nested_root")
+                    .Children
+                    .Where(c => c.Name == "nested_row" || c.Name == "computed_host")
+                    .Where(c => c.Name == "computed_host")
+                    .SelectMany(c => c.Children)
+                    .Select(c => c.Text)
+                    .ToArray(),
+                "a statement inside an element of the body is emitted at its place in the same loop");
+        }
+
+        [TestMethod]
         public void AnActionInsideALoopReachesTheLoopVariable()
         {
             var component = new NestedComponent { Items = Two() };
