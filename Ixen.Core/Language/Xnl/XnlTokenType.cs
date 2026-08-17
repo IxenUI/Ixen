@@ -22,6 +22,9 @@
         ChildrenBegin,
         ChildrenEnd,
 
+        CodeRegionBegin,
+        CodeRegionEnd,
+
         Comment
     }
 }

@@ -99,6 +99,20 @@ namespace Ixen.Core.Language.Xnl
                     case XnlTokenType.ChildrenEnd:
                         parent = stack.Pop().Parent;
                         break;
+
+                    case XnlTokenType.CodeRegionBegin:
+                        node = CreateNode(++nodeId, parent);
+                        node.Code = token.Content;
+                        node.CodeIndex = token.Index;
+                        stack.Push(node);
+                        parent = node;
+                        createNode = true;
+                        break;
+
+                    case XnlTokenType.CodeRegionEnd:
+                        parent = stack.Pop().Parent;
+                        createNode = true;
+                        break;
                 }
             }
 

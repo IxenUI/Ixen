@@ -7,6 +7,8 @@ namespace Ixen.Core.Language.Xnl
 {
     internal class XnlTokenizer : BaseTokenizer<XnlToken, XnlTokenType, XnlTokenErrorType>
     {
+        private const char CODE_MARKER = '@';
+
         private bool _expectElementName = false;
 
         private bool _expectElementTypeName = false;
@@ -15,6 +17,9 @@ namespace Ixen.Core.Language.Xnl
 
         private bool _expectChildrenBegin = false;
         private bool _expectChildrenEnd = false;
+
+        private bool _expectCodeRegionBegin = false;
+        private bool _expectCodeRegionEnd = false;
 
         private bool _expectPropertiesBegin = false;
         private bool _expectPropertiesEnd = false;
@@ -26,6 +31,7 @@ namespace Ixen.Core.Language.Xnl
         private bool _expectPropertyValue = false;
 
         private int _contentLevel;
+        private int _regionLevel;
 
         public XnlTokenizer(string source)
             : base(source)
@@ -52,7 +58,7 @@ namespace Ixen.Core.Language.Xnl
                 AddError(LanguageErrorCode.SYNTAX, $"Tokenizer failure: {ex.Message}", _index, 0);
             }
 
-            if (_contentLevel != 0)
+            if (_contentLevel != 0 || _regionLevel != 0)
             {
                 ReportUnclosedBlock();
             }
@@ -100,6 +106,18 @@ namespace Ixen.Core.Language.Xnl
                 if (_expectChildrenEnd && ReadChildrenEnd())
                 {
                     SetStatesFlags(XnlTokenType.ChildrenEnd);
+                    continue;
+                }
+
+                if (_expectCodeRegionEnd && ReadCodeRegionEnd())
+                {
+                    SetStatesFlags(XnlTokenType.CodeRegionEnd);
+                    continue;
+                }
+
+                if (_expectCodeRegionBegin && ReadCodeRegionBegin())
+                {
+                    SetStatesFlags(XnlTokenType.CodeRegionBegin);
                     continue;
                 }
 
@@ -163,6 +181,8 @@ namespace Ixen.Core.Language.Xnl
             _expectElementTypeEnd = false;
             _expectChildrenBegin = false;
             _expectChildrenEnd = false;
+            _expectCodeRegionBegin = false;
+            _expectCodeRegionEnd = false;
             _expectPropertiesBegin = false;
             _expectPropertiesEnd = false;
             _expectPropertyName = false;
@@ -182,6 +202,7 @@ namespace Ixen.Core.Language.Xnl
                     _expectElementName = true;
                     _expectElementTypeBegin = true;
                     _expectPropertiesBegin = true;
+                    _expectCodeRegionBegin = true;
                     break;
 
                 case XnlTokenType.ElementName:
@@ -212,6 +233,8 @@ namespace Ixen.Core.Language.Xnl
                     _expectPropertiesBegin = true;
                     _expectChildrenBegin = true;
                     _expectChildrenEnd = true;
+                    _expectCodeRegionBegin = true;
+                    _expectCodeRegionEnd = true;
                     break;
 
                 case XnlTokenType.PropertyName:
@@ -240,6 +263,7 @@ namespace Ixen.Core.Language.Xnl
                     _expectElementTypeBegin = true;
                     _expectPropertiesBegin = true;
                     _expectChildrenEnd = true;
+                    _expectCodeRegionBegin = true;
                     _contentLevel++;
                     break;
 
@@ -249,6 +273,27 @@ namespace Ixen.Core.Language.Xnl
                     _expectElementTypeBegin = true;
                     _expectPropertiesBegin = true;
                     _expectChildrenEnd = true;
+                    _expectCodeRegionBegin = true;
+                    _expectCodeRegionEnd = true;
+                    break;
+
+                case XnlTokenType.CodeRegionBegin:
+                    _regionLevel++;
+                    _expectElementName = true;
+                    _expectElementTypeBegin = true;
+                    _expectPropertiesBegin = true;
+                    _expectCodeRegionBegin = true;
+                    _expectCodeRegionEnd = true;
+                    break;
+
+                case XnlTokenType.CodeRegionEnd:
+                    _regionLevel--;
+                    _expectElementName = true;
+                    _expectElementTypeBegin = true;
+                    _expectPropertiesBegin = true;
+                    _expectChildrenEnd = true;
+                    _expectCodeRegionBegin = true;
+                    _expectCodeRegionEnd = true;
                     break;
             }
         }
@@ -262,6 +307,112 @@ namespace Ixen.Core.Language.Xnl
         private bool ReadPropertyValueBegin() => ReadCharToken(XnlTokenType.PropertyValueBegin, '"');
         private bool ReadPropertyValueEnd() => ReadCharToken(XnlTokenType.PropertyValueEnd, '"');
         private bool ReadPropertyEqual() => ReadCharToken(XnlTokenType.PropertyEqual, ':');
+
+        private bool ReadCodeRegionEnd()
+        {
+            int index = _index;
+
+            if (PeekNonSpaceChar() != CODE_MARKER)
+            {
+                _index = index;
+                return false;
+            }
+
+            int tokenIndex = _peekIndex;
+            MoveCursor();
+
+            if (PeekChar() != '}')
+            {
+                _index = index;
+                return false;
+            }
+
+            MoveCursor();
+            AddToken(tokenIndex, XnlTokenType.CodeRegionEnd, "@}");
+            return true;
+        }
+
+        private bool ReadCodeRegionBegin()
+        {
+            int index = _index;
+
+            if (PeekNonSpaceChar() != CODE_MARKER)
+            {
+                _index = index;
+                return false;
+            }
+
+            int tokenIndex = _peekIndex;
+            MoveCursor();
+
+            var sb = new StringBuilder();
+
+            while (true)
+            {
+                char c = PeekChar();
+
+                if (c == '\0')
+                {
+                    break;
+                }
+
+                if (c == '"' || c == '\'')
+                {
+                    ReadCodeLiteral(sb, c);
+                    continue;
+                }
+
+                if (c == '{')
+                {
+                    MoveCursor();
+                    AddToken(tokenIndex, XnlTokenType.CodeRegionBegin, sb.ToString().Trim());
+                    return true;
+                }
+
+                sb.Append(c);
+                MoveCursor();
+            }
+
+            _index = index;
+            return false;
+        }
+
+        private void ReadCodeLiteral(StringBuilder sb, char quote)
+        {
+            sb.Append(quote);
+            MoveCursor();
+
+            while (true)
+            {
+                char c = PeekChar();
+
+                if (c == '\0')
+                {
+                    return;
+                }
+
+                sb.Append(c);
+                MoveCursor();
+
+                if (c == '\\')
+                {
+                    char escaped = PeekChar();
+
+                    if (escaped != '\0')
+                    {
+                        sb.Append(escaped);
+                        MoveCursor();
+                    }
+
+                    continue;
+                }
+
+                if (c == quote)
+                {
+                    return;
+                }
+            }
+        }
 
         private bool ReadElementName()
         {

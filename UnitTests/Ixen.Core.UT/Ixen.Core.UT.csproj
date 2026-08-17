@@ -43,6 +43,8 @@
     <AdditionalFiles Include="Components\Fixtures\HostView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\ActionView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\TwoWayView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\RegionView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\LoopView.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\UnicodeView.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\UnicodeStyles.xns" />
     <AdditionalFiles Include="Xnl\Fixtures\TypedView.xnl" />

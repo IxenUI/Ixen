@@ -146,6 +146,38 @@ namespace Ixen.Core.UT.Xnl
         }
 
         [TestMethod]
+        public void ARegionHeaderDoesNotOpenAPropertyBlock()
+        {
+            Assert.AreEqual(XnlCompletionKind.None, At("root {} [\r\n\t@if (V) {\r\n\t\tit|\r\n\t@}\r\n]").Kind,
+                "inside a region we are at child position, where element names are the user's own words");
+        }
+
+        [TestMethod]
+        public void PropertiesAreStillProposedInsideARegion()
+        {
+            XnlCompletionContext context = At("root {} [\r\n\t@if (V) {\r\n\t\tel { te| }\r\n\t@}\r\n]");
+
+            Assert.AreEqual(XnlCompletionKind.PropertyName, context.Kind);
+            CollectionAssert.Contains(context.Items.ToArray(), "text");
+        }
+
+        [TestMethod]
+        public void NothingIsProposedInsideARegionHeader()
+        {
+            Assert.AreEqual(XnlCompletionKind.None, At("root {} [\r\n\t@if (Vis|\r\n]").Kind,
+                "the header is C#, and the model is not visible from here");
+        }
+
+        [TestMethod]
+        public void AClosedRegionReturnsToChildPosition()
+        {
+            XnlCompletionContext context = At("root {} [\r\n\t@if (V) {\r\n\t\ta {}\r\n\t@}\r\n\tb { te| }\r\n]");
+
+            Assert.AreEqual(XnlCompletionKind.PropertyName, context.Kind);
+            CollectionAssert.Contains(context.Items.ToArray(), "text");
+        }
+
+        [TestMethod]
         public void EveryProposedPropertyNameRoundTripsToARealProperty()
         {
             foreach (string typeName in XnlCompletions.ElementTypes)

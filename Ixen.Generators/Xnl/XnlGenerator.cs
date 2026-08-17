@@ -21,6 +21,10 @@ namespace Ixen.Generators.Xnl
         private const string COMPONENT_METADATA_NAME = "Ixen.Core.Components.Component";
         private const string COMPONENT_TYPE_NAME = "Component";
         private const string BOUND_MODEL_METADATA_NAME = "Ixen.Core.Components.IBoundModel";
+        private const string IF_KEYWORD = "if";
+        private const string FOREACH_KEYWORD = "foreach";
+        private const string IN_KEYWORD = "in";
+        private const string KEY_KEYWORD = "key";
         private const string CHANGED_SUFFIX = "Changed";
         private const string CLASS_PROPERTY = "class";
         private const string EACH_PROPERTY = "each";
@@ -78,6 +82,10 @@ namespace Ixen.Generators.Xnl
 
                 AddChildren(body, node, "this", 3, file);
 
+                var members = new StringBuilder();
+
+                AddBindMethod(members, file);
+
                 var sb = new StringBuilder();
 
                 sb.AppendLine("using Ixen.Core;");
@@ -112,8 +120,7 @@ namespace Ixen.Generators.Xnl
                 sb.AppendLine("\t\t{");
                 sb.Append(body);
                 sb.AppendLine("\t\t}");
-
-                AddBindMethod(sb, file);
+                sb.Append(members);
 
                 sb.AppendLine("\t}");
                 sb.AppendLine("}");
@@ -127,12 +134,21 @@ namespace Ixen.Generators.Xnl
         static string Identifier(XnlNode node)
             => node.Name != null ? $"el{node.Id}_{node.Name}" : $"el{node.Id}";
 
-        class Repeat
+        class Region
         {
-            internal XnlNode Node;
             internal string ParentId;
             internal string Offset;
             internal string Instances;
+            internal string Prefix;
+            internal List<XnlNode> Body = new List<XnlNode>();
+
+            internal string Condition;
+            internal string Declaration;
+            internal string Item;
+            internal string Source;
+            internal string Key;
+
+            internal bool IsLoop => Item != null;
         }
 
         class FileContext
@@ -143,12 +159,12 @@ namespace Ixen.Generators.Xnl
             internal readonly List<(string type, string variable, string initializer)> Fields
                 = new List<(string, string, string)>();
             internal readonly List<string> Bindings = new List<string>();
-            internal readonly List<Repeat> Repeaters = new List<Repeat>();
+            internal readonly List<Region> Regions = new List<Region>();
 
             internal INamedTypeSymbol Model;
             internal HashSet<string> ModelMembers;
-            internal bool SkipBindings;
             internal string RepeatItem;
+            internal bool InFactory;
             internal int ModelUses;
 
             internal FileContext(TypeResolver resolver, List<LanguageError> diagnostics)
@@ -157,10 +173,10 @@ namespace Ixen.Generators.Xnl
                 Diagnostics = diagnostics;
             }
 
-            internal bool HasBindings => BoundNodes.Count > 0 || Repeaters.Count > 0;
+            internal bool HasBindings => BoundNodes.Count > 0 || Regions.Count > 0;
 
             internal bool CanBind
-                => (Bindings.Count > 0 || Repeaters.Count > 0 || ModelUses > 0) && Model != null;
+                => (Bindings.Count > 0 || Regions.Count > 0 || ModelUses > 0) && Model != null;
 
             internal bool HasModelField => ModelUses > 0 && Model != null;
 
@@ -170,79 +186,105 @@ namespace Ixen.Generators.Xnl
                 => Fields.Add((type, variable, initializer));
         }
 
-        static string ItemVariable(XnlNode node)
-            => node.Name ?? "item";
-
-        static void AddRepeatBinding(StringBuilder sb, Repeat repeat, FileContext file)
+        static void AddRegionBinding(StringBuilder sb, Region region, FileContext file)
         {
-            string source = XnlBindings.Qualify(
-                XnlBindings.LiteralText(XnlBindings.Parse(repeat.Node.Properties
-                    .First(p => p.Name == EACH_PROPERTY).Value)), file.ModelMembers);
-
-            string instances = repeat.Instances;
-            string item = ItemVariable(repeat.Node);
-            string key = ValueOf(repeat.Node, KEY_PROPERTY);
-
-            file.RepeatItem = item;
+            string instances = region.Instances;
+            int groupSize = region.Body.Count;
 
             sb.AppendLine();
-            sb.AppendLine($"\t\t\tvar {instances}_source = {source};");
+
+            if (!region.IsLoop)
+            {
+                string condition = XnlBindings.Qualify(region.Condition, file.ModelMembers);
+
+                sb.AppendLine($"\t\t\tRepeater.Sync({region.ParentId}, {instances}, {region.Offset}, " +
+                    $"{condition} ? 1 : 0, {groupSize}, Create_{instances});");
+
+                var block = new StringBuilder();
+
+                for (int k = 0; k < groupSize; k++)
+                {
+                    AddRegionBindings(block, region.Body[k], $"{instances}[{k}]", null, file);
+                }
+
+                if (block.Length == 0)
+                {
+                    return;
+                }
+
+                sb.AppendLine();
+                sb.AppendLine($"\t\t\tif ({instances}.Count > 0)");
+                sb.AppendLine("\t\t\t{");
+                sb.Append(block);
+                sb.AppendLine("\t\t\t}");
+
+                return;
+            }
+
+            sb.AppendLine($"\t\t\tvar {instances}_source = {XnlBindings.Qualify(region.Source, file.ModelMembers)};");
             sb.AppendLine($"\t\t\tint {instances}_count = {instances}_source == null ? 0 : {instances}_source.Count;");
 
-            if (key == null)
+            if (region.Key == null)
             {
-                sb.AppendLine($"\t\t\tRepeater.Sync({repeat.ParentId}, {instances}, {repeat.Offset}, " +
-                    $"{instances}_count, Create_{instances});");
+                sb.AppendLine($"\t\t\tRepeater.Sync({region.ParentId}, {instances}, {region.Offset}, " +
+                    $"{instances}_count, {groupSize}, Create_{instances});");
             }
             else
             {
-                string prefix = repeat.Instances.Substring(0, repeat.Instances.Length - "_items".Length);
-
-                sb.AppendLine($"\t\t\t{prefix}_next.Clear();");
+                sb.AppendLine($"\t\t\t{region.Prefix}_next.Clear();");
                 sb.AppendLine();
                 sb.AppendLine($"\t\t\tfor (int i = 0; i < {instances}_count; i++)");
                 sb.AppendLine("\t\t\t{");
-                sb.AppendLine($"\t\t\t\tvar {item} = {instances}_source[i];");
-                sb.AppendLine($"\t\t\t\t{prefix}_next.Add({XnlBindings.BuildExpression(XnlBindings.Parse(key), file.ModelMembers)});");
+                sb.AppendLine($"\t\t\t\t{region.Declaration} = {instances}_source[i];");
+                sb.AppendLine($"\t\t\t\t{region.Prefix}_next.Add(" +
+                    $"{XnlBindings.Qualify(region.Key, file.ModelMembers)});");
                 sb.AppendLine("\t\t\t}");
                 sb.AppendLine();
-                sb.AppendLine($"\t\t\tRepeater.SyncKeyed({repeat.ParentId}, {instances}, {prefix}_keys, " +
-                    $"{prefix}_next, {repeat.Offset}, Create_{instances});");
+                sb.AppendLine($"\t\t\tRepeater.SyncKeyed({region.ParentId}, {instances}, {region.Prefix}_keys, " +
+                    $"{region.Prefix}_next, {region.Offset}, {groupSize}, Create_{instances});");
+            }
+
+            var loop = new StringBuilder();
+
+            for (int k = 0; k < groupSize; k++)
+            {
+                string index = groupSize == 1 ? "i" : $"i * {groupSize} + {k}";
+
+                AddRegionBindings(loop, region.Body[k], $"{instances}[{index}]", region.Item, file);
+            }
+
+            if (loop.Length == 0)
+            {
+                return;
             }
 
             sb.AppendLine();
-            sb.AppendLine($"\t\t\tfor (int i = 0; i < {instances}.Count; i++)");
+            sb.AppendLine($"\t\t\tfor (int i = 0; i < {instances}_count; i++)");
             sb.AppendLine("\t\t\t{");
-            sb.AppendLine($"\t\t\t\tvar {item} = {instances}_source[i];");
-            sb.AppendLine($"\t\t\t\tvar {item}_element = {instances}[i];");
-
-            var itemMembers = new HashSet<string>();
-            AddRepeatItemBindings(sb, repeat.Node, $"{item}_element", item, itemMembers, file);
-
+            sb.AppendLine($"\t\t\t\t{region.Declaration} = {instances}_source[i];");
+            sb.Append(loop);
             sb.AppendLine("\t\t\t}");
-
-            file.RepeatItem = null;
         }
 
-        static void AddRepeatItemBindings(StringBuilder sb, XnlNode node, string path, string item,
-            HashSet<string> members, FileContext file)
+        static void AddRegionBindings(StringBuilder sb, XnlNode node, string path, string item, FileContext file)
         {
             INamedTypeSymbol symbol = file.Resolver.Resolve(node, new List<LanguageError>()).Symbol;
 
             foreach (XnlNodeParameter param in node.Properties)
             {
-                if (param.Name == CLASS_PROPERTY || param.Name == EACH_PROPERTY || param.Name == KEY_PROPERTY)
+                if (param.Name == CLASS_PROPERTY || param.Name == KEY_PROPERTY)
                 {
                     continue;
                 }
 
                 string propertyName = ToPropertyName(param.Name);
+                string twoWayPath = XnlBindings.TwoWayPath(param.Value);
 
-                if (XnlBindings.TwoWayPath(param.Value) != null)
+                if (twoWayPath != null && item != null)
                 {
                     file.Diagnostics.Add(new LanguageError(
                         LanguageErrorCode.INVALID_PROPERTY_VALUE,
-                        $"'{param.Name}' cannot be a two-way binding inside a repeated node: the write-back is wired " +
+                        $"'{param.Name}' cannot be a two-way binding inside a repeated region: the write-back is wired " +
                         $"once when the element is created, where '{item}' is not in scope.",
                         param.ValueIndex,
                         param.Value?.Length ?? 0));
@@ -250,23 +292,27 @@ namespace Ixen.Generators.Xnl
                     continue;
                 }
 
-                List<BindingPart> parts = XnlBindings.Parse(param.Value);
+                List<BindingPart> parts = twoWayPath != null
+                    ? XnlBindings.PathParts(twoWayPath)
+                    : XnlBindings.Parse(param.Value);
 
-                if (!XnlBindings.IsBinding(parts))
+                if (twoWayPath == null && !XnlBindings.IsBinding(parts))
                 {
                     continue;
                 }
 
-                if (symbol != null
-                    && FindSettableProperty(symbol, propertyName, out string _) == null
-                    && FindEvent(symbol, XnlEvents.Resolve(param.Name, propertyName)) != null)
+                if (twoWayPath == null && symbol != null
+                    && FindSettableProperty(symbol, propertyName, out string _) == null)
                 {
-                    file.Diagnostics.Add(new LanguageError(
-                        LanguageErrorCode.INVALID_PROPERTY_VALUE,
-                        $"'{param.Name}' is an event and cannot be bound inside a repeated node: the handler is wired " +
-                        $"once when the element is created, where '{item}' is not in scope.",
-                        param.ValueIndex,
-                        param.Value?.Length ?? 0));
+                    if (item != null && FindEvent(symbol, XnlEvents.Resolve(param.Name, propertyName)) != null)
+                    {
+                        file.Diagnostics.Add(new LanguageError(
+                            LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                            $"'{param.Name}' is an event and cannot be bound inside a repeated region: the handler is " +
+                            $"wired once when the element is created, where '{item}' is not in scope.",
+                            param.ValueIndex,
+                            param.Value?.Length ?? 0));
+                    }
 
                     continue;
                 }
@@ -277,23 +323,51 @@ namespace Ixen.Generators.Xnl
 
             for (int i = 0; i < node.Children.Count; i++)
             {
-                AddRepeatItemBindings(sb, node.Children[i], $"{path}.Children[{i}]", item, members, file);
+                if (node.Children[i].IsRegion)
+                {
+                    continue;
+                }
+
+                AddRegionBindings(sb, node.Children[i], $"{path}.Children[{i}]", item, file);
             }
         }
 
-        static void AddRepeatFactory(StringBuilder sb, Repeat repeat, FileContext file)
+        static void AddRegionFactory(StringBuilder sb, Region region, FileContext file)
         {
             sb.AppendLine();
-            sb.AppendLine($"\t\tprivate VisualElement Create_{repeat.Instances}()");
+            sb.AppendLine($"\t\tprivate VisualElement Create_{region.Instances}(int index)");
             sb.AppendLine("\t\t{");
 
-            file.RepeatItem = ItemVariable(repeat.Node);
+            file.RepeatItem = region.Item;
+            file.InFactory = true;
 
-            AddDeclaration(sb, repeat.Node, 3, file, skipBindings: true);
+            if (region.Body.Count == 1)
+            {
+                AddDeclaration(sb, region.Body[0], 3, file, skipBindings: true);
+                sb.AppendLine($"\t\t\treturn {Identifier(region.Body[0])};");
+            }
+            else
+            {
+                sb.AppendLine("\t\t\tswitch (index)");
+                sb.AppendLine("\t\t\t{");
+
+                for (int k = 0; k < region.Body.Count; k++)
+                {
+                    sb.AppendLine(k == region.Body.Count - 1 ? "\t\t\t\tdefault:" : $"\t\t\t\tcase {k}:");
+                    sb.AppendLine("\t\t\t\t{");
+
+                    AddDeclaration(sb, region.Body[k], 5, file, skipBindings: true);
+
+                    sb.AppendLine($"\t\t\t\t\treturn {Identifier(region.Body[k])};");
+                    sb.AppendLine("\t\t\t\t}");
+                }
+
+                sb.AppendLine("\t\t\t}");
+            }
 
             file.RepeatItem = null;
+            file.InFactory = false;
 
-            sb.AppendLine($"\t\t\treturn {Identifier(repeat.Node)};");
             sb.AppendLine("\t\t}");
         }
 
@@ -301,8 +375,7 @@ namespace Ixen.Generators.Xnl
         {
             foreach (XnlNodeParameter param in node.Properties)
             {
-                if (param.Name != CLASS_PROPERTY && param.Name != EACH_PROPERTY
-                    && XnlBindings.HasBinding(param.Value))
+                if (param.Name != CLASS_PROPERTY && XnlBindings.HasBinding(param.Value))
                 {
                     file.BoundNodes.Add(node.Id);
                     break;
@@ -311,7 +384,7 @@ namespace Ixen.Generators.Xnl
 
             foreach (XnlNode child in node.Children)
             {
-                if (SourceOfEach(child) != null)
+                if (child.IsRegion)
                 {
                     file.BoundNodes.Add(node.Id);
                     continue;
@@ -330,6 +403,25 @@ namespace Ixen.Generators.Xnl
 
             string modelType = $"global::{file.Model.ToDisplayString()}";
 
+            var factories = new StringBuilder();
+
+            for (int i = 0; i < file.Regions.Count; i++)
+            {
+                AddRegionFactory(factories, file.Regions[i], file);
+            }
+
+            var bindings = new StringBuilder();
+
+            foreach (string binding in file.Bindings)
+            {
+                bindings.AppendLine($"\t\t\t{binding}");
+            }
+
+            foreach (Region region in file.Regions)
+            {
+                AddRegionBinding(bindings, region, file);
+            }
+
             sb.AppendLine();
             sb.AppendLine($"\t\tpublic void Bind({modelType} {XnlBindings.MODEL_PARAMETER})");
             sb.AppendLine("\t\t{");
@@ -340,22 +432,9 @@ namespace Ixen.Generators.Xnl
                 sb.AppendLine();
             }
 
-            foreach (string binding in file.Bindings)
-            {
-                sb.AppendLine($"\t\t\t{binding}");
-            }
-
-            foreach (Repeat repeat in file.Repeaters)
-            {
-                AddRepeatBinding(sb, repeat, file);
-            }
-
+            sb.Append(bindings);
             sb.AppendLine("\t\t}");
-
-            foreach (Repeat repeat in file.Repeaters)
-            {
-                AddRepeatFactory(sb, repeat, file);
-            }
+            sb.Append(factories);
             sb.AppendLine();
             sb.AppendLine($"\t\tvoid IBoundView.Bind(object {XnlBindings.MODEL_PARAMETER})");
             sb.AppendLine($"\t\t\t=> Bind(({modelType}){XnlBindings.MODEL_PARAMETER});");
@@ -367,8 +446,6 @@ namespace Ixen.Generators.Xnl
             string tabs = new string('\t', tabLevel);
             string nodeId = Identifier(node);
             bool bound = !skipBindings && file.IsBound(node);
-
-            file.SkipBindings = skipBindings;
 
             ResolvedType resolved = file.Resolver.Resolve(node, file.Diagnostics);
 
@@ -411,34 +488,14 @@ namespace Ixen.Generators.Xnl
         static void AddChildren(StringBuilder sb, XnlNode node, string parentId, int tabLevel, FileContext file)
         {
             string tabs = new string('\t', tabLevel);
-            var repeaters = new List<string>();
+            var regions = new List<string>();
             int statics = 0;
 
             foreach (XnlNode child in node.Children)
             {
-                if (SourceOfEach(child) != null)
+                if (child.IsRegion)
                 {
-                    file.Repeaters.Add(new Repeat
-                    {
-                        Node = child,
-                        ParentId = parentId,
-                        Offset = OffsetExpression(statics, repeaters),
-                        Instances = $"{Identifier(child)}_items"
-                    });
-
-                    repeaters.Add($"{Identifier(child)}_items");
-                    file.Field("global::System.Collections.Generic.List<VisualElement>",
-                        $"{Identifier(child)}_items", "new global::System.Collections.Generic.List<VisualElement>()");
-
-                    if (ValueOf(child, KEY_PROPERTY) != null)
-                    {
-                        file.Field("global::System.Collections.Generic.List<object>",
-                            $"{Identifier(child)}_keys", "new global::System.Collections.Generic.List<object>()");
-
-                        file.Field("global::System.Collections.Generic.List<object>",
-                            $"{Identifier(child)}_next", "new global::System.Collections.Generic.List<object>()");
-                    }
-
+                    AddRegion(child, parentId, statics, regions, file);
                     continue;
                 }
 
@@ -450,24 +507,351 @@ namespace Ixen.Generators.Xnl
             }
         }
 
-        static string OffsetExpression(int statics, List<string> repeaters)
+        static void AddRegion(XnlNode node, string parentId, int statics, List<string> regions, FileContext file)
         {
-            if (repeaters.Count == 0)
+            if (file.InFactory)
+            {
+                file.Diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                    "a code region cannot appear inside another one yet.",
+                    node.CodeIndex,
+                    node.Code.Length + 1));
+
+                return;
+            }
+
+            string instances = $"{Identifier(node)}_region";
+
+            var region = new Region
+            {
+                ParentId = parentId,
+                Offset = OffsetExpression(statics, regions),
+                Instances = instances,
+                Prefix = instances
+            };
+
+            if (!ParseHeader(node, region, file))
+            {
+                return;
+            }
+
+            foreach (XnlNode body in node.Children)
+            {
+                if (body.IsRegion)
+                {
+                    file.Diagnostics.Add(new LanguageError(
+                        LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                        "a code region cannot be nested in another one yet.",
+                        body.CodeIndex,
+                        body.Code.Length + 1));
+
+                    continue;
+                }
+
+                region.Body.Add(body);
+            }
+
+            if (region.Body.Count == 0)
+            {
+                return;
+            }
+
+            file.Regions.Add(region);
+            regions.Add(instances);
+
+            file.Field("global::System.Collections.Generic.List<VisualElement>", instances,
+                "new global::System.Collections.Generic.List<VisualElement>()");
+
+            if (region.Key != null)
+            {
+                file.Field("global::System.Collections.Generic.List<object>", $"{region.Prefix}_keys",
+                    "new global::System.Collections.Generic.List<object>()");
+
+                file.Field("global::System.Collections.Generic.List<object>", $"{region.Prefix}_next",
+                    "new global::System.Collections.Generic.List<object>()");
+            }
+        }
+
+        static bool ParseHeader(XnlNode node, Region region, FileContext file)
+        {
+            string code = (node.Code ?? string.Empty).Trim();
+
+            if (StartsWithKeyword(code, IF_KEYWORD))
+            {
+                string rest = code.Substring(IF_KEYWORD.Length).Trim();
+
+                if (SplitClause(rest, out string condition, out string tail))
+                {
+                    if (tail.Length == 0)
+                    {
+                        region.Condition = condition;
+                        return true;
+                    }
+
+                    file.Diagnostics.Add(new LanguageError(
+                        LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                        $"'{tail}' does not belong on an '@if': a 'key' clause only means something on a '@foreach'.",
+                        node.CodeIndex,
+                        code.Length + 1));
+
+                    return false;
+                }
+            }
+            else if (StartsWithKeyword(code, FOREACH_KEYWORD))
+            {
+                if (ParseForEach(code, region, file, node, out bool reported))
+                {
+                    return true;
+                }
+
+                if (reported)
+                {
+                    return false;
+                }
+            }
+
+            file.Diagnostics.Add(new LanguageError(
+                LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                $"'@{code}' is not a supported code region: only '@if (condition)' and "
+                    + "'@foreach (var item in collection) key (expression)' exist today.",
+                node.CodeIndex,
+                code.Length + 1));
+
+            return false;
+        }
+
+        static bool ParseForEach(string code, Region region, FileContext file, XnlNode node, out bool reported)
+        {
+            reported = false;
+
+            string rest = code.Substring(FOREACH_KEYWORD.Length).Trim();
+
+            if (!SplitClause(rest, out string group, out string tail))
+            {
+                return false;
+            }
+
+            string inner = group.Substring(1, group.Length - 2);
+            int split = IndexOfInKeyword(inner);
+
+            if (split < 0)
+            {
+                return false;
+            }
+
+            string declaration = inner.Substring(0, split).Trim();
+            string source = inner.Substring(split + IN_KEYWORD.Length).Trim();
+            string item = LastIdentifier(declaration);
+
+            if (item == null || source.Length == 0)
+            {
+                return false;
+            }
+
+            if (tail.Length > 0 && !ParseKeyClause(tail, region))
+            {
+                file.Diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                    $"'{tail}' is not a valid clause: expected 'key (expression)'.",
+                    node.CodeIndex,
+                    code.Length + 1));
+
+                reported = true;
+                return false;
+            }
+
+            region.Declaration = declaration;
+            region.Item = item;
+            region.Source = source;
+
+            return true;
+        }
+
+        static bool ParseKeyClause(string tail, Region region)
+        {
+            if (!StartsWithKeyword(tail, KEY_KEYWORD))
+            {
+                return false;
+            }
+
+            string rest = tail.Substring(KEY_KEYWORD.Length).Trim();
+
+            if (!SplitClause(rest, out string group, out string extra) || extra.Length > 0)
+            {
+                return false;
+            }
+
+            region.Key = group.Substring(1, group.Length - 2).Trim();
+
+            return region.Key.Length > 0;
+        }
+
+        static bool SplitClause(string value, out string group, out string tail)
+        {
+            group = null;
+            tail = null;
+
+            if (value.Length < 3 || value[0] != '(')
+            {
+                return false;
+            }
+
+            int depth = 0;
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                char c = value[i];
+
+                if (c == '"' || c == '\'')
+                {
+                    i = SkipLiteral(value, i);
+                    continue;
+                }
+
+                if (c == '(')
+                {
+                    depth++;
+                    continue;
+                }
+
+                if (c != ')')
+                {
+                    continue;
+                }
+
+                if (--depth > 0)
+                {
+                    continue;
+                }
+
+                group = value.Substring(0, i + 1);
+                tail = value.Substring(i + 1).Trim();
+
+                return group.Length > 2;
+            }
+
+            return false;
+        }
+
+        static bool StartsWithKeyword(string code, string keyword)
+        {
+            if (!code.StartsWith(keyword, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            return code.Length == keyword.Length || !IsIdentifierPart(code[keyword.Length]);
+        }
+
+        static int IndexOfInKeyword(string inner)
+        {
+            int depth = 0;
+
+            for (int i = 0; i < inner.Length; i++)
+            {
+                char c = inner[i];
+
+                if (c == '"' || c == '\'')
+                {
+                    i = SkipLiteral(inner, i);
+                    continue;
+                }
+
+                if (c == '(' || c == '[')
+                {
+                    depth++;
+                    continue;
+                }
+
+                if (c == ')' || c == ']')
+                {
+                    depth--;
+                    continue;
+                }
+
+                if (depth != 0 || c != IN_KEYWORD[0] || i == 0)
+                {
+                    continue;
+                }
+
+                if (string.CompareOrdinal(inner, i, IN_KEYWORD, 0, IN_KEYWORD.Length) != 0)
+                {
+                    continue;
+                }
+
+                if (!IsIdentifierPart(inner[i - 1])
+                    && (i + IN_KEYWORD.Length >= inner.Length || !IsIdentifierPart(inner[i + IN_KEYWORD.Length])))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        static int SkipLiteral(string value, int start)
+        {
+            char quote = value[start];
+
+            for (int i = start + 1; i < value.Length; i++)
+            {
+                if (value[i] == '\\')
+                {
+                    i++;
+                    continue;
+                }
+
+                if (value[i] == quote)
+                {
+                    return i;
+                }
+            }
+
+            return value.Length - 1;
+        }
+
+        static string LastIdentifier(string declaration)
+        {
+            int end = declaration.Length;
+
+            while (end > 0 && char.IsWhiteSpace(declaration[end - 1]))
+            {
+                end--;
+            }
+
+            int start = end;
+
+            while (start > 0 && IsIdentifierPart(declaration[start - 1]))
+            {
+                start--;
+            }
+
+            if (start == end || char.IsDigit(declaration[start]))
+            {
+                return null;
+            }
+
+            return declaration.Substring(start, end - start);
+        }
+
+        static bool IsIdentifierPart(char c) => char.IsLetterOrDigit(c) || c == '_';
+
+        static string OffsetExpression(int statics, List<string> regions)
+        {
+            if (regions.Count == 0)
             {
                 return statics.ToString(CultureInfo.InvariantCulture);
             }
 
             var sb = new StringBuilder(statics.ToString(CultureInfo.InvariantCulture));
 
-            foreach (string instances in repeaters)
+            foreach (string instances in regions)
             {
                 sb.Append(" + ").Append(instances).Append(".Count");
             }
 
             return sb.ToString();
         }
-
-        static string SourceOfEach(XnlNode node) => ValueOf(node, EACH_PROPERTY);
 
         static string ValueOf(XnlNode node, string name)
         {
@@ -710,8 +1094,26 @@ namespace Ixen.Generators.Xnl
                 return;
             }
 
-            if (param.Name == EACH_PROPERTY || param.Name == KEY_PROPERTY)
+            if (param.Name == EACH_PROPERTY)
             {
+                diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY,
+                    "'each' no longer exists: wrap the node in '@foreach (var item in Collection) { … @}' instead.",
+                    param.NameIndex,
+                    param.Name.Length));
+
+                return;
+            }
+
+            if (param.Name == KEY_PROPERTY)
+            {
+                diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY,
+                    "'key' is no longer a property: it belongs to the iteration, so write "
+                        + "'@foreach (var item in Collection) key (item.Id) { … @}'.",
+                    param.NameIndex,
+                    param.Name.Length));
+
                 return;
             }
 
@@ -802,7 +1204,7 @@ namespace Ixen.Generators.Xnl
                 return;
             }
 
-            if (file.SkipBindings)
+            if (file.InFactory)
             {
                 return;
             }

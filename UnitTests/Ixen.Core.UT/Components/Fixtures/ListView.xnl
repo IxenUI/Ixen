@@ -1,8 +1,10 @@
 list_root {} [
 	list_header { text: "{Title}" }
-	row { each: "{Items}" key: "{row.Id}" class: "row" } [
-		row_name { text: "{row.Name}" }
-		row_detail { text: "{row.Count} left" }
-	]
+	@foreach (var row in Items) key (row.Id) {
+		row { class: "row" } [
+			row_name { text: "{row.Name}" }
+			row_detail { text: "{row.Count} left" }
+		]
+	@}
 	list_footer { text: "end" }
 ]

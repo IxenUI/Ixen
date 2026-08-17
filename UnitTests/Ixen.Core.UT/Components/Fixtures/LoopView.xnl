@@ -1,0 +1,16 @@
+loop_root {} [
+	loop_before { text: "before" }
+	@foreach (var pair in Items) {
+		pair_name { text: "{pair.Name}" }
+		pair_count { text: "{pair.Count}x" }
+	@}
+	loop_middle { text: "middle" }
+	@foreach (string word in Words) {
+		word_row { text: "{word}" }
+	@}
+	@foreach (var keyed in Keyed) key (keyed.Id) {
+		keyed_name { text: "{keyed.Name}" }
+		keyed_count { text: "{keyed.Count}x" }
+	@}
+	loop_after { text: "after" }
+]

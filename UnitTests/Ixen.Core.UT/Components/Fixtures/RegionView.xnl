@@ -1,0 +1,12 @@
+region_root {} [
+	region_before { text: "before" }
+	@if (ShowTitle) {
+		region_title { text: "{Title}" }
+		region_subtitle { text: "sub" }
+	@}
+	region_middle { text: "middle" }
+	@if (ShowFooter) {
+		region_footer { text: "footer" click: "{Bump()}" }
+	@}
+	region_after { text: "after" }
+]

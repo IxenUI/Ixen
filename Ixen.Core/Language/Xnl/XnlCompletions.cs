@@ -5,6 +5,8 @@ namespace Ixen.Core.Language.Xnl
 {
     internal static class XnlCompletions
     {
+        private const char CODE_MARKER = '@';
+
         private enum ScanState
         {
             Text,
@@ -133,6 +135,12 @@ namespace Ixen.Core.Language.Xnl
                     continue;
                 }
 
+                if (c == CODE_MARKER)
+                {
+                    index = SkipCodeRegion(content, index, end);
+                    continue;
+                }
+
                 if (c == '"')
                 {
                     state = ScanState.Value;
@@ -152,6 +160,60 @@ namespace Ixen.Core.Language.Xnl
             }
 
             return state;
+        }
+
+        private static int SkipCodeRegion(string content, int marker, int end)
+        {
+            if (marker + 1 < content.Length && content[marker + 1] == '}')
+            {
+                return marker + 2;
+            }
+
+            int index = marker + 1;
+
+            while (index < end)
+            {
+                char c = content[index];
+
+                if (c == '"' || c == '\'')
+                {
+                    index = SkipCodeLiteral(content, index, end);
+                    continue;
+                }
+
+                if (c == '{')
+                {
+                    return index + 1;
+                }
+
+                index++;
+            }
+
+            return end;
+        }
+
+        private static int SkipCodeLiteral(string content, int start, int end)
+        {
+            char quote = content[start];
+            int index = start + 1;
+
+            while (index < end)
+            {
+                if (content[index] == '\\')
+                {
+                    index += 2;
+                    continue;
+                }
+
+                if (content[index] == quote)
+                {
+                    return index + 1;
+                }
+
+                index++;
+            }
+
+            return end;
         }
 
         private static string TypeBefore(string content, int brace)
