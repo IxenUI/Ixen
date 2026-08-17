@@ -148,9 +148,18 @@ namespace Ixen.Generators.Xnl
         {
             internal RegionKind Kind;
             internal string ParentId;
-            internal string Offset;
+            internal int OffsetStatics;
+            internal readonly List<string> OffsetRegions = new List<string>();
             internal string Instances;
             internal string Prefix;
+            internal string RowType;
+            internal Region Owner;
+            internal readonly List<Region> Nested = new List<Region>();
+            internal readonly List<(string type, string variable, string initializer)> Fields
+                = new List<(string, string, string)>();
+            internal readonly List<string> Wiring = new List<string>();
+            internal readonly List<(string type, string field)> Handlers = new List<(string, string)>();
+            internal readonly List<(string field, string body)> Assignments = new List<(string, string)>();
             internal List<XnlNode> Body = new List<XnlNode>();
 
             internal string Condition;
@@ -185,8 +194,11 @@ namespace Ixen.Generators.Xnl
             internal INamedTypeSymbol Model;
             internal HashSet<string> ModelMembers;
             internal string RepeatItem;
-            internal bool InFactory;
+            internal Region CurrentRow;
+            internal HashSet<int> RowFields;
             internal int ModelUses;
+
+            internal bool InFactory => CurrentRow != null;
 
             internal FileContext(TypeResolver resolver, List<LanguageError> diagnostics)
             {
@@ -204,32 +216,56 @@ namespace Ixen.Generators.Xnl
             internal bool IsBound(XnlNode node) => BoundNodes.Contains(node.Id);
 
             internal void Field(string type, string variable, string initializer = null)
-                => Fields.Add((type, variable, initializer));
+            {
+                if (CurrentRow != null)
+                {
+                    CurrentRow.Fields.Add((type, variable, initializer));
+                    return;
+                }
+
+                Fields.Add((type, variable, initializer));
+            }
 
             internal void Bind(string statement) => Binds.Add(new Emit { Statement = statement });
 
             internal void Bind(Region region) => Binds.Add(new Emit { Region = region });
         }
 
-        static void AddRegionBinding(StringBuilder sb, Region region, FileContext file)
+        static string OffsetOf(Region region, string prefix)
         {
-            string instances = region.Instances;
-            int groupSize = region.Body.Count;
+            var sb = new StringBuilder(region.OffsetStatics.ToString(CultureInfo.InvariantCulture));
+
+            foreach (string instances in region.OffsetRegions)
+            {
+                sb.Append(" + ").Append(prefix).Append(instances).Append(".Count");
+            }
+
+            return sb.ToString();
+        }
+
+        static void AddRegionBinding(StringBuilder sb, Region region, FileContext file, string ownerRow, int tabLevel)
+        {
+            string prefix = region.Owner == null ? string.Empty : $"{ownerRow}.";
+            string tabs = new string('\t', tabLevel);
+            string inner = new string('\t', tabLevel + 1);
+            string instances = $"{prefix}{region.Instances}";
+            string rows = $"{prefix}{region.Prefix}_rows";
+            string rowVar = $"{region.Prefix}_row";
+            string factory = $"_ => new {region.RowType}()";
+            string offset = OffsetOf(region, prefix);
+            string counter = $"{region.Prefix}_count";
 
             sb.AppendLine();
 
             if (!region.IsLoop)
             {
-                sb.AppendLine($"\t\t\tbool {region.Test} = {TestExpression(region, file)};");
-                sb.AppendLine($"\t\t\tRepeater.Sync({region.ParentId}, {instances}, {region.Offset}, " +
-                    $"{region.Test} ? 1 : 0, {groupSize}, Create_{instances});");
+                sb.AppendLine($"{tabs}bool {region.Test} = {TestExpression(region, file)};");
+                sb.AppendLine($"{tabs}Repeater.Sync({prefix}{region.ParentId}, {instances}, {rows}, {offset}, " +
+                    $"{region.Test} ? 1 : 0, {factory});");
 
                 var block = new StringBuilder();
 
-                for (int k = 0; k < groupSize; k++)
-                {
-                    AddRegionBindings(block, region.Body[k], $"{instances}[{k}]", null, file);
-                }
+                AddRowBindings(block, region, rowVar, null, file, tabLevel + 1);
 
                 if (block.Length == 0)
                 {
@@ -237,51 +273,48 @@ namespace Ixen.Generators.Xnl
                 }
 
                 sb.AppendLine();
-                sb.AppendLine($"\t\t\tif ({instances}.Count > 0)");
-                sb.AppendLine("\t\t\t{");
+                sb.AppendLine($"{tabs}if ({rows}.Count > 0)");
+                sb.AppendLine($"{tabs}{{");
+                sb.AppendLine($"{inner}var {rowVar} = {rows}[0];");
                 sb.Append(block);
-                sb.AppendLine("\t\t\t}");
+                sb.AppendLine($"{tabs}}}");
 
                 return;
             }
 
             if (region.Kind == RegionKind.For)
             {
-                AddForBinding(sb, region, file, groupSize);
+                AddForBinding(sb, region, file, prefix, tabLevel);
                 return;
             }
 
-            sb.AppendLine($"\t\t\tvar {instances}_source = {XnlBindings.Qualify(region.Source, file.ModelMembers)};");
-            sb.AppendLine($"\t\t\tint {instances}_count = {instances}_source == null ? 0 : {instances}_source.Count;");
+            sb.AppendLine($"{tabs}var {region.Prefix}_source = " +
+                $"{XnlBindings.Qualify(region.Source, file.ModelMembers)};");
+            sb.AppendLine($"{tabs}int {counter} = {region.Prefix}_source == null ? 0 : {region.Prefix}_source.Count;");
 
             if (region.Key == null)
             {
-                sb.AppendLine($"\t\t\tRepeater.Sync({region.ParentId}, {instances}, {region.Offset}, " +
-                    $"{instances}_count, {groupSize}, Create_{instances});");
+                sb.AppendLine($"{tabs}Repeater.Sync({prefix}{region.ParentId}, {instances}, {rows}, {offset}, " +
+                    $"{counter}, {factory});");
             }
             else
             {
-                sb.AppendLine($"\t\t\t{region.Prefix}_next.Clear();");
+                sb.AppendLine($"{tabs}{prefix}{region.Prefix}_next.Clear();");
                 sb.AppendLine();
-                sb.AppendLine($"\t\t\tfor (int i = 0; i < {instances}_count; i++)");
-                sb.AppendLine("\t\t\t{");
-                sb.AppendLine($"\t\t\t\t{region.Declaration} = {instances}_source[i];");
-                sb.AppendLine($"\t\t\t\t{region.Prefix}_next.Add(" +
+                sb.AppendLine($"{tabs}for (int i = 0; i < {counter}; i++)");
+                sb.AppendLine($"{tabs}{{");
+                sb.AppendLine($"{inner}{region.Declaration} = {region.Prefix}_source[i];");
+                sb.AppendLine($"{inner}{prefix}{region.Prefix}_next.Add(" +
                     $"{XnlBindings.Qualify(region.Key, file.ModelMembers)});");
-                sb.AppendLine("\t\t\t}");
+                sb.AppendLine($"{tabs}}}");
                 sb.AppendLine();
-                sb.AppendLine($"\t\t\tRepeater.SyncKeyed({region.ParentId}, {instances}, {region.Prefix}_keys, " +
-                    $"{region.Prefix}_next, {region.Offset}, {groupSize}, Create_{instances});");
+                sb.AppendLine($"{tabs}Repeater.SyncKeyed({prefix}{region.ParentId}, {instances}, {rows}, " +
+                    $"{prefix}{region.Prefix}_keys, {prefix}{region.Prefix}_next, {offset}, {factory});");
             }
 
             var loop = new StringBuilder();
 
-            for (int k = 0; k < groupSize; k++)
-            {
-                string index = groupSize == 1 ? "i" : $"i * {groupSize} + {k}";
-
-                AddRegionBindings(loop, region.Body[k], $"{instances}[{index}]", region.Item, file);
-            }
+            AddRowBindings(loop, region, rowVar, region.Item, file, tabLevel + 1);
 
             if (loop.Length == 0)
             {
@@ -289,11 +322,33 @@ namespace Ixen.Generators.Xnl
             }
 
             sb.AppendLine();
-            sb.AppendLine($"\t\t\tfor (int i = 0; i < {instances}_count; i++)");
-            sb.AppendLine("\t\t\t{");
-            sb.AppendLine($"\t\t\t\t{region.Declaration} = {instances}_source[i];");
+            sb.AppendLine($"{tabs}for (int i = 0; i < {counter}; i++)");
+            sb.AppendLine($"{tabs}{{");
+            sb.AppendLine($"{inner}{region.Declaration} = {region.Prefix}_source[i];");
+            sb.AppendLine($"{inner}var {rowVar} = {rows}[i];");
             sb.Append(loop);
-            sb.AppendLine("\t\t\t}");
+            sb.AppendLine($"{tabs}}}");
+        }
+
+        static void AddRowBindings(StringBuilder sb, Region region, string rowVar, string item, FileContext file,
+            int tabLevel)
+        {
+            string tabs = new string('\t', tabLevel);
+
+            for (int k = 0; k < region.Body.Count; k++)
+            {
+                AddRegionBindings(sb, region.Body[k], rowVar, item, file, tabLevel);
+            }
+
+            foreach ((string field, string body) in region.Assignments)
+            {
+                sb.AppendLine($"{tabs}{rowVar}.{field} = (sender, e) => {{ {body}; }};");
+            }
+
+            foreach (Region nested in region.Nested)
+            {
+                AddRegionBinding(sb, nested, file, rowVar, tabLevel);
+            }
         }
 
         static string TestExpression(Region region, FileContext file)
@@ -310,34 +365,61 @@ namespace Ixen.Generators.Xnl
             return condition == null ? region.Guard : $"{region.Guard} && {condition}";
         }
 
-        static void AddForBinding(StringBuilder sb, Region region, FileContext file, int groupSize)
+        static void AddForBinding(StringBuilder sb, Region region, FileContext file, string prefix, int tabLevel)
         {
-            string instances = region.Instances;
-            string counter = $"{instances}_index";
+            string tabs = new string('\t', tabLevel);
+            string inner = new string('\t', tabLevel + 1);
+            string instances = $"{prefix}{region.Instances}";
+            string rows = $"{prefix}{region.Prefix}_rows";
+            string rowVar = $"{region.Prefix}_row";
+            string counter = $"{region.Prefix}_index";
+            string offset = OffsetOf(region, prefix);
 
-            sb.AppendLine($"\t\t\tint {counter} = 0;");
+            sb.AppendLine($"{tabs}int {counter} = 0;");
             sb.AppendLine();
-            sb.AppendLine($"\t\t\t{XnlBindings.Qualify(region.Loop, file.ModelMembers)}");
-            sb.AppendLine("\t\t\t{");
-            sb.AppendLine($"\t\t\t\tRepeater.Ensure({region.ParentId}, {instances}, {region.Offset}, " +
-                $"{counter} + 1, {groupSize}, Create_{instances});");
+            sb.AppendLine($"{tabs}{XnlBindings.Qualify(region.Loop, file.ModelMembers)}");
+            sb.AppendLine($"{tabs}{{");
+            sb.AppendLine($"{inner}Repeater.Ensure({prefix}{region.ParentId}, {instances}, {rows}, {offset}, " +
+                $"{counter} + 1, _ => new {region.RowType}());");
+            sb.AppendLine($"{inner}var {rowVar} = {rows}[{counter}];");
 
-            for (int k = 0; k < groupSize; k++)
-            {
-                string index = groupSize == 1 ? counter : $"{counter} * {groupSize} + {k}";
+            AddRowBindings(sb, region, rowVar, region.Item, file, tabLevel + 1);
 
-                AddRegionBindings(sb, region.Body[k], $"{instances}[{index}]", region.Item, file);
-            }
-
-            sb.AppendLine($"\t\t\t\t{counter}++;");
-            sb.AppendLine("\t\t\t}");
+            sb.AppendLine($"{inner}{counter}++;");
+            sb.AppendLine($"{tabs}}}");
             sb.AppendLine();
-            sb.AppendLine($"\t\t\tRepeater.Trim({region.ParentId}, {instances}, {region.Offset}, " +
-                $"{counter}, {groupSize});");
+            sb.AppendLine($"{tabs}Repeater.Trim({prefix}{region.ParentId}, {instances}, {rows}, {offset}, " +
+                $"{counter});");
         }
 
-        static void AddRegionBindings(StringBuilder sb, XnlNode node, string path, string item, FileContext file)
+        static void CollectRowFields(XnlNode node, HashSet<int> ids)
         {
+            foreach (XnlNodeParameter param in node.Properties)
+            {
+                if (param.Name != CLASS_PROPERTY && XnlBindings.HasBinding(param.Value))
+                {
+                    ids.Add(node.Id);
+                    break;
+                }
+            }
+
+            foreach (XnlNode child in node.Children)
+            {
+                if (child.IsCode)
+                {
+                    ids.Add(node.Id);
+                    continue;
+                }
+
+                CollectRowFields(child, ids);
+            }
+        }
+
+        static void AddRegionBindings(StringBuilder sb, XnlNode node, string rowVar, string item, FileContext file,
+            int tabLevel)
+        {
+            string tabs = new string('\t', tabLevel);
+            string path = $"{rowVar}.{Identifier(node)}";
             INamedTypeSymbol symbol = file.Resolver.Resolve(node, new List<LanguageError>()).Symbol;
 
             foreach (XnlNodeParameter param in node.Properties)
@@ -349,18 +431,6 @@ namespace Ixen.Generators.Xnl
 
                 string propertyName = ToPropertyName(param.Name);
                 string twoWayPath = XnlBindings.TwoWayPath(param.Value);
-
-                if (twoWayPath != null && item != null)
-                {
-                    file.Diagnostics.Add(new LanguageError(
-                        LanguageErrorCode.INVALID_PROPERTY_VALUE,
-                        $"'{param.Name}' cannot be a two-way binding inside a repeated region: the write-back is wired " +
-                        $"once when the element is created, where '{item}' is not in scope.",
-                        param.ValueIndex,
-                        param.Value?.Length ?? 0));
-
-                    continue;
-                }
 
                 List<BindingPart> parts = twoWayPath != null
                     ? XnlBindings.PathParts(twoWayPath)
@@ -374,74 +444,108 @@ namespace Ixen.Generators.Xnl
                 if (twoWayPath == null && symbol != null
                     && FindSettableProperty(symbol, propertyName, out string _) == null)
                 {
-                    if (item != null && FindEvent(symbol, XnlEvents.Resolve(param.Name, propertyName)) != null)
-                    {
-                        file.Diagnostics.Add(new LanguageError(
-                            LanguageErrorCode.INVALID_PROPERTY_VALUE,
-                            $"'{param.Name}' is an event and cannot be bound inside a repeated region: the handler is " +
-                            $"wired once when the element is created, where '{item}' is not in scope.",
-                            param.ValueIndex,
-                            param.Value?.Length ?? 0));
-                    }
-
                     continue;
                 }
 
-                sb.AppendLine($"\t\t\t\t{path}.{propertyName} = " +
+                sb.AppendLine($"{tabs}{path}.{propertyName} = " +
                     $"{XnlBindings.BuildExpression(parts, file.ModelMembers)};");
             }
 
-            for (int i = 0; i < node.Children.Count; i++)
+            foreach (XnlNode child in node.Children)
             {
-                if (node.Children[i].IsRegion)
+                if (child.IsCode)
                 {
                     continue;
                 }
 
-                AddRegionBindings(sb, node.Children[i], $"{path}.Children[{i}]", item, file);
+                AddRegionBindings(sb, child, rowVar, item, file, tabLevel);
             }
         }
 
-        static void AddRegionFactory(StringBuilder sb, Region region, FileContext file)
+        static void AddRowClass(StringBuilder sb, Region region, FileContext file)
         {
-            sb.AppendLine();
-            sb.AppendLine($"\t\tprivate VisualElement Create_{region.Instances}(int index)");
-            sb.AppendLine("\t\t{");
+            string previousItem = file.RepeatItem;
+            Region previousRow = file.CurrentRow;
+            HashSet<int> previousFields = file.RowFields;
+
+            var rowFields = new HashSet<int>();
+
+            foreach (XnlNode node in region.Body)
+            {
+                CollectRowFields(node, rowFields);
+            }
 
             file.RepeatItem = region.Item;
-            file.InFactory = true;
+            file.CurrentRow = region;
+            file.RowFields = rowFields;
+
+            var body = new StringBuilder();
+
+            foreach (XnlNode node in region.Body)
+            {
+                AddDeclaration(body, node, 4, file, skipBindings: true, forceField: true);
+            }
+
+            file.RepeatItem = previousItem;
+            file.CurrentRow = previousRow;
+            file.RowFields = previousFields;
+
+            sb.AppendLine();
+            sb.AppendLine($"\t\tprivate sealed class {region.RowType} : IRegionRow");
+            sb.AppendLine("\t\t{");
+
+            foreach ((string type, string variable, string initializer) in region.Fields)
+            {
+                sb.AppendLine(initializer == null
+                    ? $"\t\t\tinternal readonly {type} {variable};"
+                    : $"\t\t\tinternal readonly {type} {variable} = {initializer};");
+            }
+
+            foreach ((string type, string field) in region.Handlers)
+            {
+                sb.AppendLine($"\t\t\tinternal {type} {field};");
+            }
+
+            if (region.Fields.Count > 0 || region.Handlers.Count > 0)
+            {
+                sb.AppendLine();
+            }
+
+            sb.AppendLine($"\t\t\tinternal {region.RowType}()");
+            sb.AppendLine("\t\t\t{");
+            sb.Append(body);
+
+            foreach (string wiring in region.Wiring)
+            {
+                sb.AppendLine($"\t\t\t\t{wiring}");
+            }
+
+            sb.AppendLine("\t\t\t}");
+            sb.AppendLine();
+            sb.AppendLine($"\t\t\tpublic int ElementCount => {region.Body.Count};");
+            sb.AppendLine();
+            sb.AppendLine("\t\t\tpublic VisualElement ElementAt(int index)");
+            sb.AppendLine("\t\t\t{");
 
             if (region.Body.Count == 0)
             {
-                sb.AppendLine("\t\t\treturn null;");
-            }
-            else if (region.Body.Count == 1)
-            {
-                AddDeclaration(sb, region.Body[0], 3, file, skipBindings: true);
-                sb.AppendLine($"\t\t\treturn {Identifier(region.Body[0])};");
+                sb.AppendLine("\t\t\t\treturn null;");
             }
             else
             {
-                sb.AppendLine("\t\t\tswitch (index)");
-                sb.AppendLine("\t\t\t{");
+                sb.AppendLine("\t\t\t\tswitch (index)");
+                sb.AppendLine("\t\t\t\t{");
 
                 for (int k = 0; k < region.Body.Count; k++)
                 {
-                    sb.AppendLine(k == region.Body.Count - 1 ? "\t\t\t\tdefault:" : $"\t\t\t\tcase {k}:");
-                    sb.AppendLine("\t\t\t\t{");
-
-                    AddDeclaration(sb, region.Body[k], 5, file, skipBindings: true);
-
-                    sb.AppendLine($"\t\t\t\t\treturn {Identifier(region.Body[k])};");
-                    sb.AppendLine("\t\t\t\t}");
+                    sb.AppendLine(k == region.Body.Count - 1 ? "\t\t\t\t\tdefault:" : $"\t\t\t\t\tcase {k}:");
+                    sb.AppendLine($"\t\t\t\t\t\treturn {Identifier(region.Body[k])};");
                 }
 
-                sb.AppendLine("\t\t\t}");
+                sb.AppendLine("\t\t\t\t}");
             }
 
-            file.RepeatItem = null;
-            file.InFactory = false;
-
+            sb.AppendLine("\t\t\t}");
             sb.AppendLine("\t\t}");
         }
 
@@ -481,7 +585,7 @@ namespace Ixen.Generators.Xnl
 
             for (int i = 0; i < file.Regions.Count; i++)
             {
-                AddRegionFactory(factories, file.Regions[i], file);
+                AddRowClass(factories, file.Regions[i], file);
             }
 
             var bindings = new StringBuilder();
@@ -490,7 +594,7 @@ namespace Ixen.Generators.Xnl
             {
                 if (emit.Region != null)
                 {
-                    AddRegionBinding(bindings, emit.Region, file);
+                    AddRegionBinding(bindings, emit.Region, file, null, 3);
                     continue;
                 }
 
@@ -516,11 +620,13 @@ namespace Ixen.Generators.Xnl
         }
 
         static void AddDeclaration(StringBuilder sb, XnlNode node, int tabLevel, FileContext file,
-            bool skipBindings = false)
+            bool skipBindings = false, bool forceField = false)
         {
             string tabs = new string('\t', tabLevel);
             string nodeId = Identifier(node);
-            bool bound = !skipBindings && file.IsBound(node);
+            bool bound = forceField
+                || (file.RowFields != null && file.RowFields.Contains(node.Id))
+                || (!skipBindings && file.IsBound(node));
 
             ResolvedType resolved = file.Resolver.Resolve(node, file.Diagnostics);
 
@@ -630,27 +736,20 @@ namespace Ixen.Generators.Xnl
         static Region AddRegion(XnlNode node, string parentId, int statics, List<string> regions, FileContext file,
             Region chain)
         {
-            if (file.InFactory)
-            {
-                file.Diagnostics.Add(new LanguageError(
-                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
-                    "a code region cannot appear inside another one yet.",
-                    node.CodeIndex,
-                    node.Code.Length + 1));
-
-                return null;
-            }
-
             string instances = $"{Identifier(node)}_region";
 
             var region = new Region
             {
                 ParentId = parentId,
-                Offset = OffsetExpression(statics, regions),
+                Owner = file.CurrentRow,
+                OffsetStatics = statics,
                 Instances = instances,
                 Prefix = instances,
-                Test = $"{instances}_test"
+                Test = $"{instances}_test",
+                RowType = $"Row_{Identifier(node)}"
             };
+
+            region.OffsetRegions.AddRange(regions);
 
             if (!ParseHeader(node, region, file, chain))
             {
@@ -659,13 +758,23 @@ namespace Ixen.Generators.Xnl
 
             foreach (XnlNode body in node.Children)
             {
-                if (body.IsCode)
+                if (body.IsStatement)
                 {
                     file.Diagnostics.Add(new LanguageError(
                         LanguageErrorCode.INVALID_PROPERTY_VALUE,
-                        body.IsStatement
-                            ? "a code statement cannot appear inside a code region yet."
-                            : "a code region cannot be nested in another one yet.",
+                        "a code statement cannot appear inside a code region yet.",
+                        body.CodeIndex,
+                        body.Code.Length + 1));
+
+                    continue;
+                }
+
+                if (body.IsRegion)
+                {
+                    file.Diagnostics.Add(new LanguageError(
+                        LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                        "a code region needs an element to splice into, so wrap it in one instead of nesting it "
+                            + "directly in another region.",
                         body.CodeIndex,
                         body.Code.Length + 1));
 
@@ -676,11 +785,22 @@ namespace Ixen.Generators.Xnl
             }
 
             file.Regions.Add(region);
-            file.Bind(region);
             regions.Add(instances);
+
+            if (region.Owner == null)
+            {
+                file.Bind(region);
+            }
+            else
+            {
+                region.Owner.Nested.Add(region);
+            }
 
             file.Field("global::System.Collections.Generic.List<VisualElement>", instances,
                 "new global::System.Collections.Generic.List<VisualElement>()");
+
+            file.Field($"global::System.Collections.Generic.List<{region.RowType}>", $"{region.Prefix}_rows",
+                $"new global::System.Collections.Generic.List<{region.RowType}>()");
 
             if (region.Key != null)
             {
@@ -1041,23 +1161,6 @@ namespace Ixen.Generators.Xnl
 
         static bool IsIdentifierPart(char c) => char.IsLetterOrDigit(c) || c == '_';
 
-        static string OffsetExpression(int statics, List<string> regions)
-        {
-            if (regions.Count == 0)
-            {
-                return statics.ToString(CultureInfo.InvariantCulture);
-            }
-
-            var sb = new StringBuilder(statics.ToString(CultureInfo.InvariantCulture));
-
-            foreach (string instances in regions)
-            {
-                sb.Append(" + ").Append(instances).Append(".Count");
-            }
-
-            return sb.ToString();
-        }
-
         static string ValueOf(XnlNode node, string name)
         {
             foreach (XnlNodeParameter param in node.Properties)
@@ -1364,10 +1467,11 @@ namespace Ixen.Generators.Xnl
                 if (property == null)
                 {
                     string eventName = XnlEvents.Resolve(param.Name, propertyName);
+                    IEventSymbol handler = FindEvent(elementSymbol, eventName);
 
-                    if (FindEvent(elementSymbol, eventName) != null)
+                    if (handler != null)
                     {
-                        AddAction(sb, tabs, nodeId, eventName, param, parts, bound, file);
+                        AddAction(sb, tabs, nodeId, eventName, handler, param, parts, bound, file);
                         return;
                     }
 
@@ -1417,7 +1521,7 @@ namespace Ixen.Generators.Xnl
             AddBinding(nodeId, propertyName, param, parts, file);
         }
 
-        static void AddAction(StringBuilder sb, string tabs, string nodeId, string eventName,
+        static void AddAction(StringBuilder sb, string tabs, string nodeId, string eventName, IEventSymbol handler,
             XnlNodeParameter param, List<BindingPart> parts, bool bound, FileContext file)
         {
             if (!bound || parts.Count != 1)
@@ -1428,11 +1532,6 @@ namespace Ixen.Generators.Xnl
                     param.ValueIndex,
                     param.Value?.Length ?? 0));
 
-                return;
-            }
-
-            if (file.RepeatItem != null)
-            {
                 return;
             }
 
@@ -1447,6 +1546,14 @@ namespace Ixen.Generators.Xnl
                 return;
             }
 
+            if (file.CurrentRow != null)
+            {
+                AddRowHandler(file.CurrentRow, nodeId, eventName, handler,
+                    XnlBindings.Qualify(parts[0].Text, file.ModelMembers));
+
+                return;
+            }
+
             string expression = XnlBindings.Qualify(parts[0].Text, file.ModelMembers, XnlBindings.MODEL_FIELD);
 
             file.ModelUses++;
@@ -1455,15 +1562,19 @@ namespace Ixen.Generators.Xnl
                 $"{{ {expression}; }} }};");
         }
 
+        static void AddRowHandler(Region row, string nodeId, string eventName, IEventSymbol handler, string body)
+        {
+            string field = $"On_{nodeId}_{eventName}";
+
+            row.Handlers.Add((handler.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), field));
+            row.Wiring.Add($"{nodeId}.{eventName} += (sender, e) => {field}?.Invoke(sender, e);");
+            row.Assignments.Add((field, body));
+        }
+
         static bool AddWriteBack(StringBuilder sb, string tabs, string nodeId, string propertyName,
             IPropertySymbol property, INamedTypeSymbol elementSymbol, XnlNodeParameter param,
             List<BindingPart> parts, FileContext file)
         {
-            if (file.RepeatItem != null)
-            {
-                return false;
-            }
-
             string path = parts[0].Text;
 
             if (!XnlBindings.IsMemberPath(path))
@@ -1489,8 +1600,9 @@ namespace Ixen.Generators.Xnl
             }
 
             string eventName = propertyName + CHANGED_SUFFIX;
+            IEventSymbol changed = FindEvent(elementSymbol, eventName);
 
-            if (FindEvent(elementSymbol, eventName) == null)
+            if (changed == null)
             {
                 file.Diagnostics.Add(new LanguageError(
                     LanguageErrorCode.INVALID_PROPERTY_VALUE,
@@ -1510,6 +1622,17 @@ namespace Ixen.Generators.Xnl
                     param.Value?.Length ?? 0));
 
                 return false;
+            }
+
+            if (file.CurrentRow != null)
+            {
+                AddRowHandler(file.CurrentRow, nodeId, eventName, changed,
+                    $"{XnlBindings.Qualify(path, file.ModelMembers)} = " +
+                    $"(({elementSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)})sender)" +
+                    $".{propertyName}; " +
+                    $"((global::{BOUND_MODEL_METADATA_NAME}){XnlBindings.MODEL_PARAMETER}).SetState()");
+
+                return true;
             }
 
             string target = XnlBindings.Qualify(path, file.ModelMembers, XnlBindings.MODEL_FIELD);

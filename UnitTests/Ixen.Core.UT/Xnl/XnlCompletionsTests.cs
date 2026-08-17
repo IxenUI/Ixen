@@ -189,6 +189,16 @@ namespace Ixen.Core.UT.Xnl
         }
 
         [TestMethod]
+        public void ABareElseClauseDoesNotOpenAPropertyBlock()
+        {
+            XnlCompletionContext context =
+                At("root {} [\r\n\t@if (V) {\r\n\t\ta {}\r\n\t@} else {\r\n\t\tb { te| }\r\n\t@}\r\n]");
+
+            Assert.AreEqual(XnlCompletionKind.PropertyName, context.Kind);
+            CollectionAssert.Contains(context.Items.ToArray(), "text");
+        }
+
+        [TestMethod]
         public void AClosedRegionReturnsToChildPosition()
         {
             XnlCompletionContext context = At("root {} [\r\n\t@if (V) {\r\n\t\ta {}\r\n\t@}\r\n\tb { te| }\r\n]");

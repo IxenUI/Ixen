@@ -11,11 +11,9 @@ region_root {} [
 	region_after { text: "after" }
 	@if (Level == 1) {
 		level_one { text: "one" }
-	@}
-	@else if (Level == 2) {
+	@} else if (Level == 2) {
 		level_two { text: "two" }
-	@}
-	@else {
+	@} else {
 		level_other { text: "other" }
 	@}
 ]

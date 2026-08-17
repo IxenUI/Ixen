@@ -8,6 +8,7 @@ namespace Ixen.Core.Language.Xnl
     internal class XnlTokenizer : BaseTokenizer<XnlToken, XnlTokenType, XnlTokenErrorType>
     {
         private const char CODE_MARKER = '@';
+        private const string ELSE_KEYWORD = "else";
 
         private bool _expectElementName = false;
 
@@ -20,6 +21,7 @@ namespace Ixen.Core.Language.Xnl
 
         private bool _expectCodeRegionBegin = false;
         private bool _expectCodeRegionEnd = false;
+        private bool _expectElseClause = false;
 
         private bool _expectPropertiesBegin = false;
         private bool _expectPropertiesEnd = false;
@@ -73,6 +75,12 @@ namespace Ixen.Core.Language.Xnl
 
             while (PeekChar() != '\0')
             {
+                if (_expectElseClause && ReadElseClause())
+                {
+                    SetStatesFlags(XnlTokenType.CodeRegionBegin);
+                    continue;
+                }
+
                 if (_expectElementName && ReadElementName())
                 {
                     SetStatesFlags(XnlTokenType.ElementName);
@@ -183,6 +191,7 @@ namespace Ixen.Core.Language.Xnl
             _expectChildrenEnd = false;
             _expectCodeRegionBegin = false;
             _expectCodeRegionEnd = false;
+            _expectElseClause = false;
             _expectPropertiesBegin = false;
             _expectPropertiesEnd = false;
             _expectPropertyName = false;
@@ -294,6 +303,7 @@ namespace Ixen.Core.Language.Xnl
                     _expectChildrenEnd = true;
                     _expectCodeRegionBegin = true;
                     _expectCodeRegionEnd = true;
+                    _expectElseClause = true;
                     break;
 
                 case XnlTokenType.CodeStatement:
@@ -355,7 +365,60 @@ namespace Ixen.Core.Language.Xnl
             MoveCursor();
 
             var sb = new StringBuilder();
+
+            if (!ScanCodeHeader(sb, out char terminator))
+            {
+                _index = index;
+                return false;
+            }
+
+            AddToken(tokenIndex,
+                terminator == '{' ? XnlTokenType.CodeRegionBegin : XnlTokenType.CodeStatement,
+                sb.ToString().Trim());
+
+            return true;
+        }
+
+        private bool ReadElseClause()
+        {
+            int index = _index;
+            char c = PeekNonSpaceChar();
+
+            if (!char.IsLetter(c))
+            {
+                _index = index;
+                return false;
+            }
+
+            int tokenIndex = _peekIndex;
+            var sb = new StringBuilder();
+
+            sb.Append(c);
+            MoveCursor();
+
+            while (char.IsLetter(PeekChar()))
+            {
+                sb.Append(PeekChar());
+                MoveCursor();
+            }
+
+            if (sb.ToString() != ELSE_KEYWORD
+                || !ScanCodeHeader(sb, out char terminator)
+                || terminator != '{')
+            {
+                _index = index;
+                return false;
+            }
+
+            AddToken(tokenIndex, XnlTokenType.CodeRegionBegin, sb.ToString().Trim());
+            return true;
+        }
+
+        private bool ScanCodeHeader(StringBuilder sb, out char terminator)
+        {
             int depth = 0;
+
+            terminator = '\0';
 
             while (true)
             {
@@ -363,7 +426,7 @@ namespace Ixen.Core.Language.Xnl
 
                 if (c == '\0')
                 {
-                    break;
+                    return false;
                 }
 
                 if (c == '"' || c == '\'')
@@ -375,10 +438,7 @@ namespace Ixen.Core.Language.Xnl
                 if (depth == 0 && (c == '{' || c == ';'))
                 {
                     MoveCursor();
-
-                    AddToken(tokenIndex,
-                        c == '{' ? XnlTokenType.CodeRegionBegin : XnlTokenType.CodeStatement,
-                        sb.ToString().Trim());
+                    terminator = c;
 
                     return true;
                 }
@@ -395,9 +455,6 @@ namespace Ixen.Core.Language.Xnl
                 sb.Append(c);
                 MoveCursor();
             }
-
-            _index = index;
-            return false;
         }
 
         private void ReadCodeLiteral(StringBuilder sb, char quote)

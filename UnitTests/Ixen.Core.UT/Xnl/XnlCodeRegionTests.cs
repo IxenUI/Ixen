@@ -164,6 +164,59 @@ namespace Ixen.Core.UT.Xnl
             Assert.AreEqual("el", container.Children[1].Name);
         }
 
+        private static string Stream(string source)
+            => string.Join(" ", Tokens(source).Select(t => $"{t.Type}:{t.Content}"));
+
+        [TestMethod]
+        public void AMarkedElseWorksOnOneLine()
+        {
+            Assert.AreEqual(
+                Stream("root {} [\r\n\t@if (V) {\r\n\t\ta {}\r\n\t@}\r\n\t@else {\r\n\t\tb {}\r\n\t@}\r\n]"),
+                Stream("root {} [\r\n\t@if (V) {\r\n\t\ta {}\r\n\t@} @else {\r\n\t\tb {}\r\n\t@}\r\n]"),
+                "newlines are not significant, so the one-line form was already the same token stream");
+        }
+
+        [TestMethod]
+        public void ABareElseAfterARegionEndIsAnElseClause()
+        {
+            List<XnlToken> tokens = Tokens("root {} [\r\n\t@if (V) {\r\n\t\ta {}\r\n\t@} else {\r\n\t\tb {}\r\n\t@}\r\n]");
+
+            Assert.AreEqual(2, tokens.Count(t => t.Type == XnlTokenType.CodeRegionBegin));
+            Assert.AreEqual("else", tokens.Last(t => t.Type == XnlTokenType.CodeRegionBegin).Content);
+            CollectionAssert.DoesNotContain(
+                tokens.Where(t => t.Type == XnlTokenType.ElementName).Select(t => t.Content).ToArray(),
+                "else",
+                "it used to become an element named 'else' with an empty properties block");
+        }
+
+        [TestMethod]
+        public void ABareElseIfIsReadWhole()
+        {
+            List<XnlToken> tokens = Tokens(
+                "root {} [\r\n\t@if (V) {\r\n\t\ta {}\r\n\t@} else if (W) {\r\n\t\tb {}\r\n\t@}\r\n]");
+
+            Assert.AreEqual("else if (W)", tokens.Last(t => t.Type == XnlTokenType.CodeRegionBegin).Content);
+        }
+
+        [TestMethod]
+        public void ABareElseIsOnlySpecialRightAfterARegionEnd()
+        {
+            XnlNode root = Nodify("root {} [\r\n\telse {}\r\n]", out XnlSource source);
+
+            Assert.IsFalse(source.HasErrors, string.Join(" | ", source.Diagnostics.Select(e => e.Message)));
+            Assert.AreEqual("else", root.Children[0].Children[0].Name,
+                "elsewhere it is still an ordinary element name");
+        }
+
+        [TestMethod]
+        public void AWordThatIsNotElseAfterARegionEndIsStillAnElement()
+        {
+            XnlNode root = Nodify("root {} [\r\n\t@if (V) {\r\n\t\ta {}\r\n\t@} elsewhere {}\r\n]", out XnlSource source);
+
+            Assert.IsFalse(source.HasErrors, string.Join(" | ", source.Diagnostics.Select(e => e.Message)));
+            Assert.AreEqual("elsewhere", root.Children[0].Children[1].Name);
+        }
+
         [TestMethod]
         public void AnAtSignInsideAValueIsStillContent()
         {

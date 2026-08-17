@@ -6,6 +6,7 @@ namespace Ixen.Core.Language.Xnl
     internal static class XnlCompletions
     {
         private const char CODE_MARKER = '@';
+        private const string ELSE_KEYWORD = "else";
 
         private enum ScanState
         {
@@ -166,7 +167,7 @@ namespace Ixen.Core.Language.Xnl
         {
             if (marker + 1 < content.Length && content[marker + 1] == '}')
             {
-                return marker + 2;
+                return SkipElseClause(content, marker + 2, end);
             }
 
             int index = marker + 1;
@@ -183,6 +184,60 @@ namespace Ixen.Core.Language.Xnl
                 }
 
                 if (depth == 0 && (c == '{' || c == ';'))
+                {
+                    return index + 1;
+                }
+
+                if (c == '(')
+                {
+                    depth++;
+                }
+                else if (c == ')')
+                {
+                    depth--;
+                }
+
+                index++;
+            }
+
+            return end;
+        }
+
+        private static int SkipElseClause(string content, int after, int end)
+        {
+            int index = after;
+
+            while (index < end && char.IsWhiteSpace(content[index]))
+            {
+                index++;
+            }
+
+            int start = index;
+
+            while (index < end && char.IsLetter(content[index]))
+            {
+                index++;
+            }
+
+            if (index - start != ELSE_KEYWORD.Length
+                || string.CompareOrdinal(content, start, ELSE_KEYWORD, 0, ELSE_KEYWORD.Length) != 0)
+            {
+                return after;
+            }
+
+            int depth = 0;
+
+            while (index < end)
+            {
+                char c = content[index];
+
+                if (c == '"' || c == '\'')
+                {
+                    index = SkipCodeLiteral(content, index, end);
+                    continue;
+                }
+
+                if (depth == 0 && c == '{')
                 {
                     return index + 1;
                 }

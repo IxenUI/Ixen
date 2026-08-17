@@ -5,18 +5,84 @@ namespace Ixen.Core.Visual
 {
     public static class Repeater
     {
-        public static void SyncKeyed(VisualElement parent, List<VisualElement> instances, List<object> keys,
-            List<object> next, int offset, int groupSize, Func<int, VisualElement> create)
+        public static void Sync<TRow>(VisualElement parent, List<VisualElement> instances, List<TRow> rows,
+            int offset, int count, Func<int, TRow> create)
+            where TRow : IRegionRow
         {
-            if (parent == null || instances == null || keys == null || next == null || create == null
-                || groupSize < 1)
+            Trim(parent, instances, rows, offset, count);
+            Ensure(parent, instances, rows, offset, count, create);
+        }
+
+        public static void Ensure<TRow>(VisualElement parent, List<VisualElement> instances, List<TRow> rows,
+            int offset, int count, Func<int, TRow> create)
+            where TRow : IRegionRow
+        {
+            if (parent == null || instances == null || rows == null || create == null || count < 0)
+            {
+                return;
+            }
+
+            while (rows.Count < count)
+            {
+                TRow row = create(rows.Count);
+
+                if (row == null)
+                {
+                    return;
+                }
+
+                rows.Add(row);
+
+                for (int k = 0; k < row.ElementCount; k++)
+                {
+                    VisualElement element = row.ElementAt(k);
+
+                    parent.InsertChild(offset + instances.Count, element);
+                    instances.Add(element);
+                }
+            }
+        }
+
+        public static void Trim<TRow>(VisualElement parent, List<VisualElement> instances, List<TRow> rows,
+            int offset, int count)
+            where TRow : IRegionRow
+        {
+            if (parent == null || instances == null || rows == null)
+            {
+                return;
+            }
+
+            int target = count < 0 ? 0 : count;
+
+            while (rows.Count > target)
+            {
+                int last = rows.Count - 1;
+
+                for (int k = 0; k < rows[last].ElementCount; k++)
+                {
+                    int index = instances.Count - 1;
+
+                    parent.RemoveChildAt(offset + index);
+                    instances.RemoveAt(index);
+                }
+
+                rows.RemoveAt(last);
+            }
+        }
+
+        public static void SyncKeyed<TRow>(VisualElement parent, List<VisualElement> instances, List<TRow> rows,
+            List<object> keys, List<object> next, int offset, Func<int, TRow> create)
+            where TRow : IRegionRow
+        {
+            if (parent == null || instances == null || rows == null || keys == null || next == null
+                || create == null)
             {
                 return;
             }
 
             var available = new Dictionary<object, int>();
 
-            for (int i = 0; i < keys.Count && (i + 1) * groupSize <= instances.Count; i++)
+            for (int i = 0; i < keys.Count && i < rows.Count; i++)
             {
                 if (keys[i] != null && !available.ContainsKey(keys[i]))
                 {
@@ -24,26 +90,39 @@ namespace Ixen.Core.Visual
                 }
             }
 
-            var ordered = new List<VisualElement>(next.Count * groupSize);
-            var reused = new bool[keys.Count];
+            var orderedRows = new List<TRow>(next.Count);
+            var ordered = new List<VisualElement>(instances.Count);
+            var reused = new bool[rows.Count];
 
-            foreach (object key in next)
+            for (int i = 0; i < next.Count; i++)
             {
-                if (key != null && available.TryGetValue(key, out int group) && !reused[group])
-                {
-                    reused[group] = true;
+                object key = next[i];
 
-                    for (int k = 0; k < groupSize; k++)
+                if (key != null && available.TryGetValue(key, out int index) && !reused[index])
+                {
+                    reused[index] = true;
+                    orderedRows.Add(rows[index]);
+
+                    for (int k = 0; k < rows[index].ElementCount; k++)
                     {
-                        ordered.Add(instances[group * groupSize + k]);
+                        ordered.Add(rows[index].ElementAt(k));
                     }
 
                     continue;
                 }
 
-                for (int k = 0; k < groupSize; k++)
+                TRow row = create(i);
+
+                if (row == null)
                 {
-                    VisualElement created = create(k);
+                    continue;
+                }
+
+                orderedRows.Add(row);
+
+                for (int k = 0; k < row.ElementCount; k++)
+                {
+                    VisualElement created = row.ElementAt(k);
 
                     parent.Adopt(created);
                     ordered.Add(created);
@@ -57,14 +136,9 @@ namespace Ixen.Core.Visual
                     continue;
                 }
 
-                for (int k = 0; k < groupSize; k++)
+                for (int k = 0; k < rows[i].ElementCount; k++)
                 {
-                    int index = i * groupSize + k;
-
-                    if (index < instances.Count)
-                    {
-                        parent.Release(instances[index]);
-                    }
+                    parent.Release(rows[i].ElementAt(k));
                 }
             }
 
@@ -73,53 +147,11 @@ namespace Ixen.Core.Visual
             instances.Clear();
             instances.AddRange(ordered);
 
+            rows.Clear();
+            rows.AddRange(orderedRows);
+
             keys.Clear();
             keys.AddRange(next);
-        }
-
-        public static void Sync(VisualElement parent, List<VisualElement> instances, int offset, int count,
-            int groupSize, Func<int, VisualElement> create)
-        {
-            Trim(parent, instances, offset, count, groupSize);
-            Ensure(parent, instances, offset, count, groupSize, create);
-        }
-
-        public static void Ensure(VisualElement parent, List<VisualElement> instances, int offset, int count,
-            int groupSize, Func<int, VisualElement> create)
-        {
-            if (parent == null || instances == null || create == null || groupSize < 1 || count < 0)
-            {
-                return;
-            }
-
-            int target = count * groupSize;
-
-            while (instances.Count < target)
-            {
-                VisualElement element = create(instances.Count % groupSize);
-
-                parent.InsertChild(offset + instances.Count, element);
-                instances.Add(element);
-            }
-        }
-
-        public static void Trim(VisualElement parent, List<VisualElement> instances, int offset, int count,
-            int groupSize)
-        {
-            if (parent == null || instances == null || groupSize < 1)
-            {
-                return;
-            }
-
-            int target = count < 0 ? 0 : count * groupSize;
-
-            while (instances.Count > target)
-            {
-                int last = instances.Count - 1;
-
-                parent.RemoveChildAt(offset + last);
-                instances.RemoveAt(last);
-            }
         }
     }
 }

@@ -1,0 +1,23 @@
+nested_root {} [
+	nested_before { text: "before" }
+	@foreach (var row in Items) key (row.Id) {
+		nested_row {} [
+			nested_name { text: "{row.Name}" click: "{Pick(row)}" }
+			@if (row.Count > 0) {
+				nested_badge { text: "{row.Count} left" }
+			@} else {
+				nested_empty { text: "none" }
+			@}
+			nested_tail { text: "{row.Name} tail" }
+			nested_field<TextField> { text: "[row.Name]" }
+		]
+	@}
+	@if (ShowDeep) {
+		deep_panel {} [
+			@foreach (var word in Words) {
+				deep_word { text: "{word}" }
+			@}
+		]
+	@}
+	nested_after { text: "after" }
+]
