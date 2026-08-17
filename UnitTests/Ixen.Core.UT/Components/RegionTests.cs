@@ -29,6 +29,7 @@ namespace Ixen.Core.UT.Components
                 .FindByName("region_root")
                 .Children
                 .Select(c => c.Name)
+                .Where(n => n == null || !n.StartsWith("level_"))
                 .ToArray();
 
         [TestMethod]
@@ -143,6 +144,66 @@ namespace Ixen.Core.UT.Components
 
             Assert.AreSame(title, component.Initialize().FindByName("region_title"),
                 "opening another region must not disturb the one already open");
+        }
+
+        private static string Branch(RegionComponent component)
+            => component.Initialize()
+                .FindByName("region_root")
+                .Children
+                .Where(c => c.Name != null && c.Name.StartsWith("level_"))
+                .Select(c => c.Name)
+                .SingleOrDefault();
+
+        [TestMethod]
+        public void ExactlyOneBranchOfAChainIsTaken()
+        {
+            Assert.AreEqual("level_one", Branch(new RegionComponent { Level = 1 }));
+            Assert.AreEqual("level_two", Branch(new RegionComponent { Level = 2 }));
+            Assert.AreEqual("level_other", Branch(new RegionComponent { Level = 9 }));
+        }
+
+        [TestMethod]
+        public void ABareElseIsTheNegationOfEveryBranchBeforeIt()
+        {
+            var component = new RegionComponent { Level = 2 };
+
+            Assert.AreEqual("level_two", Branch(component),
+                "the else must not fire just because the first branch was false");
+        }
+
+        [TestMethod]
+        public void SwitchingBranchDestroysTheOldOneAndBuildsTheNew()
+        {
+            var component = new RegionComponent { Level = 1 };
+            IxenSurface surface = Laid(component);
+
+            VisualElement one = component.Initialize().FindByName("level_one");
+
+            component.Toggle(false, false);
+            component.Level = 2;
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Assert.IsNull(component.Initialize().FindByName("level_one"));
+            Assert.IsNotNull(component.Initialize().FindByName("level_two"));
+            Assert.AreEqual("level_two", Branch(component));
+            Assert.IsNotNull(one);
+        }
+
+        [TestMethod]
+        public void ABranchKeepsItsPlaceAmongStaticSiblings()
+        {
+            var component = new RegionComponent { Level = 2 };
+
+            string[] names = component.Initialize()
+                .FindByName("region_root")
+                .Children
+                .Select(c => c.Name)
+                .ToArray();
+
+            CollectionAssert.AreEqual(
+                new[] { "region_before", "region_middle", "region_after", "level_two" },
+                names,
+                "the branch is spliced after every earlier region, empty ones included");
         }
 
         [TestMethod]

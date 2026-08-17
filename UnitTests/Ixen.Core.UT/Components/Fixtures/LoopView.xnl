@@ -12,5 +12,9 @@ loop_root {} [
 		keyed_name { text: "{keyed.Name}" }
 		keyed_count { text: "{keyed.Count}x" }
 	@}
+	@var limit = Max;
+	@for (int i = 0; i < limit; i++) {
+		indexed { text: "{i}/{limit}" }
+	@}
 	loop_after { text: "after" }
 ]

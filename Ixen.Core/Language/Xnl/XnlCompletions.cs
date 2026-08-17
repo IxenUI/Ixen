@@ -170,6 +170,7 @@ namespace Ixen.Core.Language.Xnl
             }
 
             int index = marker + 1;
+            int depth = 0;
 
             while (index < end)
             {
@@ -181,9 +182,18 @@ namespace Ixen.Core.Language.Xnl
                     continue;
                 }
 
-                if (c == '{')
+                if (depth == 0 && (c == '{' || c == ';'))
                 {
                     return index + 1;
+                }
+
+                if (c == '(')
+                {
+                    depth++;
+                }
+                else if (c == ')')
+                {
+                    depth--;
                 }
 
                 index++;

@@ -126,6 +126,45 @@ namespace Ixen.Core.UT.Xnl
         }
 
         [TestMethod]
+        public void ASemicolonEndsAStatementRatherThanABlock()
+        {
+            List<XnlToken> tokens = Tokens("root {} [\r\n\t@var max = 5;\r\n\tel {}\r\n]");
+
+            Assert.AreEqual("var max = 5",
+                tokens.First(t => t.Type == XnlTokenType.CodeStatement).Content);
+            Assert.IsFalse(tokens.Any(t => t.Type == XnlTokenType.CodeRegionBegin),
+                "a statement opens no block, so there is no @} to match");
+        }
+
+        [TestMethod]
+        public void ASemicolonInsideParenthesesDoesNotEndTheHeader()
+        {
+            List<XnlToken> tokens = Tokens(
+                "root {} [\r\n\t@for (int i = 0; i < 3; i++) {\r\n\t\tel {}\r\n\t@}\r\n]");
+
+            Assert.AreEqual("for (int i = 0; i < 3; i++)",
+                tokens.First(t => t.Type == XnlTokenType.CodeRegionBegin).Content,
+                "the terminator only counts at paren depth 0");
+            Assert.IsFalse(tokens.Any(t => t.Type == XnlTokenType.CodeStatement));
+        }
+
+        [TestMethod]
+        public void AStatementIsANodeWithNoBody()
+        {
+            XnlNode root = Nodify("root {} [\r\n\t@var max = 5;\r\n\tel {}\r\n]", out XnlSource source);
+
+            Assert.IsFalse(source.HasErrors, string.Join(" | ", source.Diagnostics.Select(e => e.Message)));
+
+            XnlNode container = root.Children[0];
+
+            Assert.AreEqual(2, container.Children.Count);
+            Assert.IsTrue(container.Children[0].IsStatement);
+            Assert.IsFalse(container.Children[0].IsRegion, "a statement is code, but not a region");
+            Assert.AreEqual(0, container.Children[0].Children.Count);
+            Assert.AreEqual("el", container.Children[1].Name);
+        }
+
+        [TestMethod]
         public void AnAtSignInsideAValueIsStillContent()
         {
             XnlNode root = Nodify("el { text: \"a@b\" }", out XnlSource source);

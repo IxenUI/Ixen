@@ -169,6 +169,26 @@ namespace Ixen.Core.UT.Xnl
         }
 
         [TestMethod]
+        public void AStatementDoesNotSwallowTheNextNode()
+        {
+            XnlCompletionContext context = At("root {} [\r\n\t@var max = 5;\r\n\tel { te| }\r\n]");
+
+            Assert.AreEqual(XnlCompletionKind.PropertyName, context.Kind,
+                "a statement ends at its semicolon, not at the next brace");
+            CollectionAssert.Contains(context.Items.ToArray(), "text");
+        }
+
+        [TestMethod]
+        public void AForHeaderIsSkippedWholeDespiteItsSemicolons()
+        {
+            XnlCompletionContext context =
+                At("root {} [\r\n\t@for (int i = 0; i < 3; i++) {\r\n\t\tel { te| }\r\n\t@}\r\n]");
+
+            Assert.AreEqual(XnlCompletionKind.PropertyName, context.Kind);
+            CollectionAssert.Contains(context.Items.ToArray(), "text");
+        }
+
+        [TestMethod]
         public void AClosedRegionReturnsToChildPosition()
         {
             XnlCompletionContext context = At("root {} [\r\n\t@if (V) {\r\n\t\ta {}\r\n\t@}\r\n\tb { te| }\r\n]");

@@ -9,4 +9,13 @@ region_root {} [
 		region_footer { text: "footer" click: "{Bump()}" }
 	@}
 	region_after { text: "after" }
+	@if (Level == 1) {
+		level_one { text: "one" }
+	@}
+	@else if (Level == 2) {
+		level_two { text: "two" }
+	@}
+	@else {
+		level_other { text: "other" }
+	@}
 ]

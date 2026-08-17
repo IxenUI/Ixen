@@ -209,6 +209,92 @@ namespace Ixen.Core.UT.Components
                 KeyedGroups(component).Select(c => c.Text).ToArray());
         }
 
+        private static VisualElement[] Indexed(LoopComponent component)
+            => component.Initialize()
+                .FindByName("loop_root")
+                .Children
+                .Where(c => c.Name == "indexed")
+                .ToArray();
+
+        [TestMethod]
+        public void AVarIsVisibleToTheLoopThatFollowsIt()
+        {
+            var component = new LoopComponent { Max = 3 };
+
+            CollectionAssert.AreEqual(
+                new[] { "0/3", "1/3", "2/3" },
+                Indexed(component).Select(c => c.Text).ToArray(),
+                "'@var limit = Max;' is emitted before the '@for' that reads it");
+        }
+
+        [TestMethod]
+        public void AZeroCountForProducesNothing()
+        {
+            var component = new LoopComponent { Max = 0 };
+
+            Assert.AreEqual(0, Indexed(component).Length);
+            CollectionAssert.AreEqual(
+                new[] { "loop_before", "loop_middle", "loop_after" },
+                Names(component));
+        }
+
+        [TestMethod]
+        public void AForGrowsWithoutRebuildingWhatExists()
+        {
+            var component = new LoopComponent { Max = 2 };
+            IxenSurface surface = Laid(component);
+
+            VisualElement first = Indexed(component)[0];
+
+            component.Max = 4;
+            component.Refresh();
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Assert.AreEqual(4, Indexed(component).Length);
+            Assert.AreSame(first, Indexed(component)[0],
+                "the single pass grows as it goes rather than rebuilding");
+        }
+
+        [TestMethod]
+        public void AForShrinksFromTheEnd()
+        {
+            var component = new LoopComponent { Max = 4 };
+            IxenSurface surface = Laid(component);
+
+            VisualElement first = Indexed(component)[0];
+
+            component.Max = 1;
+            component.Refresh();
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Assert.AreEqual(1, Indexed(component).Length);
+            Assert.AreSame(first, Indexed(component)[0], "Trim removes the excess at the end");
+        }
+
+        [TestMethod]
+        public void AForSitsAfterEveryPrecedingRegion()
+        {
+            var component = new LoopComponent
+            {
+                Items = Two(),
+                Words = new List<string> { "w" },
+                Max = 1
+            };
+
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "loop_before",
+                    "pair_name", "pair_count", "pair_name", "pair_count",
+                    "loop_middle",
+                    "word_row",
+                    "indexed",
+                    "loop_after"
+                },
+                Names(component),
+                "its offset sums the actual element count of all three regions before it");
+        }
+
         [TestMethod]
         public void ANullCollectionIsAnEmptyOne()
         {

@@ -11,7 +11,9 @@ namespace Ixen.Core.Language.Xnl
         public int TypeIndex { get; set; }
         public string Code { get; set; }
         public int CodeIndex { get; set; }
-        public bool IsRegion => Code != null;
+        public bool IsStatement { get; set; }
+        public bool IsCode => Code != null;
+        public bool IsRegion => Code != null && !IsStatement;
         public List<XnlNodeParameter> Properties { get; set; } = new();
         public XnlNode Parent { get; set; }
         public List<XnlNode> Children { get; set; } = new();

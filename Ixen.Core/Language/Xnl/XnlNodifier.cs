@@ -113,6 +113,14 @@ namespace Ixen.Core.Language.Xnl
                         parent = stack.Pop().Parent;
                         createNode = true;
                         break;
+
+                    case XnlTokenType.CodeStatement:
+                        node = CreateNode(++nodeId, parent);
+                        node.Code = token.Content;
+                        node.CodeIndex = token.Index;
+                        node.IsStatement = true;
+                        createNode = true;
+                        break;
                 }
             }
 

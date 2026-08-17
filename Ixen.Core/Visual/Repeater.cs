@@ -80,25 +80,19 @@ namespace Ixen.Core.Visual
         public static void Sync(VisualElement parent, List<VisualElement> instances, int offset, int count,
             int groupSize, Func<int, VisualElement> create)
         {
-            if (parent == null || instances == null || create == null || groupSize < 1)
+            Trim(parent, instances, offset, count, groupSize);
+            Ensure(parent, instances, offset, count, groupSize, create);
+        }
+
+        public static void Ensure(VisualElement parent, List<VisualElement> instances, int offset, int count,
+            int groupSize, Func<int, VisualElement> create)
+        {
+            if (parent == null || instances == null || create == null || groupSize < 1 || count < 0)
             {
                 return;
             }
 
-            if (count < 0)
-            {
-                count = 0;
-            }
-
             int target = count * groupSize;
-
-            while (instances.Count > target)
-            {
-                int last = instances.Count - 1;
-
-                parent.RemoveChildAt(offset + last);
-                instances.RemoveAt(last);
-            }
 
             while (instances.Count < target)
             {
@@ -106,6 +100,25 @@ namespace Ixen.Core.Visual
 
                 parent.InsertChild(offset + instances.Count, element);
                 instances.Add(element);
+            }
+        }
+
+        public static void Trim(VisualElement parent, List<VisualElement> instances, int offset, int count,
+            int groupSize)
+        {
+            if (parent == null || instances == null || groupSize < 1)
+            {
+                return;
+            }
+
+            int target = count < 0 ? 0 : count * groupSize;
+
+            while (instances.Count > target)
+            {
+                int last = instances.Count - 1;
+
+                parent.RemoveChildAt(offset + last);
+                instances.RemoveAt(last);
             }
         }
     }

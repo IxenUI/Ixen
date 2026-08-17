@@ -115,9 +115,9 @@ namespace Ixen.Core.Language.Xnl
                     continue;
                 }
 
-                if (_expectCodeRegionBegin && ReadCodeRegionBegin())
+                if (_expectCodeRegionBegin && ReadCode())
                 {
-                    SetStatesFlags(XnlTokenType.CodeRegionBegin);
+                    SetStatesFlags(_tokens[_tokens.Count - 1].Type);
                     continue;
                 }
 
@@ -295,6 +295,15 @@ namespace Ixen.Core.Language.Xnl
                     _expectCodeRegionBegin = true;
                     _expectCodeRegionEnd = true;
                     break;
+
+                case XnlTokenType.CodeStatement:
+                    _expectElementName = true;
+                    _expectElementTypeBegin = true;
+                    _expectPropertiesBegin = true;
+                    _expectChildrenEnd = true;
+                    _expectCodeRegionBegin = true;
+                    _expectCodeRegionEnd = true;
+                    break;
             }
         }
 
@@ -332,7 +341,7 @@ namespace Ixen.Core.Language.Xnl
             return true;
         }
 
-        private bool ReadCodeRegionBegin()
+        private bool ReadCode()
         {
             int index = _index;
 
@@ -346,6 +355,7 @@ namespace Ixen.Core.Language.Xnl
             MoveCursor();
 
             var sb = new StringBuilder();
+            int depth = 0;
 
             while (true)
             {
@@ -362,11 +372,24 @@ namespace Ixen.Core.Language.Xnl
                     continue;
                 }
 
-                if (c == '{')
+                if (depth == 0 && (c == '{' || c == ';'))
                 {
                     MoveCursor();
-                    AddToken(tokenIndex, XnlTokenType.CodeRegionBegin, sb.ToString().Trim());
+
+                    AddToken(tokenIndex,
+                        c == '{' ? XnlTokenType.CodeRegionBegin : XnlTokenType.CodeStatement,
+                        sb.ToString().Trim());
+
                     return true;
+                }
+
+                if (c == '(')
+                {
+                    depth++;
+                }
+                else if (c == ')')
+                {
+                    depth--;
                 }
 
                 sb.Append(c);

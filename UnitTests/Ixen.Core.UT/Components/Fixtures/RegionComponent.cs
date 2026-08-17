@@ -9,6 +9,7 @@ namespace Ixen.Core.UT.Components.Fixtures
         public bool ShowFooter { get; set; }
         public string Title { get; set; } = "the title";
         public int Bumps { get; set; }
+        public int Level { get; set; }
 
         public void Bump() => Bumps++;
 
