@@ -10,6 +10,8 @@ namespace Ixen.Core.Visual
         internal bool HasValue;
         internal int Step;
         internal int Steps;
+        internal int Delay;
+        internal Styles.EasingKind Easing;
 
         private Rendering.Brush _brush;
         private Rendering.Pen _pen;
@@ -58,12 +60,14 @@ namespace Ixen.Core.Visual
             Steps = 0;
         }
 
-        internal void Start(Color target, int steps)
+        internal void Start(Color target, int steps, int delay, Styles.EasingKind easing)
         {
             From = Current;
             To = target;
             Step = 0;
             Steps = steps;
+            Delay = delay;
+            Easing = easing;
         }
 
         internal void Advance()
@@ -73,8 +77,91 @@ namespace Ixen.Core.Visual
                 return;
             }
 
+            if (Delay > 0)
+            {
+                Delay--;
+                return;
+            }
+
             Step++;
-            Current = Step >= Steps ? To : Color.Lerp(From, To, (float)Step / Steps);
+
+            Current = Step >= Steps
+                ? To
+                : Color.Lerp(From, To, Visual.Easing.Apply(Easing, (float)Step / Steps));
+        }
+    }
+
+    internal class SizeTransition
+    {
+        internal Styles.Descriptors.SizeUnit Unit;
+        internal float From;
+        internal float To;
+        internal float Current;
+        internal bool HasValue;
+        internal int Step;
+        internal int Steps;
+        internal int Delay;
+        internal Styles.EasingKind Easing;
+
+        private Styles.Descriptors.OffsetStyleDescriptor _descriptor;
+
+        internal bool Running => Steps > 0 && Step < Steps;
+
+        internal Styles.Descriptors.OffsetStyleDescriptor Descriptor
+        {
+            get
+            {
+                if (_descriptor == null)
+                {
+                    _descriptor = new Styles.Descriptors.OffsetStyleDescriptor();
+                }
+
+                _descriptor.Unit = Unit;
+                _descriptor.Value = Current;
+
+                return _descriptor;
+            }
+        }
+
+        internal void Jump(Styles.Descriptors.SizeUnit unit, float value)
+        {
+            Unit = unit;
+            From = value;
+            To = value;
+            Current = value;
+            HasValue = true;
+            Step = 0;
+            Steps = 0;
+        }
+
+        internal void Start(float target, int steps, int delay, Styles.EasingKind easing)
+        {
+            From = Current;
+            To = target;
+            Step = 0;
+            Steps = steps;
+            Delay = delay;
+            Easing = easing;
+        }
+
+        internal void Advance()
+        {
+            if (!Running)
+            {
+                return;
+            }
+
+            if (Delay > 0)
+            {
+                Delay--;
+                return;
+            }
+
+            Step++;
+
+            Current = Step >= Steps
+                ? To
+                : From + (To - From) * Visual.Easing.Apply(Easing, (float)Step / Steps);
         }
     }
 
@@ -89,9 +176,70 @@ namespace Ixen.Core.Visual
         internal ColorTransition Color;
         internal ColorTransition Border;
 
+        internal SizeTransition Width;
+        internal SizeTransition Height;
+        internal SizeTransition Left;
+        internal SizeTransition Top;
+        internal SizeTransition Right;
+        internal SizeTransition Bottom;
+
         internal ElementAnimations(VisualElement element)
         {
             _element = element;
+        }
+
+        internal SizeTransition SizeFor(string identifier)
+        {
+            switch (identifier)
+            {
+                case Styles.StyleIdentifier.WIDTH:
+                    return Width ?? (Width = new SizeTransition());
+
+                case Styles.StyleIdentifier.HEIGHT:
+                    return Height ?? (Height = new SizeTransition());
+
+                case Styles.StyleIdentifier.LEFT:
+                    return Left ?? (Left = new SizeTransition());
+
+                case Styles.StyleIdentifier.TOP:
+                    return Top ?? (Top = new SizeTransition());
+
+                case Styles.StyleIdentifier.RIGHT:
+                    return Right ?? (Right = new SizeTransition());
+
+                case Styles.StyleIdentifier.BOTTOM:
+                    return Bottom ?? (Bottom = new SizeTransition());
+
+                default:
+                    return null;
+            }
+        }
+
+        internal SizeTransition SizeIfAny(string identifier)
+        {
+            switch (identifier)
+            {
+                case Styles.StyleIdentifier.WIDTH:
+                    return Width;
+
+                case Styles.StyleIdentifier.HEIGHT:
+                    return Height;
+
+                case Styles.StyleIdentifier.LEFT:
+                    return Left;
+
+                case Styles.StyleIdentifier.TOP:
+                    return Top;
+
+                case Styles.StyleIdentifier.RIGHT:
+                    return Right;
+
+                case Styles.StyleIdentifier.BOTTOM:
+                    return Bottom;
+
+                default:
+                    return null;
+            }
         }
 
         internal ColorTransition For(string identifier)
@@ -115,7 +263,16 @@ namespace Ixen.Core.Visual
         internal bool Running
             => (Background != null && Background.Running)
                 || (Color != null && Color.Running)
-                || (Border != null && Border.Running);
+                || (Border != null && Border.Running)
+                || SizeRunning;
+
+        internal bool SizeRunning
+            => (Width != null && Width.Running)
+                || (Height != null && Height.Running)
+                || (Left != null && Left.Running)
+                || (Top != null && Top.Running)
+                || (Right != null && Right.Running)
+                || (Bottom != null && Bottom.Running);
 
         internal void Sync()
         {
@@ -144,13 +301,59 @@ namespace Ixen.Core.Visual
             _ticker = null;
         }
 
+        private void Advance(ColorTransition transition, string identifier)
+        {
+            if (transition == null || !transition.Running)
+            {
+                return;
+            }
+
+            transition.Advance();
+
+            if (!transition.Running && _element.HasTransitionEndedHandler)
+            {
+                _element.RaiseTransitionEnded(new TransitionEventArgs(identifier, _element));
+            }
+        }
+
+        private void Advance(SizeTransition transition, string identifier)
+        {
+            if (transition == null || !transition.Running)
+            {
+                return;
+            }
+
+            transition.Advance();
+
+            if (!transition.Running && _element.HasTransitionEndedHandler)
+            {
+                _element.RaiseTransitionEnded(new TransitionEventArgs(identifier, _element));
+            }
+        }
+
         private void Tick()
         {
-            Background?.Advance();
-            Color?.Advance();
-            Border?.Advance();
+            bool sizes = SizeRunning;
 
-            _element.Host?.InvalidateVisual();
+            Advance(Background, Styles.StyleIdentifier.BACKGROUND);
+            Advance(Color, Styles.StyleIdentifier.COLOR);
+            Advance(Border, Styles.StyleIdentifier.BORDER);
+
+            Advance(Width, Styles.StyleIdentifier.WIDTH);
+            Advance(Height, Styles.StyleIdentifier.HEIGHT);
+            Advance(Left, Styles.StyleIdentifier.LEFT);
+            Advance(Top, Styles.StyleIdentifier.TOP);
+            Advance(Right, Styles.StyleIdentifier.RIGHT);
+            Advance(Bottom, Styles.StyleIdentifier.BOTTOM);
+
+            if (sizes)
+            {
+                _element.InvalidateLayout();
+            }
+            else
+            {
+                _element.Host?.InvalidateVisual();
+            }
 
             if (!Running)
             {
@@ -163,6 +366,13 @@ namespace Ixen.Core.Visual
             Background?.Jump(Background.To);
             Color?.Jump(Color.To);
             Border?.Jump(Border.To);
+
+            Width?.Jump(Width.Unit, Width.To);
+            Height?.Jump(Height.Unit, Height.To);
+            Left?.Jump(Left.Unit, Left.To);
+            Top?.Jump(Top.Unit, Top.To);
+            Right?.Jump(Right.Unit, Right.To);
+            Bottom?.Jump(Bottom.Unit, Bottom.To);
         }
     }
 }

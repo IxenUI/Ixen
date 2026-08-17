@@ -159,7 +159,7 @@ namespace Ixen.Core.Visual.Computers
             VisualElementStylesHandlers handlers = element.StylesHandlers;
             TransitionStyleDescriptor transitions = handlers.Transition.Descriptor;
 
-            bool declared = transitions != null && transitions.Durations.Count > 0;
+            bool declared = transitions != null && transitions.Specs.Count > 0;
 
             if (!declared && !element.HasAnimations)
             {
@@ -169,6 +169,13 @@ namespace Ixen.Core.Visual.Computers
             Retarget(element, transitions, StyleIdentifier.BACKGROUND, handlers.Background.Color);
             Retarget(element, transitions, StyleIdentifier.COLOR, handlers.Color.Brush.Color);
             Retarget(element, transitions, StyleIdentifier.BORDER, handlers.Border.Color);
+
+            RetargetSize(element, transitions, StyleIdentifier.WIDTH, handlers.Width.Descriptor);
+            RetargetSize(element, transitions, StyleIdentifier.HEIGHT, handlers.Height.Descriptor);
+            RetargetSize(element, transitions, StyleIdentifier.LEFT, handlers.Left.Descriptor);
+            RetargetSize(element, transitions, StyleIdentifier.TOP, handlers.Top.Descriptor);
+            RetargetSize(element, transitions, StyleIdentifier.RIGHT, handlers.Right.Descriptor);
+            RetargetSize(element, transitions, StyleIdentifier.BOTTOM, handlers.Bottom.Descriptor);
 
             element.Animations.Sync();
         }
@@ -189,16 +196,48 @@ namespace Ixen.Core.Visual.Computers
                 return;
             }
 
-            int duration = transitions == null ? 0 : transitions.DurationOf(identifier);
+            TransitionSpec spec = transitions == null ? default : transitions.SpecOf(identifier);
 
-            if (duration <= 0)
+            if (spec.Duration <= 0)
             {
                 transition.Jump(target);
                 return;
             }
 
-            transition.Start(target, Math.Max(1, duration / ElementAnimations.TICK));
+            transition.Start(target, Math.Max(1, spec.Duration / ElementAnimations.TICK),
+                spec.Delay / ElementAnimations.TICK, spec.Easing);
         }
+
+        private void RetargetSize(VisualElement element, TransitionStyleDescriptor transitions,
+            string identifier, SizeStyleDescriptor target)
+        {
+            SizeTransition transition = element.Animations.SizeFor(identifier);
+
+            if (!transition.HasValue)
+            {
+                transition.Jump(target.Unit, target.Value);
+                return;
+            }
+
+            if (transition.Unit == target.Unit && transition.To == target.Value)
+            {
+                return;
+            }
+
+            TransitionSpec spec = transitions == null ? default : transitions.SpecOf(identifier);
+
+            if (spec.Duration <= 0 || transition.Unit != target.Unit || !Interpolatable(target.Unit))
+            {
+                transition.Jump(target.Unit, target.Value);
+                return;
+            }
+
+            transition.Start(target.Value, Math.Max(1, spec.Duration / ElementAnimations.TICK),
+                spec.Delay / ElementAnimations.TICK, spec.Easing);
+        }
+
+        private static bool Interpolatable(SizeUnit unit)
+            => unit == SizeUnit.Pixels || unit == SizeUnit.Percents;
 
         private void ApplyBaseStyle(VisualElement element)
         {

@@ -1,3 +1,4 @@
+using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using System;
 using System.Collections.Generic;
@@ -871,10 +872,17 @@ namespace Ixen.Core.Visual.Computers
 
             foreach (VisualElement child in element.Children)
             {
-                ResolveAnchor(child.StylesHandlers.Left.Descriptor, contentWidth, out float left, out bool hasLeft);
-                ResolveAnchor(child.StylesHandlers.Right.Descriptor, contentWidth, out float right, out bool hasRight);
-                ResolveAnchor(child.StylesHandlers.Top.Descriptor, contentHeight, out float top, out bool hasTop);
-                ResolveAnchor(child.StylesHandlers.Bottom.Descriptor, contentHeight, out float bottom, out bool hasBottom);
+                ResolveAnchor(AnimatedOffset(child, StyleIdentifier.LEFT, child.StylesHandlers.Left.Descriptor),
+                    contentWidth, out float left, out bool hasLeft);
+
+                ResolveAnchor(AnimatedOffset(child, StyleIdentifier.RIGHT, child.StylesHandlers.Right.Descriptor),
+                    contentWidth, out float right, out bool hasRight);
+
+                ResolveAnchor(AnimatedOffset(child, StyleIdentifier.TOP, child.StylesHandlers.Top.Descriptor),
+                    contentHeight, out float top, out bool hasTop);
+
+                ResolveAnchor(AnimatedOffset(child, StyleIdentifier.BOTTOM, child.StylesHandlers.Bottom.Descriptor),
+                    contentHeight, out float bottom, out bool hasBottom);
 
                 float horizontalSpacing = child.HorizontalMargin + child.HorizontalBorderOutside;
                 float verticalSpacing = child.VerticalMargin + child.VerticalBorderOutside;
@@ -1098,12 +1106,34 @@ namespace Ixen.Core.Visual.Computers
         private static bool IsFilling(SizeStyleDescriptor style)
             => style.Unit == SizeUnit.Weight || style.Unit == SizeUnit.Unset;
 
+        private static SizeStyleDescriptor Animated(VisualElement element, string identifier,
+            SizeStyleDescriptor style)
+            => element.AnimatedSize(identifier) ?? style;
+
+        private static OffsetStyleDescriptor AnimatedOffset(VisualElement element, string identifier,
+            OffsetStyleDescriptor style)
+        {
+            if (!element.HasAnimations)
+            {
+                return style;
+            }
+
+            return element.AnimatedSize(identifier) as OffsetStyleDescriptor ?? style;
+        }
+
         private SizeStyleDescriptor GetSizeStyleDescriptor(VisualElement element, SizeStyleDescriptorType sizeType)
         {
             // Direct size style has priority
             SizeStyleDescriptor sizeStyle = (sizeType == SizeStyleDescriptorType.Width)
                 ? element.StylesHandlers.Width.Descriptor
                 : element.StylesHandlers.Height.Descriptor;
+
+            if (element.HasAnimations)
+            {
+                sizeStyle = Animated(element, sizeType == SizeStyleDescriptorType.Width
+                    ? StyleIdentifier.WIDTH
+                    : StyleIdentifier.HEIGHT, sizeStyle);
+            }
 
             // Get the templated size if any
             if (sizeStyle.Unit == SizeUnit.Unset && element.Parent != null)

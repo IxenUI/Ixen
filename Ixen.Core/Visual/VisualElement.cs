@@ -304,6 +304,19 @@ namespace Ixen.Core.Visual
             return transition != null && transition.HasValue ? transition.Brush : null;
         }
 
+        public event EventHandler<TransitionEventArgs> TransitionEnded;
+
+        internal bool HasTransitionEndedHandler => TransitionEnded != null;
+
+        internal void RaiseTransitionEnded(TransitionEventArgs args) => TransitionEnded?.Invoke(this, args);
+
+        internal Styles.Descriptors.SizeStyleDescriptor AnimatedSize(string identifier)
+        {
+            SizeTransition transition = _animations?.SizeIfAny(identifier);
+
+            return transition != null && transition.Running ? transition.Descriptor : null;
+        }
+
         internal Rendering.Pen AnimatedPen(string identifier, Rendering.Pen source)
         {
             ColorTransition transition = _animations?.For(identifier);

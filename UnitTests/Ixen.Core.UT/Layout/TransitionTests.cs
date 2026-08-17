@@ -47,7 +47,7 @@ namespace Ixen.Core.UT.Layout
         {
             _box.Styles.Transition = new TransitionStyleDescriptor
             {
-                Durations = { { Visual.Styles.StyleIdentifier.BACKGROUND, milliseconds } }
+                Specs = { { Visual.Styles.StyleIdentifier.BACKGROUND, new TransitionSpec { Duration = milliseconds } } }
             };
         }
 
@@ -147,7 +147,7 @@ namespace Ixen.Core.UT.Layout
             box.Styles.Background = new BackgroundStyleDescriptor { Color = TO };
             box.Styles.Transition = new TransitionStyleDescriptor
             {
-                Durations = { { Visual.Styles.StyleIdentifier.BACKGROUND, 200 } }
+                Specs = { { Visual.Styles.StyleIdentifier.BACKGROUND, new TransitionSpec { Duration = 200 } } }
             };
 
             _surface.Root.AddChild(box);
@@ -180,7 +180,7 @@ namespace Ixen.Core.UT.Layout
                 new BackgroundStyleDescriptor { Color = FROM },
                 new TransitionStyleDescriptor
                 {
-                    Durations = { { Visual.Styles.StyleIdentifier.BACKGROUND, 64 } }
+                    Specs = { { Visual.Styles.StyleIdentifier.BACKGROUND, new TransitionSpec { Duration = 64 } } }
                 }
             }));
 

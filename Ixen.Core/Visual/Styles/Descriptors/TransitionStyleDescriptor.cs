@@ -3,41 +3,50 @@ using System.Text;
 
 namespace Ixen.Core.Visual.Styles.Descriptors
 {
+    public struct TransitionSpec
+    {
+        public int Duration { get; set; }
+        public int Delay { get; set; }
+        public EasingKind Easing { get; set; }
+    }
+
     public class TransitionStyleDescriptor : StyleDescriptor
     {
         public const string ALL = "all";
 
         internal override string Identifier => StyleIdentifier.TRANSITION;
 
-        public Dictionary<string, int> Durations { get; set; } = new Dictionary<string, int>();
+        public Dictionary<string, TransitionSpec> Specs { get; set; } = new Dictionary<string, TransitionSpec>();
 
-        public int DurationOf(string property)
+        public TransitionSpec SpecOf(string property)
         {
-            if (Durations.TryGetValue(property, out int duration))
+            if (Specs.TryGetValue(property, out TransitionSpec spec))
             {
-                return duration;
+                return spec;
             }
 
-            return Durations.TryGetValue(ALL, out int all) ? all : 0;
+            return Specs.TryGetValue(ALL, out TransitionSpec all) ? all : default;
         }
+
+        public int DurationOf(string property) => SpecOf(property).Duration;
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()
         {
             var sb = new StringBuilder();
 
-            sb.Append($"new {nameof(TransitionStyleDescriptor)} {{ {nameof(Durations)} = new global::System.Collections.Generic.Dictionary<string, int> {{ ");
+            sb.Append($"new {nameof(TransitionStyleDescriptor)} {{ {nameof(Specs)} = new global::System.Collections.Generic.Dictionary<string, global::Ixen.Core.Visual.Styles.Descriptors.{nameof(TransitionSpec)}> {{ ");
 
             bool first = true;
 
-            foreach (KeyValuePair<string, int> entry in Durations)
+            foreach (KeyValuePair<string, TransitionSpec> entry in Specs)
             {
                 if (!first)
                 {
                     sb.Append(", ");
                 }
 
-                sb.Append($"{{ {SourceOf(entry.Key)}, {entry.Value} }}");
+                sb.Append($"{{ {SourceOf(entry.Key)}, new global::Ixen.Core.Visual.Styles.Descriptors.{nameof(TransitionSpec)} {{ {nameof(TransitionSpec.Duration)} = {entry.Value.Duration}, {nameof(TransitionSpec.Delay)} = {entry.Value.Delay}, {nameof(TransitionSpec.Easing)} = global::Ixen.Core.Visual.Styles.{nameof(EasingKind)}.{entry.Value.Easing} }} }}");
                 first = false;
             }
 

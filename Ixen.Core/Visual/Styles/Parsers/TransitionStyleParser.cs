@@ -1,5 +1,6 @@
 using Ixen.Core.Visual.Styles.Descriptors;
 using System.Globalization;
+using Easing = Ixen.Core.Visual.Easing;
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
@@ -16,21 +17,55 @@ namespace Ixen.Core.Visual.Styles.Parsers
             string[] parts = _content?.Trim().Split(new[] { ' ', '\t' },
                 System.StringSplitOptions.RemoveEmptyEntries);
 
-            if (parts == null || parts.Length == 0 || parts.Length % 2 != 0)
+            if (parts == null || parts.Length < 2)
             {
                 return false;
             }
 
-            for (int i = 0; i < parts.Length; i += 2)
-            {
-                string property = parts[i].ToLower();
+            int index = 0;
 
-                if (!IsAnimatable(property) || !TryParseDuration(parts[i + 1], out int duration))
+            while (index < parts.Length)
+            {
+                string property = parts[index].ToLower();
+
+                if (!IsAnimatable(property) || index + 1 >= parts.Length
+                    || !TryParseDuration(parts[index + 1], out int duration))
                 {
                     return false;
                 }
 
-                Descriptor.Durations[property] = duration;
+                index += 2;
+
+                var easing = EasingKind.Linear;
+                int delay = 0;
+
+                for (int extra = 0; extra < 2 && index < parts.Length; extra++)
+                {
+                    string token = parts[index].ToLower();
+
+                    if (Easing.TryParse(token, out EasingKind parsed))
+                    {
+                        easing = parsed;
+                        index++;
+                        continue;
+                    }
+
+                    if (TryParseDuration(token, out int parsedDelay))
+                    {
+                        delay = parsedDelay;
+                        index++;
+                        continue;
+                    }
+
+                    break;
+                }
+
+                Descriptor.Specs[property] = new TransitionSpec
+                {
+                    Duration = duration,
+                    Delay = delay,
+                    Easing = easing
+                };
             }
 
             return true;
@@ -40,7 +75,13 @@ namespace Ixen.Core.Visual.Styles.Parsers
             => property == TransitionStyleDescriptor.ALL
                 || property == StyleIdentifier.BACKGROUND
                 || property == StyleIdentifier.COLOR
-                || property == StyleIdentifier.BORDER;
+                || property == StyleIdentifier.BORDER
+                || property == StyleIdentifier.WIDTH
+                || property == StyleIdentifier.HEIGHT
+                || property == StyleIdentifier.LEFT
+                || property == StyleIdentifier.TOP
+                || property == StyleIdentifier.RIGHT
+                || property == StyleIdentifier.BOTTOM;
 
         private static bool TryParseDuration(string value, out int duration)
         {
