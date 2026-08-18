@@ -266,7 +266,7 @@ LRESULT NativeWindow::HandleWheel(WPARAM wParam, LPARAM lParam, bool horizontal)
 
     int delta = GET_WHEEL_DELTA_WPARAM(wParam);
 
-    _wheelCallBack(point.x, point.y, horizontal ? delta : 0, horizontal ? 0 : delta);
+    _wheelCallBack(point.x, point.y, horizontal ? delta : 0, horizontal ? 0 : delta, GetModifiers());
 
     return 0;
 }

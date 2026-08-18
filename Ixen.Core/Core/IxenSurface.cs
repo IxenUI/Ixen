@@ -323,8 +323,9 @@ namespace Ixen.Core
             set => _pointerDispatcher.TimeSource = value;
         }
 
-        internal void PointerWheel(float x, float y, float deltaX, float deltaY)
-            => _pointerDispatcher.Wheel(Root, ToLogical(x), ToLogical(y), deltaX, deltaY);
+        internal void PointerWheel(float x, float y, float deltaX, float deltaY,
+            KeyModifiers modifiers = KeyModifiers.None)
+            => _pointerDispatcher.Wheel(Root, ToLogical(x), ToLogical(y), deltaX, deltaY, modifiers);
 
         internal void Render(SKCanvas canvas)
         {

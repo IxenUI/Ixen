@@ -63,7 +63,8 @@ namespace Ixen.Core.Input
             Bubble(hit, new PointerEventArgs(x, y, PointerButton.None, hit), PointerEventKind.Move);
         }
 
-        internal void Wheel(VisualElement root, float x, float y, float deltaX, float deltaY)
+        internal void Wheel(VisualElement root, float x, float y, float deltaX, float deltaY,
+            KeyModifiers modifiers)
         {
             VisualElement hit = _captured ?? HitTester.HitTest(root, x, y);
 
@@ -72,7 +73,7 @@ namespace Ixen.Core.Input
                 return;
             }
 
-            var args = new WheelEventArgs(x, y, deltaX, deltaY, hit);
+            var args = new WheelEventArgs(x, y, deltaX, deltaY, modifiers, hit);
 
             for (VisualElement element = hit; element != null; element = element.Parent)
             {
@@ -84,13 +85,15 @@ namespace Ixen.Core.Input
                 }
             }
 
-            Scroll(hit, deltaX, deltaY);
+            Scroll(hit, deltaX, deltaY, modifiers);
         }
 
-        private static void Scroll(VisualElement hit, float deltaX, float deltaY)
+        private static void Scroll(VisualElement hit, float deltaX, float deltaY, KeyModifiers modifiers)
         {
-            float offsetX = deltaX * WHEEL_STEP;
-            float offsetY = -deltaY * WHEEL_STEP;
+            bool sideways = (modifiers & KeyModifiers.Shift) == KeyModifiers.Shift;
+
+            float offsetX = (deltaX - (sideways ? deltaY : 0)) * WHEEL_STEP;
+            float offsetY = (sideways ? 0 : -deltaY) * WHEEL_STEP;
 
             for (VisualElement element = hit; element != null; element = element.Parent)
             {

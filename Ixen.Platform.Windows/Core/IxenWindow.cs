@@ -53,8 +53,9 @@ namespace Ixen.Platform.Windows
 
         private const float WHEEL_DELTA = 120f;
 
-        private void OnWheel(int x, int y, int deltaX, int deltaY)
-            => _host.PointerWheel(x, y, deltaX / WHEEL_DELTA, deltaY / WHEEL_DELTA);
+        private void OnWheel(int x, int y, int deltaX, int deltaY, int modifiers)
+            => _host.PointerWheel(x, y, deltaX / WHEEL_DELTA, deltaY / WHEEL_DELTA,
+                NativeKeys.ToModifiers(modifiers));
 
         private void OnKey(int kind, int keyCode, int modifiers)
         {

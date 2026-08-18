@@ -96,9 +96,10 @@ namespace Ixen.Platform
             RepaintIfDirty();
         }
 
-        public void PointerWheel(float x, float y, float deltaX, float deltaY)
+        public void PointerWheel(float x, float y, float deltaX, float deltaY,
+            KeyModifiers modifiers = KeyModifiers.None)
         {
-            _surface.PointerWheel(x, y, deltaX, deltaY);
+            _surface.PointerWheel(x, y, deltaX, deltaY, modifiers);
             RepaintIfDirty();
         }
 

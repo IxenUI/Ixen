@@ -21,7 +21,7 @@ namespace IxenWindowsNative
         void (*_paintCallBack)(int, int) = nullptr;
         void (*_pointerCallBack)(int, int, int, int) = nullptr;
         void (*_keyCallBack)(int, int, int) = nullptr;
-        void (*_wheelCallBack)(int, int, int, int) = nullptr;
+        void (*_wheelCallBack)(int, int, int, int, int) = nullptr;
         void* _pixelsBuffer = nullptr;
         HCURSOR _cursor = nullptr;
 
@@ -61,7 +61,7 @@ namespace IxenWindowsNative
         void SetOnPaintCallBack(void __stdcall callback(int, int)) { _paintCallBack = callback; }
         void SetOnPointerCallBack(void __stdcall callback(int, int, int, int)) { _pointerCallBack = callback; }
         void SetOnKeyCallBack(void __stdcall callback(int, int, int)) { _keyCallBack = callback; }
-        void SetOnWheelCallBack(void __stdcall callback(int, int, int, int)) { _wheelCallBack = callback; }
+        void SetOnWheelCallBack(void __stdcall callback(int, int, int, int, int)) { _wheelCallBack = callback; }
     };
 }
 

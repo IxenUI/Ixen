@@ -222,6 +222,79 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void ShiftTurnsAVerticalWheelIntoAHorizontalOne()
+        {
+            VisualElement root = Element("root");
+            VisualElement viewport = Sideways(root);
+
+            IxenSurface surface = Laid(root);
+
+            Assert.AreEqual(60, viewport.MaxScrollX);
+
+            surface.PointerWheel(50, 50, 0, -1, KeyModifiers.Shift);
+
+            Assert.AreEqual(48, viewport.ScrollX,
+                "an ordinary mouse has no tilt wheel, so shift is the only way in");
+            Assert.AreEqual(0, viewport.ScrollY, "and the vertical axis is untouched");
+
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+            surface.PointerWheel(50, 50, 0, 1, KeyModifiers.Shift);
+
+            Assert.AreEqual(0, viewport.ScrollX, "wheel away from you goes back to the left");
+        }
+
+        [TestMethod]
+        public void WithoutShiftTheSameWheelDoesNothingSideways()
+        {
+            VisualElement root = Element("root");
+            VisualElement viewport = Sideways(root);
+
+            IxenSurface surface = Laid(root);
+
+            surface.PointerWheel(50, 50, 0, -1);
+
+            Assert.AreEqual(0, viewport.ScrollX,
+                "there is nothing to scroll vertically, and the wheel must not wander onto the other axis");
+        }
+
+        [TestMethod]
+        public void TheHandlerStillSeesTheRawDeltasAndTheModifier()
+        {
+            VisualElement root = Element("root");
+            VisualElement viewport = Sideways(root);
+
+            IxenSurface surface = Laid(root);
+
+            WheelEventArgs seen = null;
+            viewport.PointerWheel += (sender, e) => seen = e;
+
+            surface.PointerWheel(50, 50, 0, -1, KeyModifiers.Shift);
+
+            Assert.IsNotNull(seen);
+            Assert.AreEqual(-1f, seen.DeltaY, "the args report what the user actually did");
+            Assert.AreEqual(0f, seen.DeltaX, "the axis swap belongs to the scrolling, not to the event");
+            Assert.IsTrue(seen.HasModifier(KeyModifiers.Shift), "so a handler can decide for itself");
+        }
+
+        private static VisualElement Sideways(VisualElement root)
+        {
+            VisualElement viewport = Box("viewport", 100, 100);
+            viewport.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Row };
+            viewport.Scrollable = true;
+
+            VisualElement a = Element("a");
+            a.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
+
+            VisualElement b = Element("b");
+            b.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
+
+            viewport.AddChildren(a, b);
+            root.AddChild(viewport);
+
+            return viewport;
+        }
+
+        [TestMethod]
         public void HitTestingFollowsTheScrolledContent()
         {
             VisualElement viewport = Viewport(out VisualElement first, out VisualElement last);

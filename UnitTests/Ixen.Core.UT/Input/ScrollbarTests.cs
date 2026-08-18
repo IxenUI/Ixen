@@ -199,6 +199,49 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void DraggingTheHorizontalThumbScrollsSideways()
+        {
+            var root = new VisualElement { Name = "root" };
+            root.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
+
+            VisualElement viewport = Box("wide", 100, 100);
+            viewport.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Row };
+            viewport.Scrollable = true;
+            viewport.AddChildren(Box("a", 80, 40), Box("b", 80, 40));
+            root.AddChild(viewport);
+
+            var surface = new IxenSurface(root) { Styles = new StyleRegistry() };
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Scrollbar bar = null;
+
+            foreach (VisualElement chrome in viewport.Chrome)
+            {
+                if (chrome is Scrollbar candidate && !candidate.IsVertical)
+                {
+                    bar = candidate;
+                }
+            }
+
+            Assert.IsNotNull(bar);
+            Assert.IsTrue(viewport.MaxScrollX > 0, "there is something to scroll to");
+
+            float free = bar.ActualWidth - 2 * Scrollbar.THICKNESS - bar.Thumb.ActualWidth;
+
+            Assert.IsTrue(free > 0, "and room for the thumb to travel");
+
+            surface.PointerDown(bar.Thumb.X + 2, bar.Thumb.Y + 2, PointerButton.Left);
+            surface.PointerMove(bar.Thumb.X + 2 + free, bar.Thumb.Y + 2);
+
+            Assert.AreEqual(viewport.MaxScrollX, viewport.ScrollX,
+                "dragging the whole free track reaches the far end");
+
+            surface.PointerMove(bar.Thumb.X + 2 - free, bar.Thumb.Y + 2);
+
+            Assert.AreEqual(0f, viewport.ScrollX, "and dragging back returns to the start");
+        }
+
+        [TestMethod]
         public void ANonScrollableElementNeverGetsChrome()
         {
             _viewport.Scrollable = false;

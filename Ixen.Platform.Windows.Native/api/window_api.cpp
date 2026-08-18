@@ -81,7 +81,7 @@ void WA_RegisterKeyCallBack(NativeWindow* window, void __stdcall callBack(int, i
     window->SetOnKeyCallBack(callBack);
 }
 
-void WA_RegisterWheelCallBack(NativeWindow* window, void __stdcall callBack(int, int, int, int))
+void WA_RegisterWheelCallBack(NativeWindow* window, void __stdcall callBack(int, int, int, int, int))
 {
     if (!window)
     {
