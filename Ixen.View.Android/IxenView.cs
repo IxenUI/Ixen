@@ -1,7 +1,9 @@
 using Android.Content;
 using Android.Runtime;
+using Android.Text;
 using Android.Util;
 using Android.Views;
+using Android.Views.InputMethods;
 using Android.Widget;
 using Ixen.Core;
 using Ixen.Core.Components;
@@ -41,10 +43,17 @@ namespace Ixen.View.Android
             Init();
         }
 
+        private bool _softKeyboardShown;
+
         private void Init()
         {
+            Focusable = true;
+            FocusableInTouchMode = true;
+
             _skCanvasView = new SKCanvasView(Context);
-            _host = new IxenHost(new IxenSurface(), _skCanvasView.Invalidate);
+
+            _host = new IxenHost(new IxenSurface(), _skCanvasView.Invalidate,
+                new AndroidScheduler(), null, null, new AssetImageSource(Context?.Assets));
 
             _skCanvasView.PaintSurface += OnPaintSurface;
             _skCanvasView.Touch += OnTouch;
@@ -53,7 +62,12 @@ namespace Ixen.View.Android
         }
 
         private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
-            => _host.Paint(e.Surface.Canvas, e.Info.Width, e.Info.Height);
+        {
+            float density = Context?.Resources?.DisplayMetrics?.Density ?? 1f;
+
+            _host.Surface.Scale = density > 0 ? density : 1f;
+            _host.Paint(e.Surface.Canvas, e.Info.Width, e.Info.Height);
+        }
 
         private void OnTouch(object sender, TouchEventArgs e)
         {
@@ -80,6 +94,7 @@ namespace Ixen.View.Android
                 case MotionEventActions.Up:
                     _host.PointerUp(x, y, PointerButton.Left);
                     _host.PointerLeave();
+                    SyncSoftKeyboard();
                     break;
 
                 case MotionEventActions.Cancel:
@@ -91,6 +106,76 @@ namespace Ixen.View.Android
             }
 
             e.Handled = true;
+        }
+
+        public override bool OnCheckIsTextEditor() => true;
+
+        public override IInputConnection OnCreateInputConnection(EditorInfo outAttrs)
+        {
+            if (outAttrs != null)
+            {
+                outAttrs.InputType = InputTypes.ClassText | InputTypes.TextFlagNoSuggestions;
+                outAttrs.ImeOptions = ImeFlags.NoExtractUi;
+            }
+
+            return new BaseInputConnection(this, false);
+        }
+
+        public override bool DispatchKeyEvent(KeyEvent e)
+        {
+            if (e == null || AndroidKeys.IsSystemKey(e.KeyCode))
+            {
+                return base.DispatchKeyEvent(e);
+            }
+
+            KeyModifiers modifiers = AndroidKeys.ToModifiers(e.MetaState);
+
+            switch (e.Action)
+            {
+                case KeyEventActions.Down:
+                    _host.KeyDown(AndroidKeys.ToKey(e.KeyCode), modifiers);
+
+                    int unicode = e.UnicodeChar;
+
+                    if (unicode != 0)
+                    {
+                        _host.TextInput(((char)unicode).ToString());
+                    }
+
+                    return true;
+
+                case KeyEventActions.Up:
+                    _host.KeyUp(AndroidKeys.ToKey(e.KeyCode), modifiers);
+                    return true;
+            }
+
+            return base.DispatchKeyEvent(e);
+        }
+
+        private void SyncSoftKeyboard()
+        {
+            bool wanted = _host.FocusedElement is TextField;
+
+            if (wanted == _softKeyboardShown)
+            {
+                return;
+            }
+
+            _softKeyboardShown = wanted;
+
+            if (!(Context?.GetSystemService(Context.InputMethodService) is InputMethodManager manager))
+            {
+                return;
+            }
+
+            if (wanted)
+            {
+                RequestFocus();
+                manager.ShowSoftInput(this, ShowFlags.Implicit);
+                return;
+            }
+
+            manager.HideSoftInputFromWindow(WindowToken, HideSoftInputFlags.None);
         }
 
         public VisualElement Root
