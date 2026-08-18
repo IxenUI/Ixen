@@ -19,6 +19,7 @@ generated_root {
     text-wrap: nowrap
     transition: background 150ms color 0.2s 30ms ease-out
     cursor: hand
+    animation: generated_pulse 480ms ease-out 60ms infinite alternate
 
     generated_child {
         width: 30.5%
@@ -37,4 +38,10 @@ generated_root {
     generated_child:hover {
         width: 5px
     }
+}
+
+@keyframes generated_pulse {
+    0%   { background: #FF0000  width: 10px }
+    50%  { background: #00FF00 }
+    100% { background: #0000FF  width: 30.5px }
 }

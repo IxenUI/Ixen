@@ -1,4 +1,4 @@
-﻿using Ixen.Core.Input;
+using Ixen.Core.Input;
 using System;
 using System.Collections.Generic;
 
@@ -319,7 +319,7 @@ namespace Ixen.Core.Visual
         {
             SizeTransition transition = _animations?.SizeIfAny(identifier);
 
-            return transition != null && transition.Running ? transition.Descriptor : null;
+            return transition != null && (transition.Running || transition.Held) ? transition.Descriptor : null;
         }
 
         internal Rendering.Pen AnimatedPen(string identifier, Rendering.Pen source)

@@ -24,6 +24,7 @@ namespace Ixen.Core.Visual.Classes
 
         private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), StyleClass> _unscoped = new();
         private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), List<ScopedClass>> _scoped = new();
+        private readonly Dictionary<string, KeyframesSet> _keyframes = new();
 
         private int _count;
         private bool _hasStateClasses;
@@ -35,6 +36,8 @@ namespace Ixen.Core.Visual.Classes
         internal bool HasScopedClasses => _scoped.Count > 0;
 
         internal bool HasStateClasses => _hasStateClasses;
+
+        internal bool HasKeyframes => _keyframes.Count > 0;
 
         private static bool DeclaresState(StyleClass styleClass)
             => styleClass.Name.IndexOf(StyleScope.STATE_SEPARATOR) >= 0
@@ -87,9 +90,23 @@ namespace Ixen.Core.Visual.Classes
             candidates.Sort((a, b) => a.Segments.Length.CompareTo(b.Segments.Length));
         }
 
-        public void Add(StyleSheet sheet) => AddRange(sheet?.Classes);
+        public void Add(KeyframesSet keyframes)
+        {
+            if (keyframes == null || keyframes.Name == null)
+            {
+                return;
+            }
 
-        public void Add(ClassesSet set) => AddRange(set?.Classes);
+            _keyframes[keyframes.Name] = keyframes;
+        }
+
+        public void Add(StyleSheet sheet) => Add((ClassesSet)sheet);
+
+        public void Add(ClassesSet set)
+        {
+            AddRange(set?.Classes);
+            AddRange(set?.Keyframes);
+        }
 
         private void AddRange(List<StyleClass> classes)
         {
@@ -104,10 +121,27 @@ namespace Ixen.Core.Visual.Classes
             }
         }
 
+        private void AddRange(List<KeyframesSet> keyframes)
+        {
+            if (keyframes == null)
+            {
+                return;
+            }
+
+            foreach (KeyframesSet set in keyframes)
+            {
+                Add(set);
+            }
+        }
+
+        internal KeyframesSet GetKeyframes(string name)
+            => name != null && _keyframes.TryGetValue(name, out KeyframesSet set) ? set : null;
+
         public void Clear()
         {
             _unscoped.Clear();
             _scoped.Clear();
+            _keyframes.Clear();
             _count = 0;
             _hasStateClasses = false;
         }

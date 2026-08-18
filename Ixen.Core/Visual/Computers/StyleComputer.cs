@@ -18,7 +18,7 @@ namespace Ixen.Core.Visual.Computers
                 ApplyBaseStyle(element);
                 ApplyClasses(element, registry);
                 Inherit(element);
-                SyncTransitions(element);
+                SyncTransitions(element, registry);
 
                 element.MustRefreshStyles = false;
             }
@@ -154,35 +154,69 @@ namespace Ixen.Core.Visual.Computers
             }
         }
 
-        private void SyncTransitions(VisualElement element)
+        private void SyncTransitions(VisualElement element, StyleRegistry registry)
         {
             VisualElementStylesHandlers handlers = element.StylesHandlers;
             TransitionStyleDescriptor transitions = handlers.Transition.Descriptor;
+            AnimationStyleDescriptor animation = handlers.Animation.Descriptor;
 
-            bool declared = transitions != null && transitions.Specs.Count > 0;
+            bool declared = (transitions != null && transitions.Specs.Count > 0)
+                || (animation != null && animation.IsDeclared);
 
             if (!declared && !element.HasAnimations)
             {
                 return;
             }
 
-            Retarget(element, transitions, StyleIdentifier.BACKGROUND, handlers.Background.Color);
-            Retarget(element, transitions, StyleIdentifier.COLOR, handlers.Color.Brush.Color);
-            Retarget(element, transitions, StyleIdentifier.BORDER, handlers.Border.Color);
+            SyncAnimation(element, registry, animation);
 
-            RetargetSize(element, transitions, StyleIdentifier.WIDTH, handlers.Width.Descriptor);
-            RetargetSize(element, transitions, StyleIdentifier.HEIGHT, handlers.Height.Descriptor);
-            RetargetSize(element, transitions, StyleIdentifier.LEFT, handlers.Left.Descriptor);
-            RetargetSize(element, transitions, StyleIdentifier.TOP, handlers.Top.Descriptor);
-            RetargetSize(element, transitions, StyleIdentifier.RIGHT, handlers.Right.Descriptor);
-            RetargetSize(element, transitions, StyleIdentifier.BOTTOM, handlers.Bottom.Descriptor);
+            KeyframeAnimation keyframes = element.Animations.Keyframes;
+
+            Retarget(element, transitions, StyleIdentifier.BACKGROUND, handlers.Background.Color, keyframes);
+            Retarget(element, transitions, StyleIdentifier.COLOR, handlers.Color.Brush.Color, keyframes);
+            Retarget(element, transitions, StyleIdentifier.BORDER, handlers.Border.Color, keyframes);
+
+            RetargetSize(element, transitions, StyleIdentifier.WIDTH, handlers.Width.Descriptor, keyframes);
+            RetargetSize(element, transitions, StyleIdentifier.HEIGHT, handlers.Height.Descriptor, keyframes);
+            RetargetSize(element, transitions, StyleIdentifier.LEFT, handlers.Left.Descriptor, keyframes);
+            RetargetSize(element, transitions, StyleIdentifier.TOP, handlers.Top.Descriptor, keyframes);
+            RetargetSize(element, transitions, StyleIdentifier.RIGHT, handlers.Right.Descriptor, keyframes);
+            RetargetSize(element, transitions, StyleIdentifier.BOTTOM, handlers.Bottom.Descriptor, keyframes);
 
             element.Animations.Sync();
         }
 
-        private void Retarget(VisualElement element, TransitionStyleDescriptor transitions,
-            string identifier, Color target)
+        private void SyncAnimation(VisualElement element, StyleRegistry registry,
+            AnimationStyleDescriptor spec)
         {
+            if (spec == null || !spec.IsDeclared)
+            {
+                if (element.HasAnimations)
+                {
+                    element.Animations.StopKeyframes();
+                }
+
+                return;
+            }
+
+            KeyframeAnimation animation = element.Animations.Keyframes;
+
+            if (animation.StartedWith(spec))
+            {
+                return;
+            }
+
+            animation.Start(registry.GetKeyframes(spec.Name), spec);
+        }
+
+        private void Retarget(VisualElement element, TransitionStyleDescriptor transitions,
+            string identifier, Color target, KeyframeAnimation keyframes)
+        {
+            if (keyframes.Drives(identifier))
+            {
+                return;
+            }
+
             ColorTransition transition = element.Animations.For(identifier);
 
             if (!transition.HasValue)
@@ -209,8 +243,13 @@ namespace Ixen.Core.Visual.Computers
         }
 
         private void RetargetSize(VisualElement element, TransitionStyleDescriptor transitions,
-            string identifier, SizeStyleDescriptor target)
+            string identifier, SizeStyleDescriptor target, KeyframeAnimation keyframes)
         {
+            if (keyframes.Drives(identifier))
+            {
+                return;
+            }
+
             SizeTransition transition = element.Animations.SizeFor(identifier);
 
             if (!transition.HasValue)
@@ -237,7 +276,7 @@ namespace Ixen.Core.Visual.Computers
         }
 
         private static bool Interpolatable(SizeUnit unit)
-            => unit == SizeUnit.Pixels || unit == SizeUnit.Percents;
+            => SizeTransition.CanInterpolate(unit);
 
         private void ApplyBaseStyle(VisualElement element)
         {
@@ -422,6 +461,13 @@ namespace Ixen.Core.Visual.Computers
                     ? new TransitionStyleHandler(styles.Transition)
                     : VisualElementStylesHandlers.DefaultTransition;
             }
+
+            if (handlers.Animation.Descriptor != styles.Animation)
+            {
+                handlers.Animation = styles.Animation != null && styles.Animation.IsDeclared
+                    ? new AnimationStyleHandler(styles.Animation)
+                    : VisualElementStylesHandlers.DefaultAnimation;
+            }
         }
 
         private static bool IsPainting(BackgroundStyleDescriptor descriptor)
@@ -509,6 +555,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.TRANSITION:
                     handlers.Transition = new TransitionStyleHandler((TransitionStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.ANIMATION:
+                    handlers.Animation = new AnimationStyleHandler((AnimationStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.DOCK:

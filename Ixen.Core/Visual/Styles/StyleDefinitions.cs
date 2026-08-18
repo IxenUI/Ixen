@@ -27,6 +27,12 @@ namespace Ixen.Core.Visual.Styles
         {
             _all = new List<StyleDefinition>
             {
+                Define(StyleIdentifier.ANIMATION, v => new AnimationStyleParser(v),
+                    p => ((AnimationStyleParser)p).Descriptor,
+                    null, new[] { AnimationStyleParser.INFINITE, AnimationStyleParser.ALTERNATE,
+                        AnimationStyleParser.NORMAL,
+                        Easing.LINEAR, Easing.EASE_IN, Easing.EASE_OUT, Easing.EASE_IN_OUT }),
+
                 Define(StyleIdentifier.BACKGROUND, v => new BackgroundStyleParser(v),
                     p => ((BackgroundStyleParser)p).Descriptor),
 

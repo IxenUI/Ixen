@@ -98,12 +98,17 @@ namespace Ixen.Core.Visual
         internal float To;
         internal float Current;
         internal bool HasValue;
+        internal bool Held;
         internal int Step;
         internal int Steps;
         internal int Delay;
         internal Styles.EasingKind Easing;
 
         private Styles.Descriptors.OffsetStyleDescriptor _descriptor;
+
+        internal static bool CanInterpolate(Styles.Descriptors.SizeUnit unit)
+            => unit == Styles.Descriptors.SizeUnit.Pixels
+                || unit == Styles.Descriptors.SizeUnit.Percents;
 
         internal bool Running => Steps > 0 && Step < Steps;
 
@@ -130,8 +135,15 @@ namespace Ixen.Core.Visual
             To = value;
             Current = value;
             HasValue = true;
+            Held = false;
             Step = 0;
             Steps = 0;
+        }
+
+        internal void Hold(Styles.Descriptors.SizeUnit unit, float value)
+        {
+            Jump(unit, value);
+            Held = true;
         }
 
         internal void Start(float target, int steps, int delay, Styles.EasingKind easing)
@@ -142,6 +154,7 @@ namespace Ixen.Core.Visual
             Steps = steps;
             Delay = delay;
             Easing = easing;
+            Held = false;
         }
 
         internal void Advance()
@@ -183,10 +196,19 @@ namespace Ixen.Core.Visual
         internal SizeTransition Right;
         internal SizeTransition Bottom;
 
+        private KeyframeAnimation _keyframes;
+
         internal ElementAnimations(VisualElement element)
         {
             _element = element;
         }
+
+        internal KeyframeAnimation Keyframes
+            => _keyframes ?? (_keyframes = new KeyframeAnimation(_element));
+
+        internal bool HasKeyframes => _keyframes != null && _keyframes.Running;
+
+        internal void StopKeyframes() => _keyframes?.Stop();
 
         internal SizeTransition SizeFor(string identifier)
         {
@@ -264,6 +286,7 @@ namespace Ixen.Core.Visual
             => (Background != null && Background.Running)
                 || (Color != null && Color.Running)
                 || (Border != null && Border.Running)
+                || HasKeyframes
                 || SizeRunning;
 
         internal bool SizeRunning
@@ -272,7 +295,8 @@ namespace Ixen.Core.Visual
                 || (Left != null && Left.Running)
                 || (Top != null && Top.Running)
                 || (Right != null && Right.Running)
-                || (Bottom != null && Bottom.Running);
+                || (Bottom != null && Bottom.Running)
+                || (HasKeyframes && _keyframes.AnimatesSize);
 
         internal void Sync()
         {
@@ -335,6 +359,8 @@ namespace Ixen.Core.Visual
         {
             bool sizes = SizeRunning;
 
+            _keyframes?.Advance();
+
             Advance(Background, Styles.StyleIdentifier.BACKGROUND);
             Advance(Color, Styles.StyleIdentifier.COLOR);
             Advance(Border, Styles.StyleIdentifier.BORDER);
@@ -363,6 +389,8 @@ namespace Ixen.Core.Visual
 
         private void Finish()
         {
+            _keyframes?.Suspend();
+
             Background?.Jump(Background.To);
             Color?.Jump(Color.To);
             Border?.Jump(Border.To);

@@ -2,6 +2,7 @@ using Ixen.Core.Language.Xns;
 using Microsoft.CodeAnalysis;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -74,6 +75,31 @@ namespace Ixen.Generators.Xns
                         {
                             sb.AppendLine($"\t\t\t\t{style.ToSource()},");
                         }
+                    }
+
+                    sb.AppendLine("\t\t\t}));");
+                    sb.AppendLine();
+                }
+
+                foreach (var keyframes in sheet.Keyframes)
+                {
+                    sb.AppendLine($"\t\t\tAddKeyframes(new KeyframesSet(\"{keyframes.Name}\", new List<Keyframe>()");
+                    sb.AppendLine("\t\t\t{");
+
+                    foreach (var frame in keyframes.Frames)
+                    {
+                        sb.AppendLine($"\t\t\t\tnew Keyframe({frame.Offset.ToString(CultureInfo.InvariantCulture)}f, new List<StyleDescriptor>()");
+                        sb.AppendLine("\t\t\t\t{");
+
+                        foreach (var style in frame.Styles)
+                        {
+                            if (style.CanGenerateSource)
+                            {
+                                sb.AppendLine($"\t\t\t\t\t{style.ToSource()},");
+                            }
+                        }
+
+                        sb.AppendLine("\t\t\t\t}),");
                     }
 
                     sb.AppendLine("\t\t\t}));");

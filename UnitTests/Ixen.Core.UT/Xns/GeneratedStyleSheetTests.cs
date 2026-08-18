@@ -24,7 +24,43 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(20, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(21, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+        }
+
+        [TestMethod]
+        public void TheAnimationSurvivesGeneration()
+        {
+            AnimationStyleDescriptor animation = Style<AnimationStyleDescriptor>();
+
+            Assert.AreEqual("generated_pulse", animation.Name);
+            Assert.AreEqual(480, animation.Duration);
+            Assert.AreEqual(60, animation.Delay);
+            Assert.AreEqual(EasingKind.EaseOut, animation.Easing);
+            Assert.AreEqual(AnimationStyleDescriptor.INFINITE, animation.Iterations);
+            Assert.IsTrue(animation.Alternate);
+        }
+
+        [TestMethod]
+        public void TheKeyframesSurviveGeneration()
+        {
+            KeyframesSet keyframes = StyleRegistry.Default.GetKeyframes("generated_pulse");
+
+            Assert.IsNotNull(keyframes, "a keyframes block must reach the registry through the generated sheet");
+            Assert.AreEqual(3, keyframes.Frames.Count);
+
+            CollectionAssert.AreEquivalent(
+                new[] { StyleIdentifier.BACKGROUND, StyleIdentifier.WIDTH },
+                keyframes.Properties.ToList(),
+                "both a colour and a size track must survive");
+
+            Assert.AreEqual(0f, keyframes.Frames[0].Offset);
+            Assert.AreEqual(0.5f, keyframes.Frames[1].Offset);
+            Assert.AreEqual(1f, keyframes.Frames[2].Offset);
+
+            var last = (SizeStyleDescriptor)keyframes.Frames[2].Styles
+                .Single(s => s is WidthStyleDescriptor);
+
+            Assert.AreEqual(30.5f, last.Value, "a fractional stop value survives the round trip");
         }
 
         [TestMethod]

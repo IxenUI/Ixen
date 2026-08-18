@@ -1,4 +1,4 @@
-﻿using Ixen.Core.Language.Base;
+using Ixen.Core.Language.Base;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,6 +7,9 @@ namespace Ixen.Core.Language.Xns
 {
     internal class XnsTokenizer : BaseTokenizer<XnsToken, XnsTokenType, XnsTokenErrorType>
     {
+        internal const char KEYFRAMES_MARKER = '@';
+        internal const string KEYFRAMES_KEYWORD = "keyframes";
+
         private bool _expectClassName = false;
 
         private bool _expectContentBegin = false;
@@ -57,6 +60,12 @@ namespace Ixen.Core.Language.Xns
 
             while (PeekChar() != '\0')
             {
+                if (_expectClassName && ReadKeyframes())
+                {
+                    SetStatesFlags(XnsTokenType.ClassName);
+                    continue;
+                }
+
                 if (_expectClassName && ReadClassName())
                 {
                     SetStatesFlags(XnsTokenType.ClassName);
@@ -162,12 +171,84 @@ namespace Ixen.Core.Language.Xns
             }
         }
 
+        private bool ReadKeyframes()
+        {
+            int index = _index;
+
+            if (PeekNonSpaceChar() != KEYFRAMES_MARKER)
+            {
+                _index = index;
+                return false;
+            }
+
+            int tokenIndex = _peekIndex;
+            MoveCursor();
+
+            var keyword = new StringBuilder();
+
+            while (char.IsLetter(PeekChar()))
+            {
+                keyword.Append(PeekChar());
+                MoveCursor();
+            }
+
+            if (keyword.ToString() != KEYFRAMES_KEYWORD)
+            {
+                _index = index;
+                return false;
+            }
+
+            char c = PeekNonSpaceChar();
+
+            if (!char.IsLetter(c) && c != '_')
+            {
+                _index = index;
+                return false;
+            }
+
+            var name = new StringBuilder();
+            name.Append(c);
+            MoveCursor();
+
+            while (true)
+            {
+                c = PeekChar();
+
+                if (char.IsLetterOrDigit(c) || c == '_' || c == '-')
+                {
+                    name.Append(c);
+                    MoveCursor();
+                    continue;
+                }
+
+                break;
+            }
+
+            if (PeekNonSpaceChar() != '{')
+            {
+                _index = index;
+                return false;
+            }
+
+            if (_contentLevel != 0)
+            {
+                AddError(LanguageErrorCode.SYNTAX,
+                    $"A '{KEYFRAMES_MARKER}{KEYFRAMES_KEYWORD}' block must be declared at the top level.",
+                    tokenIndex, 1);
+            }
+
+            AddToken(tokenIndex, XnsTokenType.ClassName, KEYFRAMES_MARKER + name.ToString(),
+                _index - tokenIndex + 1);
+
+            return true;
+        }
+
         private bool ReadClassName()
         {
             int index = _index;
             char c = PeekNonSpaceChar();
 
-            if (char.IsLetter(c) || c == '.' || c == '#' || c == '_')
+            if (char.IsLetterOrDigit(c) || c == '.' || c == '#' || c == '_')
             {
                 int tokenIndex = _peekIndex;
                 var sb = new StringBuilder();
@@ -177,7 +258,7 @@ namespace Ixen.Core.Language.Xns
                 while (true)
                 {
                     c = PeekChar();
-                    if (char.IsLetterOrDigit(c) || c == '_' ||  c == '-' || c == ':')
+                    if (char.IsLetterOrDigit(c) || c == '_' ||  c == '-' || c == ':' || c == '%')
                     {
                         sb.Append(c);
                         MoveCursor();
@@ -243,7 +324,7 @@ namespace Ixen.Core.Language.Xns
             int index = _index;
             char c = PeekNonSpaceChar();
 
-            if (char.IsLetterOrDigit(c) || c == '#' || c == '?')
+            if (char.IsLetterOrDigit(c) || c == '#' || c == '?' || c == '_')
             {
                 int tokenIndex = _peekIndex;
                 var sb = new StringBuilder();
@@ -260,7 +341,7 @@ namespace Ixen.Core.Language.Xns
                     }
 
                     if (char.IsLetterOrDigit(c) || c == '%' || c == '*' || c == '.' || c == '#' || c == '?'
-                        || c == '-' || c == ' ' || c == '\t')
+                        || c == '-' || c == '_' || c == ' ' || c == '\t')
                     {
                         sb.Append(c);
                         MoveCursor();

@@ -12,6 +12,7 @@
         internal const string GRID_SPAN = "grid-span";
 
         // Actual properties
+        public const string ANIMATION = "animation";
         public const string BACKGROUND = "background";
         public const string BORDER = "border";
         public const string BOTTOM = "bottom";

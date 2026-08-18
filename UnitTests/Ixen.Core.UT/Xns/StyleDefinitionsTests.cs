@@ -89,7 +89,7 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void TheNamesAreWhatTheDocumentationClaims()
         {
-            Assert.AreEqual(29, StyleDefinitions.All.Count,
+            Assert.AreEqual(30, StyleDefinitions.All.Count,
                 string.Join(", ", StyleDefinitions.All.Select(d => d.Name)));
         }
     }

@@ -4,6 +4,7 @@ namespace Ixen.Core.Visual
 {
     internal class VisualElementStylesHandlers
     {
+        internal static readonly AnimationStyleHandler DefaultAnimation = new();
         internal static readonly BackgroundStyleHandler DefaultBackground = new();
         internal static readonly BorderStyleHandler DefaultBorder = new();
         internal static readonly BottomStyleHandler DefaultBottom = new();
@@ -34,6 +35,7 @@ namespace Ixen.Core.Visual
         internal static readonly TransitionStyleHandler DefaultTransition = new();
         internal static readonly WidthStyleHandler DefaultWidth = new();
 
+        public AnimationStyleHandler Animation { get; set; } = DefaultAnimation;
         public BackgroundStyleHandler Background { get; set; } = DefaultBackground;
         public BorderStyleHandler Border { get; set; } = DefaultBorder;
         public BottomStyleHandler Bottom { get; set; } = DefaultBottom;

@@ -1,5 +1,4 @@
 using Ixen.Core.Visual.Styles.Descriptors;
-using System.Globalization;
 using Easing = Ixen.Core.Visual.Easing;
 
 namespace Ixen.Core.Visual.Styles.Parsers
@@ -29,7 +28,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 string property = parts[index].ToLower();
 
                 if (!IsAnimatable(property) || index + 1 >= parts.Length
-                    || !TryParseDuration(parts[index + 1], out int duration))
+                    || !StyleDuration.TryParse(parts[index + 1], out int duration))
                 {
                     return false;
                 }
@@ -50,7 +49,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
                         continue;
                     }
 
-                    if (TryParseDuration(token, out int parsedDelay))
+                    if (StyleDuration.TryParse(token, out int parsedDelay))
                     {
                         delay = parsedDelay;
                         index++;
@@ -82,35 +81,5 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 || property == StyleIdentifier.TOP
                 || property == StyleIdentifier.RIGHT
                 || property == StyleIdentifier.BOTTOM;
-
-        private static bool TryParseDuration(string value, out int duration)
-        {
-            duration = 0;
-
-            string trimmed = value.ToLower();
-
-            if (trimmed.EndsWith("ms"))
-            {
-                trimmed = trimmed.Substring(0, trimmed.Length - 2);
-            }
-            else if (trimmed.EndsWith("s"))
-            {
-                if (!float.TryParse(trimmed.Substring(0, trimmed.Length - 1),
-                    NumberStyles.Float, CultureInfo.InvariantCulture, out float seconds))
-                {
-                    return false;
-                }
-
-                duration = (int)(seconds * 1000);
-                return duration > 0;
-            }
-
-            if (!int.TryParse(trimmed, NumberStyles.Integer, CultureInfo.InvariantCulture, out duration))
-            {
-                return false;
-            }
-
-            return duration > 0;
-        }
     }
 }
