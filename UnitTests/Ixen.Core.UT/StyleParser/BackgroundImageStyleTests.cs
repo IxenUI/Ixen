@@ -144,6 +144,67 @@ namespace Ixen.Core.UT.StyleParser
         }
 
         [TestMethod]
+        public void ThePositionKeywordsMapToFractions()
+        {
+            Assert.AreEqual(0f, Valid("hero.jpg left").PositionX);
+            Assert.AreEqual(0.5f, Valid("hero.jpg center").PositionX);
+            Assert.AreEqual(1f, Valid("hero.jpg right").PositionX);
+            Assert.AreEqual(0f, Valid("hero.jpg top").PositionY);
+            Assert.AreEqual(0.5f, Valid("hero.jpg middle").PositionY);
+            Assert.AreEqual(1f, Valid("hero.jpg bottom").PositionY);
+        }
+
+        [TestMethod]
+        public void EachKeywordSetsOneAxisOnly()
+        {
+            BackgroundStyleDescriptor descriptor = Valid("hero.jpg right");
+
+            Assert.AreEqual(1f, descriptor.PositionX);
+            Assert.AreEqual(BackgroundStyleDescriptor.UNSET_POSITION, descriptor.PositionY,
+                "center/middle is the same horizontal/vertical split text-align uses");
+        }
+
+        [TestMethod]
+        public void APositionMixesWithEverythingElseInAnyOrder()
+        {
+            BackgroundStyleDescriptor one = Valid("#EEF2FF hero.jpg cover right bottom");
+            BackgroundStyleDescriptor two = Valid("bottom cover right #EEF2FF hero.jpg");
+
+            Assert.AreEqual(one.Color, two.Color);
+            Assert.AreEqual(one.ImageUrl, two.ImageUrl);
+            Assert.AreEqual(one.Fit, two.Fit);
+            Assert.AreEqual(one.PositionX, two.PositionX);
+            Assert.AreEqual(one.PositionY, two.PositionY);
+        }
+
+        [TestMethod]
+        public void TheAnchorDefaultsDependOnWhetherThePictureIsScaled()
+        {
+            BackgroundStyleDescriptor natural = Valid("logo.png");
+
+            Assert.IsFalse(natural.HasPosition);
+            Assert.AreEqual(0f, natural.AnchorX, "an unscaled picture anchors top-left");
+            Assert.AreEqual(0f, natural.AnchorY);
+
+            BackgroundStyleDescriptor scaled = Valid("hero.jpg cover");
+
+            Assert.AreEqual(0.5f, scaled.AnchorX, "a scaled one centres");
+            Assert.AreEqual(0.5f, scaled.AnchorY);
+
+            BackgroundStyleDescriptor stated = Valid("hero.jpg cover left top");
+
+            Assert.AreEqual(0f, stated.AnchorX, "and an explicit position overrides either default");
+            Assert.AreEqual(0f, stated.AnchorY);
+        }
+
+        [TestMethod]
+        public void APositionWithNoImageIsAnError()
+        {
+            Invalid("right");
+            Invalid("#F5F5F5 bottom");
+        }
+
+        [TestMethod]
         public void ARepeatWithNoImageIsAnError()
         {
             Invalid("#F5F5F5 repeat");

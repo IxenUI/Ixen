@@ -213,6 +213,108 @@ namespace Ixen.Core.UT.Rendering
         }
 
         [TestMethod]
+        public void APositionAnchorsAnUnscaledPicture()
+        {
+            using (SKBitmap rendered = Render(new BackgroundStyleDescriptor
+            {
+                ImageUrl = TILE,
+                PositionX = 1f,
+                PositionY = 1f
+            }))
+            {
+                Assert.IsTrue(IsRed(rendered, BOX - 10, BOX - 10), "right bottom puts it in that corner");
+                Assert.IsFalse(IsRed(rendered, 10, 10), "and no longer at the top-left");
+            }
+        }
+
+        [TestMethod]
+        public void PositionHasNoEffectOnARepeatingAxis()
+        {
+            using (SKBitmap rendered = Render(new BackgroundStyleDescriptor
+            {
+                ImageUrl = TILE,
+                RepeatX = true,
+                RepeatY = true,
+                PositionY = 1f
+            }))
+            {
+                Assert.IsTrue(IsRed(rendered, 10, 10),
+                    "an endless pattern has nothing to anchor, so the whole element is still covered");
+                Assert.IsTrue(IsRed(rendered, 50, 50));
+            }
+        }
+
+        [TestMethod]
+        public void APositionAnchorsTheBandOfAOneAxisRepeat()
+        {
+            using (SKBitmap rendered = Render(new BackgroundStyleDescriptor
+            {
+                ImageUrl = TILE,
+                RepeatX = true,
+                PositionY = 1f
+            }))
+            {
+                Assert.IsTrue(IsRed(rendered, 50, BOX - 10), "the band sits at the bottom");
+                Assert.IsFalse(IsRed(rendered, 50, 10), "and not at the top");
+            }
+        }
+
+        [TestMethod]
+        public void APositionChoosesWhatCoverKeeps()
+        {
+            var images = new FakeImages();
+            images.Files[TILE] = TwoTone(TILE_SIZE, TILE_SIZE);
+            _surface.ImageSource = images;
+
+            _panel.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = BOX * 2 };
+
+            using (SKBitmap top = Render(new BackgroundStyleDescriptor
+            {
+                ImageUrl = TILE,
+                Fit = ObjectFit.Cover,
+                PositionY = 0f
+            }))
+            {
+                Assert.IsTrue(IsRed(top, BOX, BOX / 2), "anchored top, the red half is what survives");
+            }
+
+            using (SKBitmap bottom = Render(new BackgroundStyleDescriptor
+            {
+                ImageUrl = TILE,
+                Fit = ObjectFit.Cover,
+                PositionY = 1f
+            }))
+            {
+                SKColor pixel = bottom.GetPixel(BOX, BOX / 2);
+
+                Assert.IsTrue(pixel.Blue > 0xC0 && pixel.Red < 0x40,
+                    "anchored bottom, the blue half does - which is the whole point of the property");
+            }
+        }
+
+        private static byte[] TwoTone(int width, int height)
+        {
+            using (var bitmap = new SKBitmap(width, height))
+            {
+                using (var canvas = new SKCanvas(bitmap))
+                {
+                    canvas.Clear(new SKColor(0xFF, 0x00, 0x00));
+
+                    using (var lower = new SKPaint { Color = new SKColor(0x00, 0x00, 0xFF) })
+                    {
+                        canvas.DrawRect(0, height / 2f, width, height / 2f, lower);
+                    }
+                }
+
+                using (SKImage image = SKImage.FromBitmap(bitmap))
+                using (SKData data = image.Encode(SKEncodedImageFormat.Png, 100))
+                {
+                    return data.ToArray();
+                }
+            }
+        }
+
+        [TestMethod]
         public void ARadiusClipsTheBackgroundImage()
         {
             _panel.Styles.CornerRadius = new CornerRadiusStyleDescriptor

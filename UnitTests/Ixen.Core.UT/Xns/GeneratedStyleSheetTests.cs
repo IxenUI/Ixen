@@ -37,6 +37,10 @@ namespace Ixen.Core.UT.Xns
                 "a path with slashes must survive both the tokenizer and the generated source");
             Assert.IsTrue(background.RepeatX);
             Assert.IsFalse(background.RepeatY);
+
+            Assert.AreEqual(BackgroundStyleDescriptor.UNSET_POSITION, background.PositionX,
+                "only the axis the keyword names is set");
+            Assert.AreEqual(1f, background.PositionY);
         }
 
         [TestMethod]

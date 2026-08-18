@@ -61,24 +61,24 @@ namespace Ixen.Core.Rendering
 
             if (background.RepeatX || background.RepeatY)
             {
-                context.TileImage(_images.GetTile(background.ImageUrl), element.X, element.Y,
-                    background.RepeatX ? width : Math.Min(width, bitmap.Width),
-                    background.RepeatY ? height : Math.Min(height, bitmap.Height));
+                float bandWidth = background.RepeatX ? width : Math.Min(width, bitmap.Width);
+                float bandHeight = background.RepeatY ? height : Math.Min(height, bitmap.Height);
+
+                context.TileImage(_images.GetTile(background.ImageUrl),
+                    element.X + (width - bandWidth) * background.AnchorX,
+                    element.Y + (height - bandHeight) * background.AnchorY,
+                    bandWidth,
+                    bandHeight);
             }
             else
             {
                 float drawWidth = bitmap.Width;
                 float drawHeight = bitmap.Height;
-                float x = element.X;
-                float y = element.Y;
 
                 if (background.IsScaled)
                 {
                     Resolve(background.Fit, bitmap.Width, bitmap.Height, width, height,
                         out drawWidth, out drawHeight);
-
-                    x += (width - drawWidth) / 2f;
-                    y += (height - drawHeight) / 2f;
                 }
 
                 bool overflows = drawWidth > width + EPSILON || drawHeight > height + EPSILON;
@@ -88,7 +88,11 @@ namespace Ixen.Core.Rendering
                     context.PushClip(element.X, element.Y, width, height, null);
                 }
 
-                context.DrawImage(bitmap, x, y, drawWidth, drawHeight);
+                context.DrawImage(bitmap,
+                    element.X + (width - drawWidth) * background.AnchorX,
+                    element.Y + (height - drawHeight) * background.AnchorY,
+                    drawWidth,
+                    drawHeight);
 
                 if (overflows)
                 {

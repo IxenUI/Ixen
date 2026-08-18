@@ -2,7 +2,7 @@ generated_root {
     layout: row
     width: ?
     height: ?
-    background: #FF0000 Assets/Images/logo.png repeat-x  // a path and a keyword
+    background: #FF0000 Assets/Images/logo.png repeat-x bottom  // a path, a keyword and a position
     border: #CCCCCC 1.5px inner
     corner-radius: 8.5px 4px 2px 1px
     color: #123456

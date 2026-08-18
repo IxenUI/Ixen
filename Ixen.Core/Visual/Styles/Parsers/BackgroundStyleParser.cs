@@ -16,6 +16,13 @@ namespace Ixen.Core.Visual.Styles.Parsers
         internal const string FILL = "fill";
         internal const string STRETCH = "stretch";
 
+        internal const string LEFT = "left";
+        internal const string CENTER = "center";
+        internal const string RIGHT = "right";
+        internal const string TOP = "top";
+        internal const string MIDDLE = "middle";
+        internal const string BOTTOM = "bottom";
+
         public BackgroundStyleDescriptor Descriptor { get; } = new BackgroundStyleDescriptor();
 
         public BackgroundStyleParser(string content)
@@ -60,6 +67,11 @@ namespace Ixen.Core.Visual.Styles.Parsers
                     continue;
                 }
 
+                if (TryPosition(part.ToLower()))
+                {
+                    continue;
+                }
+
                 if (IsImageName(part))
                 {
                     Descriptor.ImageUrl = part;
@@ -71,7 +83,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
             if (Descriptor.ImageUrl == null)
             {
-                return !repeatSeen && !Descriptor.IsScaled;
+                return !repeatSeen && !Descriptor.IsScaled && !Descriptor.HasPosition;
             }
 
             return !((Descriptor.RepeatX || Descriptor.RepeatY) && Descriptor.IsScaled);
@@ -82,6 +94,39 @@ namespace Ixen.Core.Visual.Styles.Parsers
             int dot = value.LastIndexOf('.');
 
             return dot > 0 && dot < value.Length - 1;
+        }
+
+        private bool TryPosition(string value)
+        {
+            switch (value)
+            {
+                case LEFT:
+                    Descriptor.PositionX = 0f;
+                    return true;
+
+                case CENTER:
+                    Descriptor.PositionX = 0.5f;
+                    return true;
+
+                case RIGHT:
+                    Descriptor.PositionX = 1f;
+                    return true;
+
+                case TOP:
+                    Descriptor.PositionY = 0f;
+                    return true;
+
+                case MIDDLE:
+                    Descriptor.PositionY = 0.5f;
+                    return true;
+
+                case BOTTOM:
+                    Descriptor.PositionY = 1f;
+                    return true;
+
+                default:
+                    return false;
+            }
         }
 
         private bool TryFit(string value)
