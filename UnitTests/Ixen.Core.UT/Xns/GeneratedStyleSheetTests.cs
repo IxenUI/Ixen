@@ -24,7 +24,26 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(21, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(22, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+        }
+
+        [TestMethod]
+        public void TheBackgroundImageSurvivesGeneration()
+        {
+            BackgroundStyleDescriptor background = Style<BackgroundStyleDescriptor>();
+
+            Assert.AreEqual("#FF0000", background.Color);
+            Assert.AreEqual("Assets/Images/logo.png", background.ImageUrl,
+                "a path with slashes must survive both the tokenizer and the generated source");
+            Assert.IsTrue(background.RepeatX);
+            Assert.IsFalse(background.RepeatY);
+        }
+
+        [TestMethod]
+        public void TheObjectFitSurvivesGeneration()
+        {
+            Assert.AreEqual(ObjectFit.ScaleDown, Style<ObjectFitStyleDescriptor>().Value,
+                "a hyphenated enum value must survive the round trip");
         }
 
         [TestMethod]

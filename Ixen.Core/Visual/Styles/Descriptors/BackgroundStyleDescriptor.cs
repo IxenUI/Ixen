@@ -10,7 +10,9 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         public string ImageUrl { get; set; }
         public bool RepeatX { get; set; } = false;
         public bool RepeatY { get; set; } = false;
+        public ObjectFit Fit { get; set; } = ObjectFit.None;
 
+        public bool IsScaled => Fit != ObjectFit.None;
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()
@@ -19,7 +21,8 @@ namespace Ixen.Core.Visual.Styles.Descriptors
                     (string.IsNullOrWhiteSpace(Color) ? "" : $"{nameof(Color)} = {SourceOf(Color)}, ") +
                     (string.IsNullOrWhiteSpace(ImageUrl) ? "" : $"{nameof(ImageUrl)} = {SourceOf(ImageUrl)}, ") +
                     $"{nameof(RepeatX)} = {SourceOf(RepeatX)}, " +
-                    $"{nameof(RepeatY)} = {SourceOf(RepeatY)} " +
+                    $"{nameof(RepeatY)} = {SourceOf(RepeatY)}, " +
+                    $"{nameof(Fit)} = {nameof(ObjectFit)}.{Fit} " +
                 "}";
     }
 }

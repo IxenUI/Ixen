@@ -462,6 +462,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultTransition;
             }
 
+            if (handlers.ObjectFit.Descriptor != styles.ObjectFit)
+            {
+                handlers.ObjectFit = styles.ObjectFit != null
+                    ? new ObjectFitStyleHandler(styles.ObjectFit)
+                    : VisualElementStylesHandlers.DefaultObjectFit;
+            }
+
             if (handlers.Animation.Descriptor != styles.Animation)
             {
                 handlers.Animation = styles.Animation != null && styles.Animation.IsDeclared
@@ -559,6 +566,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.ANIMATION:
                     handlers.Animation = new AnimationStyleHandler((AnimationStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.OBJECT_FIT:
+                    handlers.ObjectFit = new ObjectFitStyleHandler((ObjectFitStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.DOCK:

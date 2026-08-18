@@ -8,6 +8,7 @@ namespace Ixen.Core.Rendering
     internal class ImageStore : IImageMeasurer
     {
         private readonly Dictionary<string, SKBitmap> _bitmaps = new Dictionary<string, SKBitmap>();
+        private readonly Dictionary<string, SKPaint> _tiles = new Dictionary<string, SKPaint>();
 
         private IImageSource _source;
 
@@ -44,6 +45,35 @@ namespace Ixen.Core.Rendering
             return bitmap;
         }
 
+        internal SKPaint GetTile(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return null;
+            }
+
+            if (_tiles.TryGetValue(name, out SKPaint cached))
+            {
+                return cached;
+            }
+
+            SKBitmap bitmap = Get(name);
+            SKPaint paint = null;
+
+            if (bitmap != null)
+            {
+                paint = new SKPaint
+                {
+                    IsAntialias = false,
+                    Shader = bitmap.ToShader(SKShaderTileMode.Repeat, SKShaderTileMode.Repeat)
+                };
+            }
+
+            _tiles[name] = paint;
+
+            return paint;
+        }
+
         public bool TryMeasure(string source, out float width, out float height)
         {
             SKBitmap bitmap = Get(source);
@@ -64,6 +94,14 @@ namespace Ixen.Core.Rendering
 
         internal void Clear()
         {
+            foreach (KeyValuePair<string, SKPaint> tile in _tiles)
+            {
+                tile.Value?.Shader?.Dispose();
+                tile.Value?.Dispose();
+            }
+
+            _tiles.Clear();
+
             foreach (KeyValuePair<string, SKBitmap> entry in _bitmaps)
             {
                 entry.Value?.Dispose();

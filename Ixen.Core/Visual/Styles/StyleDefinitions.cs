@@ -96,6 +96,10 @@ namespace Ixen.Core.Visual.Styles
                 Define(StyleIdentifier.MARGIN, v => new MarginStyleParser(v),
                     p => ((MarginStyleParser)p).Descriptor),
 
+                Define(StyleIdentifier.OBJECT_FIT, v => new ObjectFitStyleParser(v),
+                    p => ((ObjectFitStyleParser)p).Descriptor,
+                    new[] { "fill", "contain", "cover", "none", "scale-down" }),
+
                 Define(StyleIdentifier.PADDING, v => new PaddingStyleParser(v),
                     p => ((PaddingStyleParser)p).Descriptor),
 

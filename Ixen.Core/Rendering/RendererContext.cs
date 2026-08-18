@@ -116,6 +116,19 @@ namespace Ixen.Core.Rendering
             SKCanvas.DrawBitmap(bitmap, new SKRect(x, y, x + width, y + height), _sampling, _imagePaint);
         }
 
+        internal void TileImage(SKPaint tile, float x, float y, float width, float height)
+        {
+            if (tile == null || width <= 0 || height <= 0)
+            {
+                return;
+            }
+
+            SKCanvas.Save();
+            SKCanvas.Translate(x, y);
+            SKCanvas.DrawRect(new SKRect(0, 0, width, height), tile);
+            SKCanvas.Restore();
+        }
+
         internal float GetLineHeight(FontSpec fontSpec)
             => FontCache.Get(fontSpec).Spacing;
 

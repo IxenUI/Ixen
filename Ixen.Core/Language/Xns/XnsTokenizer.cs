@@ -340,8 +340,13 @@ namespace Ixen.Core.Language.Xns
                         break;
                     }
 
+                    if (c == '/' && StartsComment(_peekIndex))
+                    {
+                        break;
+                    }
+
                     if (char.IsLetterOrDigit(c) || c == '%' || c == '*' || c == '.' || c == '#' || c == '?'
-                        || c == '-' || c == '_' || c == ' ' || c == '\t')
+                        || c == '-' || c == '_' || c == '/' || c == ' ' || c == '\t')
                     {
                         sb.Append(c);
                         MoveCursor();
@@ -362,6 +367,14 @@ namespace Ixen.Core.Language.Xns
 
             _index = index;
             return false;
+        }
+
+        private bool StartsComment(int index)
+        {
+            string content = _source.Content;
+            int next = index + 1;
+
+            return next < content.Length && (content[next] == '/' || content[next] == '*');
         }
 
         private bool StartsStyleName(int index)

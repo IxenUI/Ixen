@@ -5,6 +5,7 @@ namespace Ixen.Core.Visual
     public class VisualElementStylesDescriptors
     {
         public AnimationStyleDescriptor Animation { get; set; } = new();
+        public ObjectFitStyleDescriptor ObjectFit { get; set; } = new();
         public BackgroundStyleDescriptor Background { get; set; } = new();
         public BorderStyleDescriptor Border { get; set; } = new();
         public BottomStyleDescriptor Bottom { get; set; } = new();

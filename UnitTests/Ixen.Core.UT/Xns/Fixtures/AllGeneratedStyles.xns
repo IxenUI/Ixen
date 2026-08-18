@@ -2,7 +2,7 @@ generated_root {
     layout: row
     width: ?
     height: ?
-    background: #FF0000
+    background: #FF0000 Assets/Images/logo.png repeat-x  // a path and a keyword
     border: #CCCCCC 1.5px inner
     corner-radius: 8.5px 4px 2px 1px
     color: #123456
@@ -19,6 +19,7 @@ generated_root {
     text-wrap: nowrap
     transition: background 150ms color 0.2s 30ms ease-out
     cursor: hand
+    object-fit: scale-down
     animation: generated_pulse 480ms ease-out 60ms infinite alternate
 
     generated_child {
