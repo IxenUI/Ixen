@@ -183,7 +183,7 @@ namespace Ixen.Core.Visual
         internal const int TICK = 16;
 
         private readonly VisualElement _element;
-        private IDisposable _ticker;
+        private Ixen.Core.IElementHost _registered;
 
         internal ColorTransition Background;
         internal ColorTransition Color;
@@ -306,23 +306,35 @@ namespace Ixen.Core.Visual
                 return;
             }
 
-            if (_ticker != null)
+            IElementHost host = _element.Host;
+
+            if (host == null)
+            {
+                Finish();
+                return;
+            }
+
+            if (_registered == host)
             {
                 return;
             }
 
-            _ticker = _element.Host?.Scheduler?.Schedule(TICK, true, Tick);
+            Stop();
 
-            if (_ticker == null)
-            {
-                Finish();
-            }
+            _registered = host;
+            host.StartAnimating(_element);
         }
 
         internal void Stop()
         {
-            _ticker?.Dispose();
-            _ticker = null;
+            if (_registered == null)
+            {
+                return;
+            }
+
+            IElementHost host = _registered;
+            _registered = null;
+            host.StopAnimating(_element);
         }
 
         private void Advance(ColorTransition transition, string identifier)
@@ -355,7 +367,7 @@ namespace Ixen.Core.Visual
             }
         }
 
-        private void Tick()
+        internal bool Tick()
         {
             bool sizes = SizeRunning;
 
@@ -376,18 +388,17 @@ namespace Ixen.Core.Visual
             {
                 _element.InvalidateLayout();
             }
-            else
+
+            if (Running)
             {
-                _element.Host?.InvalidateVisual();
+                return true;
             }
 
-            if (!Running)
-            {
-                Stop();
-            }
+            _registered = null;
+            return false;
         }
 
-        private void Finish()
+        internal void Finish()
         {
             _keyframes?.Suspend();
 

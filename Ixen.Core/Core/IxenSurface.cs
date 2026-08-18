@@ -1,4 +1,4 @@
-﻿using Ixen.Core.Components;
+using Ixen.Core.Components;
 using Ixen.Core.Input;
 using Ixen.Core.Rendering;
 using Ixen.Core.Visual;
@@ -7,6 +7,7 @@ using Ixen.Core.Visual.Computers;
 using Ixen.Core.Visual.Styles.Descriptors;
 using SkiaSharp;
 using System;
+using System.Collections.Generic;
 
 namespace Ixen.Core
 {
@@ -121,6 +122,84 @@ namespace Ixen.Core
         internal bool IsDirty => _visualDirty || (Root != null && Root.IsLayoutDirty);
 
         public void InvalidateVisual() => _visualDirty = true;
+
+        private readonly List<VisualElement> _animating = new List<VisualElement>();
+        private readonly List<VisualElement> _ticking = new List<VisualElement>();
+        private IDisposable _animationTicker;
+
+        internal int AnimatingCount => _animating.Count;
+
+        public void StartAnimating(VisualElement element)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            if (_scheduler == null)
+            {
+                element.Animations.Finish();
+                return;
+            }
+
+            if (!_animating.Contains(element))
+            {
+                _animating.Add(element);
+            }
+
+            if (_animationTicker == null)
+            {
+                _animationTicker = _scheduler.Schedule(ElementAnimations.TICK, true, TickAnimations);
+            }
+        }
+
+        public void StopAnimating(VisualElement element)
+        {
+            if (element == null || !_animating.Remove(element))
+            {
+                return;
+            }
+
+            if (_animating.Count == 0)
+            {
+                StopAnimationTicker();
+            }
+        }
+
+        private void StopAnimationTicker()
+        {
+            _animationTicker?.Dispose();
+            _animationTicker = null;
+        }
+
+        private void TickAnimations()
+        {
+            _ticking.Clear();
+            _ticking.AddRange(_animating);
+
+            for (int index = 0; index < _ticking.Count; index++)
+            {
+                VisualElement element = _ticking[index];
+
+                if (!element.HasAnimations || element.Host != this)
+                {
+                    _animating.Remove(element);
+                    continue;
+                }
+
+                if (!element.Animations.Tick())
+                {
+                    _animating.Remove(element);
+                }
+            }
+
+            InvalidateVisual();
+
+            if (_animating.Count == 0)
+            {
+                StopAnimationTicker();
+            }
+        }
 
         private IScheduler _scheduler;
         private IClipboard _clipboard;
