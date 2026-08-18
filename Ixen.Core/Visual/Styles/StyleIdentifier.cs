@@ -32,6 +32,7 @@
         public const string LEFT = "left";
         public const string MARGIN = "margin";
         public const string OBJECT_FIT = "object-fit";
+        public const string OVERFLOW = "overflow";
         public const string PADDING = "padding";
         public const string RIGHT = "right";
         public const string ROW_INDEX = "row-index";

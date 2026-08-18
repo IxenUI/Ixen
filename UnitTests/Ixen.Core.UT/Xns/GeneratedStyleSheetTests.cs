@@ -24,7 +24,13 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(22, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(23, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+        }
+
+        [TestMethod]
+        public void TheOverflowSurvivesGeneration()
+        {
+            Assert.AreEqual(OverflowKind.Scroll, Style<OverflowStyleDescriptor>().Value);
         }
 
         [TestMethod]

@@ -80,8 +80,14 @@ namespace Ixen.Core.Visual.Computers
             {
                 element.ScrollExtentWidth = Math.Max(aggregateWidth, intrinsicWidth);
                 element.ScrollExtentHeight = Math.Max(aggregateHeight, intrinsicHeight);
-                element.ClampScroll();
             }
+            else
+            {
+                element.ScrollExtentWidth = 0;
+                element.ScrollExtentHeight = 0;
+            }
+
+            element.ClampScroll();
 
             if (element is TextField field)
             {

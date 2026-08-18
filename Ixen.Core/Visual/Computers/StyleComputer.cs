@@ -1,4 +1,4 @@
-﻿using Ixen.Core.Visual.Classes;
+using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Ixen.Core.Visual.Styles.Handlers;
@@ -18,6 +18,7 @@ namespace Ixen.Core.Visual.Computers
                 ApplyBaseStyle(element);
                 ApplyClasses(element, registry);
                 Inherit(element);
+                SyncOverflow(element);
                 SyncTransitions(element, registry);
 
                 element.MustRefreshStyles = false;
@@ -152,6 +153,18 @@ namespace Ixen.Core.Visual.Computers
             {
                 handlers.Cursor = from.Cursor;
             }
+        }
+
+        private void SyncOverflow(VisualElement element)
+        {
+            OverflowKind resolved = element.StylesHandlers.Overflow.Descriptor.Value;
+
+            if (resolved == OverflowKind.Unset)
+            {
+                return;
+            }
+
+            element.Scrollable = resolved == OverflowKind.Scroll;
         }
 
         private void SyncTransitions(VisualElement element, StyleRegistry registry)
@@ -462,6 +475,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultTransition;
             }
 
+            if (handlers.Overflow.Descriptor != styles.Overflow)
+            {
+                handlers.Overflow = styles.Overflow != null && styles.Overflow.Value != OverflowKind.Unset
+                    ? new OverflowStyleHandler(styles.Overflow)
+                    : VisualElementStylesHandlers.DefaultOverflow;
+            }
+
             if (handlers.ObjectFit.Descriptor != styles.ObjectFit)
             {
                 handlers.ObjectFit = styles.ObjectFit != null
@@ -570,6 +590,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.OBJECT_FIT:
                     handlers.ObjectFit = new ObjectFitStyleHandler((ObjectFitStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.OVERFLOW:
+                    handlers.Overflow = new OverflowStyleHandler((OverflowStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.DOCK:

@@ -20,6 +20,7 @@ generated_root {
     transition: background 150ms color 0.2s 30ms ease-out
     cursor: hand
     object-fit: scale-down
+    overflow: scroll
     animation: generated_pulse 480ms ease-out 60ms infinite alternate
 
     generated_child {

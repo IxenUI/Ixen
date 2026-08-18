@@ -100,6 +100,11 @@ namespace Ixen.Core.Visual.Styles
                     p => ((ObjectFitStyleParser)p).Descriptor,
                     new[] { "fill", "contain", "cover", "none", "scale-down" }),
 
+                Define(StyleIdentifier.OVERFLOW, v => new OverflowStyleParser(v),
+                    p => ((OverflowStyleParser)p).Descriptor,
+                    new[] { OverflowStyleParser.SCROLL, OverflowStyleParser.HIDDEN,
+                        OverflowStyleParser.AUTO }),
+
                 Define(StyleIdentifier.PADDING, v => new PaddingStyleParser(v),
                     p => ((PaddingStyleParser)p).Descriptor),
 
