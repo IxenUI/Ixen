@@ -14,7 +14,7 @@ namespace Ixen.Platform
         private readonly Action _requestRepaint;
 
         public IxenHost(IxenSurface surface, Action requestRepaint, IScheduler scheduler = null,
-            IClipboard clipboard = null, Action<CursorKind> setCursor = null)
+            IClipboard clipboard = null, Action<CursorKind> setCursor = null, IImageSource images = null)
         {
             _surface = surface ?? throw new ArgumentNullException(nameof(surface));
             _requestRepaint = requestRepaint;
@@ -32,6 +32,11 @@ namespace Ixen.Platform
             if (clipboard != null)
             {
                 _surface.Clipboard = clipboard;
+            }
+
+            if (images != null)
+            {
+                _surface.ImageSource = images;
             }
         }
 

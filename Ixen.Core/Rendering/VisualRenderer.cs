@@ -5,6 +5,12 @@ namespace Ixen.Core.Rendering
     internal class VisualRenderer
     {
         private TextRenderer _textRenderer = new();
+        private readonly ImageRenderer _imageRenderer;
+
+        internal VisualRenderer(ImageStore images = null)
+        {
+            _imageRenderer = new ImageRenderer(images);
+        }
 
         internal void Render(VisualElement element, RendererContext context, ViewPort viewPort)
         {
@@ -44,6 +50,7 @@ namespace Ixen.Core.Rendering
             VisualElementStylesHandlers styles = element.StylesHandlers;
 
             styles.Background?.Render(element, context);
+            _imageRenderer.Render(element, context);
             styles.Border?.Render(element, context);
             _textRenderer.Render(element, context);
         }

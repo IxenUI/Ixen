@@ -13,6 +13,11 @@ namespace Ixen.Core.Rendering
 
         internal SKCanvas SKCanvas { get; private set; }
 
+        private readonly SKPaint _imagePaint = new SKPaint { IsAntialias = true };
+
+        private readonly SKSamplingOptions _sampling =
+            new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
+
         internal void BeginFrame(SKCanvas canvas, float scale)
         {
             SKCanvas = canvas;
@@ -99,6 +104,16 @@ namespace Ixen.Core.Rendering
         {
             pen.Antialisasing = false;
             SKCanvas.DrawRect(x, y, width, height, pen.SKPaint);
+        }
+
+        internal void DrawImage(SKBitmap bitmap, float x, float y, float width, float height)
+        {
+            if (bitmap == null || width <= 0 || height <= 0)
+            {
+                return;
+            }
+
+            SKCanvas.DrawBitmap(bitmap, new SKRect(x, y, x + width, y + height), _sampling, _imagePaint);
         }
 
         internal float GetLineHeight(FontSpec fontSpec)

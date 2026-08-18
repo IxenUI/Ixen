@@ -16,12 +16,14 @@ namespace Ixen.Core
         private static Color _clearColor = Color.Transparent;
 
         private ViewPort _viewPort = new();
+        private readonly ImageStore _images = new();
+
         private StyleComputer _styleComputer = new();
-        private MeasureComputer _measureComputer = new(SkiaTextMeasurer.Default);
+        private MeasureComputer _measureComputer;
         private ArrangeComputer _arrangeComputer = new();
         private ClippingComputer _clippingComputer = new();
         private RendererContext _rendererContext = new();
-        private VisualRenderer _renderer = new();
+        private VisualRenderer _renderer;
         private PointerDispatcher _pointerDispatcher = new();
         private KeyboardDispatcher _keyboardDispatcher = new();
 
@@ -64,6 +66,9 @@ namespace Ixen.Core
 
         internal IxenSurface(VisualElement root = null, IxenSurfaceInitOptions initOptions = null)
         {
+            _measureComputer = new MeasureComputer(SkiaTextMeasurer.Default, _images);
+            _renderer = new VisualRenderer(_images);
+
             InitOptions = initOptions ?? new();
             Root = root ?? new();
             Root.SetPosition(0, 0);
@@ -208,6 +213,21 @@ namespace Ixen.Core
         {
             get => _clipboard;
             set => _clipboard = value;
+        }
+
+        public IImageSource ImageSource
+        {
+            get => _images.Source;
+            set
+            {
+                if (_images.Source == value)
+                {
+                    return;
+                }
+
+                _images.Source = value;
+                Root?.InvalidateLayout();
+            }
         }
 
         public IScheduler Scheduler

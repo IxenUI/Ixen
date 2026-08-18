@@ -13,13 +13,15 @@ namespace Ixen.Core.Visual.Computers
         private static readonly SizeStyleDescriptor _contentTrack = new SizeStyleDescriptor { Unit = SizeUnit.Content, Value = 1 };
 
         private readonly ITextMeasurer _textMeasurer;
+        private readonly IImageMeasurer _imageMeasurer;
 
         private float _viewportWidth;
         private float _viewportHeight;
 
-        internal MeasureComputer(ITextMeasurer textMeasurer)
+        internal MeasureComputer(ITextMeasurer textMeasurer, IImageMeasurer imageMeasurer = null)
         {
             _textMeasurer = textMeasurer;
+            _imageMeasurer = imageMeasurer;
         }
 
         internal void Measure(VisualElement element, float availableWidth, float availableHeight, bool widthIsDefinite, bool heightIsDefinite)
@@ -45,18 +47,20 @@ namespace Ixen.Core.Visual.Computers
             float contentWidth = ContentSize(element, availableWidth, true);
             float contentHeight = ContentSize(element, availableHeight, false);
 
-            MeasureContent(element, type, contentWidth, contentHeight, out float textWidth, out float textHeight);
+            MeasureContent(element, type, contentWidth, contentHeight, widthIsDefinite, heightIsDefinite,
+                out float intrinsicWidth, out float intrinsicHeight);
 
             float aggregateWidth = widthIsDefinite && !scrollable ? 0 : AggregateWidth(element, type);
             float aggregateHeight = heightIsDefinite && !scrollable ? 0 : AggregateHeight(element, type);
 
             if (scrollable && ReserveGutters(element, aggregateWidth, aggregateHeight,
-                textWidth, textHeight, contentWidth, contentHeight))
+                intrinsicWidth, intrinsicHeight, contentWidth, contentHeight))
             {
                 contentWidth = ContentSize(element, availableWidth, true);
                 contentHeight = ContentSize(element, availableHeight, false);
 
-                MeasureContent(element, type, contentWidth, contentHeight, out textWidth, out textHeight);
+                MeasureContent(element, type, contentWidth, contentHeight, widthIsDefinite, heightIsDefinite,
+                    out intrinsicWidth, out intrinsicHeight);
 
                 aggregateWidth = AggregateWidth(element, type);
                 aggregateHeight = AggregateHeight(element, type);
@@ -64,24 +68,24 @@ namespace Ixen.Core.Visual.Computers
 
             element.Width = widthIsDefinite
                 ? availableWidth
-                : Math.Max(aggregateWidth, textWidth)
+                : Math.Max(aggregateWidth, intrinsicWidth)
                     + element.HorizontalPadding + element.HorizontalBorderInside;
 
             element.Height = heightIsDefinite
                 ? availableHeight
-                : Math.Max(aggregateHeight, textHeight)
+                : Math.Max(aggregateHeight, intrinsicHeight)
                     + element.VerticalPadding + element.VerticalBorderInside;
 
             if (scrollable)
             {
-                element.ScrollExtentWidth = Math.Max(aggregateWidth, textWidth);
-                element.ScrollExtentHeight = Math.Max(aggregateHeight, textHeight);
+                element.ScrollExtentWidth = Math.Max(aggregateWidth, intrinsicWidth);
+                element.ScrollExtentHeight = Math.Max(aggregateHeight, intrinsicHeight);
                 element.ClampScroll();
             }
 
             if (element is TextField field)
             {
-                ClampFieldOffset(field, textWidth);
+                ClampFieldOffset(field, intrinsicWidth);
             }
 
             if (element.HasChrome)
@@ -100,7 +104,7 @@ namespace Ixen.Core.Visual.Computers
         }
 
         private void MeasureContent(VisualElement element, LayoutType type, float contentWidth, float contentHeight,
-            out float textWidth, out float textHeight)
+            bool widthIsDefinite, bool heightIsDefinite, out float intrinsicWidth, out float intrinsicHeight)
         {
             switch (type)
             {
@@ -125,14 +129,54 @@ namespace Ixen.Core.Visual.Computers
                     break;
             }
 
-            LayoutText(element, contentWidth, out textWidth, out textHeight);
+            LayoutText(element, contentWidth, out intrinsicWidth, out intrinsicHeight);
+
+            if (element is Image image)
+            {
+                MeasureImage(image, contentWidth, contentHeight, widthIsDefinite, heightIsDefinite,
+                    ref intrinsicWidth, ref intrinsicHeight);
+            }
+        }
+
+        private void MeasureImage(Image image, float contentWidth, float contentHeight,
+            bool widthIsDefinite, bool heightIsDefinite, ref float intrinsicWidth, ref float intrinsicHeight)
+        {
+            image.NaturalWidth = 0;
+            image.NaturalHeight = 0;
+
+            if (_imageMeasurer == null
+                || !_imageMeasurer.TryMeasure(image.Source, out float natural, out float naturalHeight)
+                || natural <= 0 || naturalHeight <= 0)
+            {
+                return;
+            }
+
+            image.NaturalWidth = natural;
+            image.NaturalHeight = naturalHeight;
+
+            float width = natural;
+            float height = naturalHeight;
+
+            if (widthIsDefinite && !heightIsDefinite)
+            {
+                width = contentWidth;
+                height = naturalHeight * (contentWidth / natural);
+            }
+            else if (heightIsDefinite && !widthIsDefinite)
+            {
+                height = contentHeight;
+                width = natural * (contentHeight / naturalHeight);
+            }
+
+            intrinsicWidth = Math.Max(intrinsicWidth, width);
+            intrinsicHeight = Math.Max(intrinsicHeight, height);
         }
 
         private bool ReserveGutters(VisualElement element, float aggregateWidth, float aggregateHeight,
-            float textWidth, float textHeight, float contentWidth, float contentHeight)
+            float intrinsicWidth, float intrinsicHeight, float contentWidth, float contentHeight)
         {
-            float vertical = Math.Max(aggregateHeight, textHeight) > contentHeight ? Scrollbar.THICKNESS : 0;
-            float horizontal = Math.Max(aggregateWidth, textWidth) > contentWidth ? Scrollbar.THICKNESS : 0;
+            float vertical = Math.Max(aggregateHeight, intrinsicHeight) > contentHeight ? Scrollbar.THICKNESS : 0;
+            float horizontal = Math.Max(aggregateWidth, intrinsicWidth) > contentWidth ? Scrollbar.THICKNESS : 0;
 
             if (element.ScrollbarGutterWidth == vertical && element.ScrollbarGutterHeight == horizontal)
             {
