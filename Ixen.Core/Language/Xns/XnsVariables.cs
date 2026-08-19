@@ -32,8 +32,10 @@ namespace Ixen.Core.Language.Xns
             {
                 var seen = new HashSet<string> { declaration.Name };
 
-                variables._values[declaration.Name] =
-                    Expand(declaration.Value, declaration.ValueIndex, raw, seen, 0, errors);
+                variables._values[declaration.Name] = XnsCalc.Evaluate(
+                    Expand(declaration.Value, declaration.ValueIndex, raw, seen, 0, errors),
+                    declaration.ValueIndex,
+                    errors);
             }
 
             return variables;

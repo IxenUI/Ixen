@@ -257,6 +257,8 @@ namespace Ixen.Core.Language.Xns
                 xnsStyle.Value = _variables.Substitute(xnsStyle.Value, xnsStyle.ValueIndex, errors);
             }
 
+            xnsStyle.Value = XnsCalc.Evaluate(xnsStyle.Value, xnsStyle.ValueIndex, errors);
+
             StyleParser parser = definition.CreateParser(xnsStyle.Value);
 
             if (parser.IsValid)

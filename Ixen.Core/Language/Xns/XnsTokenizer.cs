@@ -503,7 +503,8 @@ namespace Ixen.Core.Language.Xns
                     }
 
                     if (char.IsLetterOrDigit(c) || c == '%' || c == '*' || c == '.' || c == '#' || c == '?'
-                        || c == '-' || c == '_' || c == '/' || c == '$' || c == ' ' || c == '\t')
+                        || c == '-' || c == '_' || c == '/' || c == '$' || c == '(' || c == ')' || c == '+'
+                        || c == ' ' || c == '\t')
                     {
                         sb.Append(c);
                         MoveCursor();
