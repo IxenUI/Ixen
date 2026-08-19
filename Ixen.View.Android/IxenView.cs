@@ -85,15 +85,15 @@ namespace Ixen.View.Android
             switch (motion.Action)
             {
                 case MotionEventActions.Down:
-                    _host.PointerDown(x, y, PointerButton.Left);
+                    _host.PointerDown(x, y, PointerButton.Left, PointerKind.Touch);
                     break;
 
                 case MotionEventActions.Move:
-                    _host.PointerMove(x, y);
+                    _host.PointerMove(x, y, PointerKind.Touch);
                     break;
 
                 case MotionEventActions.Up:
-                    _host.PointerUp(x, y, PointerButton.Left);
+                    _host.PointerUp(x, y, PointerButton.Left, PointerKind.Touch);
                     _host.PointerLeave();
                     SyncSoftKeyboard();
                     break;

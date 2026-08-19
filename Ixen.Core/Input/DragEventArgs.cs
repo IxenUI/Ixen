@@ -10,8 +10,9 @@ namespace Ixen.Core.Input
         public float TotalY { get; private set; }
 
         internal DragEventArgs(float x, float y, PointerButton button, VisualElement source,
-            float deltaX, float deltaY, float totalX, float totalY)
-            : base(x, y, button, source)
+            float deltaX, float deltaY, float totalX, float totalY,
+            PointerKind kind = PointerKind.Mouse)
+            : base(x, y, button, source, kind)
         {
             DeltaX = deltaX;
             DeltaY = deltaY;

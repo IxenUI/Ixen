@@ -78,21 +78,23 @@ namespace Ixen.Platform
             _surface.Render(canvas);
         }
 
-        public void PointerMove(float x, float y)
+        public void PointerMove(float x, float y, PointerKind kind = PointerKind.Mouse)
         {
-            _surface.PointerMove(x, y);
+            _surface.PointerMove(x, y, kind);
             RepaintIfDirty();
         }
 
-        public void PointerDown(float x, float y, PointerButton button)
+        public void PointerDown(float x, float y, PointerButton button,
+            PointerKind kind = PointerKind.Mouse)
         {
-            _surface.PointerDown(x, y, button);
+            _surface.PointerDown(x, y, button, kind);
             RepaintIfDirty();
         }
 
-        public void PointerUp(float x, float y, PointerButton button)
+        public void PointerUp(float x, float y, PointerButton button,
+            PointerKind kind = PointerKind.Mouse)
         {
-            _surface.PointerUp(x, y, button);
+            _surface.PointerUp(x, y, button, kind);
             RepaintIfDirty();
         }
 

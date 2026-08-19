@@ -24,11 +24,13 @@ namespace Ixen.Core.Input
         private VisualElement _captured;
 
         private PointerButton _pressedButton;
+        private PointerKind _kind;
         private float _pressX;
         private float _pressY;
         private float _lastDragX;
         private float _lastDragY;
         private bool _dragging;
+        private VisualElement _panning;
 
         private VisualElement _lastClicked;
         private long _lastClickTime;
@@ -45,9 +47,17 @@ namespace Ixen.Core.Input
         internal VisualElement Pressed => _pressed;
         internal VisualElement Captured => _captured;
 
-        internal void Move(VisualElement root, float x, float y, bool trackStates)
+        internal void Move(VisualElement root, float x, float y, bool trackStates,
+            PointerKind kind = PointerKind.Mouse)
         {
             _trackStates = trackStates;
+            _kind = kind;
+
+            if (_panning != null)
+            {
+                Pan(x, y);
+                return;
+            }
 
             VisualElement hit = HitTester.HitTest(root, x, y);
 
@@ -135,15 +145,19 @@ namespace Ixen.Core.Input
         internal void ReleaseCapture()
         {
             _captured = null;
+            _panning = null;
             CancelLongPress();
             EndDrag(_lastDragX, _lastDragY);
             SetState(_pressed, StyleStates.PRESSED, false);
             _pressed = null;
         }
 
-        internal void Down(VisualElement root, float x, float y, PointerButton button, bool trackStates)
+        internal void Down(VisualElement root, float x, float y, PointerButton button, bool trackStates,
+            PointerKind kind = PointerKind.Mouse)
         {
             _trackStates = trackStates;
+            _kind = kind;
+            _panning = null;
 
             VisualElement hit = HitTester.HitTest(root, x, y);
 
@@ -214,7 +228,12 @@ namespace Ixen.Core.Input
 
                 _dragging = true;
                 CancelLongPress();
-                RaiseDrag(x, y, PointerEventKind.DragStart);
+
+                if (!RaiseDrag(x, y, PointerEventKind.DragStart))
+                {
+                    TryStartPan(x, y);
+                }
+
                 return;
             }
 
@@ -232,15 +251,70 @@ namespace Ixen.Core.Input
             RaiseDrag(x, y, PointerEventKind.DragEnd);
         }
 
-        private void RaiseDrag(float x, float y, PointerEventKind kind)
+        private bool RaiseDrag(float x, float y, PointerEventKind kind)
         {
             var args = new DragEventArgs(x, y, _pressedButton, _pressed,
-                x - _lastDragX, y - _lastDragY, x - _pressX, y - _pressY);
+                x - _lastDragX, y - _lastDragY, x - _pressX, y - _pressY, _kind);
 
             _lastDragX = x;
             _lastDragY = y;
 
             Bubble(_pressed, args, kind);
+
+            return args.Handled;
+        }
+
+        private bool TryStartPan(float x, float y)
+        {
+            if (_kind != PointerKind.Touch)
+            {
+                return false;
+            }
+
+            float offsetX = _pressX - x;
+            float offsetY = _pressY - y;
+
+            VisualElement target = PanTarget(_pressed, offsetX, offsetY);
+
+            if (target == null)
+            {
+                return false;
+            }
+
+            _panning = target;
+            _dragging = false;
+
+            _captured = null;
+            SetState(_pressed, StyleStates.PRESSED, false);
+            _pressed = null;
+
+            _lastDragX = _pressX;
+            _lastDragY = _pressY;
+
+            Pan(x, y);
+
+            return true;
+        }
+
+        private static VisualElement PanTarget(VisualElement from, float offsetX, float offsetY)
+        {
+            for (VisualElement element = from; element != null; element = element.Parent)
+            {
+                if (element.Scrollable && CanScroll(element, offsetX, offsetY))
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
+
+        private void Pan(float x, float y)
+        {
+            _panning.ScrollBy(_lastDragX - x, _lastDragY - y);
+
+            _lastDragX = x;
+            _lastDragY = y;
         }
 
         private bool IsDoubleClick(VisualElement hit, float x, float y)
@@ -260,9 +334,19 @@ namespace Ixen.Core.Input
             return doubled;
         }
 
-        internal void Up(VisualElement root, float x, float y, PointerButton button, bool trackStates)
+        internal void Up(VisualElement root, float x, float y, PointerButton button, bool trackStates,
+            PointerKind kind = PointerKind.Mouse)
         {
             _trackStates = trackStates;
+            _kind = kind;
+
+            if (_panning != null)
+            {
+                Pan(x, y);
+                _panning = null;
+
+                return;
+            }
 
             VisualElement hit = HitTester.HitTest(root, x, y);
             VisualElement target = _captured ?? hit;
