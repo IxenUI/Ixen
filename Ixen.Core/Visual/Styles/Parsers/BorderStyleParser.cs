@@ -1,5 +1,6 @@
 using Ixen.Core.Visual.Styles.Descriptors;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -20,14 +21,14 @@ namespace Ixen.Core.Visual.Styles.Parsers
         {
             MatchCollection parts = _splitter.Matches(_content ?? string.Empty);
 
-            if (parts.Count < 1 || parts.Count > 3)
+            if (parts.Count < 1 || parts.Count > 6)
             {
                 return false;
             }
 
             bool hasColor = false;
-            bool hasThickness = false;
             bool hasType = false;
+            var thicknesses = new List<float>();
 
             foreach (Match part in parts)
             {
@@ -51,15 +52,14 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
                 if (thickness.Success)
                 {
-                    if (hasThickness
+                    if (thicknesses.Count == 4
                         || !float.TryParse(thickness.Groups[1].Value, NumberStyles.Float,
                             CultureInfo.InvariantCulture, out float parsed))
                     {
                         return false;
                     }
 
-                    Descriptor.Thickness = parsed;
-                    hasThickness = true;
+                    thicknesses.Add(parsed);
                     continue;
                 }
 
@@ -72,7 +72,39 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 hasType = true;
             }
 
-            return hasColor && hasThickness;
+            if (!hasColor || thicknesses.Count == 0)
+            {
+                return false;
+            }
+
+            ApplyThicknesses(thicknesses);
+
+            return true;
+        }
+
+        private void ApplyThicknesses(List<float> values)
+        {
+            switch (values.Count)
+            {
+                case 1:
+                    Descriptor.Thickness = values[0];
+                    return;
+
+                case 2:
+                    Descriptor.Thickness = values[0];
+                    Descriptor.SetThickness(values[0], values[1], values[0], values[1]);
+                    return;
+
+                case 3:
+                    Descriptor.Thickness = values[0];
+                    Descriptor.SetThickness(values[0], values[1], values[2], values[1]);
+                    return;
+
+                default:
+                    Descriptor.Thickness = values[0];
+                    Descriptor.SetThickness(values[0], values[1], values[2], values[3]);
+                    return;
+            }
         }
     }
 }

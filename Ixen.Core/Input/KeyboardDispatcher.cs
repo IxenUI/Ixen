@@ -44,6 +44,17 @@ namespace Ixen.Core.Input
             }
         }
 
+        internal void ElementDetached(VisualElement element)
+        {
+            if (element == null || _focused != element)
+            {
+                return;
+            }
+
+            SetState(element, false);
+            _focused = null;
+        }
+
         internal void FocusFromPointer(VisualElement hit, bool trackStates)
         {
             for (VisualElement candidate = hit; candidate != null; candidate = candidate.Parent)

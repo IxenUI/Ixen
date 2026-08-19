@@ -7,6 +7,7 @@ namespace Ixen.Core.Components
     {
         private bool _initialized;
         private bool _isStateDirty;
+        private bool _rendering;
 
         internal abstract VisualElement GetVisualElement();
 
@@ -29,8 +30,7 @@ namespace Ixen.Core.Components
             }
 
             OnInitialized();
-            ApplyBindings();
-            Render();
+            RenderPass();
 
             return element;
         }
@@ -43,14 +43,30 @@ namespace Ixen.Core.Components
 
         protected void SetState(Action change)
         {
+            EnsureNotRendering();
             change?.Invoke();
             SetState();
         }
 
         protected void SetState()
         {
+            EnsureNotRendering();
+
             _isStateDirty = true;
             GetVisualElement()?.InvalidateLayout();
+        }
+
+        private void EnsureNotRendering()
+        {
+            if (!_rendering)
+            {
+                return;
+            }
+
+            throw new InvalidOperationException(
+                $"{GetType().Name}.SetState() was called while the component was rendering. "
+                + "That marks the component dirty again on every pass, so it would repaint forever. "
+                + "Compute the value inside Render, or raise the change from an event handler instead.");
         }
 
         void IBoundModel.SetState() => SetState();
@@ -63,8 +79,22 @@ namespace Ixen.Core.Components
             }
 
             _isStateDirty = false;
-            ApplyBindings();
-            Render();
+            RenderPass();
+        }
+
+        private void RenderPass()
+        {
+            _rendering = true;
+
+            try
+            {
+                ApplyBindings();
+                Render();
+            }
+            finally
+            {
+                _rendering = false;
+            }
         }
 
         private void ApplyBindings()

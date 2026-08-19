@@ -184,5 +184,38 @@ namespace Ixen.Core.UT.StyleScoping
             Assert.AreEqual("#111111", BackgroundOf(box),
                 "this is why AddClass exists: a raw list mutation notifies nothing");
         }
+
+        [TestMethod]
+        public void ALaterClassBeatsAnEarlierClassesStateVariant()
+        {
+            VisualElement box = Element("box", "text", "on");
+            IxenSurface surface = Surface(
+                ".text {\r\n    background: #111111\r\n}\r\n"
+                + ".text:hover {\r\n    background: #222222\r\n}\r\n"
+                + ".on {\r\n    background: #333333\r\n}", box);
+
+            box.AddState("hover");
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Assert.AreEqual("#333333", BackgroundOf(box),
+                "classes are applied one at a time with their own states, so the second class"
+                + " lands after the first one's hover variant");
+        }
+
+        [TestMethod]
+        public void AnEarlierClassesStateStillWinsOverItsOwnBase()
+        {
+            VisualElement box = Element("box", "text", "on");
+            IxenSurface surface = Surface(
+                ".text {\r\n    background: #111111\r\n}\r\n"
+                + ".text:hover {\r\n    background: #222222\r\n}\r\n"
+                + ".on {\r\n    color: #FFFFFF\r\n}", box);
+
+            box.AddState("hover");
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Assert.AreEqual("#222222", BackgroundOf(box),
+                "the later class only wins the properties it actually declares");
+        }
     }
 }

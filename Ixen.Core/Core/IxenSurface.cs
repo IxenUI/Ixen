@@ -124,6 +124,12 @@ namespace Ixen.Core
         internal void PointerCaptureLost()
             => _pointerDispatcher.ReleaseCapture();
 
+        public void ElementDetached(VisualElement element)
+        {
+            _pointerDispatcher.ElementDetached(element);
+            _keyboardDispatcher.ElementDetached(element);
+        }
+
         internal bool IsDirty => _visualDirty || (Root != null && Root.IsLayoutDirty);
 
         public void InvalidateVisual() => _visualDirty = true;

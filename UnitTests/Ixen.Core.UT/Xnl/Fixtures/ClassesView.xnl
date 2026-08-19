@@ -1,0 +1,7 @@
+root {} [
+	one { class: "alpha" }
+	two { class: "alpha beta" }
+	spaced { class: "  alpha   beta  gamma " }
+	empty { class: "" }
+	none {}
+]

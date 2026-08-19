@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -46,6 +46,7 @@
     <AdditionalFiles Include="Components\Fixtures\RegionView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\LoopView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\NestedView.xnl" />
+    <AdditionalFiles Include="Xnl\Fixtures\ClassesView.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\UnicodeView.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\UnicodeStyles.xns" />
     <AdditionalFiles Include="Xnl\Fixtures\TypedView.xnl" />

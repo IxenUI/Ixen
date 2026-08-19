@@ -152,6 +152,43 @@ namespace Ixen.Core.Input
             _pressed = null;
         }
 
+        internal void ElementDetached(VisualElement element)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            if (_hovered == element)
+            {
+                SetState(element, StyleStates.HOVER, false);
+                _hovered = null;
+            }
+
+            if (_pressed == element)
+            {
+                SetState(element, StyleStates.PRESSED, false);
+                _pressed = null;
+                CancelLongPress();
+            }
+
+            if (_captured == element)
+            {
+                _captured = null;
+                EndDrag(_lastDragX, _lastDragY);
+            }
+
+            if (_panning == element)
+            {
+                _panning = null;
+            }
+
+            if (_lastClicked == element)
+            {
+                _lastClicked = null;
+            }
+        }
+
         internal void Down(VisualElement root, float x, float y, PointerButton button, bool trackStates,
             PointerKind kind = PointerKind.Mouse)
         {

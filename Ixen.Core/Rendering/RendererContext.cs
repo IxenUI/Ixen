@@ -15,6 +15,8 @@ namespace Ixen.Core.Rendering
 
         private readonly SKPaint _imagePaint = new SKPaint { IsAntialias = true };
 
+        private readonly SKPaint _bandPaint = new SKPaint { IsStroke = false, IsAntialias = false };
+
         private readonly SKSamplingOptions _sampling =
             new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
 
@@ -187,6 +189,17 @@ namespace Ixen.Core.Rendering
         {
             brush.Antialisasing = false;
             SKCanvas.DrawRect(x, y, width, height, brush.SKPaint);
+        }
+
+        internal void FillRectangle(float x, float y, float width, float height, Color color)
+        {
+            if (width <= 0 || height <= 0)
+            {
+                return;
+            }
+
+            _bandPaint.Color = color.SKColor;
+            SKCanvas.DrawRect(x, y, width, height, _bandPaint);
         }
     }
 }

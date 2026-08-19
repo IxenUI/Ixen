@@ -159,5 +159,78 @@ namespace Ixen.Core.UT.Layout.Geometry
             AssertBoxSize(box, 200, 120);
             AssertBox(child, 0, 0, 200, 120);
         }
+
+        private static VisualElement WithSides(VisualElement element, BorderType type,
+            float top, float right, float bottom, float left)
+        {
+            var border = new BorderStyleDescriptor { Color = "#000000", Type = type };
+            border.SetThickness(top, right, bottom, left);
+
+            element.Styles.Border = border;
+
+            return element;
+        }
+
+        [TestMethod]
+        public void ABottomOnlyInnerBorderInsetsOnlyTheBottom()
+        {
+            VisualElement box = WithSides(Box("box", 200, 120), BorderType.Inner, 0, 0, 10, 0);
+            VisualElement child = Element("child");
+            box.AddChild(child);
+
+            Layout(box);
+
+            AssertContentSize(box, 200, 110);
+            AssertBox(child, 0, 0, 200, 110);
+            AssertBoxSize(box, 200, 120);
+        }
+
+        [TestMethod]
+        public void EachSideIsInsetByItsOwnThickness()
+        {
+            VisualElement box = WithSides(Box("box", 200, 120), BorderType.Inner, 1, 2, 3, 4);
+            VisualElement child = Element("child");
+            box.AddChild(child);
+
+            Layout(box);
+
+            AssertContentSize(box, 194, 116);
+            AssertBox(child, 4, 1, 194, 116);
+        }
+
+        [TestMethod]
+        public void AnOuterBorderOnOneSideGrowsOnlyThatSide()
+        {
+            VisualElement box = WithSides(Box("box", 200, 120), BorderType.Outer, 0, 0, 10, 0);
+
+            Layout(box);
+
+            AssertBoxSize(box, 200, 130);
+            AssertContentSize(box, 200, 120);
+        }
+
+        [TestMethod]
+        public void ACentredSideSplitsItsOwnThickness()
+        {
+            VisualElement box = WithSides(Box("box", 200, 120), BorderType.Center, 0, 0, 10, 0);
+
+            Layout(box);
+
+            AssertContentSize(box, 200, 115);
+            AssertBoxSize(box, 200, 125);
+        }
+
+        [TestMethod]
+        public void AUniformThicknessStillGoesThroughTheShorthand()
+        {
+            VisualElement declared = WithSides(Box("declared", 200, 120), BorderType.Inner, 10, 10, 10, 10);
+            VisualElement shorthand = WithBorder(Box("shorthand", 200, 120), 10, BorderType.Inner);
+
+            Layout(declared);
+            Layout(shorthand);
+
+            AssertContentSize(declared, 180, 100);
+            AssertContentSize(shorthand, 180, 100);
+        }
     }
 }

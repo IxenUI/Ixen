@@ -95,5 +95,79 @@ namespace Ixen.Core.UT.StyleParser
         {
             AssertRejected("#000000 #FFFFFF 1px");
         }
+
+        private static void AssertSides(BorderStyleDescriptor border,
+            float top, float right, float bottom, float left)
+        {
+            Assert.AreEqual(top, border.Top, "top");
+            Assert.AreEqual(right, border.Right, "right");
+            Assert.AreEqual(bottom, border.Bottom, "bottom");
+            Assert.AreEqual(left, border.Left, "left");
+        }
+
+        [TestMethod]
+        public void OneThicknessAppliesToEverySide()
+        {
+            BorderStyleDescriptor border = Parse("#CCCCCC 2px");
+
+            AssertSides(border, 2, 2, 2, 2);
+            Assert.IsTrue(border.IsUniform);
+        }
+
+        [TestMethod]
+        public void TwoThicknessesAreVerticalThenHorizontal()
+        {
+            AssertSides(Parse("#CCCCCC 1px 2px"), 1, 2, 1, 2);
+        }
+
+        [TestMethod]
+        public void ThreeThicknessesAreTopHorizontalBottom()
+        {
+            AssertSides(Parse("#CCCCCC 1px 2px 3px"), 1, 2, 3, 2);
+        }
+
+        [TestMethod]
+        public void FourThicknessesGoClockwiseFromTheTop()
+        {
+            BorderStyleDescriptor border = Parse("#CCCCCC 1px 2px 3px 4px");
+
+            AssertSides(border, 1, 2, 3, 4);
+            Assert.IsFalse(border.IsUniform);
+        }
+
+        [TestMethod]
+        public void ASingleSideIsExpressible()
+        {
+            BorderStyleDescriptor border = Parse("#445566 0px 0px 1px 0px inner");
+
+            AssertSides(border, 0, 0, 1, 0);
+            Assert.AreEqual(BorderType.Inner, border.Type);
+            Assert.IsTrue(border.HasBorder, "one non-zero side is still a border");
+        }
+
+        [TestMethod]
+        public void EverySideAtZeroIsNotABorder()
+        {
+            Assert.IsFalse(Parse("#445566 0px 0px 0px 0px").HasBorder);
+        }
+
+        [TestMethod]
+        public void TheThicknessesMayBeWrittenInAnyOrderAmongTheOtherParts()
+        {
+            AssertSides(Parse("1px 2px 3px 4px #CCCCCC inner"), 1, 2, 3, 4);
+            AssertSides(Parse("inner 1px #CCCCCC 2px"), 1, 2, 1, 2);
+        }
+
+        [TestMethod]
+        public void AFifthThicknessIsRejected()
+        {
+            AssertRejected("#CCCCCC 1px 2px 3px 4px 5px");
+        }
+
+        [TestMethod]
+        public void DecimalsWorkPerSide()
+        {
+            AssertSides(Parse("#CCCCCC 0.5px 1.25px 2px 3px"), 0.5f, 1.25f, 2, 3);
+        }
     }
 }

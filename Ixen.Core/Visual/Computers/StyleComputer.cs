@@ -503,7 +503,7 @@ namespace Ixen.Core.Visual.Computers
 
         private static bool IsPainting(BorderStyleDescriptor descriptor)
             => descriptor != null
-                && descriptor.Thickness > 0
+                && descriptor.HasBorder
                 && !string.IsNullOrWhiteSpace(descriptor.Color);
 
         private void ApplyStyle(VisualElementStylesHandlers handlers, StyleDescriptor style)

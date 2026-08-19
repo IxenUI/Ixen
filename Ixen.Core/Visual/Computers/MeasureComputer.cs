@@ -1347,38 +1347,71 @@ namespace Ixen.Core.Visual.Computers
         private void ResolveBorders(VisualElement element)
         {
             BorderStyleDescriptor border = element.StylesHandlers.Border.Descriptor;
-            float thickness = border != null ? border.Thickness : 0;
-            float inside = 0;
-            float outside = 0;
 
-            if (thickness > 0)
+            if (border == null)
             {
-                switch (border.Type)
-                {
-                    case BorderType.Inner:
-                        inside = thickness;
-                        break;
+                element.BorderInsideTop = 0;
+                element.BorderInsideRight = 0;
+                element.BorderInsideBottom = 0;
+                element.BorderInsideLeft = 0;
 
-                    case BorderType.Outer:
-                        outside = thickness;
-                        break;
+                element.BorderOutsideTop = 0;
+                element.BorderOutsideRight = 0;
+                element.BorderOutsideBottom = 0;
+                element.BorderOutsideLeft = 0;
 
-                    default:
-                        inside = thickness / 2;
-                        outside = thickness / 2;
-                        break;
-                }
+                return;
             }
 
-            element.BorderInsideTop = inside;
-            element.BorderInsideRight = inside;
-            element.BorderInsideBottom = inside;
-            element.BorderInsideLeft = inside;
+            element.BorderInsideTop = Inside(border, border.Top);
+            element.BorderInsideRight = Inside(border, border.Right);
+            element.BorderInsideBottom = Inside(border, border.Bottom);
+            element.BorderInsideLeft = Inside(border, border.Left);
 
-            element.BorderOutsideTop = outside;
-            element.BorderOutsideRight = outside;
-            element.BorderOutsideBottom = outside;
-            element.BorderOutsideLeft = outside;
+            element.BorderOutsideTop = Outside(border, border.Top);
+            element.BorderOutsideRight = Outside(border, border.Right);
+            element.BorderOutsideBottom = Outside(border, border.Bottom);
+            element.BorderOutsideLeft = Outside(border, border.Left);
+        }
+
+        private static float Inside(BorderStyleDescriptor border, float thickness)
+        {
+            if (thickness <= 0)
+            {
+                return 0;
+            }
+
+            switch (border.Type)
+            {
+                case BorderType.Inner:
+                    return thickness;
+
+                case BorderType.Outer:
+                    return 0;
+
+                default:
+                    return thickness / 2;
+            }
+        }
+
+        private static float Outside(BorderStyleDescriptor border, float thickness)
+        {
+            if (thickness <= 0)
+            {
+                return 0;
+            }
+
+            switch (border.Type)
+            {
+                case BorderType.Inner:
+                    return 0;
+
+                case BorderType.Outer:
+                    return thickness;
+
+                default:
+                    return thickness / 2;
+            }
         }
 
         private void ResolveHorizontalSpacing(VisualElement element, float contentWidth)

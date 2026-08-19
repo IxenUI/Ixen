@@ -266,8 +266,15 @@ namespace Ixen.Core.Visual
                 return;
             }
 
+            IElementHost previous = Host;
+
             Host = host;
             OnHostChanged();
+
+            if (host == null)
+            {
+                previous?.ElementDetached(this);
+            }
 
             foreach (VisualElement child in Children)
             {

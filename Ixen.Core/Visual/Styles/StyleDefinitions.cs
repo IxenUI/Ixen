@@ -38,7 +38,9 @@ namespace Ixen.Core.Visual.Styles
 
                 Define(StyleIdentifier.BORDER, v => new BorderStyleParser(v),
                     p => ((BorderStyleParser)p).Descriptor,
-                    null, new[] { "inner", "center", "outer" }),
+                    new[] { "#CCCCCC 1px", "#CCCCCC 1px 2px", "#CCCCCC 1px 2px 3px",
+                        "#CCCCCC 0px 0px 1px 0px inner" },
+                    new[] { "inner", "center", "outer" }),
 
                 Define(StyleIdentifier.BOTTOM, v => new BottomStyleParser(v),
                     p => ((BottomStyleParser)p).Descriptor),

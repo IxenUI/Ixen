@@ -40,6 +40,10 @@ generated_root {
     generated_child:hover {
         width: 5px
     }
+
+    generated_sides {
+        border: #445566 0px 1px 2.5px 3px inner
+    }
 }
 
 @keyframes generated_pulse {

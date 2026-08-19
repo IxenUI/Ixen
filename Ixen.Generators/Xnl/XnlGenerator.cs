@@ -1248,7 +1248,7 @@ namespace Ixen.Generators.Xnl
                     continue;
                 }
 
-                sb.AppendLine($"{tabs}{nodeId}.Classes.Add({StringLiteral(param.Value)});");
+                AddClasses(sb, tabs, nodeId, param.Value);
             }
         }
 
@@ -1427,7 +1427,7 @@ namespace Ixen.Generators.Xnl
 
             if (param.Name == CLASS_PROPERTY)
             {
-                sb.AppendLine($"{tabs}{nodeId}.Classes.Add({StringLiteral(param.Value)});");
+                AddClasses(sb, tabs, nodeId, param.Value);
                 return;
             }
 
@@ -1696,6 +1696,14 @@ namespace Ixen.Generators.Xnl
 
         static string StringLiteral(string value)
             => SymbolDisplay.FormatLiteral(value ?? string.Empty, true);
+
+        static void AddClasses(StringBuilder sb, string tabs, string nodeId, string value)
+        {
+            foreach (string name in XnlClasses.Split(value))
+            {
+                sb.AppendLine($"{tabs}{nodeId}.Classes.Add({StringLiteral(name)});");
+            }
+        }
 
         static IPropertySymbol FindSettableProperty(INamedTypeSymbol type, string propertyName, out string reason)
         {

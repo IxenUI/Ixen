@@ -10,5 +10,7 @@ namespace Ixen.Core
 
         void StartAnimating(Visual.VisualElement element);
         void StopAnimating(Visual.VisualElement element);
+
+        void ElementDetached(Visual.VisualElement element);
     }
 }
