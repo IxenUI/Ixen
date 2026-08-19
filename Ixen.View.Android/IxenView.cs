@@ -53,7 +53,8 @@ namespace Ixen.View.Android
             _skCanvasView = new SKCanvasView(Context);
 
             _host = new IxenHost(new IxenSurface(), _skCanvasView.Invalidate,
-                new AndroidScheduler(), null, null, new AssetImageSource(Context?.Assets));
+                new AndroidScheduler(), new AndroidClipboard(Context), null,
+                new AssetImageSource(Context?.Assets));
 
             _skCanvasView.PaintSurface += OnPaintSurface;
             _skCanvasView.Touch += OnTouch;
@@ -106,6 +107,27 @@ namespace Ixen.View.Android
             }
 
             e.Handled = true;
+        }
+
+        public override bool OnGenericMotionEvent(MotionEvent e)
+        {
+            if (e == null || e.Action != MotionEventActions.Scroll)
+            {
+                return base.OnGenericMotionEvent(e);
+            }
+
+            float deltaX = e.GetAxisValue(Axis.Hscroll);
+            float deltaY = e.GetAxisValue(Axis.Vscroll);
+
+            if (deltaX == 0 && deltaY == 0)
+            {
+                return base.OnGenericMotionEvent(e);
+            }
+
+            _host.PointerWheel(e.GetX(), e.GetY(), deltaX, deltaY,
+                AndroidKeys.ToModifiers(e.MetaState));
+
+            return true;
         }
 
         public override bool OnCheckIsTextEditor() => true;
