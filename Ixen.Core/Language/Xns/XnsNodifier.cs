@@ -43,6 +43,17 @@ namespace Ixen.Core.Language.Xns
                         parent.Children.Add(node);
                         break;
 
+                    case XnsTokenType.MediaQuery:
+                        node = new XnsNode()
+                        {
+                            Id = ++nodeId,
+                            Parent = parent,
+                            Media = token.Content,
+                            NameIndex = token.Index
+                        };
+                        parent.Children.Add(node);
+                        break;
+
                     case XnsTokenType.BeginClassContent:
                         stack.Push(node);
                         parent = node;

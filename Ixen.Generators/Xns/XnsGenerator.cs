@@ -77,7 +77,9 @@ namespace Ixen.Generators.Xns
                         }
                     }
 
-                    sb.AppendLine("\t\t\t}));");
+                    sb.AppendLine(c.Media != null
+                        ? $"\t\t\t}}, global::Ixen.Core.Visual.Classes.MediaQuery.Parse(\"{c.Media.Source}\")));"
+                        : "\t\t\t}));");
                     sb.AppendLine();
                 }
 

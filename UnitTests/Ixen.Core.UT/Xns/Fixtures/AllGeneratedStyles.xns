@@ -44,6 +44,20 @@ generated_root {
     generated_sides {
         border: #445566 0px 1px 2.5px 3px inner
     }
+
+    generated_narrow {
+        width: 100px
+
+        @media (max-width: 600px) {
+            width: 50px
+        }
+    }
+}
+
+@media (min-width: 700px) and (orientation: landscape) {
+    generated_wide {
+        width: 40%
+    }
 }
 
 @keyframes generated_pulse {

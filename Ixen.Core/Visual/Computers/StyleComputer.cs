@@ -11,7 +11,19 @@ namespace Ixen.Core.Visual.Computers
     {
         private readonly List<StyleClass> _matches = new();
 
-        internal void Compute(VisualElement element, StyleRegistry registry)
+        private float _viewportWidth;
+        private float _viewportHeight;
+
+        internal void Compute(VisualElement element, StyleRegistry registry,
+            float viewportWidth = 0, float viewportHeight = 0)
+        {
+            _viewportWidth = viewportWidth;
+            _viewportHeight = viewportHeight;
+
+            ComputeTree(element, registry);
+        }
+
+        private void ComputeTree(VisualElement element, StyleRegistry registry)
         {
             if (element.MustRefreshStyles)
             {
@@ -26,7 +38,7 @@ namespace Ixen.Core.Visual.Computers
 
             foreach (VisualElement child in element.Children)
             {
-                Compute(child, registry);
+                ComputeTree(child, registry);
             }
 
             if (!element.HasChrome)
@@ -36,7 +48,7 @@ namespace Ixen.Core.Visual.Computers
 
             foreach (VisualElement chrome in element.Chrome)
             {
-                Compute(chrome, registry);
+                ComputeTree(chrome, registry);
             }
         }
 
@@ -79,6 +91,32 @@ namespace Ixen.Core.Visual.Computers
 
                 ApplyClass(handlers, registry.GetGlobal(target, stated));
                 ApplyScopedClasses(handlers, registry, target, stated, element, scoped);
+            }
+
+            if (!registry.HasMediaClasses)
+            {
+                return;
+            }
+
+            ApplyMediaClasses(handlers, registry, target, name, element);
+
+            for (int i = 0; i < element.States.Count; i++)
+            {
+                ApplyMediaClasses(handlers, registry, target,
+                    name + StyleScope.STATE_SEPARATOR + element.States[i], element);
+            }
+        }
+
+        private void ApplyMediaClasses(VisualElementStylesHandlers handlers, StyleRegistry registry,
+            StyleClassTarget target, string name, VisualElement element)
+        {
+            _matches.Clear();
+            registry.CollectMatchingMediaClasses(target, name, element,
+                _viewportWidth, _viewportHeight, _matches);
+
+            foreach (StyleClass styleClass in _matches)
+            {
+                ApplyClass(handlers, styleClass);
             }
         }
 

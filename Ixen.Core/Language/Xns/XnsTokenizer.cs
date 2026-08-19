@@ -9,6 +9,7 @@ namespace Ixen.Core.Language.Xns
     {
         internal const char KEYFRAMES_MARKER = '@';
         internal const string KEYFRAMES_KEYWORD = "keyframes";
+        internal const string MEDIA_KEYWORD = "media";
 
         private bool _expectClassName = false;
 
@@ -60,6 +61,12 @@ namespace Ixen.Core.Language.Xns
 
             while (PeekChar() != '\0')
             {
+                if (_expectClassName && ReadMedia())
+                {
+                    SetStatesFlags(XnsTokenType.MediaQuery);
+                    continue;
+                }
+
                 if (_expectClassName && ReadKeyframes())
                 {
                     SetStatesFlags(XnsTokenType.ClassName);
@@ -133,6 +140,7 @@ namespace Ixen.Core.Language.Xns
                     break;
 
                 case XnsTokenType.ClassName:
+                case XnsTokenType.MediaQuery:
                     _expectContentBegin = true;
                     break;
 
@@ -169,6 +177,61 @@ namespace Ixen.Core.Language.Xns
                     _expectContentEnd = true;
                     break;
             }
+        }
+
+        private bool ReadMedia()
+        {
+            int index = _index;
+
+            if (PeekNonSpaceChar() != KEYFRAMES_MARKER)
+            {
+                _index = index;
+                return false;
+            }
+
+            int tokenIndex = _peekIndex;
+            MoveCursor();
+
+            var keyword = new StringBuilder();
+
+            while (char.IsLetter(PeekChar()))
+            {
+                keyword.Append(PeekChar());
+                MoveCursor();
+            }
+
+            if (keyword.ToString() != MEDIA_KEYWORD)
+            {
+                _index = index;
+                return false;
+            }
+
+            var condition = new StringBuilder();
+
+            while (true)
+            {
+                char c = PeekChar();
+
+                if (c == '\0' || c == '{' || c == '}' || c == '\r' || c == '\n')
+                {
+                    break;
+                }
+
+                condition.Append(c);
+                MoveCursor();
+            }
+
+            string text = condition.ToString().Trim();
+
+            if (PeekChar() != '{' || text.Length == 0)
+            {
+                _index = index;
+                return false;
+            }
+
+            AddToken(tokenIndex, XnsTokenType.MediaQuery, text, _index - tokenIndex + 1);
+
+            return true;
         }
 
         private bool ReadKeyframes()

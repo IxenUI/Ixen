@@ -6,6 +6,7 @@
         Error,
 
         ClassName,
+        MediaQuery,
         BeginClassContent,
         EndClassContent,
         StyleName,

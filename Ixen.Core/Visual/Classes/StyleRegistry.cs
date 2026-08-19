@@ -24,7 +24,9 @@ namespace Ixen.Core.Visual.Classes
 
         private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), StyleClass> _unscoped = new();
         private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), List<ScopedClass>> _scoped = new();
+        private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), List<ScopedClass>> _media = new();
         private readonly Dictionary<string, KeyframesSet> _keyframes = new();
+        private readonly List<MediaQuery> _queries = new();
 
         private int _count;
         private bool _hasStateClasses;
@@ -36,6 +38,8 @@ namespace Ixen.Core.Visual.Classes
         internal bool HasScopedClasses => _scoped.Count > 0;
 
         internal bool HasStateClasses => _hasStateClasses;
+
+        internal bool HasMediaClasses => _media.Count > 0;
 
         internal bool HasKeyframes => _keyframes.Count > 0;
 
@@ -56,6 +60,12 @@ namespace Ixen.Core.Visual.Classes
             }
 
             var key = (styleClass.Target, styleClass.SheetScope, styleClass.Name);
+
+            if (styleClass.Media != null)
+            {
+                AddMedia(key, styleClass);
+                return;
+            }
 
             if (styleClass.Scope == null)
             {
@@ -88,6 +98,78 @@ namespace Ixen.Core.Visual.Classes
             }
 
             candidates.Sort((a, b) => a.Segments.Length.CompareTo(b.Segments.Length));
+        }
+
+        private void AddMedia((StyleClassTarget, string, string) key, StyleClass styleClass)
+        {
+            if (!_media.TryGetValue(key, out List<ScopedClass> candidates))
+            {
+                candidates = new List<ScopedClass>();
+                _media[key] = candidates;
+            }
+
+            var entry = new ScopedClass(styleClass);
+            int existing = candidates.FindIndex(c => c.Class.Scope == styleClass.Scope
+                && c.Class.Media.Source == styleClass.Media.Source);
+
+            if (existing >= 0)
+            {
+                candidates[existing] = entry;
+            }
+            else
+            {
+                candidates.Add(entry);
+                _count++;
+            }
+
+            candidates.Sort((a, b) => a.Segments.Length.CompareTo(b.Segments.Length));
+
+            if (!_queries.Exists(q => q.Source == styleClass.Media.Source))
+            {
+                _queries.Add(styleClass.Media);
+            }
+        }
+
+        internal long MediaSignature(float width, float height)
+        {
+            long signature = 0;
+
+            for (int index = 0; index < _queries.Count && index < 63; index++)
+            {
+                if (_queries[index].Matches(width, height))
+                {
+                    signature |= 1L << index;
+                }
+            }
+
+            return signature;
+        }
+
+        internal void CollectMatchingMediaClasses(StyleClassTarget target, string name, VisualElement element,
+            float width, float height, List<StyleClass> result)
+        {
+            if (name == null || _media.Count == 0)
+            {
+                return;
+            }
+
+            if (!_media.TryGetValue((target, null, name), out List<ScopedClass> candidates))
+            {
+                return;
+            }
+
+            foreach (ScopedClass candidate in candidates)
+            {
+                if (!candidate.Class.Media.Matches(width, height))
+                {
+                    continue;
+                }
+
+                if (StyleScope.Matches(candidate.Segments, element))
+                {
+                    result.Add(candidate.Class);
+                }
+            }
         }
 
         public void Add(KeyframesSet keyframes)
@@ -141,6 +223,8 @@ namespace Ixen.Core.Visual.Classes
         {
             _unscoped.Clear();
             _scoped.Clear();
+            _media.Clear();
+            _queries.Clear();
             _keyframes.Clear();
             _count = 0;
             _hasStateClasses = false;

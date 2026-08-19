@@ -89,18 +89,50 @@ namespace Ixen.Core
             _viewPort.Width = logicalWidth;
             _viewPort.Height = logicalHeight;
 
+            StyleRegistry styles = Styles ?? StyleRegistry.Default;
+
+            if (SyncMedia(styles, logicalWidth, logicalHeight))
+            {
+                Root?.Invalidate();
+            }
+
             if (Root == null || (!viewPortChanged && !Root.IsLayoutDirty))
             {
                 return;
             }
 
             RenderComponents(Root);
-            _styleComputer.Compute(Root, Styles ?? StyleRegistry.Default);
+            _styleComputer.Compute(Root, styles, logicalWidth, logicalHeight);
             _measureComputer.Measure(Root, logicalWidth, logicalHeight, true, true);
             _arrangeComputer.Arrange(Root, 0, 0);
             _clippingComputer.Compute(Root, logicalWidth, logicalHeight);
 
             Root.ClearLayoutDirty();
+        }
+
+        private long _mediaSignature;
+        private bool _mediaKnown;
+
+        private bool SyncMedia(StyleRegistry styles, float width, float height)
+        {
+            if (!styles.HasMediaClasses)
+            {
+                return false;
+            }
+
+            long signature = styles.MediaSignature(width, height);
+
+            if (_mediaKnown && signature == _mediaSignature)
+            {
+                return false;
+            }
+
+            bool changed = _mediaKnown;
+
+            _mediaKnown = true;
+            _mediaSignature = signature;
+
+            return changed;
         }
 
         private static void RenderComponents(VisualElement element)

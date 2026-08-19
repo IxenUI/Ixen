@@ -30,9 +30,10 @@ namespace Ixen.Core.Language.Xns
         private string GetScope(XnsNode node)
             => StyleScope.Build(node, n => n.Parent, n => n.Name);
 
-        private StyleClass GetClass(XnsNode node, List<LanguageError> errors)
+        private StyleClass GetClass(XnsNode node, XnsNode selector, MediaQuery media,
+            List<LanguageError> errors)
         {
-            string name = node.Name;
+            string name = selector.Name;
             var target = StyleClassTarget.ElementName;
 
             if (name.StartsWith("."))
@@ -46,10 +47,13 @@ namespace Ixen.Core.Language.Xns
                 name = name.Substring(1);
             }
 
-            return new StyleClass(target, null, GetScope(node), name, ToStyles(node, errors));
+            return new StyleClass(target, null, GetScope(selector), name, ToStyles(node, errors), media);
         }
 
         private void Add(XnsNode node, ClassesSet set, List<LanguageError> errors)
+            => Add(node, set, null, errors);
+
+        private void Add(XnsNode node, ClassesSet set, MediaQuery media, List<LanguageError> errors)
         {
             if (IsKeyframes(node))
             {
@@ -57,15 +61,72 @@ namespace Ixen.Core.Language.Xns
                 return;
             }
 
-            if (node.Styles.Count > 0)
+            if (node.Media != null)
             {
-                set.Classes.Add(GetClass(node, errors));
+                media = GetMedia(node, media, errors);
+
+                if (media == null)
+                {
+                    return;
+                }
+
+                if (node.Styles.Count > 0)
+                {
+                    AddInherited(node, set, media, errors);
+                }
+            }
+            else if (node.Styles.Count > 0)
+            {
+                set.Classes.Add(GetClass(node, node, media, errors));
             }
 
             foreach (var child in node.Children)
             {
-                Add(child, set, errors);
+                Add(child, set, media, errors);
             }
+        }
+
+        private void AddInherited(XnsNode node, ClassesSet set, MediaQuery media,
+            List<LanguageError> errors)
+        {
+            XnsNode selector = node.Parent;
+
+            while (selector != null && selector.Name == null)
+            {
+                selector = selector.Parent;
+            }
+
+            if (selector == null)
+            {
+                errors.Add(new LanguageError(
+                    LanguageErrorCode.SYNTAX,
+                    $"A top-level '{XnsTokenizer.KEYFRAMES_MARKER}{XnsTokenizer.MEDIA_KEYWORD}' block holds selectors, not styles.",
+                    node.NameIndex,
+                    XnsTokenizer.MEDIA_KEYWORD.Length + 1));
+
+                return;
+            }
+
+            set.Classes.Add(GetClass(node, selector, media, errors));
+        }
+
+        private MediaQuery GetMedia(XnsNode node, MediaQuery outer, List<LanguageError> errors)
+        {
+            MediaQuery query = MediaQuery.Parse(node.Media);
+
+            if (query == null)
+            {
+                errors.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_STYLE_VALUE,
+                    $"'{node.Media}' is not a valid media query. Use min-width, max-width, min-height,"
+                        + " max-height or orientation, combined with 'and'.",
+                    node.NameIndex,
+                    XnsTokenizer.MEDIA_KEYWORD.Length + 1));
+
+                return null;
+            }
+
+            return outer == null ? query : outer.And(query);
         }
 
         private static bool IsKeyframes(XnsNode node)
