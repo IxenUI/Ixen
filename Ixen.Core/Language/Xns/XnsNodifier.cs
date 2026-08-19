@@ -58,6 +58,25 @@ namespace Ixen.Core.Language.Xns
                         root.Variables.Add(variable);
                         break;
 
+                    case XnsTokenType.MixinName:
+                        node = new XnsNode()
+                        {
+                            Id = ++nodeId,
+                            Parent = parent,
+                            Mixin = token.Content,
+                            NameIndex = token.Index
+                        };
+                        parent.Children.Add(node);
+                        break;
+
+                    case XnsTokenType.IncludeName:
+                        parent.Styles.Add(new XnsStyle
+                        {
+                            Include = token.Content,
+                            NameIndex = token.Index
+                        });
+                        break;
+
                     case XnsTokenType.MediaQuery:
                         node = new XnsNode()
                         {

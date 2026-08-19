@@ -1,6 +1,11 @@
 $generated_accent: #123456
 $generated_phone: (max-width: 600px)
 
+@mixin generated_mixin {
+    text-wrap: nowrap
+    text-overflow: ellipsis
+}
+
 generated_root {
     layout: row
     width: ?
@@ -18,8 +23,7 @@ generated_root {
     row-template: 1.5* 20.5px
     column-template: 30% 2.5*
     text-align: right bottom
-    text-overflow: ellipsis
-    text-wrap: nowrap
+    @include generated_mixin
     transition: background 150ms color 0.2s 30ms ease-out
     cursor: hand
     object-fit: scale-down

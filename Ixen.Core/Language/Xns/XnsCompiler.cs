@@ -26,10 +26,35 @@ namespace Ixen.Core.Language.Xns
 
             _variables = XnsVariables.Resolve(node?.Variables, errors);
 
+            _mixins.Clear();
+            CollectMixins(node);
+
             Add(node, set, errors);
 
             return set;
         }
+
+        private readonly Dictionary<string, XnsNode> _mixins = new Dictionary<string, XnsNode>();
+
+        private void CollectMixins(XnsNode node)
+        {
+            if (node == null)
+            {
+                return;
+            }
+
+            if (node.Mixin != null)
+            {
+                _mixins[node.Mixin] = node;
+            }
+
+            foreach (XnsNode child in node.Children)
+            {
+                CollectMixins(child);
+            }
+        }
+
+        private static bool IsMixin(XnsNode node) => node.Mixin != null;
 
         private string GetScope(XnsNode node)
             => StyleScope.Build(node, n => n.Parent, n => n.Name);
@@ -62,6 +87,11 @@ namespace Ixen.Core.Language.Xns
             if (IsKeyframes(node))
             {
                 set.Keyframes.Add(GetKeyframes(node, errors));
+                return;
+            }
+
+            if (IsMixin(node))
+            {
                 return;
             }
 
@@ -220,18 +250,85 @@ namespace Ixen.Core.Language.Xns
         {
             var styles = new List<StyleDescriptor>();
 
-            foreach (var xnsStyle in xnsNode.Styles)
+            Expand(xnsNode.Styles, styles, new HashSet<string>(), 0, errors);
+
+            return styles;
+        }
+
+        private const int MAX_INCLUDE_DEPTH = 16;
+
+        private void Expand(List<XnsStyle> source, List<StyleDescriptor> styles,
+            HashSet<string> including, int depth, List<LanguageError> errors)
+        {
+            if (depth > MAX_INCLUDE_DEPTH)
             {
-                StyleDescriptor descriptor = ToStyleDescriptor(xnsStyle, errors);
+                return;
+            }
+
+            foreach (XnsStyle xnsStyle in source)
+            {
+                if (xnsStyle.Include != null)
+                {
+                    Include(xnsStyle, styles, including, depth, errors);
+                    continue;
+                }
+
+                StyleDescriptor descriptor = ToStyleDescriptor(Copy(xnsStyle), errors);
 
                 if (descriptor != null)
                 {
                     styles.Add(descriptor);
                 }
             }
-
-            return styles;
         }
+
+        private void Include(XnsStyle xnsStyle, List<StyleDescriptor> styles,
+            HashSet<string> including, int depth, List<LanguageError> errors)
+        {
+            if (!_mixins.TryGetValue(xnsStyle.Include, out XnsNode mixin))
+            {
+                errors.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_STYLE_VALUE,
+                    $"'{xnsStyle.Include}' is not a declared mixin.",
+                    xnsStyle.NameIndex,
+                    XnsTokenizer.INCLUDE_KEYWORD.Length + 1));
+
+                return;
+            }
+
+            if (!including.Add(xnsStyle.Include))
+            {
+                errors.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_STYLE_VALUE,
+                    $"mixin '{xnsStyle.Include}' includes itself.",
+                    xnsStyle.NameIndex,
+                    XnsTokenizer.INCLUDE_KEYWORD.Length + 1));
+
+                return;
+            }
+
+            if (mixin.Children.Count > 0)
+            {
+                errors.Add(new LanguageError(
+                    LanguageErrorCode.SYNTAX,
+                    $"mixin '{xnsStyle.Include}' holds selectors, and a mixin may only hold declarations.",
+                    mixin.NameIndex,
+                    XnsTokenizer.MIXIN_KEYWORD.Length + 1));
+            }
+
+            Expand(mixin.Styles, styles, including, depth + 1, errors);
+
+            including.Remove(xnsStyle.Include);
+        }
+
+        private static XnsStyle Copy(XnsStyle style)
+            => new XnsStyle
+            {
+                Name = style.Name,
+                Value = style.Value,
+                NameIndex = style.NameIndex,
+                ValueIndex = style.ValueIndex
+            };
 
         private StyleDescriptor ToStyleDescriptor(XnsStyle xnsStyle, List<LanguageError> errors)
         {

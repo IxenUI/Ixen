@@ -1,4 +1,4 @@
-﻿namespace Ixen.Core.Language.Xns
+namespace Ixen.Core.Language.Xns
 {
     internal enum XnsTokenType
     {
@@ -9,6 +9,8 @@
         MediaQuery,
         VariableName,
         VariableValue,
+        MixinName,
+        IncludeName,
         BeginClassContent,
         EndClassContent,
         StyleName,

@@ -10,6 +10,8 @@ namespace Ixen.Core.Language.Xns
         internal const char KEYFRAMES_MARKER = '@';
         internal const string KEYFRAMES_KEYWORD = "keyframes";
         internal const string MEDIA_KEYWORD = "media";
+        internal const string MIXIN_KEYWORD = "mixin";
+        internal const string INCLUDE_KEYWORD = "include";
         internal const char VARIABLE_MARKER = '$';
 
         private bool _expectClassName = false;
@@ -65,6 +67,18 @@ namespace Ixen.Core.Language.Xns
                 if (_expectClassName && ReadVariable())
                 {
                     SetStatesFlags(XnsTokenType.VariableValue);
+                    continue;
+                }
+
+                if (_expectStyleName && ReadInclude())
+                {
+                    SetStatesFlags(XnsTokenType.IncludeName);
+                    continue;
+                }
+
+                if (_expectClassName && ReadMixin())
+                {
+                    SetStatesFlags(XnsTokenType.MixinName);
                     continue;
                 }
 
@@ -148,7 +162,14 @@ namespace Ixen.Core.Language.Xns
 
                 case XnsTokenType.ClassName:
                 case XnsTokenType.MediaQuery:
+                case XnsTokenType.MixinName:
                     _expectContentBegin = true;
+                    break;
+
+                case XnsTokenType.IncludeName:
+                    _expectStyleName = true;
+                    _expectClassName = true;
+                    _expectContentEnd = true;
                     break;
 
                 case XnsTokenType.BeginClassContent:
@@ -188,6 +209,104 @@ namespace Ixen.Core.Language.Xns
                     _expectClassName = true;
                     break;
             }
+        }
+
+        private bool ReadAtKeyword(string keyword, out int tokenIndex)
+        {
+            tokenIndex = 0;
+
+            if (PeekNonSpaceChar() != KEYFRAMES_MARKER)
+            {
+                return false;
+            }
+
+            tokenIndex = _peekIndex;
+            MoveCursor();
+
+            var read = new StringBuilder();
+
+            while (char.IsLetter(PeekChar()))
+            {
+                read.Append(PeekChar());
+                MoveCursor();
+            }
+
+            return read.ToString() == keyword;
+        }
+
+        private bool ReadName(out string name)
+        {
+            var builder = new StringBuilder();
+            char c = PeekNonSpaceChar();
+
+            if (!char.IsLetter(c) && c != '_')
+            {
+                name = null;
+                return false;
+            }
+
+            builder.Append(c);
+            MoveCursor();
+
+            while (true)
+            {
+                c = PeekChar();
+
+                if (!char.IsLetterOrDigit(c) && c != '_' && c != '-')
+                {
+                    break;
+                }
+
+                builder.Append(c);
+                MoveCursor();
+            }
+
+            name = builder.ToString();
+
+            return true;
+        }
+
+        private bool ReadMixin()
+        {
+            int index = _index;
+
+            if (!ReadAtKeyword(MIXIN_KEYWORD, out int tokenIndex) || !ReadName(out string name))
+            {
+                _index = index;
+                return false;
+            }
+
+            if (PeekNonSpaceChar() != '{')
+            {
+                _index = index;
+                return false;
+            }
+
+            if (_contentLevel != 0)
+            {
+                AddError(LanguageErrorCode.SYNTAX,
+                    $"A '{KEYFRAMES_MARKER}{MIXIN_KEYWORD}' block must be declared at the top level.",
+                    tokenIndex, 1);
+            }
+
+            AddToken(tokenIndex, XnsTokenType.MixinName, name, _index - tokenIndex + 1);
+
+            return true;
+        }
+
+        private bool ReadInclude()
+        {
+            int index = _index;
+
+            if (!ReadAtKeyword(INCLUDE_KEYWORD, out int tokenIndex) || !ReadName(out string name))
+            {
+                _index = index;
+                return false;
+            }
+
+            AddToken(tokenIndex, XnsTokenType.IncludeName, name, _index - tokenIndex + 1);
+
+            return true;
         }
 
         private bool ReadVariable()
