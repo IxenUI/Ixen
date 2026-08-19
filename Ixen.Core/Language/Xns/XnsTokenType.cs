@@ -7,6 +7,8 @@
 
         ClassName,
         MediaQuery,
+        VariableName,
+        VariableValue,
         BeginClassContent,
         EndClassContent,
         StyleName,

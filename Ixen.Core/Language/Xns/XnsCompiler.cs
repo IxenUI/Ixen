@@ -16,11 +16,15 @@ namespace Ixen.Core.Language.Xns
         internal const string FROM_OFFSET = "from";
         internal const string TO_OFFSET = "to";
 
+        private XnsVariables _variables = new XnsVariables();
+
         public ClassesSet Compile(XnsNode node, List<LanguageError> errors)
         {
             var set = new ClassesSet();
             set.Classes = new List<StyleClass>();
             set.Keyframes = new List<KeyframesSet>();
+
+            _variables = XnsVariables.Resolve(node?.Variables, errors);
 
             Add(node, set, errors);
 
@@ -112,7 +116,9 @@ namespace Ixen.Core.Language.Xns
 
         private MediaQuery GetMedia(XnsNode node, MediaQuery outer, List<LanguageError> errors)
         {
-            MediaQuery query = MediaQuery.Parse(node.Media);
+            MediaQuery query = MediaQuery.Parse(_variables.IsEmpty
+                ? node.Media
+                : _variables.Substitute(node.Media, node.NameIndex, errors));
 
             if (query == null)
             {
@@ -246,6 +252,11 @@ namespace Ixen.Core.Language.Xns
         }
         private StyleDescriptor Validated(StyleDefinition definition, XnsStyle xnsStyle, List<LanguageError> errors)
         {
+            if (!_variables.IsEmpty)
+            {
+                xnsStyle.Value = _variables.Substitute(xnsStyle.Value, xnsStyle.ValueIndex, errors);
+            }
+
             StyleParser parser = definition.CreateParser(xnsStyle.Value);
 
             if (parser.IsValid)

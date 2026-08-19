@@ -25,6 +25,7 @@ namespace Ixen.Core.Language.Xns
 
             XnsNode node = null;
             XnsStyle style = null;
+            XnsVariable variable = null;
 
             stack.Push(root);
 
@@ -41,6 +42,20 @@ namespace Ixen.Core.Language.Xns
                             NameIndex = token.Index
                         };
                         parent.Children.Add(node);
+                        break;
+
+                    case XnsTokenType.VariableName:
+                        variable = new XnsVariable
+                        {
+                            Name = token.Content,
+                            NameIndex = token.Index
+                        };
+                        break;
+
+                    case XnsTokenType.VariableValue:
+                        variable.Value = token.Content;
+                        variable.ValueIndex = token.Index;
+                        root.Variables.Add(variable);
                         break;
 
                     case XnsTokenType.MediaQuery:

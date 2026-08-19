@@ -10,6 +10,7 @@ namespace Ixen.Core.Language.Xns
         internal const char KEYFRAMES_MARKER = '@';
         internal const string KEYFRAMES_KEYWORD = "keyframes";
         internal const string MEDIA_KEYWORD = "media";
+        internal const char VARIABLE_MARKER = '$';
 
         private bool _expectClassName = false;
 
@@ -61,6 +62,12 @@ namespace Ixen.Core.Language.Xns
 
             while (PeekChar() != '\0')
             {
+                if (_expectClassName && ReadVariable())
+                {
+                    SetStatesFlags(XnsTokenType.VariableValue);
+                    continue;
+                }
+
                 if (_expectClassName && ReadMedia())
                 {
                     SetStatesFlags(XnsTokenType.MediaQuery);
@@ -176,7 +183,94 @@ namespace Ixen.Core.Language.Xns
                     _expectClassName = true;
                     _expectContentEnd = true;
                     break;
+
+                case XnsTokenType.VariableValue:
+                    _expectClassName = true;
+                    break;
             }
+        }
+
+        private bool ReadVariable()
+        {
+            int index = _index;
+
+            if (PeekNonSpaceChar() != VARIABLE_MARKER)
+            {
+                _index = index;
+                return false;
+            }
+
+            int nameIndex = _peekIndex;
+            MoveCursor();
+
+            char c = PeekChar();
+
+            if (!char.IsLetter(c) && c != '_')
+            {
+                _index = index;
+                return false;
+            }
+
+            var name = new StringBuilder();
+
+            while (char.IsLetterOrDigit(c) || c == '_' || c == '-')
+            {
+                name.Append(c);
+                MoveCursor();
+                c = PeekChar();
+            }
+
+            if (PeekNonSpaceChar() != ':')
+            {
+                _index = index;
+                return false;
+            }
+
+            MoveCursor();
+
+            int rawIndex = _index + 1;
+            var value = new StringBuilder();
+
+            while (true)
+            {
+                c = PeekChar();
+
+                if (c == '\0' || c == '\r' || c == '\n' || c == '{' || c == '}')
+                {
+                    break;
+                }
+
+                if (c == '/' && StartsComment(_peekIndex))
+                {
+                    break;
+                }
+
+                value.Append(c);
+                MoveCursor();
+            }
+
+            string raw = value.ToString();
+            string text = raw.Trim();
+
+            if (text.Length == 0)
+            {
+                _index = index;
+                return false;
+            }
+
+            int valueIndex = rawIndex + (raw.Length - raw.TrimStart().Length);
+
+            if (_contentLevel != 0)
+            {
+                AddError(LanguageErrorCode.SYNTAX,
+                    $"A '{VARIABLE_MARKER}' variable must be declared at the top level.",
+                    nameIndex, 1);
+            }
+
+            AddToken(nameIndex, XnsTokenType.VariableName, name.ToString(), name.Length + 1);
+            AddToken(valueIndex, XnsTokenType.VariableValue, text);
+
+            return true;
         }
 
         private bool ReadMedia()
@@ -387,7 +481,7 @@ namespace Ixen.Core.Language.Xns
             int index = _index;
             char c = PeekNonSpaceChar();
 
-            if (char.IsLetterOrDigit(c) || c == '#' || c == '?' || c == '_')
+            if (char.IsLetterOrDigit(c) || c == '#' || c == '?' || c == '_' || c == '$')
             {
                 int tokenIndex = _peekIndex;
                 var sb = new StringBuilder();
@@ -409,7 +503,7 @@ namespace Ixen.Core.Language.Xns
                     }
 
                     if (char.IsLetterOrDigit(c) || c == '%' || c == '*' || c == '.' || c == '#' || c == '?'
-                        || c == '-' || c == '_' || c == '/' || c == ' ' || c == '\t')
+                        || c == '-' || c == '_' || c == '/' || c == '$' || c == ' ' || c == '\t')
                     {
                         sb.Append(c);
                         MoveCursor();
