@@ -1,4 +1,5 @@
 using Ixen.Core.Visual;
+using System.Collections.Generic;
 
 namespace Ixen.Core.Rendering
 {
@@ -14,6 +15,23 @@ namespace Ixen.Core.Rendering
 
         internal void Render(VisualElement element, RendererContext context, ViewPort viewPort)
         {
+            RenderTree(element, context, viewPort);
+
+            if (!element.HasOverlays)
+            {
+                return;
+            }
+
+            List<VisualElement> overlays = element.Overlays;
+
+            for (int index = 0; index < overlays.Count; index++)
+            {
+                RenderTree(overlays[index], context, viewPort);
+            }
+        }
+
+        private void RenderTree(VisualElement element, RendererContext context, ViewPort viewPort)
+        {
             if (element.StylesHandlers == null || element.Clip.IsVoidOrInvalid)
             {
                 return;
@@ -26,19 +44,30 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            context.PushClip(element.X, element.Y, element.ActualWidth, element.ActualHeight,
-                element.StylesHandlers.CornerRadius.Descriptor);
+            if (element.IsOverlay)
+            {
+                context.PushClip(element.Clip.X, element.Clip.Y,
+                    element.Clip.ActualWidth, element.Clip.ActualHeight, null);
+            }
+            else
+            {
+                context.PushClip(element.X, element.Y, element.ActualWidth, element.ActualHeight,
+                    element.StylesHandlers.CornerRadius.Descriptor);
+            }
 
             foreach (VisualElement child in element.Children)
             {
-                Render(child, context, viewPort);
+                if (!child.IsOverlay)
+                {
+                    RenderTree(child, context, viewPort);
+                }
             }
 
             if (element.HasChrome)
             {
                 foreach (VisualElement chrome in element.Chrome)
                 {
-                    Render(chrome, context, viewPort);
+                    RenderTree(chrome, context, viewPort);
                 }
             }
 

@@ -1,8 +1,28 @@
-﻿namespace Ixen.Core.Visual.Computers
+using System.Collections.Generic;
+
+namespace Ixen.Core.Visual.Computers
 {
     internal class ClippingComputer
     {
-        internal void Compute(VisualElement element)
+        private float _viewportWidth;
+        private float _viewportHeight;
+
+        private List<VisualElement> _collected;
+
+        internal void Compute(VisualElement element, float viewportWidth, float viewportHeight)
+        {
+            _viewportWidth = viewportWidth;
+            _viewportHeight = viewportHeight;
+
+            _collected = element.Overlays;
+            _collected.Clear();
+
+            Compute(element);
+
+            _collected = null;
+        }
+
+        private void Compute(VisualElement element)
         {
             ComputeElementClip(element);
 
@@ -24,6 +44,21 @@
 
         private void ComputeElementClip(VisualElement element)
         {
+            if (element.IsOverlay)
+            {
+                _collected?.Add(element);
+
+                element.Clip = new DimensionalElement
+                {
+                    X = 0,
+                    Y = 0,
+                    Width = _viewportWidth,
+                    Height = _viewportHeight
+                };
+
+                return;
+            }
+
             var res = new DimensionalElement(element);
             var parent = element.Parent;
 

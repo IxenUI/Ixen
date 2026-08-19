@@ -4,7 +4,60 @@ namespace Ixen.Core.Visual
 {
     internal static class HitTester
     {
-        internal static VisualElement HitTest(VisualElement element, float x, float y)
+        internal static VisualElement HitTest(VisualElement root, float x, float y)
+        {
+            if (root != null && root.HasOverlays)
+            {
+                System.Collections.Generic.List<VisualElement> overlays = root.Overlays;
+
+                for (int index = overlays.Count - 1; index >= 0; index--)
+                {
+                    VisualElement hit = TestOverlay(overlays[index], x, y);
+
+                    if (hit != null)
+                    {
+                        return hit;
+                    }
+                }
+            }
+
+            return Test(root, x, y);
+        }
+
+        private static VisualElement TestOverlay(VisualElement layer, float x, float y)
+        {
+            if (layer == null)
+            {
+                return null;
+            }
+
+            if (layer.HasChrome)
+            {
+                for (int i = layer.Chrome.Count - 1; i >= 0; i--)
+                {
+                    VisualElement chrome = Test(layer.Chrome[i], x, y);
+
+                    if (chrome != null)
+                    {
+                        return chrome;
+                    }
+                }
+            }
+
+            for (int i = layer.Children.Count - 1; i >= 0; i--)
+            {
+                VisualElement hit = Test(layer.Children[i], x, y);
+
+                if (hit != null)
+                {
+                    return hit;
+                }
+            }
+
+            return Test(layer, x, y);
+        }
+
+        private static VisualElement Test(VisualElement element, float x, float y)
         {
             if (element == null || element.IsVoidOrInvalid)
             {
@@ -33,7 +86,7 @@ namespace Ixen.Core.Visual
             {
                 for (int i = element.Chrome.Count - 1; i >= 0; i--)
                 {
-                    VisualElement chrome = HitTest(element.Chrome[i], x, y);
+                    VisualElement chrome = Test(element.Chrome[i], x, y);
 
                     if (chrome != null)
                     {
@@ -44,7 +97,12 @@ namespace Ixen.Core.Visual
 
             for (int i = element.Children.Count - 1; i >= 0; i--)
             {
-                VisualElement hit = HitTest(element.Children[i], x, y);
+                if (element.Children[i].IsOverlay)
+                {
+                    continue;
+                }
+
+                VisualElement hit = Test(element.Children[i], x, y);
 
                 if (hit != null)
                 {

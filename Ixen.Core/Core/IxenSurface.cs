@@ -98,7 +98,7 @@ namespace Ixen.Core
             _styleComputer.Compute(Root, Styles ?? StyleRegistry.Default);
             _measureComputer.Measure(Root, logicalWidth, logicalHeight, true, true);
             _arrangeComputer.Arrange(Root, 0, 0);
-            _clippingComputer.Compute(Root);
+            _clippingComputer.Compute(Root, logicalWidth, logicalHeight);
 
             Root.ClearLayoutDirty();
         }

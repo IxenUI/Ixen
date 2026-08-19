@@ -295,6 +295,18 @@ namespace Ixen.Core.Visual
             }
         }
 
+        internal bool IsOverlay
+            => Parent != null
+                && StylesHandlers != null
+                && Computers.MeasureComputer.LayoutTypeOf(this)
+                    == Ixen.Core.Visual.Styles.Descriptors.LayoutType.Fixed;
+
+        private List<VisualElement> _overlays;
+
+        internal List<VisualElement> Overlays => _overlays ?? (_overlays = new List<VisualElement>());
+
+        internal bool HasOverlays => _overlays != null && _overlays.Count > 0;
+
         private ElementAnimations _animations;
 
         internal bool HasAnimations => _animations != null;
