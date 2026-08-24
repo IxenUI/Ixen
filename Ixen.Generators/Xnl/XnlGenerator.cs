@@ -678,10 +678,16 @@ namespace Ixen.Generators.Xnl
                 sb.AppendLine();
             }
 
-            AddChildren(sb, node, nodeId, tabLevel, file);
+            AddChildren(sb, node, ContentParent(resolved, nodeId), tabLevel, file);
 
             sb.AppendLine();
         }
+
+        static string ComponentIdentifier(string nodeId)
+            => $"{nodeId}_component";
+
+        static string ContentParent(ResolvedType resolved, string nodeId)
+            => resolved.IsComponent ? $"{ComponentIdentifier(nodeId)}.Content" : nodeId;
 
         static void AddChildren(StringBuilder sb, XnlNode node, string parentId, int tabLevel, FileContext file)
         {
@@ -1217,7 +1223,7 @@ namespace Ixen.Generators.Xnl
         static void AddComponentDeclaration(StringBuilder sb, XnlNode node, string tabs, string nodeId,
             ResolvedType resolved, FileContext file, bool bound)
         {
-            string componentId = $"{nodeId}_component";
+            string componentId = ComponentIdentifier(nodeId);
             string componentType = resolved.Symbol != null
                 ? $"global::{resolved.Symbol.ToDisplayString()}"
                 : node.Type;

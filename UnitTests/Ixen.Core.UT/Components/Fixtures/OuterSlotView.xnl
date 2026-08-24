@@ -1,0 +1,4 @@
+outer_root {} [
+	outer_inner<SlotCardComponent> { title: "inner" }
+	outer_content<Slot> {}
+]

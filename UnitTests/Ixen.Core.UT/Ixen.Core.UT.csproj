@@ -46,6 +46,14 @@
     <AdditionalFiles Include="Components\Fixtures\RegionView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\LoopView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\NestedView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\SlotCardView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\SlotHostView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\SlotlessCardView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\SlotlessHostView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\TwoSlotsCardView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\TwoSlotsHostView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\OuterSlotView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\OuterSlotHostView.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\ClassesView.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\UnicodeView.xnl" />
     <AdditionalFiles Include="Xnl\Fixtures\UnicodeStyles.xns" />

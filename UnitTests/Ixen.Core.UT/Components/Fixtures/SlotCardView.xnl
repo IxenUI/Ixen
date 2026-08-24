@@ -1,0 +1,5 @@
+card_root {} [
+	card_title { text: "{Title}" }
+	card_content<Slot> {}
+	card_footer { text: "footer" }
+]

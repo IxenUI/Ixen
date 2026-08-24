@@ -1,0 +1,5 @@
+two_slots_host_root {} [
+	card<TwoSlotsCardComponent> {} [
+		ambiguous { text: "which slot" }
+	]
+]

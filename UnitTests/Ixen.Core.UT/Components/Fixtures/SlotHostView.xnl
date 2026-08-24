@@ -1,0 +1,23 @@
+slot_host_root {} [
+	first<SlotCardComponent> { title: "A" } [
+		projected_static { text: "static" }
+		projected_bound { text: "{Caption}" }
+		projected_action { text: "press" click: "{Bump()}" }
+		@if (Flag) {
+			projected_if { text: "on" }
+		@}
+		@foreach (var word in Words) {
+			projected_word { text: "{word}" }
+		@}
+		inner<SlotlessCardComponent> {}
+	]
+	second<SlotCardComponent> { title: "B" } [
+		projected_second { text: "second" }
+	]
+	empty<SlotCardComponent> { title: "C" }
+	@if (Flag) {
+		region_card<SlotCardComponent> { title: "in a region" } [
+			region_projected { text: "{Caption}" }
+		]
+	@}
+]

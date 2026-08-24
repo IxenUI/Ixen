@@ -1,0 +1,5 @@
+slotless_host_root {} [
+	card<SlotlessCardComponent> {} [
+		orphan { text: "nowhere to go" }
+	]
+]

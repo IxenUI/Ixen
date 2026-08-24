@@ -1,0 +1,3 @@
+slotless_root {} [
+	slotless_label { text: "no slot here" }
+]

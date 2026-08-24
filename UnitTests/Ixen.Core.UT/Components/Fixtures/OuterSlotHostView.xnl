@@ -1,0 +1,5 @@
+outer_host_root {} [
+	outer<OuterSlotComponent> {} [
+		outer_projected { text: "projected" }
+	]
+]
