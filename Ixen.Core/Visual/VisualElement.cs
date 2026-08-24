@@ -276,6 +276,8 @@ namespace Ixen.Core.Visual
                 previous?.ElementDetached(this);
             }
 
+            Owner?.HostChanged();
+
             foreach (VisualElement child in Children)
             {
                 child.AttachHost(host);

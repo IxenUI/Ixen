@@ -1,0 +1,7 @@
+lifecycle_host_root {} [
+	lifecycle_before { text: "before" }
+	@if (Show) {
+		tracked<LifecycleComponent> {}
+		ticker<TickerComponent> {}
+	@}
+]

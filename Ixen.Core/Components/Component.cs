@@ -11,6 +11,7 @@ namespace Ixen.Core.Components
         private bool _isStateDirty;
         private bool _rendering;
         private VisualElement _content;
+        private bool _attached;
 
         internal abstract VisualElement GetVisualElement();
 
@@ -99,6 +100,32 @@ namespace Ixen.Core.Components
 
         protected virtual void OnInitialized()
         { }
+
+        protected virtual void OnAttached()
+        { }
+
+        protected virtual void OnDetached()
+        { }
+
+        internal void HostChanged()
+        {
+            bool attached = GetVisualElement()?.Host != null;
+
+            if (attached == _attached)
+            {
+                return;
+            }
+
+            _attached = attached;
+
+            if (attached)
+            {
+                OnAttached();
+                return;
+            }
+
+            OnDetached();
+        }
 
         protected virtual void Render()
         { }

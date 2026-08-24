@@ -1,0 +1,3 @@
+lifecycle_inner_root {} [
+	lifecycle_inner_label { text: "inner" }
+]
