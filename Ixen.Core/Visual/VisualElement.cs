@@ -308,6 +308,10 @@ namespace Ixen.Core.Visual
                 && Computers.MeasureComputer.LayoutTypeOf(this)
                     == Ixen.Core.Visual.Styles.Descriptors.LayoutType.Fixed;
 
+        internal bool IsAnchored
+            => StylesHandlers != null
+                && !string.IsNullOrEmpty(StylesHandlers.Anchor.Descriptor.Name);
+
         private List<VisualElement> _overlays;
 
         internal List<VisualElement> Overlays => _overlays ?? (_overlays = new List<VisualElement>());

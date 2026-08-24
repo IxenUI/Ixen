@@ -533,6 +533,20 @@ namespace Ixen.Core.Visual.Computers
                     ? new AnimationStyleHandler(styles.Animation)
                     : VisualElementStylesHandlers.DefaultAnimation;
             }
+
+            if (handlers.Anchor.Descriptor != styles.Anchor)
+            {
+                handlers.Anchor = styles.Anchor != null && !string.IsNullOrEmpty(styles.Anchor.Name)
+                    ? new AnchorStyleHandler(styles.Anchor)
+                    : VisualElementStylesHandlers.DefaultAnchor;
+            }
+
+            if (handlers.AnchorPlacement.Descriptor != styles.AnchorPlacement)
+            {
+                handlers.AnchorPlacement = styles.AnchorPlacement != null
+                    ? new AnchorPlacementStyleHandler(styles.AnchorPlacement)
+                    : VisualElementStylesHandlers.DefaultAnchorPlacement;
+            }
         }
 
         private static bool IsPainting(BackgroundStyleDescriptor descriptor)
@@ -624,6 +638,14 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.ANIMATION:
                     handlers.Animation = new AnimationStyleHandler((AnimationStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.ANCHOR:
+                    handlers.Anchor = new AnchorStyleHandler((AnchorStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.ANCHOR_PLACEMENT:
+                    handlers.AnchorPlacement = new AnchorPlacementStyleHandler((AnchorPlacementStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.OBJECT_FIT:

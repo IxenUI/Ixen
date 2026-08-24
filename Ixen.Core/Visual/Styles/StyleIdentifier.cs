@@ -12,6 +12,8 @@
         internal const string GRID_SPAN = "grid-span";
 
         // Actual properties
+        public const string ANCHOR = "anchor";
+        public const string ANCHOR_PLACEMENT = "anchor-placement";
         public const string ANIMATION = "animation";
         public const string BACKGROUND = "background";
         public const string BORDER = "border";

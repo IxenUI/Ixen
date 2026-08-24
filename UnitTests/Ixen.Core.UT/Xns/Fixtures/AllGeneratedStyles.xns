@@ -52,6 +52,12 @@ generated_root {
         border: #445566 0px 1px 2.5px 3px inner
     }
 
+    generated_anchored {
+        layout: fixed
+        anchor: generated_child
+        anchor-placement: above center noflip
+    }
+
     generated_narrow {
         width: 100px
 
@@ -71,4 +77,4 @@ generated_root {
     0%   { background: #FF0000  width: 10px }
     50%  { background: #00FF00 }
     100% { background: #0000FF  width: 30.5px }
-}
+}

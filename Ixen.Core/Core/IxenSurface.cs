@@ -104,7 +104,7 @@ namespace Ixen.Core
             RenderComponents(Root);
             _styleComputer.Compute(Root, styles, logicalWidth, logicalHeight);
             _measureComputer.Measure(Root, logicalWidth, logicalHeight, true, true);
-            _arrangeComputer.Arrange(Root, 0, 0);
+            _arrangeComputer.Arrange(Root, 0, 0, logicalWidth, logicalHeight);
             _clippingComputer.Compute(Root, logicalWidth, logicalHeight);
 
             Root.ClearLayoutDirty();

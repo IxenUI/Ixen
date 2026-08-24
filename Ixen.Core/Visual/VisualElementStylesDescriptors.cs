@@ -4,6 +4,8 @@ namespace Ixen.Core.Visual
 {
     public class VisualElementStylesDescriptors
     {
+        public AnchorStyleDescriptor Anchor { get; set; } = new();
+        public AnchorPlacementStyleDescriptor AnchorPlacement { get; set; } = new();
         public AnimationStyleDescriptor Animation { get; set; } = new();
         public ObjectFitStyleDescriptor ObjectFit { get; set; } = new();
         public OverflowStyleDescriptor Overflow { get; set; } = new();

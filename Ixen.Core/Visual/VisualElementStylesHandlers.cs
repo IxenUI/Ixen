@@ -4,6 +4,8 @@ namespace Ixen.Core.Visual
 {
     internal class VisualElementStylesHandlers
     {
+        internal static readonly AnchorStyleHandler DefaultAnchor = new();
+        internal static readonly AnchorPlacementStyleHandler DefaultAnchorPlacement = new();
         internal static readonly AnimationStyleHandler DefaultAnimation = new();
         internal static readonly ObjectFitStyleHandler DefaultObjectFit = new();
         internal static readonly OverflowStyleHandler DefaultOverflow = new();
@@ -37,6 +39,8 @@ namespace Ixen.Core.Visual
         internal static readonly TransitionStyleHandler DefaultTransition = new();
         internal static readonly WidthStyleHandler DefaultWidth = new();
 
+        public AnchorStyleHandler Anchor { get; set; } = DefaultAnchor;
+        public AnchorPlacementStyleHandler AnchorPlacement { get; set; } = DefaultAnchorPlacement;
         public AnimationStyleHandler Animation { get; set; } = DefaultAnimation;
         public ObjectFitStyleHandler ObjectFit { get; set; } = DefaultObjectFit;
         public OverflowStyleHandler Overflow { get; set; } = DefaultOverflow;
