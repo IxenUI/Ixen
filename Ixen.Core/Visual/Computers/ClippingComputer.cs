@@ -8,19 +8,47 @@ namespace Ixen.Core.Visual.Computers
         private float _viewportHeight;
 
         private List<VisualElement> _collected;
+        private bool _layered;
 
         internal void Compute(VisualElement element, float viewportWidth, float viewportHeight)
         {
             _viewportWidth = viewportWidth;
             _viewportHeight = viewportHeight;
+            _layered = false;
 
             _collected = element.Overlays;
             _collected.Clear();
 
             Compute(element);
 
+            if (_layered)
+            {
+                SortByDepth(_collected);
+            }
+
             _collected = null;
         }
+
+        private static void SortByDepth(List<VisualElement> layers)
+        {
+            for (int i = 1; i < layers.Count; i++)
+            {
+                VisualElement moving = layers[i];
+                int depth = DepthOf(moving);
+                int j = i - 1;
+
+                while (j >= 0 && DepthOf(layers[j]) > depth)
+                {
+                    layers[j + 1] = layers[j];
+                    j--;
+                }
+
+                layers[j + 1] = moving;
+            }
+        }
+
+        private static int DepthOf(VisualElement element)
+            => element.StylesHandlers.ZIndex.Descriptor.Value;
 
         private void Compute(VisualElement element)
         {
@@ -47,6 +75,11 @@ namespace Ixen.Core.Visual.Computers
             if (element.IsOverlay)
             {
                 _collected?.Add(element);
+
+                if (element.StylesHandlers.ZIndex.Descriptor.Value != 0)
+                {
+                    _layered = true;
+                }
 
                 element.Clip = new DimensionalElement
                 {

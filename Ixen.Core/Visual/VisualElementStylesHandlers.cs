@@ -38,6 +38,7 @@ namespace Ixen.Core.Visual
         internal static readonly TopStyleHandler DefaultTop = new();
         internal static readonly TransitionStyleHandler DefaultTransition = new();
         internal static readonly WidthStyleHandler DefaultWidth = new();
+        internal static readonly ZIndexStyleHandler DefaultZIndex = new();
 
         public AnchorStyleHandler Anchor { get; set; } = DefaultAnchor;
         public AnchorPlacementStyleHandler AnchorPlacement { get; set; } = DefaultAnchorPlacement;
@@ -73,5 +74,6 @@ namespace Ixen.Core.Visual
         public TopStyleHandler Top { get; set; } = DefaultTop;
         public TransitionStyleHandler Transition { get; set; } = DefaultTransition;
         public WidthStyleHandler Width { get; set; } = DefaultWidth;
+        public ZIndexStyleHandler ZIndex { get; set; } = DefaultZIndex;
     }
 }

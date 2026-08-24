@@ -6,7 +6,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
 {
     internal class SizeStyleParser : StyleParser
     {
-        private static Regex _regex = new Regex(@"(([0-9]+(?:\.[0-9]+)?)(px|%|\*|)|\?)");
+        private static Regex _regex = new Regex(@"^\s*(([0-9]+(?:\.[0-9]+)?)(px|%|\*|)|\?)\s*$");
         public SizeStyleDescriptor Descriptor { get; } = new SizeStyleDescriptor();
 
         public SizeStyleParser(string content)

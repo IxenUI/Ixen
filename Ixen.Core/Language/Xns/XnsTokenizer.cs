@@ -600,7 +600,7 @@ namespace Ixen.Core.Language.Xns
             int index = _index;
             char c = PeekNonSpaceChar();
 
-            if (char.IsLetterOrDigit(c) || c == '#' || c == '?' || c == '_' || c == '$')
+            if (char.IsLetterOrDigit(c) || c == '#' || c == '?' || c == '_' || c == '$' || c == '-')
             {
                 int tokenIndex = _peekIndex;
                 var sb = new StringBuilder();

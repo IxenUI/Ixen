@@ -38,5 +38,6 @@ namespace Ixen.Core.Visual
         public TopStyleDescriptor Top { get; set; } = new();
         public TransitionStyleDescriptor Transition { get; set; } = new();
         public WidthStyleDescriptor Width { get; set; } = new();
+        public ZIndexStyleDescriptor ZIndex { get; set; } = new();
     }
 }

@@ -143,7 +143,10 @@ namespace Ixen.Core.Visual.Styles
                         Easing.LINEAR, Easing.EASE_IN, Easing.EASE_OUT, Easing.EASE_IN_OUT }),
 
                 Define(StyleIdentifier.WIDTH, v => new WidthStyleParser(v),
-                    p => ((WidthStyleParser)p).Descriptor)
+                    p => ((WidthStyleParser)p).Descriptor),
+
+                Define(StyleIdentifier.Z_INDEX, v => new ZIndexStyleParser(v),
+                    p => ((ZIndexStyleParser)p).Descriptor)
             };
 
             _byName = new Dictionary<string, StyleDefinition>();

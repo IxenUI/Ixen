@@ -46,5 +46,6 @@
         public const string TOP = "top";
         public const string TRANSITION = "transition";
         public const string WIDTH = "width";
+        public const string Z_INDEX = "z-index";
     }
 }

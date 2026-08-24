@@ -547,6 +547,13 @@ namespace Ixen.Core.Visual.Computers
                     ? new AnchorPlacementStyleHandler(styles.AnchorPlacement)
                     : VisualElementStylesHandlers.DefaultAnchorPlacement;
             }
+
+            if (handlers.ZIndex.Descriptor != styles.ZIndex)
+            {
+                handlers.ZIndex = styles.ZIndex != null && styles.ZIndex.Value != 0
+                    ? new ZIndexStyleHandler(styles.ZIndex)
+                    : VisualElementStylesHandlers.DefaultZIndex;
+            }
         }
 
         private static bool IsPainting(BackgroundStyleDescriptor descriptor)
@@ -646,6 +653,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.ANCHOR_PLACEMENT:
                     handlers.AnchorPlacement = new AnchorPlacementStyleHandler((AnchorPlacementStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.Z_INDEX:
+                    handlers.ZIndex = new ZIndexStyleHandler((ZIndexStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.OBJECT_FIT:
