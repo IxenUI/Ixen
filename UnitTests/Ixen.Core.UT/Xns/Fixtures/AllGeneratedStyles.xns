@@ -54,6 +54,10 @@ generated_root {
         border: #445566 0px 1px 2.5px 3px inner
     }
 
+    generated_gradient {
+        background: linear-gradient(45deg #112233 20% #445566 #778899)
+    }
+
     generated_anchored {
         layout: fixed
         anchor: generated_child

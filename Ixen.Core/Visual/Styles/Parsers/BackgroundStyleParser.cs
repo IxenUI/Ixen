@@ -1,5 +1,7 @@
 using Ixen.Core.Visual.Styles.Descriptors;
 using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
@@ -31,8 +33,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
         protected override bool Parse()
         {
-            string[] parts = _content?.Trim().Split(new[] { ' ', '\t' },
-                StringSplitOptions.RemoveEmptyEntries);
+            string[] parts = Split(_content?.Trim());
 
             if (parts == null || parts.Length == 0)
             {
@@ -43,6 +44,23 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
             foreach (string part in parts)
             {
+                if (GradientParser.IsCall(part))
+                {
+                    if (Descriptor.Gradient != null)
+                    {
+                        return false;
+                    }
+
+                    Descriptor.Gradient = GradientParser.Parse(part);
+
+                    if (Descriptor.Gradient == null)
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
                 if (part[0] == '#')
                 {
                     var color = new ColorStyleParser(part);
@@ -182,6 +200,49 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 default:
                     return false;
             }
+        }
+
+        private static string[] Split(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+            {
+                return null;
+            }
+
+            var parts = new List<string>();
+            var current = new StringBuilder();
+            int depth = 0;
+
+            foreach (char c in content)
+            {
+                if (c == '(')
+                {
+                    depth++;
+                }
+                else if (c == ')')
+                {
+                    depth--;
+                }
+                else if ((c == ' ' || c == '\t') && depth == 0)
+                {
+                    if (current.Length > 0)
+                    {
+                        parts.Add(current.ToString());
+                        current.Clear();
+                    }
+
+                    continue;
+                }
+
+                current.Append(c);
+            }
+
+            if (current.Length > 0)
+            {
+                parts.Add(current.ToString());
+            }
+
+            return depth == 0 ? parts.ToArray() : null;
         }
     }
 }

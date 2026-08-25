@@ -9,6 +9,7 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
         private Brush _brush;
         private Color _color = Color.Transparent;
+        private readonly GradientShader _gradient;
 
         public BackgroundStyleHandler()
             : this(new())
@@ -19,6 +20,11 @@ namespace Ixen.Core.Visual.Styles.Handlers
             Descriptor = descriptor;
             _color = new Color(descriptor.Color);
             _brush = new Brush(_color);
+
+            if (descriptor.Gradient != null)
+            {
+                _gradient = new GradientShader(descriptor.Gradient);
+            }
         }
 
         internal Color Color => _color;
@@ -27,6 +33,14 @@ namespace Ixen.Core.Visual.Styles.Handlers
         {
             CornerRadiusStyleDescriptor radius = element.StylesHandlers.CornerRadius.Descriptor;
             Brush brush = element.AnimatedBrush(StyleIdentifier.BACKGROUND) ?? _brush;
+
+            if (_gradient != null && element.AnimatedBrush(StyleIdentifier.BACKGROUND) == null)
+            {
+                context.FillGradient(element.X, element.Y, element.ActualWidth, element.ActualHeight,
+                    radius, _gradient);
+
+                return;
+            }
 
             if (radius.HasRadius)
             {

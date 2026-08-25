@@ -10,6 +10,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 
         public string Color { get; set; } = null;
         public string ImageUrl { get; set; }
+        public Gradient Gradient { get; set; }
         public bool RepeatX { get; set; } = false;
         public bool RepeatY { get; set; } = false;
         public ObjectFit Fit { get; set; } = ObjectFit.None;
@@ -31,6 +32,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
                 "{ " +
                     (string.IsNullOrWhiteSpace(Color) ? "" : $"{nameof(Color)} = {SourceOf(Color)}, ") +
                     (string.IsNullOrWhiteSpace(ImageUrl) ? "" : $"{nameof(ImageUrl)} = {SourceOf(ImageUrl)}, ") +
+                    (Gradient == null ? "" : $"{nameof(Gradient)} = {Gradient.ToSource()}, ") +
                     $"{nameof(RepeatX)} = {SourceOf(RepeatX)}, " +
                     $"{nameof(RepeatY)} = {SourceOf(RepeatY)}, " +
                     $"{nameof(Fit)} = {nameof(ObjectFit)}.{Fit}, " +

@@ -20,6 +20,7 @@ namespace Ixen.Core.Rendering
         private float _shadowBlur = -1;
         private readonly SKPaint _textShadowPaint = new SKPaint { IsStroke = false, IsAntialias = true };
         private float _textShadowBlur = -1;
+        private readonly SKPaint _gradientPaint = new SKPaint { IsStroke = false, IsAntialias = true };
 
         private readonly SKSamplingOptions _sampling =
             new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
@@ -199,6 +200,32 @@ namespace Ixen.Core.Rendering
             SKCanvas.DrawRoundRect(
                 BuildRoundRect(x + offset, y + offset, width - offset * 2, height - offset * 2, radius),
                 pen.SKPaint);
+        }
+
+        internal void FillGradient(float x, float y, float width, float height,
+            CornerRadiusStyleDescriptor radius, GradientShader gradient)
+        {
+            if (width <= 0 || height <= 0)
+            {
+                return;
+            }
+
+            _gradientPaint.Shader = gradient.For(width, height);
+
+            SKCanvas.Save();
+            SKCanvas.Translate(x, y);
+
+            if (radius != null && radius.HasRadius)
+            {
+                SKCanvas.DrawRoundRect(BuildRoundRect(0, 0, width, height, radius), _gradientPaint);
+            }
+            else
+            {
+                SKCanvas.DrawRect(0, 0, width, height, _gradientPaint);
+            }
+
+            SKCanvas.Restore();
+            _gradientPaint.Shader = null;
         }
 
         internal void DrawShadow(float x, float y, float width, float height,

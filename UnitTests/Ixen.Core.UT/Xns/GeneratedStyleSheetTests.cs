@@ -216,5 +216,24 @@ namespace Ixen.Core.UT.Xns
             Assert.AreEqual(2.5f, text.Blur);
             Assert.AreEqual("#80445566", text.Color);
         }
+
+        [TestMethod]
+        public void AGradientSurvivesGeneration()
+        {
+            StyleClass gradient = StyleRegistry.Default.GetScopedClass(
+                StyleClassTarget.ElementName, "generated_gradient", null, "generated_root");
+
+            Assert.IsNotNull(gradient, "the nested generated_gradient class should be registered");
+
+            var background = (BackgroundStyleDescriptor)gradient.Styles.Single();
+
+            Assert.IsNotNull(background.Gradient);
+            Assert.AreEqual(GradientKind.Linear, background.Gradient.Kind);
+            Assert.AreEqual(45f, background.Gradient.Angle);
+            Assert.AreEqual(3, background.Gradient.Stops.Count);
+            Assert.AreEqual("#112233", background.Gradient.Stops[0].Color);
+            Assert.AreEqual(0.2f, background.Gradient.Stops[0].Offset);
+            Assert.IsFalse(background.Gradient.Stops[1].HasOffset);
+        }
     }
 }

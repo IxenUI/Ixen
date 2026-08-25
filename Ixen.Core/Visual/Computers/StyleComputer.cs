@@ -577,7 +577,8 @@ namespace Ixen.Core.Visual.Computers
 
         private static bool IsPainting(BackgroundStyleDescriptor descriptor)
             => descriptor != null
-                && (!string.IsNullOrWhiteSpace(descriptor.Color) || !string.IsNullOrWhiteSpace(descriptor.ImageUrl));
+                && (!string.IsNullOrWhiteSpace(descriptor.Color) || !string.IsNullOrWhiteSpace(descriptor.ImageUrl)
+                    || descriptor.Gradient != null);
 
         private static bool IsPainting(BorderStyleDescriptor descriptor)
             => descriptor != null
