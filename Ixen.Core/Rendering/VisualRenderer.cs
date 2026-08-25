@@ -38,6 +38,13 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
+            bool transformed = element.HasTransform;
+
+            if (transformed)
+            {
+                context.PushTransform(Transforms.Of(element));
+            }
+
             OpacityStyleDescriptor opacity = element.StylesHandlers.Opacity.Descriptor;
             bool layered = opacity.IsTransparent;
 
@@ -51,6 +58,11 @@ namespace Ixen.Core.Rendering
             if (element.Children.Count == 0 && !element.HasChrome)
             {
                 if (layered)
+                {
+                    context.PopClip();
+                }
+
+                if (transformed)
                 {
                     context.PopClip();
                 }
@@ -88,6 +100,11 @@ namespace Ixen.Core.Rendering
             context.PopClip();
 
             if (layered)
+            {
+                context.PopClip();
+            }
+
+            if (transformed)
             {
                 context.PopClip();
             }

@@ -69,6 +69,17 @@ namespace Ixen.Core.Rendering
             SKCanvas.ClipRect(new SKRect(x, y, x + width, y + height), SKClipOperation.Intersect, false);
         }
 
+        internal void PushTransform(Matrix2D matrix)
+        {
+            SKCanvas.Save();
+            _clipDepth++;
+
+            var skia = new SKMatrix(matrix.ScaleX, matrix.SkewX, matrix.TransX,
+                matrix.SkewY, matrix.ScaleY, matrix.TransY, 0, 0, 1);
+
+            SKCanvas.Concat(in skia);
+        }
+
         internal void PushOpacity(float opacity)
         {
             _layerPaint.Color = _layerPaint.Color.WithAlpha((byte)(opacity * 255));

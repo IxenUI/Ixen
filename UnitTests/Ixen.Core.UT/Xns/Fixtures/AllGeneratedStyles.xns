@@ -71,6 +71,11 @@ generated_root {
         background: linear-gradient(45deg #112233 20% #445566 #778899)
     }
 
+    generated_transformed {
+        transform: translate(4px -12.5%) rotate(-30deg) scale(1.25 2) skewX(6deg)
+        transform-origin: left bottom
+    }
+
     generated_anchored {
         layout: fixed
         anchor: generated_child

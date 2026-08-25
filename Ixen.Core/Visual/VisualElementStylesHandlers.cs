@@ -45,6 +45,8 @@ namespace Ixen.Core.Visual
         internal static readonly TextOverflowStyleHandler DefaultTextOverflow = new();
         internal static readonly TextWrapStyleHandler DefaultTextWrap = new();
         internal static readonly TopStyleHandler DefaultTop = new();
+        internal static readonly TransformStyleHandler DefaultTransform = new();
+        internal static readonly TransformOriginStyleHandler DefaultTransformOrigin = new();
         internal static readonly TransitionStyleHandler DefaultTransition = new();
         internal static readonly WidthStyleHandler DefaultWidth = new();
         internal static readonly ZIndexStyleHandler DefaultZIndex = new();
@@ -90,6 +92,8 @@ namespace Ixen.Core.Visual
         public TextOverflowStyleHandler TextOverflow { get; set; } = DefaultTextOverflow;
         public TextWrapStyleHandler TextWrap { get; set; } = DefaultTextWrap;
         public TopStyleHandler Top { get; set; } = DefaultTop;
+        public TransformStyleHandler Transform { get; set; } = DefaultTransform;
+        public TransformOriginStyleHandler TransformOrigin { get; set; } = DefaultTransformOrigin;
         public TransitionStyleHandler Transition { get; set; } = DefaultTransition;
         public WidthStyleHandler Width { get; set; } = DefaultWidth;
         public ZIndexStyleHandler ZIndex { get; set; } = DefaultZIndex;

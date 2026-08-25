@@ -54,6 +54,8 @@
         public const string TEXT_SHADOW = "text-shadow";
         public const string TEXT_WRAP = "text-wrap";
         public const string TOP = "top";
+        public const string TRANSFORM = "transform";
+        public const string TRANSFORM_ORIGIN = "transform-origin";
         public const string TRANSITION = "transition";
         public const string WIDTH = "width";
         public const string Z_INDEX = "z-index";

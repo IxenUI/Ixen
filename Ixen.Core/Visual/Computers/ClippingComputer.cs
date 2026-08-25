@@ -19,7 +19,7 @@ namespace Ixen.Core.Visual.Computers
             _collected = element.Overlays;
             _collected.Clear();
 
-            Compute(element);
+            Compute(element, false);
 
             if (_layered)
             {
@@ -50,13 +50,15 @@ namespace Ixen.Core.Visual.Computers
         private static int DepthOf(VisualElement element)
             => element.StylesHandlers.ZIndex.Descriptor.Value;
 
-        private void Compute(VisualElement element)
+        private void Compute(VisualElement element, bool transformed)
         {
-            ComputeElementClip(element);
+            transformed = transformed || element.HasTransform;
+
+            ComputeElementClip(element, transformed);
 
             foreach (VisualElement child in element.Children)
             {
-                Compute(child);
+                Compute(child, transformed);
             }
 
             if (!element.HasChrome)
@@ -66,11 +68,11 @@ namespace Ixen.Core.Visual.Computers
 
             foreach (VisualElement chrome in element.Chrome)
             {
-                Compute(chrome);
+                Compute(chrome, transformed);
             }
         }
 
-        private void ComputeElementClip(VisualElement element)
+        private void ComputeElementClip(VisualElement element, bool transformed)
         {
             if (element.IsOverlay)
             {
@@ -88,6 +90,15 @@ namespace Ixen.Core.Visual.Computers
                     Width = _viewportWidth,
                     Height = _viewportHeight
                 };
+
+                return;
+            }
+
+            if (transformed)
+            {
+                element.Clip = element.Parent?.Clip != null
+                    ? new DimensionalElement(element.Parent.Clip)
+                    : new DimensionalElement(element);
 
                 return;
             }

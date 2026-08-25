@@ -314,6 +314,9 @@ namespace Ixen.Core.Visual
             => StylesHandlers != null
                 && !string.IsNullOrEmpty(StylesHandlers.Anchor.Descriptor.Name);
 
+        internal bool HasTransform
+            => StylesHandlers != null && StylesHandlers.Transform.Descriptor.IsDeclared;
+
         private List<VisualElement> _overlays;
 
         internal List<VisualElement> Overlays => _overlays ?? (_overlays = new List<VisualElement>());

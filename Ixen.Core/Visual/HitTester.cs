@@ -31,11 +31,24 @@ namespace Ixen.Core.Visual
                 return null;
             }
 
+            float localX = x;
+            float localY = y;
+
+            if (layer.HasTransform)
+            {
+                if (!Transforms.Of(layer).TryInvert(out Matrix2D inverse))
+                {
+                    return null;
+                }
+
+                inverse.Map(x, y, out localX, out localY);
+            }
+
             if (layer.HasChrome)
             {
                 for (int i = layer.Chrome.Count - 1; i >= 0; i--)
                 {
-                    VisualElement chrome = Test(layer.Chrome[i], x, y);
+                    VisualElement chrome = Test(layer.Chrome[i], localX, localY);
 
                     if (chrome != null)
                     {
@@ -46,7 +59,7 @@ namespace Ixen.Core.Visual
 
             for (int i = layer.Children.Count - 1; i >= 0; i--)
             {
-                VisualElement hit = Test(layer.Children[i], x, y);
+                VisualElement hit = Test(layer.Children[i], localX, localY);
 
                 if (hit != null)
                 {
@@ -62,6 +75,16 @@ namespace Ixen.Core.Visual
             if (element == null || element.IsVoidOrInvalid)
             {
                 return null;
+            }
+
+            if (element.HasTransform)
+            {
+                if (!Transforms.Of(element).TryInvert(out Matrix2D inverse))
+                {
+                    return null;
+                }
+
+                inverse.Map(x, y, out x, out y);
             }
 
             if (x < element.X

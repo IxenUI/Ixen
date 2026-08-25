@@ -9,6 +9,8 @@ namespace Ixen.Core.Visual
         public AnimationStyleDescriptor Animation { get; set; } = new();
         public ObjectFitStyleDescriptor ObjectFit { get; set; } = new();
         public OpacityStyleDescriptor Opacity { get; set; } = new();
+        public TransformStyleDescriptor Transform { get; set; } = new();
+        public TransformOriginStyleDescriptor TransformOrigin { get; set; } = new();
         public OverflowStyleDescriptor Overflow { get; set; } = new();
         public BackgroundStyleDescriptor Background { get; set; } = new();
         public BorderStyleDescriptor Border { get; set; } = new();

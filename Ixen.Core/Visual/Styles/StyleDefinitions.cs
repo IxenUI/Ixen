@@ -165,6 +165,21 @@ namespace Ixen.Core.Visual.Styles
                 Define(StyleIdentifier.TOP, v => new TopStyleParser(v),
                     p => ((TopStyleParser)p).Descriptor),
 
+                Define(StyleIdentifier.TRANSFORM, v => new TransformStyleParser(v),
+                    p => ((TransformStyleParser)p).Descriptor,
+                    new[] { TransformStyleParser.NONE },
+                    new[] { TransformStyleParser.TRANSLATE, "translateX", "translateY",
+                        TransformStyleParser.SCALE, "scaleX", "scaleY",
+                        TransformStyleParser.ROTATE,
+                        TransformStyleParser.SKEW, "skewX", "skewY" }),
+
+                Define(StyleIdentifier.TRANSFORM_ORIGIN, v => new TransformOriginStyleParser(v),
+                    p => ((TransformOriginStyleParser)p).Descriptor,
+                    new[] { "center middle", "left top", "right bottom" },
+                    new[] { TransformOriginStyleParser.LEFT, TransformOriginStyleParser.CENTER,
+                        TransformOriginStyleParser.RIGHT, TransformOriginStyleParser.TOP,
+                        TransformOriginStyleParser.MIDDLE, TransformOriginStyleParser.BOTTOM }),
+
                 Define(StyleIdentifier.TRANSITION, v => new TransitionStyleParser(v),
                     p => ((TransitionStyleParser)p).Descriptor,
                     null, new[] { "all", "background", "color", "border",

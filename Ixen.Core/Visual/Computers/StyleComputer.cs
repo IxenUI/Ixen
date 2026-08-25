@@ -572,6 +572,20 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultOpacity;
             }
 
+            if (handlers.Transform.Descriptor != styles.Transform)
+            {
+                handlers.Transform = styles.Transform != null && styles.Transform.IsDeclared
+                    ? new TransformStyleHandler(styles.Transform)
+                    : VisualElementStylesHandlers.DefaultTransform;
+            }
+
+            if (handlers.TransformOrigin.Descriptor != styles.TransformOrigin)
+            {
+                handlers.TransformOrigin = styles.TransformOrigin != null && !styles.TransformOrigin.IsDefault
+                    ? new TransformOriginStyleHandler(styles.TransformOrigin)
+                    : VisualElementStylesHandlers.DefaultTransformOrigin;
+            }
+
             if (handlers.Gap.Descriptor != styles.Gap)
             {
                 handlers.Gap = styles.Gap != null && styles.Gap.IsDeclared
@@ -735,6 +749,14 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.OPACITY:
                     handlers.Opacity = new OpacityStyleHandler((OpacityStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.TRANSFORM:
+                    handlers.Transform = new TransformStyleHandler((TransformStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.TRANSFORM_ORIGIN:
+                    handlers.TransformOrigin = new TransformOriginStyleHandler((TransformOriginStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.GAP:
