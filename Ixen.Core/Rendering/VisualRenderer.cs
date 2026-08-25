@@ -1,4 +1,5 @@
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Styles.Descriptors;
 using System.Collections.Generic;
 
 namespace Ixen.Core.Rendering
@@ -37,10 +38,23 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
+            OpacityStyleDescriptor opacity = element.StylesHandlers.Opacity.Descriptor;
+            bool layered = opacity.IsTransparent;
+
+            if (layered)
+            {
+                context.PushOpacity(opacity.Value);
+            }
+
             RenderElement(element, context);
 
             if (element.Children.Count == 0 && !element.HasChrome)
             {
+                if (layered)
+                {
+                    context.PopClip();
+                }
+
                 return;
             }
 
@@ -72,6 +86,11 @@ namespace Ixen.Core.Rendering
             }
 
             context.PopClip();
+
+            if (layered)
+            {
+                context.PopClip();
+            }
         }
 
         private void RenderElement(VisualElement element, RendererContext context)

@@ -130,6 +130,9 @@ namespace Ixen.Core.Visual.Styles
                 Define(StyleIdentifier.MIN_WIDTH, v => new MinWidthStyleParser(v),
                     p => ((MinWidthStyleParser)p).Descriptor),
 
+                Define(StyleIdentifier.OPACITY, v => new OpacityStyleParser(v),
+                    p => ((OpacityStyleParser)p).Descriptor),
+
                 Define(StyleIdentifier.OVERFLOW, v => new OverflowStyleParser(v),
                     p => ((OverflowStyleParser)p).Descriptor,
                     new[] { OverflowStyleParser.SCROLL, OverflowStyleParser.HIDDEN,

@@ -21,6 +21,7 @@ namespace Ixen.Core.Rendering
         private readonly SKPaint _textShadowPaint = new SKPaint { IsStroke = false, IsAntialias = true };
         private float _textShadowBlur = -1;
         private readonly SKPaint _gradientPaint = new SKPaint { IsStroke = false, IsAntialias = true };
+        private readonly SKPaint _layerPaint = new SKPaint { Color = SKColors.Black };
 
         private readonly SKSamplingOptions _sampling =
             new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
@@ -66,6 +67,14 @@ namespace Ixen.Core.Rendering
             }
 
             SKCanvas.ClipRect(new SKRect(x, y, x + width, y + height), SKClipOperation.Intersect, false);
+        }
+
+        internal void PushOpacity(float opacity)
+        {
+            _layerPaint.Color = _layerPaint.Color.WithAlpha((byte)(opacity * 255));
+
+            SKCanvas.SaveLayer(_layerPaint);
+            _clipDepth++;
         }
 
         internal void PopClip()

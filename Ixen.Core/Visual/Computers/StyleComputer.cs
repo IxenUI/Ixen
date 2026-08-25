@@ -553,6 +553,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultAnchorPlacement;
             }
 
+            if (handlers.Opacity.Descriptor != styles.Opacity)
+            {
+                handlers.Opacity = styles.Opacity != null && styles.Opacity.IsTransparent
+                    ? new OpacityStyleHandler(styles.Opacity)
+                    : VisualElementStylesHandlers.DefaultOpacity;
+            }
+
             if (handlers.Gap.Descriptor != styles.Gap)
             {
                 handlers.Gap = styles.Gap != null && styles.Gap.IsDeclared
@@ -708,6 +715,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.ANCHOR_PLACEMENT:
                     handlers.AnchorPlacement = new AnchorPlacementStyleHandler((AnchorPlacementStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.OPACITY:
+                    handlers.Opacity = new OpacityStyleHandler((OpacityStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.GAP:

@@ -24,7 +24,7 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(25, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(26, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
         }
 
         [TestMethod]
@@ -234,6 +234,12 @@ namespace Ixen.Core.UT.Xns
             Assert.AreEqual("#112233", background.Gradient.Stops[0].Color);
             Assert.AreEqual(0.2f, background.Gradient.Stops[0].Offset);
             Assert.IsFalse(background.Gradient.Stops[1].HasOffset);
+        }
+
+        [TestMethod]
+        public void TheOpacitySurvivesGeneration()
+        {
+            Assert.AreEqual(0.75f, Style<OpacityStyleDescriptor>().Value);
         }
     }
 }
