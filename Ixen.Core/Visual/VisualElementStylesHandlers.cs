@@ -29,6 +29,10 @@ namespace Ixen.Core.Visual
         internal static readonly LayoutStyleHandler DefaultLayout = new();
         internal static readonly LeftStyleHandler DefaultLeft = new();
         internal static readonly MarginStyleHandler DefaultMargin = new();
+        internal static readonly MaxHeightStyleHandler DefaultMaxHeight = new();
+        internal static readonly MaxWidthStyleHandler DefaultMaxWidth = new();
+        internal static readonly MinHeightStyleHandler DefaultMinHeight = new();
+        internal static readonly MinWidthStyleHandler DefaultMinWidth = new();
         internal static readonly PaddingStyleHandler DefaultPadding = new();
         internal static readonly RightStyleHandler DefaultRight = new();
         internal static readonly RowIndexStyleHandler DefaultRowIndex = new();
@@ -67,6 +71,10 @@ namespace Ixen.Core.Visual
         public LayoutStyleHandler Layout { get; set; } = DefaultLayout;
         public LeftStyleHandler Left { get; set; } = DefaultLeft;
         public MarginStyleHandler Margin { get; set; } = DefaultMargin;
+        public MaxHeightStyleHandler MaxHeight { get; set; } = DefaultMaxHeight;
+        public MaxWidthStyleHandler MaxWidth { get; set; } = DefaultMaxWidth;
+        public MinHeightStyleHandler MinHeight { get; set; } = DefaultMinHeight;
+        public MinWidthStyleHandler MinWidth { get; set; } = DefaultMinWidth;
         public PaddingStyleHandler Padding { get; set; } = DefaultPadding;
         public RightStyleHandler Right { get; set; } = DefaultRight;
         public RowIndexStyleHandler RowIndex { get; set; } = DefaultRowIndex;

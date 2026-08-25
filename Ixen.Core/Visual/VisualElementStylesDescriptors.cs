@@ -29,6 +29,10 @@ namespace Ixen.Core.Visual
         public LayoutStyleDescriptor Layout { get; set; } = new();
         public LeftStyleDescriptor Left { get; set; } = new();
         public MarginStyleDescriptor Margin { get; set; } = new();
+        public MaxHeightStyleDescriptor MaxHeight { get; set; } = new();
+        public MaxWidthStyleDescriptor MaxWidth { get; set; } = new();
+        public MinHeightStyleDescriptor MinHeight { get; set; } = new();
+        public MinWidthStyleDescriptor MinWidth { get; set; } = new();
         public PaddingStyleDescriptor Padding { get; set; } = new();
         public RightStyleDescriptor Right { get; set; } = new();
         public RowIndexStyleDescriptor RowIndex { get; set; } = new();

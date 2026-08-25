@@ -553,6 +553,34 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultAnchorPlacement;
             }
 
+            if (handlers.MinWidth.Descriptor != styles.MinWidth)
+            {
+                handlers.MinWidth = styles.MinWidth != null && styles.MinWidth.IsDeclared
+                    ? new MinWidthStyleHandler(styles.MinWidth)
+                    : VisualElementStylesHandlers.DefaultMinWidth;
+            }
+
+            if (handlers.MaxWidth.Descriptor != styles.MaxWidth)
+            {
+                handlers.MaxWidth = styles.MaxWidth != null && styles.MaxWidth.IsDeclared
+                    ? new MaxWidthStyleHandler(styles.MaxWidth)
+                    : VisualElementStylesHandlers.DefaultMaxWidth;
+            }
+
+            if (handlers.MinHeight.Descriptor != styles.MinHeight)
+            {
+                handlers.MinHeight = styles.MinHeight != null && styles.MinHeight.IsDeclared
+                    ? new MinHeightStyleHandler(styles.MinHeight)
+                    : VisualElementStylesHandlers.DefaultMinHeight;
+            }
+
+            if (handlers.MaxHeight.Descriptor != styles.MaxHeight)
+            {
+                handlers.MaxHeight = styles.MaxHeight != null && styles.MaxHeight.IsDeclared
+                    ? new MaxHeightStyleHandler(styles.MaxHeight)
+                    : VisualElementStylesHandlers.DefaultMaxHeight;
+            }
+
             if (handlers.BoxShadow.Descriptor != styles.BoxShadow)
             {
                 handlers.BoxShadow = styles.BoxShadow != null && styles.BoxShadow.IsDeclared
@@ -673,6 +701,22 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.ANCHOR_PLACEMENT:
                     handlers.AnchorPlacement = new AnchorPlacementStyleHandler((AnchorPlacementStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.MIN_WIDTH:
+                    handlers.MinWidth = new MinWidthStyleHandler((MinWidthStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.MAX_WIDTH:
+                    handlers.MaxWidth = new MaxWidthStyleHandler((MaxWidthStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.MIN_HEIGHT:
+                    handlers.MinHeight = new MinHeightStyleHandler((MinHeightStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.MAX_HEIGHT:
+                    handlers.MaxHeight = new MaxHeightStyleHandler((MaxHeightStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.BOX_SHADOW:

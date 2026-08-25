@@ -115,6 +115,18 @@ namespace Ixen.Core.Visual.Styles
                     p => ((ObjectFitStyleParser)p).Descriptor,
                     new[] { "fill", "contain", "cover", "none", "scale-down" }),
 
+                Define(StyleIdentifier.MAX_HEIGHT, v => new MaxHeightStyleParser(v),
+                    p => ((MaxHeightStyleParser)p).Descriptor),
+
+                Define(StyleIdentifier.MAX_WIDTH, v => new MaxWidthStyleParser(v),
+                    p => ((MaxWidthStyleParser)p).Descriptor),
+
+                Define(StyleIdentifier.MIN_HEIGHT, v => new MinHeightStyleParser(v),
+                    p => ((MinHeightStyleParser)p).Descriptor),
+
+                Define(StyleIdentifier.MIN_WIDTH, v => new MinWidthStyleParser(v),
+                    p => ((MinWidthStyleParser)p).Descriptor),
+
                 Define(StyleIdentifier.OVERFLOW, v => new OverflowStyleParser(v),
                     p => ((OverflowStyleParser)p).Descriptor,
                     new[] { OverflowStyleParser.SCROLL, OverflowStyleParser.HIDDEN,

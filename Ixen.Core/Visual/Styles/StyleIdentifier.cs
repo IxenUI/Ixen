@@ -5,6 +5,7 @@
         // Internal bases
         internal const string BOOLEAN = "bool";
         internal const string OFFSET = "offset";
+        internal const string BOUND = "bound";
         internal const string SIZE = "size";
         internal const string SPACE = "space";
         internal const string SIZE_TEMPLATE = "size-template";
@@ -34,6 +35,10 @@
         public const string LAYOUT = "layout";
         public const string LEFT = "left";
         public const string MARGIN = "margin";
+        public const string MAX_HEIGHT = "max-height";
+        public const string MAX_WIDTH = "max-width";
+        public const string MIN_HEIGHT = "min-height";
+        public const string MIN_WIDTH = "min-width";
         public const string OBJECT_FIT = "object-fit";
         public const string OVERFLOW = "overflow";
         public const string PADDING = "padding";

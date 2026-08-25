@@ -34,6 +34,9 @@ namespace Ixen.Core.Visual.Computers
 
             ResolveBorders(element);
 
+            availableWidth = Bounded(element, availableWidth, true);
+            availableHeight = Bounded(element, availableHeight, false);
+
             bool scrollable = element.Scrollable;
 
             if (scrollable)
@@ -68,13 +71,13 @@ namespace Ixen.Core.Visual.Computers
 
             element.Width = widthIsDefinite
                 ? availableWidth
-                : Math.Max(aggregateWidth, intrinsicWidth)
-                    + element.HorizontalPadding + element.HorizontalBorderInside;
+                : Bounded(element, Math.Max(aggregateWidth, intrinsicWidth)
+                    + element.HorizontalPadding + element.HorizontalBorderInside, true);
 
             element.Height = heightIsDefinite
                 ? availableHeight
-                : Math.Max(aggregateHeight, intrinsicHeight)
-                    + element.VerticalPadding + element.VerticalBorderInside;
+                : Bounded(element, Math.Max(aggregateHeight, intrinsicHeight)
+                    + element.VerticalPadding + element.VerticalBorderInside, false);
 
             if (scrollable)
             {
@@ -98,6 +101,31 @@ namespace Ixen.Core.Visual.Computers
             {
                 MeasureScrollbars(element, scrollable);
             }
+        }
+
+        private static float Bounded(VisualElement element, float size, bool horizontal)
+        {
+            VisualElementStylesHandlers handlers = element.StylesHandlers;
+
+            if (handlers == null)
+            {
+                return size;
+            }
+
+            BoundStyleDescriptor max = horizontal
+                ? (BoundStyleDescriptor)handlers.MaxWidth.Descriptor
+                : handlers.MaxHeight.Descriptor;
+
+            if (max.IsDeclared && size > max.Value)
+            {
+                size = max.Value;
+            }
+
+            BoundStyleDescriptor min = horizontal
+                ? (BoundStyleDescriptor)handlers.MinWidth.Descriptor
+                : handlers.MinHeight.Descriptor;
+
+            return min.IsDeclared && size < min.Value ? min.Value : size;
         }
 
         private float ContentSize(VisualElement element, float available, bool horizontal)
