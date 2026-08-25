@@ -92,6 +92,7 @@ namespace Ixen.Core.Rendering
                     x += align == TextAlign.Center ? slack / 2 : slack;
                 }
 
+                context.DrawTextShadow(line, x, top, fontSpec, handlers.TextShadow.Descriptor);
                 context.DrawText(line, x, top, fontSpec, handlers.Color.Brush);
                 top += lineHeight;
             }
@@ -138,6 +139,7 @@ namespace Ixen.Core.Rendering
                 }
                 else
                 {
+                    context.DrawTextShadow(lines[line], x, lineTop, fontSpec, handlers.TextShadow.Descriptor);
                     context.DrawText(lines[line], x, lineTop, fontSpec, handlers.Color.Brush);
                 }
             }

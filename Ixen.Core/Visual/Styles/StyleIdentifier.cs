@@ -18,6 +18,7 @@
         public const string BACKGROUND = "background";
         public const string BORDER = "border";
         public const string BOTTOM = "bottom";
+        public const string BOX_SHADOW = "box-shadow";
         public const string COLOR = "color";
         public const string COLUMN_INDEX = "column-index";
         public const string COLUMN_SPAN = "column-span";
@@ -42,6 +43,7 @@
         public const string ROW_TEMPLATE = "row-template";
         public const string TEXT_ALIGN = "text-align";
         public const string TEXT_OVERFLOW = "text-overflow";
+        public const string TEXT_SHADOW = "text-shadow";
         public const string TEXT_WRAP = "text-wrap";
         public const string TOP = "top";
         public const string TRANSITION = "transition";

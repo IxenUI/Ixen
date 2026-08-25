@@ -78,6 +78,7 @@ namespace Ixen.Core.Rendering
         {
             VisualElementStylesHandlers styles = element.StylesHandlers;
 
+            ShadowRenderer.Render(element, context);
             styles.Background?.Render(element, context);
             _imageRenderer.Render(element, context);
             styles.Border?.Render(element, context);

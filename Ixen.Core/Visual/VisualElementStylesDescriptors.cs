@@ -11,6 +11,8 @@ namespace Ixen.Core.Visual
         public OverflowStyleDescriptor Overflow { get; set; } = new();
         public BackgroundStyleDescriptor Background { get; set; } = new();
         public BorderStyleDescriptor Border { get; set; } = new();
+        public BoxShadowStyleDescriptor BoxShadow { get; set; } = new();
+        public TextShadowStyleDescriptor TextShadow { get; set; } = new();
         public BottomStyleDescriptor Bottom { get; set; } = new();
         public ColorStyleDescriptor Color { get; set; } = new();
         public ColumnIndexStyleDescriptor ColumnIndex { get; set; } = new();

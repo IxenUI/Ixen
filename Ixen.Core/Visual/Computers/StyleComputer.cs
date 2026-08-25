@@ -191,6 +191,11 @@ namespace Ixen.Core.Visual.Computers
             {
                 handlers.Cursor = from.Cursor;
             }
+
+            if (!handlers.TextShadow.Descriptor.IsDeclared)
+            {
+                handlers.TextShadow = from.TextShadow;
+            }
         }
 
         private void SyncOverflow(VisualElement element)
@@ -548,6 +553,20 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultAnchorPlacement;
             }
 
+            if (handlers.BoxShadow.Descriptor != styles.BoxShadow)
+            {
+                handlers.BoxShadow = styles.BoxShadow != null && styles.BoxShadow.IsDeclared
+                    ? new BoxShadowStyleHandler(styles.BoxShadow)
+                    : VisualElementStylesHandlers.DefaultBoxShadow;
+            }
+
+            if (handlers.TextShadow.Descriptor != styles.TextShadow)
+            {
+                handlers.TextShadow = styles.TextShadow != null && styles.TextShadow.IsDeclared
+                    ? new TextShadowStyleHandler(styles.TextShadow)
+                    : VisualElementStylesHandlers.DefaultTextShadow;
+            }
+
             if (handlers.ZIndex.Descriptor != styles.ZIndex)
             {
                 handlers.ZIndex = styles.ZIndex != null && styles.ZIndex.Value != 0
@@ -653,6 +672,14 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.ANCHOR_PLACEMENT:
                     handlers.AnchorPlacement = new AnchorPlacementStyleHandler((AnchorPlacementStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.BOX_SHADOW:
+                    handlers.BoxShadow = new BoxShadowStyleHandler((BoxShadowStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.TEXT_SHADOW:
+                    handlers.TextShadow = new TextShadowStyleHandler((TextShadowStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.Z_INDEX:

@@ -16,6 +16,10 @@ namespace Ixen.Core.Rendering
         private readonly SKPaint _imagePaint = new SKPaint { IsAntialias = true };
 
         private readonly SKPaint _bandPaint = new SKPaint { IsStroke = false, IsAntialias = false };
+        private readonly SKPaint _shadowPaint = new SKPaint { IsStroke = false, IsAntialias = true };
+        private float _shadowBlur = -1;
+        private readonly SKPaint _textShadowPaint = new SKPaint { IsStroke = false, IsAntialias = true };
+        private float _textShadowBlur = -1;
 
         private readonly SKSamplingOptions _sampling =
             new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
@@ -145,6 +149,31 @@ namespace Ixen.Core.Rendering
             SKCanvas.DrawText(text, x, top - font.Metrics.Ascent, SKTextAlign.Left, font, brush.SKPaint);
         }
 
+        internal void DrawTextShadow(string text, float x, float top, FontSpec fontSpec,
+            ShadowStyleDescriptor shadow)
+        {
+            if (shadow == null || !shadow.IsDeclared)
+            {
+                return;
+            }
+
+            SKFont font = FontCache.Get(fontSpec);
+
+            if (shadow.Blur != _textShadowBlur)
+            {
+                _textShadowPaint.MaskFilter = shadow.Blur > 0
+                    ? SKMaskFilter.CreateBlur(SKBlurStyle.Normal, shadow.Blur / 2)
+                    : null;
+
+                _textShadowBlur = shadow.Blur;
+            }
+
+            _textShadowPaint.Color = new Color(shadow.Color).SKColor;
+
+            SKCanvas.DrawText(text, x + shadow.OffsetX, top + shadow.OffsetY - font.Metrics.Ascent,
+                SKTextAlign.Left, font, _textShadowPaint);
+        }
+
         internal void FillRoundRectangle(float x, float y, float width, float height,
             CornerRadiusStyleDescriptor radius, Brush brush)
         {
@@ -170,6 +199,34 @@ namespace Ixen.Core.Rendering
             SKCanvas.DrawRoundRect(
                 BuildRoundRect(x + offset, y + offset, width - offset * 2, height - offset * 2, radius),
                 pen.SKPaint);
+        }
+
+        internal void DrawShadow(float x, float y, float width, float height,
+            CornerRadiusStyleDescriptor radius, float blur, Color color)
+        {
+            if (width <= 0 || height <= 0)
+            {
+                return;
+            }
+
+            if (blur != _shadowBlur)
+            {
+                _shadowPaint.MaskFilter = blur > 0
+                    ? SKMaskFilter.CreateBlur(SKBlurStyle.Normal, blur / 2)
+                    : null;
+
+                _shadowBlur = blur;
+            }
+
+            _shadowPaint.Color = color.SKColor;
+
+            if (radius != null && radius.HasRadius)
+            {
+                SKCanvas.DrawRoundRect(BuildRoundRect(x, y, width, height, radius), _shadowPaint);
+                return;
+            }
+
+            SKCanvas.DrawRect(x, y, width, height, _shadowPaint);
         }
 
         private SKRoundRect BuildRoundRect(float x, float y, float width, float height,

@@ -11,6 +11,8 @@ namespace Ixen.Core.Visual
         internal static readonly OverflowStyleHandler DefaultOverflow = new();
         internal static readonly BackgroundStyleHandler DefaultBackground = new();
         internal static readonly BorderStyleHandler DefaultBorder = new();
+        internal static readonly BoxShadowStyleHandler DefaultBoxShadow = new();
+        internal static readonly TextShadowStyleHandler DefaultTextShadow = new();
         internal static readonly BottomStyleHandler DefaultBottom = new();
         internal static readonly ColorStyleHandler DefaultColor = new();
         internal static readonly ColumnIndexStyleHandler DefaultColumnIndex = new();
@@ -47,6 +49,8 @@ namespace Ixen.Core.Visual
         public OverflowStyleHandler Overflow { get; set; } = DefaultOverflow;
         public BackgroundStyleHandler Background { get; set; } = DefaultBackground;
         public BorderStyleHandler Border { get; set; } = DefaultBorder;
+        public BoxShadowStyleHandler BoxShadow { get; set; } = DefaultBoxShadow;
+        public TextShadowStyleHandler TextShadow { get; set; } = DefaultTextShadow;
         public BottomStyleHandler Bottom { get; set; } = DefaultBottom;
         public ColorStyleHandler Color { get; set; } = DefaultColor;
         public ColumnIndexStyleHandler ColumnIndex { get; set; } = DefaultColumnIndex;

@@ -43,6 +43,12 @@ namespace Ixen.Core.Visual.Styles
                 Define(StyleIdentifier.BACKGROUND, v => new BackgroundStyleParser(v),
                     p => ((BackgroundStyleParser)p).Descriptor),
 
+                Define(StyleIdentifier.BOX_SHADOW, v => new BoxShadowStyleParser(v),
+                    p => ((BoxShadowStyleParser)p).Descriptor),
+
+                Define(StyleIdentifier.TEXT_SHADOW, v => new TextShadowStyleParser(v),
+                    p => ((TextShadowStyleParser)p).Descriptor),
+
                 Define(StyleIdentifier.BORDER, v => new BorderStyleParser(v),
                     p => ((BorderStyleParser)p).Descriptor,
                     new[] { "#CCCCCC 1px", "#CCCCCC 1px 2px", "#CCCCCC 1px 2px 3px",

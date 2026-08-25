@@ -24,7 +24,7 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(23, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(25, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
         }
 
         [TestMethod]
@@ -197,6 +197,24 @@ namespace Ixen.Core.UT.Xns
 
             Assert.AreEqual(SizeUnit.Percents, width.Unit);
             Assert.AreEqual(30.5f, width.Value);
+        }
+
+        [TestMethod]
+        public void TheShadowsSurviveGeneration()
+        {
+            BoxShadowStyleDescriptor box = Style<BoxShadowStyleDescriptor>();
+
+            Assert.AreEqual(-1f, box.OffsetX, "a negative offset makes it through the tokenizer and the parser");
+            Assert.AreEqual(2.5f, box.OffsetY);
+            Assert.AreEqual(6f, box.Blur);
+            Assert.AreEqual(3f, box.Spread);
+            Assert.AreEqual("#40112233", box.Color);
+
+            TextShadowStyleDescriptor text = Style<TextShadowStyleDescriptor>();
+
+            Assert.AreEqual(1f, text.OffsetY);
+            Assert.AreEqual(2.5f, text.Blur);
+            Assert.AreEqual("#80445566", text.Color);
         }
     }
 }
