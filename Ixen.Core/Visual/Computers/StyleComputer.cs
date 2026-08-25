@@ -553,6 +553,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultAnchorPlacement;
             }
 
+            if (handlers.Gap.Descriptor != styles.Gap)
+            {
+                handlers.Gap = styles.Gap != null && styles.Gap.IsDeclared
+                    ? new GapStyleHandler(styles.Gap)
+                    : VisualElementStylesHandlers.DefaultGap;
+            }
+
             if (handlers.MinWidth.Descriptor != styles.MinWidth)
             {
                 handlers.MinWidth = styles.MinWidth != null && styles.MinWidth.IsDeclared
@@ -701,6 +708,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.ANCHOR_PLACEMENT:
                     handlers.AnchorPlacement = new AnchorPlacementStyleHandler((AnchorPlacementStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.GAP:
+                    handlers.Gap = new GapStyleHandler((GapStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.MIN_WIDTH:

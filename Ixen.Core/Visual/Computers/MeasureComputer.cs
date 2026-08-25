@@ -580,7 +580,7 @@ namespace Ixen.Core.Visual.Computers
                 ResolveVerticalSpacing(child, contentHeight);
             }
 
-            float pool = isRow ? contentWidth : contentHeight;
+            float pool = (isRow ? contentWidth : contentHeight) - TotalGap(element, isRow);
             float totalWeight = 0;
 
             foreach (VisualElement child in element.Children)
@@ -623,6 +623,34 @@ namespace Ixen.Core.Visual.Computers
                 float share = (pool / totalWeight) * mainStyle.Value;
                 MeasureChild(child, contentWidth, contentHeight, isRow, share, true);
             }
+        }
+
+        internal static float GapOf(VisualElement element, bool isRow)
+        {
+            if (element.StylesHandlers == null)
+            {
+                return 0;
+            }
+
+            GapStyleDescriptor gap = element.StylesHandlers.Gap.Descriptor;
+
+            return isRow ? gap.Column : gap.Row;
+        }
+
+        internal static float TrackGap(VisualElement element, bool horizontal)
+        {
+            float[] tracks = horizontal ? element.GridColumns : element.GridRows;
+
+            return tracks == null || tracks.Length < 2
+                ? 0
+                : GapOf(element, horizontal) * (tracks.Length - 1);
+        }
+
+        internal static float TotalGap(VisualElement element, bool isRow)
+        {
+            int count = element.Children.Count;
+
+            return count < 2 ? 0 : GapOf(element, isRow) * (count - 1);
         }
 
         private void MeasureChild(VisualElement child, float contentWidth, float contentHeight, bool isRow, float mainShare, bool useMainShare)
@@ -696,28 +724,36 @@ namespace Ixen.Core.Visual.Computers
             float[] columns = element.EnsureGridColumns(columnCount);
             float[] rows = element.EnsureGridRows(rowCount);
 
-            ResolveColumnTracks(element, columnTemplate, columns, contentWidth);
-            ResolveRowTracks(element, rowTemplate, columns, rows, contentHeight);
+            float columnGap = GapOf(element, true);
+            float rowGap = GapOf(element, false);
+
+            ResolveColumnTracks(element, columnTemplate, columns,
+                contentWidth - columnGap * (columnCount - 1));
+
+            ResolveRowTracks(element, rowTemplate, columns, rows,
+                contentHeight - rowGap * (rowCount - 1));
 
             foreach (VisualElement child in element.Children)
             {
                 MeasureCell(child,
-                    Extent(columns, child.GridColumn, child.GridColumnSpan),
-                    Extent(rows, child.GridRow, child.GridRowSpan),
+                    Extent(columns, child.GridColumn, child.GridColumnSpan, columnGap),
+                    Extent(rows, child.GridRow, child.GridRowSpan, rowGap),
                     true, true);
             }
         }
 
-        private static float Extent(float[] tracks, int start, int span)
+        private static float Extent(float[] tracks, int start, int span, float gap)
         {
             float extent = 0;
+            int covered = 0;
 
             for (int i = start; i < start + span && i < tracks.Length; i++)
             {
                 extent += tracks[i];
+                covered++;
             }
 
-            return extent;
+            return covered < 2 ? extent : extent + gap * (covered - 1);
         }
 
         private static int PlaceCells(VisualElement element, int columnCount)
@@ -971,7 +1007,8 @@ namespace Ixen.Core.Visual.Computers
                     continue;
                 }
 
-                MeasureCell(child, Extent(columns, child.GridColumn, child.GridColumnSpan), available, true, false);
+                MeasureCell(child, Extent(columns, child.GridColumn, child.GridColumnSpan,
+                    GapOf(element, true)), available, true, false);
 
                 if (child.BoxHeight > extent)
                 {
@@ -1033,7 +1070,7 @@ namespace Ixen.Core.Visual.Computers
         {
             if (type == LayoutType.Grid)
             {
-                return Sum(element.GridColumns);
+                return Sum(element.GridColumns) + TrackGap(element, true);
             }
 
             if (type == LayoutType.Fixed)
@@ -1061,14 +1098,14 @@ namespace Ixen.Core.Visual.Computers
                 }
             }
 
-            return total;
+            return isRow ? total + TotalGap(element, true) : total;
         }
 
         private float AggregateHeight(VisualElement element, LayoutType type)
         {
             if (type == LayoutType.Grid)
             {
-                return Sum(element.GridRows);
+                return Sum(element.GridRows) + TrackGap(element, false);
             }
 
             if (type == LayoutType.Fixed)
@@ -1096,7 +1133,7 @@ namespace Ixen.Core.Visual.Computers
                 }
             }
 
-            return total;
+            return isRow ? total : total + TotalGap(element, false);
         }
 
         private void MeasureAnchored(VisualElement element, float contentWidth, float contentHeight)

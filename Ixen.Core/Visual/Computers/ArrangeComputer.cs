@@ -214,6 +214,7 @@ namespace Ixen.Core.Visual.Computers
             bool isRow = type == LayoutType.Row;
             float childX = ContentOriginX(element);
             float childY = ContentOriginY(element);
+            float gap = MeasureComputer.GapOf(element, isRow);
 
             foreach (VisualElement child in element.Children)
             {
@@ -221,11 +222,11 @@ namespace Ixen.Core.Visual.Computers
 
                 if (isRow)
                 {
-                    childX += child.BoxWidth;
+                    childX += child.BoxWidth + gap;
                 }
                 else
                 {
-                    childY += child.BoxHeight;
+                    childY += child.BoxHeight + gap;
                 }
             }
         }
@@ -269,6 +270,8 @@ namespace Ixen.Core.Visual.Computers
 
             float originX = ContentOriginX(element);
             float originY = ContentOriginY(element);
+            float columnGap = MeasureComputer.GapOf(element, true);
+            float rowGap = MeasureComputer.GapOf(element, false);
 
             foreach (VisualElement child in element.Children)
             {
@@ -278,21 +281,23 @@ namespace Ixen.Core.Visual.Computers
                 }
 
                 Arrange(child,
-                    originX + Offset(columns, child.GridColumn),
-                    originY + Offset(rows, child.GridRow));
+                    originX + Offset(columns, child.GridColumn, columnGap),
+                    originY + Offset(rows, child.GridRow, rowGap));
             }
         }
 
-        private static float Offset(float[] tracks, int index)
+        private static float Offset(float[] tracks, int index, float gap)
         {
             float offset = 0;
+            int counted = 0;
 
             for (int i = 0; i < index && i < tracks.Length; i++)
             {
                 offset += tracks[i];
+                counted++;
             }
 
-            return offset;
+            return offset + gap * counted;
         }
     }
 }

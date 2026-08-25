@@ -54,6 +54,10 @@ generated_root {
         border: #445566 0px 1px 2.5px 3px inner
     }
 
+    generated_gap {
+        gap: 6px 12.5px
+    }
+
     generated_bounds {
         min-width: 20px
         max-width: 200.5px
