@@ -235,7 +235,7 @@ namespace Ixen.Core.Visual.Computers
 
             if (element is TextField field)
             {
-                LayoutField(field, out width, out height);
+                LayoutField(field, availableWidth, out width, out height);
                 return;
             }
 
@@ -255,7 +255,7 @@ namespace Ixen.Core.Visual.Computers
             height = _textMeasurer.GetLineHeight(fontSpec) * lines.Count;
         }
 
-        private void LayoutField(TextField field, out float width, out float height)
+        private void LayoutField(TextField field, float availableWidth, out float width, out float height)
         {
             List<string> lines = field.EnsureTextLines();
 
@@ -269,18 +269,22 @@ namespace Ixen.Core.Visual.Computers
             string value = field.DisplayText;
             FontSpec fontSpec = FontSpec.From(field.StylesHandlers);
 
+            bool breaks = field.Multiline;
+            bool wraps = breaks
+                && field.StylesHandlers.TextWrap.Descriptor.Value == TextWrap.Wrap
+                && availableWidth > 0;
+
             float[] offsets = EnsureCaretOffsets(field, value.Length + 1);
-            int[] starts = EnsureLineStarts(field, value, out int lineCount);
+            int[] starts = EnsureLineStarts(field, value, wraps);
 
             offsets[0] = 0;
             starts[0] = 0;
 
             int line = 0;
             int lineStart = 0;
+            int lastSpace = -1;
 
             width = 0;
-
-            bool breaks = field.Multiline;
 
             for (int i = 0; i < value.Length; i++)
             {
@@ -300,16 +304,38 @@ namespace Ixen.Core.Visual.Computers
                     out float prefix, out _);
 
                 offsets[i + 1] = prefix;
+
+                bool blank = value[i] == ' ' || value[i] == '\t';
+
+                if (wraps && !blank && prefix > availableWidth && lastSpace > lineStart)
+                {
+                    int next = lastSpace + 1;
+
+                    lines.Add(value.Substring(lineStart, next - lineStart));
+                    width = Math.Max(width, offsets[next]);
+
+                    line++;
+                    starts[line] = next;
+                    lineStart = next;
+                    offsets[next] = 0;
+                    i = next - 1;
+                    continue;
+                }
+
+                if (blank)
+                {
+                    lastSpace = i;
+                }
             }
 
             lines.Add(value.Substring(lineStart));
             width = Math.Max(width, offsets[value.Length]);
 
             field.CaretOffsetCount = value.Length + 1;
-            field.LineCount = lineCount;
+            field.LineCount = line + 1;
             field.LineHeight = _textMeasurer.GetLineHeight(fontSpec);
 
-            height = field.LineHeight * lineCount;
+            height = field.LineHeight * field.LineCount;
 
             if (!field.ShowsPlaceholder)
             {
@@ -320,22 +346,22 @@ namespace Ixen.Core.Visual.Computers
             width = Math.Max(width, placeholder);
         }
 
-        private static int[] EnsureLineStarts(TextField field, string value, out int lineCount)
+        private static int[] EnsureLineStarts(TextField field, string value, bool wraps)
         {
-            lineCount = 1;
+            int capacity = 1;
 
             if (field.Multiline)
             {
                 foreach (char c in value)
                 {
-                    if (c == '\n')
+                    if (c == '\n' || (wraps && (c == ' ' || c == '\t')))
                     {
-                        lineCount++;
+                        capacity++;
                     }
                 }
             }
 
-            return field.EnsureLineStarts(lineCount);
+            return field.EnsureLineStarts(capacity);
         }
 
         private static float[] EnsureCaretOffsets(TextField field, int count)

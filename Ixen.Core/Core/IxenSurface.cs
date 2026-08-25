@@ -363,6 +363,15 @@ namespace Ixen.Core
             set => _pointerDispatcher.TimeSource = value;
         }
 
+        internal ITextMeasurer TextMeasurer
+        {
+            set
+            {
+                _measureComputer = new MeasureComputer(value, _images);
+                Root?.Invalidate();
+            }
+        }
+
         internal void PointerWheel(float x, float y, float deltaX, float deltaY,
             KeyModifiers modifiers = KeyModifiers.None)
             => _pointerDispatcher.Wheel(Root, ToLogical(x), ToLogical(y), deltaX, deltaY, modifiers);
