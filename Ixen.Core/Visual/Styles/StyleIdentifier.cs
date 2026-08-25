@@ -49,6 +49,7 @@
         public const string ROW_SPAN = "row-span";
         public const string ROW_TEMPLATE = "row-template";
         public const string TEXT_ALIGN = "text-align";
+        public const string TEXT_DECORATION = "text-decoration";
         public const string TEXT_OVERFLOW = "text-overflow";
         public const string TEXT_SHADOW = "text-shadow";
         public const string TEXT_WRAP = "text-wrap";

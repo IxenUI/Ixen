@@ -25,6 +25,7 @@ generated_root {
     row-template: 1.5* 20.5px
     column-template: 30% 2.5*
     text-align: right bottom
+    text-decoration: underline line-through
     @include generated_mixin
     transition: background 150ms color 0.2s 30ms ease-out
     cursor: hand

@@ -94,6 +94,9 @@ namespace Ixen.Core.Rendering
 
                 context.DrawTextShadow(line, x, top, fontSpec, handlers.TextShadow.Descriptor);
                 context.DrawText(line, x, top, fontSpec, handlers.Color.Brush);
+                context.DrawTextDecoration(line, x, top, fontSpec,
+                    handlers.TextDecoration.Descriptor, handlers.Color.Brush);
+
                 top += lineHeight;
             }
         }

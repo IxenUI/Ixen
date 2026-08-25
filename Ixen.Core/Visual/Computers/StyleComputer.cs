@@ -196,6 +196,11 @@ namespace Ixen.Core.Visual.Computers
             {
                 handlers.TextShadow = from.TextShadow;
             }
+
+            if (!handlers.TextDecoration.Descriptor.IsDeclared)
+            {
+                handlers.TextDecoration = from.TextDecoration;
+            }
         }
 
         private void SyncOverflow(VisualElement element)
@@ -553,6 +558,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultAnchorPlacement;
             }
 
+            if (handlers.TextDecoration.Descriptor != styles.TextDecoration)
+            {
+                handlers.TextDecoration = styles.TextDecoration != null && styles.TextDecoration.IsDeclared
+                    ? new TextDecorationStyleHandler(styles.TextDecoration)
+                    : VisualElementStylesHandlers.DefaultTextDecoration;
+            }
+
             if (handlers.Opacity.Descriptor != styles.Opacity)
             {
                 handlers.Opacity = styles.Opacity != null && styles.Opacity.IsTransparent
@@ -715,6 +727,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.ANCHOR_PLACEMENT:
                     handlers.AnchorPlacement = new AnchorPlacementStyleHandler((AnchorPlacementStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.TEXT_DECORATION:
+                    handlers.TextDecoration = new TextDecorationStyleHandler((TextDecorationStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.OPACITY:

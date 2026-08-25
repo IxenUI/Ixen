@@ -41,6 +41,7 @@ namespace Ixen.Core.Visual
         internal static readonly RowSpanStyleHandler DefaultRowSpan = new();
         internal static readonly RowTemplateStyleHandler DefaultRowTemplate = new();
         internal static readonly TextAlignStyleHandler DefaultTextAlign = new();
+        internal static readonly TextDecorationStyleHandler DefaultTextDecoration = new();
         internal static readonly TextOverflowStyleHandler DefaultTextOverflow = new();
         internal static readonly TextWrapStyleHandler DefaultTextWrap = new();
         internal static readonly TopStyleHandler DefaultTop = new();
@@ -85,6 +86,7 @@ namespace Ixen.Core.Visual
         public RowSpanStyleHandler RowSpan { get; set; } = DefaultRowSpan;
         public RowTemplateStyleHandler RowTemplate { get; set; } = DefaultRowTemplate;
         public TextAlignStyleHandler TextAlign { get; set; } = DefaultTextAlign;
+        public TextDecorationStyleHandler TextDecoration { get; set; } = DefaultTextDecoration;
         public TextOverflowStyleHandler TextOverflow { get; set; } = DefaultTextOverflow;
         public TextWrapStyleHandler TextWrap { get; set; } = DefaultTextWrap;
         public TopStyleHandler Top { get; set; } = DefaultTop;

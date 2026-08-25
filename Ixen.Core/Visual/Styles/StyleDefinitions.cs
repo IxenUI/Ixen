@@ -151,6 +151,11 @@ namespace Ixen.Core.Visual.Styles
                     p => ((TextAlignStyleParser)p).Descriptor,
                     new[] { "left", "center", "right", "top", "middle", "bottom" }),
 
+                Define(StyleIdentifier.TEXT_DECORATION, v => new TextDecorationStyleParser(v),
+                    p => ((TextDecorationStyleParser)p).Descriptor,
+                    new[] { TextDecorationStyleParser.NONE, TextDecorationStyleParser.UNDERLINE,
+                        TextDecorationStyleParser.LINE_THROUGH, TextDecorationStyleParser.OVERLINE }),
+
                 Define(StyleIdentifier.TEXT_OVERFLOW, v => new TextOverflowStyleParser(v),
                     p => ((TextOverflowStyleParser)p).Descriptor, new[] { "clip", "ellipsis" }),
 

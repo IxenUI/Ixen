@@ -184,6 +184,56 @@ namespace Ixen.Core.Rendering
                 SKTextAlign.Left, font, _textShadowPaint);
         }
 
+        internal void DrawTextDecoration(string text, float x, float top, FontSpec fontSpec,
+            TextDecorationStyleDescriptor decoration, Brush brush)
+        {
+            if (decoration == null || decoration.Value == TextDecorations.None
+                || string.IsNullOrEmpty(text))
+            {
+                return;
+            }
+
+            SKFont font = FontCache.Get(fontSpec);
+            SKFontMetrics metrics = font.Metrics;
+            float width = font.MeasureText(text);
+
+            if (width <= 0)
+            {
+                return;
+            }
+
+            float baseline = top - metrics.Ascent;
+            float thickness = metrics.UnderlineThickness ?? font.Size / 14f;
+
+            if (thickness < 1)
+            {
+                thickness = 1;
+            }
+
+            if (decoration.Has(TextDecorations.Underline))
+            {
+                float offset = metrics.UnderlinePosition ?? font.Size / 9f;
+                Line(x, baseline + offset, width, thickness, brush);
+            }
+
+            if (decoration.Has(TextDecorations.LineThrough))
+            {
+                float offset = metrics.StrikeoutPosition ?? metrics.Ascent / 2.6f;
+                Line(x, baseline + offset, width, thickness, brush);
+            }
+
+            if (decoration.Has(TextDecorations.Overline))
+            {
+                Line(x, baseline + metrics.Ascent, width, thickness, brush);
+            }
+        }
+
+        private void Line(float x, float y, float width, float thickness, Brush brush)
+        {
+            _bandPaint.Color = brush.Color.SKColor;
+            SKCanvas.DrawRect(x, y, width, thickness, _bandPaint);
+        }
+
         internal void FillRoundRectangle(float x, float y, float width, float height,
             CornerRadiusStyleDescriptor radius, Brush brush)
         {

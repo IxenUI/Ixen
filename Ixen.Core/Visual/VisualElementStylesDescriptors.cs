@@ -41,6 +41,7 @@ namespace Ixen.Core.Visual
         public RowSpanStyleDescriptor RowSpan { get; set; } = new();
         public RowTemplateStyleDescriptor RowTemplate { get; set; } = new();
         public TextAlignStyleDescriptor TextAlign { get; set; } = new();
+        public TextDecorationStyleDescriptor TextDecoration { get; set; } = new();
         public TextOverflowStyleDescriptor TextOverflow { get; set; } = new();
         public TextWrapStyleDescriptor TextWrap { get; set; } = new();
         public TopStyleDescriptor Top { get; set; } = new();

@@ -24,7 +24,7 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(26, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(27, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
         }
 
         [TestMethod]
@@ -240,6 +240,17 @@ namespace Ixen.Core.UT.Xns
         public void TheOpacitySurvivesGeneration()
         {
             Assert.AreEqual(0.75f, Style<OpacityStyleDescriptor>().Value);
+        }
+
+        [TestMethod]
+        public void TheTextDecorationSurvivesGeneration()
+        {
+            TextDecorationStyleDescriptor decoration = Style<TextDecorationStyleDescriptor>();
+
+            Assert.IsTrue(decoration.IsDeclared);
+            Assert.AreEqual(
+                TextDecorations.Underline | TextDecorations.LineThrough,
+                decoration.Value);
         }
     }
 }
