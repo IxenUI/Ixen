@@ -1,0 +1,15 @@
+named_host_root {} [
+	card<NamedSlotCardComponent> {} [
+		to_head { slot: "head" text: "{Caption}" }
+		to_body_group { slot: "body" } [
+			inner_a { text: "a" }
+			inner_b { text: "b" }
+		]
+		to_head_too { slot: "head" text: "second" }
+		leftover { text: "no slot named" }
+		@if (Flag) {
+			region_child { text: "in the default slot" }
+		@}
+		clicker { slot: "body" text: "press" click: "{Bump()}" }
+	]
+]

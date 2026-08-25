@@ -1,0 +1,4 @@
+duplicate_root {} [
+	head<Slot> {}
+	head<Slot> {}
+]

@@ -32,6 +32,7 @@ namespace Ixen.Generators.Xnl
         private const string CLASS_PROPERTY = "class";
         private const string EACH_PROPERTY = "each";
         private const string KEY_PROPERTY = "key";
+        private const string SLOT_PROPERTY = "slot";
 
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
@@ -432,7 +433,7 @@ namespace Ixen.Generators.Xnl
 
             foreach (XnlNodeParameter param in node.Properties)
             {
-                if (param.Name == CLASS_PROPERTY || param.Name == KEY_PROPERTY)
+                if (param.Name == CLASS_PROPERTY || param.Name == KEY_PROPERTY || param.Name == SLOT_PROPERTY)
                 {
                     continue;
                 }
@@ -689,11 +690,27 @@ namespace Ixen.Generators.Xnl
         static string ContentParent(ResolvedType resolved, string nodeId)
             => resolved.IsComponent ? $"{ComponentIdentifier(nodeId)}.Content" : nodeId;
 
+        static XnlNodeParameter SlotOf(XnlNode node)
+        {
+            foreach (XnlNodeParameter param in node.Properties)
+            {
+                if (param.Name == SLOT_PROPERTY && !string.IsNullOrEmpty(param.Value))
+                {
+                    return param;
+                }
+            }
+
+            return null;
+        }
+
         static void AddChildren(StringBuilder sb, XnlNode node, string parentId, int tabLevel, FileContext file)
         {
             string tabs = new string('\t', tabLevel);
             var regions = new List<string>();
             int statics = 0;
+
+            bool projects = parentId.EndsWith(".Content");
+            string owner = projects ? parentId.Substring(0, parentId.Length - ".Content".Length) : null;
 
             Region chain = null;
 
@@ -712,12 +729,34 @@ namespace Ixen.Generators.Xnl
                     continue;
                 }
 
+                XnlNodeParameter slot = SlotOf(child);
+
+                if (slot != null && owner == null)
+                {
+                    file.Diagnostics.Add(new LanguageError(
+                        LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                        $"'{SLOT_PROPERTY}' only means something on a child of a component node, and "
+                            + $"'{node.Name ?? node.Type ?? "the enclosing element"}' is not one.",
+                        slot.NameIndex,
+                        SLOT_PROPERTY.Length));
+
+                    slot = null;
+                }
+
+                string target = slot == null
+                    ? parentId
+                    : $"{owner}.ContentFor({StringLiteral(slot.Value)})";
+
                 AddDeclaration(sb, child, tabLevel, file);
-                sb.AppendLine($"{tabs}{parentId}.AddChild({Identifier(child)});");
+                sb.AppendLine($"{tabs}{target}.AddChild({Identifier(child)});");
                 sb.AppendLine();
 
                 chain = null;
-                statics++;
+
+                if (slot == null)
+                {
+                    statics++;
+                }
             }
         }
 
@@ -1434,6 +1473,11 @@ namespace Ixen.Generators.Xnl
             if (param.Name == CLASS_PROPERTY)
             {
                 AddClasses(sb, tabs, nodeId, param.Value);
+                return;
+            }
+
+            if (param.Name == SLOT_PROPERTY)
+            {
                 return;
             }
 

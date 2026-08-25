@@ -1,5 +1,6 @@
 using Ixen.Core.Visual;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 
@@ -10,7 +11,7 @@ namespace Ixen.Core.Components
         private bool _initialized;
         private bool _isStateDirty;
         private bool _rendering;
-        private VisualElement _content;
+        private List<Slot> _slots;
         private bool _attached;
 
         internal abstract VisualElement GetVisualElement();
@@ -39,36 +40,57 @@ namespace Ixen.Core.Components
             return element;
         }
 
-        public VisualElement Content
+        public VisualElement Content => ContentFor(null);
+
+        public VisualElement ContentFor(string name)
         {
-            get
+            if (_slots == null)
             {
-                if (_content == null)
+                _slots = new List<Slot>();
+                Collect(GetVisualElement());
+            }
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                foreach (Slot named in _slots)
                 {
-                    _content = FindSlot();
+                    if (named.Name == name)
+                    {
+                        return named;
+                    }
                 }
 
-                return _content;
+                throw new InvalidOperationException(
+                    $"{GetType().Name}'s view declares no <Slot> named '{name}'. "
+                    + $"Declare an element such as '{name}<Slot> {{}}' where that content should go.");
             }
-        }
 
-        private VisualElement FindSlot()
-        {
-            Slot found = null;
+            if (_slots.Count == 1)
+            {
+                return _slots[0];
+            }
 
-            Collect(GetVisualElement(), ref found);
+            foreach (Slot unnamed in _slots)
+            {
+                if (string.IsNullOrEmpty(unnamed.Name))
+                {
+                    return unnamed;
+                }
+            }
 
-            if (found == null)
+            if (_slots.Count > 1)
             {
                 throw new InvalidOperationException(
-                    $"{GetType().Name} was given content, but its view declares no <Slot> to receive it. "
-                    + "Declare an element such as 'content<Slot> {}' where the content should go.");
+                    $"{GetType().Name}'s view declares several named <Slot>s and no unnamed one, so there is "
+                    + "nowhere for content that names no slot. Add an unnamed '<Slot> {}' for it.");
             }
 
-            return found;
+            throw new InvalidOperationException(
+                $"{GetType().Name} was given content, but its view declares no <Slot> to receive it. "
+                + "Declare an element such as 'content<Slot> {}' where the content should go.");
         }
 
-        private void Collect(VisualElement element, ref Slot found)
+        private void Collect(VisualElement element)
         {
             if (element == null)
             {
@@ -77,14 +99,21 @@ namespace Ixen.Core.Components
 
             if (element is Slot slot)
             {
-                if (found != null)
+                foreach (Slot known in _slots)
                 {
-                    throw new InvalidOperationException(
-                        $"{GetType().Name}'s view declares more than one <Slot>, so there is no way to tell "
-                        + "which one its content belongs to.");
+                    if (known.Name == slot.Name)
+                    {
+                        string which = string.IsNullOrEmpty(slot.Name)
+                            ? "more than one unnamed <Slot>"
+                            : $"more than one <Slot> named '{slot.Name}'";
+
+                        throw new InvalidOperationException(
+                            $"{GetType().Name}'s view declares {which}, so there is no way to tell "
+                            + "which one a piece of content belongs to.");
+                    }
                 }
 
-                found = slot;
+                _slots.Add(slot);
             }
 
             foreach (VisualElement child in element.Children)
@@ -94,7 +123,7 @@ namespace Ixen.Core.Components
                     continue;
                 }
 
-                Collect(child, ref found);
+                Collect(child);
             }
         }
 

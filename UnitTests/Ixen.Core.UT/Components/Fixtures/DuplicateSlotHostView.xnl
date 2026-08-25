@@ -1,0 +1,5 @@
+duplicate_host_root {} [
+	card<DuplicateSlotComponent> {} [
+		x { slot: "head" text: "which one" }
+	]
+]

@@ -1,0 +1,6 @@
+named_root {} [
+	head<Slot> {}
+	named_divider { text: "-" }
+	body<Slot> {}
+	<Slot> {}
+]

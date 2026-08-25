@@ -10,10 +10,9 @@ namespace Ixen.Core.Language.Xnl
     internal static class XnlTypes
     {
         internal const string CLASS_PROPERTY = "class";
-        internal const string EACH_PROPERTY = "each";
-        internal const string KEY_PROPERTY = "key";
+        internal const string SLOT_PROPERTY = "slot";
 
-        internal static readonly string[] UniversalProperties = { CLASS_PROPERTY, EACH_PROPERTY, KEY_PROPERTY };
+        internal static readonly string[] UniversalProperties = { CLASS_PROPERTY, SLOT_PROPERTY };
 
         private static readonly Dictionary<string, Type> _byName = BuildTypes();
         private static readonly string[] _names = _byName.Keys.OrderBy(n => n, StringComparer.Ordinal).ToArray();

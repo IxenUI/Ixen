@@ -1,0 +1,5 @@
+missing_host_root {} [
+	card<NamedSlotCardComponent> {} [
+		typo { slot: "heade" text: "oops" }
+	]
+]

@@ -49,6 +49,11 @@
     <AdditionalFiles Include="Components\Fixtures\LifecycleView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\LifecycleInnerView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\LifecycleHostView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\NamedSlotCardView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\NamedSlotHostView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\MissingSlotHostView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\DuplicateSlotView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\DuplicateSlotHostView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\TickerView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\SlotCardView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\SlotHostView.xnl" />
