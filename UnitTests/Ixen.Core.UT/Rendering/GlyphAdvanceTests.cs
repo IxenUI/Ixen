@@ -47,5 +47,68 @@ namespace Ixen.Core.UT.Rendering
                     $"prefix of {length} characters");
             }
         }
+
+        [TestMethod]
+        public void TheBatchedAdvancesSumToTheWholeStringMeasure()
+        {
+            FontSpec[] specs =
+            {
+                new FontSpec(null, 20f, false, false),
+                new FontSpec(null, 13.5f, true, true),
+                new FontSpec(null, 20f, false, false, 0, 1.5f)
+            };
+
+            string[] samples =
+            {
+                "Waffle AV. To jig?",
+                "The quick brown fox jumps over the lazy dog",
+                "iiiillll,,,,WWWW"
+            };
+
+            var advances = new float[256];
+
+            foreach (FontSpec spec in specs)
+            {
+                foreach (string sample in samples)
+                {
+                    SkiaTextMeasurer.Default.MeasureCharacters(sample, spec, advances);
+                    SkiaTextMeasurer.Default.MeasureText(sample, spec, out float whole, out _);
+
+                    float sum = 0;
+
+                    for (int index = 0; index < sample.Length; index++)
+                    {
+                        sum += advances[index];
+                    }
+
+                    Assert.AreEqual(whole, sum, 0.01f,
+                        $"'{sample}' at {spec.Size}px. The advances come from one batched "
+                        + "GetGlyphWidths call while the whole string goes through MeasureText, "
+                        + "and every prefix width in the wrap and the caret is a running sum of "
+                        + "the first - so the two have to agree exactly");
+                }
+            }
+        }
+
+        [TestMethod]
+        public void ASurrogatePairFallsBackAndStillSumsCorrectly()
+        {
+            string sample = "a" + char.ConvertFromUtf32(0x1F600) + "b";
+            var spec = new FontSpec(null, 20f, false, false);
+
+            Assert.AreNotEqual(sample.Length, FontCache.Get(spec).CountGlyphs(sample),
+                "the sample really does hold a surrogate pair, so the batched 1:1 path is skipped");
+
+            var advances = new float[sample.Length];
+
+            SkiaTextMeasurer.Default.MeasureCharacters(sample, spec, advances);
+            SkiaTextMeasurer.Default.MeasureText(sample, spec, out float whole, out _);
+
+            Assert.AreEqual(0, advances[2], 0.001f,
+                "the pair's width belongs to its first char, so the low surrogate is zero wide - "
+                + "a caret cannot sit between the two halves of a codepoint");
+
+            Assert.AreEqual(whole, advances[0] + advances[1] + advances[2] + advances[3], 0.01f);
+        }
     }
 }

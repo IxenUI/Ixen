@@ -30,6 +30,43 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 
         internal bool IsDeclared => Count > 0;
 
+        internal FilterStyleDescriptor Snapshot()
+        {
+            var copy = new FilterStyleDescriptor();
+
+            for (int index = 0; index < Count; index++)
+            {
+                FilterOperation operation = Operations[index];
+
+                copy.Operations.Add(new FilterOperation
+                {
+                    Kind = operation.Kind,
+                    Value = operation.Value
+                });
+            }
+
+            return copy;
+        }
+
+        internal bool SameAs(FilterStyleDescriptor other)
+        {
+            if (other == null || Count != other.Count)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < Count; index++)
+            {
+                if (Operations[index].Kind != other.Operations[index].Kind
+                    || Operations[index].Value != other.Operations[index].Value)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         internal override bool CanGenerateSource => true;
         internal override string ToSource()
         {

@@ -7,10 +7,25 @@ namespace Ixen.Core.Rendering
 {
     internal class ImageStore : IImageMeasurer
     {
-        private readonly Dictionary<string, SKBitmap> _bitmaps = new Dictionary<string, SKBitmap>();
-        private readonly Dictionary<string, SKPaint> _tiles = new Dictionary<string, SKPaint>();
+        private const long DEFAULT_BUDGET = 64 * 1024 * 1024;
+
+        private sealed class Entry
+        {
+            internal SKBitmap Bitmap;
+            internal SKPaint Tile;
+            internal long Bytes;
+            internal long Stamp;
+        }
+
+        private readonly Dictionary<string, Entry> _entries = new Dictionary<string, Entry>();
 
         private IImageSource _source;
+        private long _bytes;
+        private long _clock;
+
+        internal long Budget { get; set; } = DEFAULT_BUDGET;
+
+        internal long Bytes => _bytes;
 
         internal IImageSource Source
         {
@@ -29,49 +44,60 @@ namespace Ixen.Core.Rendering
 
         internal SKBitmap Get(string name)
         {
-            if (string.IsNullOrEmpty(name))
-            {
-                return null;
-            }
+            Entry entry = Touch(name);
 
-            if (_bitmaps.TryGetValue(name, out SKBitmap cached))
-            {
-                return cached;
-            }
-
-            SKBitmap bitmap = Load(name);
-            _bitmaps[name] = bitmap;
-
-            return bitmap;
+            return entry?.Bitmap;
         }
 
-        internal SKPaint GetTile(string name)
+        private Entry Touch(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
                 return null;
             }
 
-            if (_tiles.TryGetValue(name, out SKPaint cached))
+            if (_entries.TryGetValue(name, out Entry cached))
             {
+                cached.Stamp = ++_clock;
                 return cached;
             }
 
-            SKBitmap bitmap = Get(name);
-            SKPaint paint = null;
+            SKBitmap bitmap = Load(name);
 
-            if (bitmap != null)
+            var entry = new Entry
             {
-                paint = new SKPaint
-                {
-                    IsAntialias = false,
-                    Shader = bitmap.ToShader(SKShaderTileMode.Repeat, SKShaderTileMode.Repeat)
-                };
+                Bitmap = bitmap,
+                Bytes = bitmap == null ? 0 : bitmap.ByteCount,
+                Stamp = ++_clock
+            };
+
+            _entries[name] = entry;
+            _bytes += entry.Bytes;
+
+            return entry;
+        }
+
+        internal SKPaint GetTile(string name)
+        {
+            Entry entry = Touch(name);
+
+            if (entry == null)
+            {
+                return null;
             }
 
-            _tiles[name] = paint;
+            if (entry.Tile != null || entry.Bitmap == null)
+            {
+                return entry.Tile;
+            }
 
-            return paint;
+            entry.Tile = new SKPaint
+            {
+                IsAntialias = false,
+                Shader = entry.Bitmap.ToShader(SKShaderTileMode.Repeat, SKShaderTileMode.Repeat)
+            };
+
+            return entry.Tile;
         }
 
         public bool TryMeasure(string source, out float width, out float height)
@@ -92,22 +118,57 @@ namespace Ixen.Core.Rendering
             return true;
         }
 
+        internal void Trim()
+        {
+            while (_bytes > Budget)
+            {
+                string oldest = null;
+                long stamp = long.MaxValue;
+
+                foreach (KeyValuePair<string, Entry> candidate in _entries)
+                {
+                    if (candidate.Value.Bytes > 0 && candidate.Value.Stamp < stamp)
+                    {
+                        stamp = candidate.Value.Stamp;
+                        oldest = candidate.Key;
+                    }
+                }
+
+                if (oldest == null)
+                {
+                    return;
+                }
+
+                Evict(oldest);
+            }
+        }
+
+        private void Evict(string name)
+        {
+            Entry entry = _entries[name];
+
+            _entries.Remove(name);
+            _bytes -= entry.Bytes;
+
+            Release(entry);
+        }
+
+        private static void Release(Entry entry)
+        {
+            entry.Tile?.Shader?.Dispose();
+            entry.Tile?.Dispose();
+            entry.Bitmap?.Dispose();
+        }
+
         internal void Clear()
         {
-            foreach (KeyValuePair<string, SKPaint> tile in _tiles)
+            foreach (KeyValuePair<string, Entry> entry in _entries)
             {
-                tile.Value?.Shader?.Dispose();
-                tile.Value?.Dispose();
+                Release(entry.Value);
             }
 
-            _tiles.Clear();
-
-            foreach (KeyValuePair<string, SKBitmap> entry in _bitmaps)
-            {
-                entry.Value?.Dispose();
-            }
-
-            _bitmaps.Clear();
+            _entries.Clear();
+            _bytes = 0;
         }
 
         private SKBitmap Load(string name)

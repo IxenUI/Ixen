@@ -485,15 +485,20 @@ namespace Ixen.Core.Visual.Computers
         private void AppendLine(string line, FontSpec fontSpec, float maxWidth,
             bool wrap, bool ellipsis, List<string> lines, ref float widest)
         {
+            float[] advances = EnsureAdvances(line.Length);
+
+            _textMeasurer.MeasureCharacters(line, fontSpec, advances);
+
             if (!wrap)
             {
-                AddLine(lines, line, fontSpec, maxWidth, ellipsis, ref widest);
+                AddLine(lines, line, 0, line.Length, advances, fontSpec, maxWidth, ellipsis, ref widest);
                 return;
             }
 
             int lineStart = 0;
             int lastSpace = -1;
             int index = 0;
+            float prefix = 0;
 
             while (index <= line.Length)
             {
@@ -501,20 +506,20 @@ namespace Ixen.Core.Visual.Computers
 
                 if (!atEnd && line[index] != ' ' && line[index] != '\t')
                 {
+                    prefix += advances[index];
                     index++;
                     continue;
                 }
 
-                _textMeasurer.MeasureText(line.Substring(lineStart, index - lineStart),
-                    fontSpec, out float candidateWidth, out _);
-
-                if (candidateWidth > maxWidth && lastSpace > lineStart)
+                if (prefix > maxWidth && lastSpace > lineStart)
                 {
-                    AddLine(lines, line.Substring(lineStart, lastSpace - lineStart).TrimEnd(),
-                        fontSpec, maxWidth, ellipsis, ref widest);
+                    AddLine(lines, line, lineStart, TrimmedLength(line, lineStart, lastSpace),
+                        advances, fontSpec, maxWidth, ellipsis, ref widest);
 
                     lineStart = lastSpace + 1;
                     lastSpace = -1;
+                    prefix = Width(advances, lineStart, index);
+
                     continue;
                 }
 
@@ -524,21 +529,55 @@ namespace Ixen.Core.Visual.Computers
                 }
 
                 lastSpace = index;
+                prefix += advances[index];
                 index++;
             }
 
-            AddLine(lines, line.Substring(lineStart), fontSpec, maxWidth, ellipsis, ref widest);
+            AddLine(lines, line, lineStart, line.Length - lineStart,
+                advances, fontSpec, maxWidth, ellipsis, ref widest);
         }
 
-        private void AddLine(List<string> lines, string line, FontSpec fontSpec, float maxWidth,
-            bool ellipsis, ref float widest)
+        private static int TrimmedLength(string line, int start, int end)
         {
-            _textMeasurer.MeasureText(line, fontSpec, out float width, out _);
+            while (end > start && char.IsWhiteSpace(line[end - 1]))
+            {
+                end--;
+            }
+
+            return end - start;
+        }
+
+        private static float Width(float[] advances, int start, int end)
+        {
+            float width = 0;
+
+            for (int index = start; index < end; index++)
+            {
+                width += advances[index];
+            }
+
+            return width;
+        }
+
+        private void AddLine(List<string> lines, string source, int start, int length, float[] advances,
+            FontSpec fontSpec, float maxWidth, bool ellipsis, ref float widest)
+        {
+            float width = Width(advances, start, start + length);
+            string line;
 
             if (ellipsis && width > maxWidth)
             {
-                line = Ellipsize(line, fontSpec, maxWidth);
+                line = Ellipsize(source, start, length, advances, fontSpec, maxWidth);
+
                 _textMeasurer.MeasureText(line, fontSpec, out width, out _);
+            }
+            else if (start == 0 && length == source.Length)
+            {
+                line = source;
+            }
+            else
+            {
+                line = source.Substring(start, length);
             }
 
             lines.Add(line);
@@ -549,7 +588,8 @@ namespace Ixen.Core.Visual.Computers
             }
         }
 
-        private string Ellipsize(string line, FontSpec fontSpec, float maxWidth)
+        private string Ellipsize(string source, int start, int length, float[] advances,
+            FontSpec fontSpec, float maxWidth)
         {
             _textMeasurer.MeasureText(ELLIPSIS, fontSpec, out float ellipsisWidth, out _);
 
@@ -559,15 +599,13 @@ namespace Ixen.Core.Visual.Computers
             }
 
             int low = 0;
-            int high = line.Length;
+            int high = length;
 
             while (low < high)
             {
                 int mid = (low + high + 1) / 2;
 
-                _textMeasurer.MeasureText(line.Substring(0, mid), fontSpec, out float width, out _);
-
-                if (width + ellipsisWidth <= maxWidth)
+                if (Width(advances, start, start + mid) + ellipsisWidth <= maxWidth)
                 {
                     low = mid;
                 }
@@ -577,7 +615,7 @@ namespace Ixen.Core.Visual.Computers
                 }
             }
 
-            return line.Substring(0, low).TrimEnd() + ELLIPSIS;
+            return source.Substring(start, low).TrimEnd() + ELLIPSIS;
         }
 
         private void MeasureChildren(VisualElement element, float contentWidth, float contentHeight)

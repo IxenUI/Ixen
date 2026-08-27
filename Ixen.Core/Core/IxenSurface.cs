@@ -81,6 +81,8 @@ namespace Ixen.Core
 
         internal void ComputeLayout(int width, int height)
         {
+            _images.Trim();
+
             int logicalWidth = (int)(width / _scale);
             int logicalHeight = (int)(height / _scale);
 
@@ -251,6 +253,12 @@ namespace Ixen.Core
         {
             get => _clipboard;
             set => _clipboard = value;
+        }
+
+        public long ImageCacheBudget
+        {
+            get => _images.Budget;
+            set => _images.Budget = value;
         }
 
         public IImageSource ImageSource

@@ -1,5 +1,6 @@
 ﻿using Ixen.Core.Rendering;
 using Ixen.Core.Visual.Styles.Descriptors;
+using System.Runtime.CompilerServices;
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
@@ -11,6 +12,12 @@ namespace Ixen.Core.Visual.Styles.Handlers
         private Color _color = Color.Transparent;
         private readonly GradientShader _gradient;
 
+        private readonly string _colorSource;
+        private readonly Gradient _gradientSnapshot;
+
+        private static readonly ConditionalWeakTable<BackgroundStyleDescriptor, BackgroundStyleHandler> _built =
+            new ConditionalWeakTable<BackgroundStyleDescriptor, BackgroundStyleHandler>();
+
         public BackgroundStyleHandler()
             : this(new())
         { }
@@ -21,9 +28,47 @@ namespace Ixen.Core.Visual.Styles.Handlers
             _color = new Color(descriptor.Color);
             _brush = new Brush(_color);
 
+            _colorSource = descriptor.Color;
+            _gradientSnapshot = descriptor.Gradient?.Snapshot();
+
             if (descriptor.Gradient != null)
             {
                 _gradient = new GradientShader(descriptor.Gradient);
+            }
+        }
+
+        internal static BackgroundStyleHandler For(BackgroundStyleDescriptor descriptor)
+        {
+            if (_built.TryGetValue(descriptor, out BackgroundStyleHandler handler) && handler.IsCurrent)
+            {
+                return handler;
+            }
+
+            handler = new BackgroundStyleHandler(descriptor);
+
+            _built.Remove(descriptor);
+            _built.Add(descriptor, handler);
+
+            return handler;
+        }
+
+        private bool IsCurrent
+        {
+            get
+            {
+                if (_colorSource != Descriptor.Color)
+                {
+                    return false;
+                }
+
+                Gradient gradient = Descriptor.Gradient;
+
+                if (_gradientSnapshot == null || gradient == null)
+                {
+                    return _gradientSnapshot == null && gradient == null;
+                }
+
+                return _gradientSnapshot.SameAs(gradient);
             }
         }
 

@@ -26,6 +26,40 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         public float Angle { get; set; } = 180f;
         public List<GradientStop> Stops { get; set; } = new List<GradientStop>();
 
+        internal Gradient Snapshot()
+        {
+            var copy = new Gradient { Kind = Kind, Angle = Angle };
+
+            foreach (GradientStop stop in Stops)
+            {
+                copy.Stops.Add(new GradientStop { Color = stop.Color, Offset = stop.Offset });
+            }
+
+            return copy;
+        }
+
+        internal bool SameAs(Gradient other)
+        {
+            if (other == null || Kind != other.Kind || Angle != other.Angle
+                || Stops.Count != other.Stops.Count)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < Stops.Count; index++)
+            {
+                GradientStop mine = Stops[index];
+                GradientStop theirs = other.Stops[index];
+
+                if (mine.Color != theirs.Color || mine.Offset != theirs.Offset)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         internal string ToSource()
         {
             var sb = new StringBuilder();

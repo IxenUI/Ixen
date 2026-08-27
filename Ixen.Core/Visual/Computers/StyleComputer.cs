@@ -392,7 +392,7 @@ namespace Ixen.Core.Visual.Computers
             VisualElementStylesHandlers handlers = element.StylesHandlers;
 
             handlers.Background = IsPainting(styles.Background)
-                ? new BackgroundStyleHandler(styles.Background)
+                ? BackgroundStyleHandler.For(styles.Background)
                 : VisualElementStylesHandlers.DefaultBackground;
 
             handlers.Border = IsPainting(styles.Border)
@@ -409,7 +409,7 @@ namespace Ixen.Core.Visual.Computers
             if (handlers.Filter.Descriptor != styles.Filter)
             {
                 handlers.Filter = styles.Filter != null && styles.Filter.IsDeclared
-                    ? new FilterStyleHandler(styles.Filter)
+                    ? FilterStyleHandler.For(styles.Filter)
                     : VisualElementStylesHandlers.DefaultFilter;
             }
 
@@ -728,7 +728,7 @@ namespace Ixen.Core.Visual.Computers
                 case StyleIdentifier.BACKGROUND:
                     var background = (BackgroundStyleDescriptor)style;
                     handlers.Background = IsPainting(background)
-                        ? new BackgroundStyleHandler(background)
+                        ? BackgroundStyleHandler.For(background)
                         : VisualElementStylesHandlers.DefaultBackground;
                     break;
 
@@ -752,7 +752,7 @@ namespace Ixen.Core.Visual.Computers
                     break;
 
                 case StyleIdentifier.FILTER:
-                    handlers.Filter = new FilterStyleHandler((FilterStyleDescriptor)style);
+                    handlers.Filter = FilterStyleHandler.For((FilterStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.FONT_FAMILY:

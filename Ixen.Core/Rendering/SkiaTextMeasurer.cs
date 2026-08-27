@@ -26,17 +26,49 @@ namespace Ixen.Core.Rendering
 
         public void MeasureCharacters(string text, FontSpec font, float[] advances)
         {
-            if (string.IsNullOrEmpty(text) || font.Size <= 0)
+            if (string.IsNullOrEmpty(text))
             {
+                return;
+            }
+
+            if (font.Size <= 0)
+            {
+                Array.Clear(advances, 0, text.Length);
                 return;
             }
 
             SKFont skFont = FontCache.Get(font);
             float spacing = font.LetterSpacing;
 
+            if (skFont.CountGlyphs(text) == text.Length)
+            {
+                skFont.GetGlyphWidths(text, new Span<float>(advances, 0, text.Length),
+                    Span<SKRect>.Empty, null);
+
+                if (spacing != 0)
+                {
+                    for (int index = 0; index < text.Length; index++)
+                    {
+                        advances[index] += spacing;
+                    }
+                }
+
+                return;
+            }
+
             for (int index = 0; index < text.Length; index++)
             {
-                advances[index] = skFont.MeasureText(text.AsSpan(index, 1)) + spacing;
+                int length = char.IsHighSurrogate(text[index])
+                    && index + 1 < text.Length
+                    && char.IsLowSurrogate(text[index + 1]) ? 2 : 1;
+
+                advances[index] = skFont.MeasureText(text.AsSpan(index, length)) + spacing;
+
+                if (length == 2)
+                {
+                    advances[index + 1] = 0;
+                    index++;
+                }
             }
         }
 
