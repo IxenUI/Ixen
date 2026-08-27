@@ -10,6 +10,7 @@ namespace Ixen.Core.Rendering
         private readonly SKPoint[] _radii = new SKPoint[4];
 
         private int _clipDepth;
+        private bool _filtered;
 
         internal SKCanvas SKCanvas { get; private set; }
 
@@ -30,6 +31,7 @@ namespace Ixen.Core.Rendering
         {
             SKCanvas = canvas;
             _clipDepth = 0;
+            _filtered = false;
 
             if (scale <= 0 || scale == 1)
             {
@@ -48,6 +50,14 @@ namespace Ixen.Core.Rendering
                 SKCanvas.Restore();
                 _clipDepth--;
             }
+
+            if (!_filtered)
+            {
+                return;
+            }
+
+            _filtered = false;
+            SKGraphics.PurgeResourceCache();
         }
 
         public void Clear(Color color)
@@ -80,10 +90,11 @@ namespace Ixen.Core.Rendering
             SKCanvas.Concat(in skia);
         }
 
-        internal void PushFilter(FilterChain chain)
+        internal void PushFilter(FilterChain chain, float x, float y, float width, float height)
         {
-            SKCanvas.SaveLayer(chain.Paint);
+            SKCanvas.SaveLayer(new SKRect(x, y, x + width, y + height), chain.Paint);
             _clipDepth++;
+            _filtered = true;
         }
 
         internal void PushOpacity(float opacity)

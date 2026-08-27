@@ -16,6 +16,27 @@ namespace Ixen.Core.Rendering
             _descriptor = descriptor;
         }
 
+        private const float SIGMAS = 3f;
+
+        internal float Margin
+        {
+            get
+            {
+                float total = 0;
+                List<FilterOperation> operations = _descriptor.Operations;
+
+                for (int index = 0; index < operations.Count; index++)
+                {
+                    if (operations[index].Kind == FilterKind.Blur)
+                    {
+                        total += operations[index].Value;
+                    }
+                }
+
+                return total * SIGMAS;
+            }
+        }
+
         internal SKPaint Paint
         {
             get

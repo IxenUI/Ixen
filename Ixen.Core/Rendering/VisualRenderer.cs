@@ -57,7 +57,14 @@ namespace Ixen.Core.Rendering
 
             if (filtered)
             {
-                context.PushFilter(element.StylesHandlers.Filter.Chain);
+                FilterChain chain = element.StylesHandlers.Filter.Chain;
+                float grow = chain.Margin;
+
+                context.PushFilter(chain,
+                    element.X - element.BorderOutsideLeft - grow,
+                    element.Y - element.BorderOutsideTop - grow,
+                    element.ActualWidth + element.BorderOutsideLeft + element.BorderOutsideRight + grow * 2,
+                    element.ActualHeight + element.BorderOutsideTop + element.BorderOutsideBottom + grow * 2);
             }
 
             RenderElement(element, context);
