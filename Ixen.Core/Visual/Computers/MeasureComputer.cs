@@ -304,6 +304,9 @@ namespace Ixen.Core.Visual.Computers
 
             float[] offsets = EnsureCaretOffsets(field, value.Length + 1);
             int[] starts = EnsureLineStarts(field, value, wraps);
+            float[] advances = EnsureAdvances(value.Length);
+
+            _textMeasurer.MeasureCharacters(value, fontSpec, advances);
 
             offsets[0] = 0;
             starts[0] = 0;
@@ -311,6 +314,7 @@ namespace Ixen.Core.Visual.Computers
             int line = 0;
             int lineStart = 0;
             int lastSpace = -1;
+            float prefix = 0;
 
             width = 0;
 
@@ -325,12 +329,11 @@ namespace Ixen.Core.Visual.Computers
                     starts[line] = i + 1;
                     lineStart = i + 1;
                     offsets[i + 1] = 0;
+                    prefix = 0;
                     continue;
                 }
 
-                _textMeasurer.MeasureText(value.Substring(lineStart, i + 1 - lineStart), fontSpec,
-                    out float prefix, out _);
-
+                prefix += advances[i];
                 offsets[i + 1] = prefix;
 
                 bool blank = value[i] == ' ' || value[i] == '\t';
@@ -346,6 +349,7 @@ namespace Ixen.Core.Visual.Computers
                     starts[line] = next;
                     lineStart = next;
                     offsets[next] = 0;
+                    prefix = 0;
                     i = next - 1;
                     continue;
                 }
@@ -390,6 +394,18 @@ namespace Ixen.Core.Visual.Computers
             }
 
             return field.EnsureLineStarts(capacity);
+        }
+
+        private float[] _advances = new float[0];
+
+        private float[] EnsureAdvances(int count)
+        {
+            if (_advances.Length < count)
+            {
+                _advances = new float[count];
+            }
+
+            return _advances;
         }
 
         private static float[] EnsureCaretOffsets(TextField field, int count)

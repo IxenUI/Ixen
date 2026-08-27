@@ -378,6 +378,14 @@ namespace Ixen.Core.UT.Input
             height = _lineHeight;
         }
 
+        public void MeasureCharacters(string text, FontSpec font, float[] advances)
+        {
+            for (int index = 0; index < (text == null ? 0 : text.Length); index++)
+            {
+                advances[index] = _charWidth;
+            }
+        }
+
         public float GetLineHeight(FontSpec font) => _lineHeight;
     }
 }

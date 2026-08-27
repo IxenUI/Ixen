@@ -53,6 +53,14 @@ namespace Ixen.Core.UT.Layout
                 height = GetLineHeight(font);
             }
 
+            public void MeasureCharacters(string text, FontSpec font, float[] advances)
+            {
+                for (int index = 0; index < (text == null ? 0 : text.Length); index++)
+                {
+                    advances[index] = PER_CHAR;
+                }
+            }
+
             public float GetLineHeight(FontSpec font)
                 => font.LineHeight > 0 ? font.LineHeight : NATURAL;
         }
