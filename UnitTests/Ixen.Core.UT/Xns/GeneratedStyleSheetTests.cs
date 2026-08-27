@@ -204,17 +204,21 @@ namespace Ixen.Core.UT.Xns
         {
             BoxShadowStyleDescriptor box = Style<BoxShadowStyleDescriptor>();
 
-            Assert.AreEqual(-1f, box.OffsetX, "a negative offset makes it through the tokenizer and the parser");
-            Assert.AreEqual(2.5f, box.OffsetY);
-            Assert.AreEqual(6f, box.Blur);
-            Assert.AreEqual(3f, box.Spread);
-            Assert.AreEqual("#40112233", box.Color);
+            Assert.AreEqual(-1f, box.First.OffsetX, "a negative offset makes it through the tokenizer and the parser");
+            Assert.AreEqual(2.5f, box.First.OffsetY);
+            Assert.AreEqual(6f, box.First.Blur);
+            Assert.AreEqual(3f, box.First.Spread);
+            Assert.AreEqual("#40112233", box.First.Color);
+
+            Assert.AreEqual(2, box.Shadows.Count, "a comma-separated list survives the round trip");
+            Assert.AreEqual("#20445566", box.Shadows[1].Color);
+            Assert.AreEqual(2f, box.Shadows[1].Blur);
 
             TextShadowStyleDescriptor text = Style<TextShadowStyleDescriptor>();
 
-            Assert.AreEqual(1f, text.OffsetY);
-            Assert.AreEqual(2.5f, text.Blur);
-            Assert.AreEqual("#80445566", text.Color);
+            Assert.AreEqual(1f, text.First.OffsetY);
+            Assert.AreEqual(2.5f, text.First.Blur);
+            Assert.AreEqual("#80445566", text.First.Color);
         }
 
         [TestMethod]

@@ -1,5 +1,6 @@
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Styles.Descriptors;
+using System.Collections.Generic;
 
 namespace Ixen.Core.Rendering
 {
@@ -7,23 +8,30 @@ namespace Ixen.Core.Rendering
     {
         internal static void Render(VisualElement element, RendererContext context)
         {
-            ShadowStyleDescriptor shadow = element.StylesHandlers.BoxShadow.Descriptor;
+            ShadowStyleDescriptor descriptor = element.StylesHandlers.BoxShadow.Descriptor;
 
-            if (!shadow.IsDeclared)
+            if (!descriptor.IsDeclared)
             {
                 return;
             }
 
-            float spread = shadow.Spread;
+            List<Shadow> shadows = descriptor.Shadows;
+            CornerRadiusStyleDescriptor radius = element.StylesHandlers.CornerRadius.Descriptor;
 
-            context.DrawShadow(
-                element.X + shadow.OffsetX - spread,
-                element.Y + shadow.OffsetY - spread,
-                element.ActualWidth + spread * 2,
-                element.ActualHeight + spread * 2,
-                element.StylesHandlers.CornerRadius.Descriptor,
-                shadow.Blur,
-                new Color(shadow.Color));
+            for (int index = shadows.Count - 1; index >= 0; index--)
+            {
+                Shadow shadow = shadows[index];
+                float spread = shadow.Spread;
+
+                context.DrawShadow(
+                    element.X + shadow.OffsetX - spread,
+                    element.Y + shadow.OffsetY - spread,
+                    element.ActualWidth + spread * 2,
+                    element.ActualHeight + spread * 2,
+                    radius,
+                    shadow.Blur,
+                    new Color(shadow.Color));
+            }
         }
     }
 }

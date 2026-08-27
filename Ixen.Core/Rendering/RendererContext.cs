@@ -209,7 +209,17 @@ namespace Ixen.Core.Rendering
             }
 
             SKFont font = FontCache.Get(fontSpec);
+            System.Collections.Generic.List<Shadow> shadows = shadow.Shadows;
 
+            for (int index = shadows.Count - 1; index >= 0; index--)
+            {
+                DrawOneTextShadow(text, x, top, fontSpec, font, shadows[index]);
+            }
+        }
+
+        private void DrawOneTextShadow(string text, float x, float top, FontSpec fontSpec,
+            SKFont font, Shadow shadow)
+        {
             if (shadow.Blur != _textShadowBlur)
             {
                 _textShadowPaint.MaskFilter = shadow.Blur > 0

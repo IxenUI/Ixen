@@ -41,11 +41,17 @@ namespace Ixen.Core.UT.Rendering
         {
             _card.Styles.BoxShadow = new BoxShadowStyleDescriptor
             {
-                OffsetX = x,
-                OffsetY = y,
-                Blur = blur,
-                Spread = spread,
-                Color = colour
+                Shadows =
+                {
+                    new Ixen.Core.Visual.Styles.Descriptors.Shadow
+                    {
+                        OffsetX = x,
+                        OffsetY = y,
+                        Blur = blur,
+                        Spread = spread,
+                        Color = colour
+                    }
+                }
             };
 
             _card.Invalidate();
@@ -193,10 +199,7 @@ namespace Ixen.Core.UT.Rendering
             _card.Styles.Color = new ColorStyleDescriptor { Value = "#FFFFFF" };
             _card.Styles.TextShadow = new TextShadowStyleDescriptor
             {
-                OffsetX = 0,
-                OffsetY = 0,
-                Blur = 6,
-                Color = "#FF000000"
+                Shadows = { new Ixen.Core.Visual.Styles.Descriptors.Shadow { Blur = 6, Color = "#FF000000" } }
             };
 
             _card.Invalidate();
@@ -230,10 +233,7 @@ namespace Ixen.Core.UT.Rendering
 
             _card.Styles.TextShadow = new TextShadowStyleDescriptor
             {
-                OffsetX = 1,
-                OffsetY = 2,
-                Blur = 3,
-                Color = "#80112233"
+                Shadows = { new Ixen.Core.Visual.Styles.Descriptors.Shadow { OffsetX = 1, OffsetY = 2, Blur = 3, Color = "#80112233" } }
             };
 
             _root.Invalidate();
@@ -241,9 +241,9 @@ namespace Ixen.Core.UT.Rendering
 
             TextShadowStyleDescriptor resolved = label.StylesHandlers.TextShadow.Descriptor;
 
-            Assert.AreEqual("#80112233", resolved.Color,
+            Assert.AreEqual("#80112233", resolved.First.Color,
                 "text-shadow travels with the font properties, as it does in CSS");
-            Assert.AreEqual(2f, resolved.OffsetY);
+            Assert.AreEqual(2f, resolved.First.OffsetY);
         }
 
         [TestMethod]
@@ -251,15 +251,15 @@ namespace Ixen.Core.UT.Rendering
         {
             var label = new VisualElement { Name = "label" };
             label.Text = "Ixen";
-            label.Styles.TextShadow = new TextShadowStyleDescriptor { Blur = 1, Color = "#FF445566" };
+            label.Styles.TextShadow = new TextShadowStyleDescriptor { Shadows = { new Ixen.Core.Visual.Styles.Descriptors.Shadow { Blur = 1, Color = "#FF445566" } } };
 
             _card.AddChild(label);
-            _card.Styles.TextShadow = new TextShadowStyleDescriptor { Blur = 9, Color = "#80112233" };
+            _card.Styles.TextShadow = new TextShadowStyleDescriptor { Shadows = { new Ixen.Core.Visual.Styles.Descriptors.Shadow { Blur = 9, Color = "#80112233" } } };
 
             _root.Invalidate();
             _surface.ComputeLayout(VIEWPORT, VIEWPORT);
 
-            Assert.AreEqual("#FF445566", label.StylesHandlers.TextShadow.Descriptor.Color);
+            Assert.AreEqual("#FF445566", label.StylesHandlers.TextShadow.Descriptor.First.Color);
         }
 
         [TestMethod]

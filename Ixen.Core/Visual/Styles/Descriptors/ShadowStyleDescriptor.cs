@@ -1,31 +1,66 @@
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
+
 namespace Ixen.Core.Visual.Styles.Descriptors
 {
-    public class ShadowStyleDescriptor : StyleDescriptor
+    public class Shadow
     {
-        internal override string Identifier => StyleIdentifier.BOX_SHADOW;
-
         public float OffsetX { get; set; }
         public float OffsetY { get; set; }
         public float Blur { get; set; }
         public float Spread { get; set; }
         public string Color { get; set; }
 
-        internal bool IsDeclared => Color != null;
+        private static string Of(float value)
+            => value.ToString("R", CultureInfo.InvariantCulture) + "f";
+
+        internal string ToSource()
+            => $"new {nameof(Shadow)} {{ "
+                + $"{nameof(OffsetX)} = {Of(OffsetX)}, "
+                + $"{nameof(OffsetY)} = {Of(OffsetY)}, "
+                + $"{nameof(Blur)} = {Of(Blur)}, "
+                + $"{nameof(Spread)} = {Of(Spread)}, "
+                + $"{nameof(Color)} = {(Color == null ? "null" : "\"" + Color + "\"")} }}";
+    }
+
+    public class ShadowStyleDescriptor : StyleDescriptor
+    {
+        internal override string Identifier => StyleIdentifier.BOX_SHADOW;
+
+        public List<Shadow> Shadows { get; set; } = new List<Shadow>();
+
+        internal bool IsDeclared => Shadows != null && Shadows.Count > 0;
+
+        internal int Count => Shadows == null ? 0 : Shadows.Count;
+
+        internal Shadow First => Count > 0 ? Shadows[0] : null;
 
         internal void Set(ShadowStyleDescriptor other)
         {
-            OffsetX = other.OffsetX;
-            OffsetY = other.OffsetY;
-            Blur = other.Blur;
-            Spread = other.Spread;
-            Color = other.Color;
+            Shadows.Clear();
+            Shadows.AddRange(other.Shadows);
         }
 
         internal string Fields()
-            => $"{nameof(OffsetX)} = {SourceOf(OffsetX)}, "
-                + $"{nameof(OffsetY)} = {SourceOf(OffsetY)}, "
-                + $"{nameof(Blur)} = {SourceOf(Blur)}, "
-                + $"{nameof(Spread)} = {SourceOf(Spread)}, "
-                + $"{nameof(Color)} = {SourceOf(Color)}";
+        {
+            var sb = new StringBuilder();
+
+            sb.Append($"{nameof(Shadows)} = new global::System.Collections.Generic.List<{nameof(Shadow)}> {{ ");
+
+            for (int index = 0; index < Count; index++)
+            {
+                if (index > 0)
+                {
+                    sb.Append(", ");
+                }
+
+                sb.Append(Shadows[index].ToSource());
+            }
+
+            sb.Append(" }");
+
+            return sb.ToString();
+        }
     }
 }

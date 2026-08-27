@@ -21,7 +21,26 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
         protected override bool Parse()
         {
-            MatchCollection parts = _splitter.Matches(_content ?? string.Empty);
+            string[] entries = (_content ?? string.Empty).Split(',');
+
+            foreach (string entry in entries)
+            {
+                Shadow shadow = ParseOne(entry);
+
+                if (shadow == null)
+                {
+                    return false;
+                }
+
+                Descriptor.Shadows.Add(shadow);
+            }
+
+            return Descriptor.Shadows.Count > 0;
+        }
+
+        private Shadow ParseOne(string content)
+        {
+            MatchCollection parts = _splitter.Matches(content);
 
             var lengths = new List<float>();
             string color = null;
@@ -32,7 +51,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 {
                     if (color != null)
                     {
-                        return false;
+                        return null;
                     }
 
                     color = part.Value;
@@ -43,13 +62,13 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
                 if (!length.Success || lengths.Count == MaxLengths)
                 {
-                    return false;
+                    return null;
                 }
 
                 if (!float.TryParse(length.Groups[1].Value, NumberStyles.Float,
                     CultureInfo.InvariantCulture, out float value))
                 {
-                    return false;
+                    return null;
                 }
 
                 lengths.Add(value);
@@ -57,16 +76,19 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
             if (lengths.Count < 2 || color == null)
             {
-                return false;
+                return null;
             }
 
-            Descriptor.OffsetX = lengths[0];
-            Descriptor.OffsetY = lengths[1];
-            Descriptor.Blur = lengths.Count > 2 ? lengths[2] : 0;
-            Descriptor.Spread = lengths.Count > 3 ? lengths[3] : 0;
-            Descriptor.Color = color;
+            var shadow = new Shadow
+            {
+                OffsetX = lengths[0],
+                OffsetY = lengths[1],
+                Blur = lengths.Count > 2 ? lengths[2] : 0,
+                Spread = lengths.Count > 3 ? lengths[3] : 0,
+                Color = color
+            };
 
-            return Descriptor.Blur >= 0 && Descriptor.Spread >= 0;
+            return shadow.Blur >= 0 && shadow.Spread >= 0 ? shadow : null;
         }
     }
 }

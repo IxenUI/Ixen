@@ -35,11 +35,11 @@ namespace Ixen.Core.UT.StyleParser
         {
             BoxShadowStyleDescriptor shadow = Parse<BoxShadowStyleDescriptor>("box-shadow", "0px 4px #40000000");
 
-            Assert.AreEqual(0f, shadow.OffsetX);
-            Assert.AreEqual(4f, shadow.OffsetY);
-            Assert.AreEqual(0f, shadow.Blur);
-            Assert.AreEqual(0f, shadow.Spread);
-            Assert.AreEqual("#40000000", shadow.Color);
+            Assert.AreEqual(0f, shadow.First.OffsetX);
+            Assert.AreEqual(4f, shadow.First.OffsetY);
+            Assert.AreEqual(0f, shadow.First.Blur);
+            Assert.AreEqual(0f, shadow.First.Spread);
+            Assert.AreEqual("#40000000", shadow.First.Color);
             Assert.IsTrue(shadow.IsDeclared);
         }
 
@@ -49,10 +49,10 @@ namespace Ixen.Core.UT.StyleParser
             BoxShadowStyleDescriptor shadow =
                 Parse<BoxShadowStyleDescriptor>("box-shadow", "1px 2px 8px 3px #80112233");
 
-            Assert.AreEqual(1f, shadow.OffsetX);
-            Assert.AreEqual(2f, shadow.OffsetY);
-            Assert.AreEqual(8f, shadow.Blur);
-            Assert.AreEqual(3f, shadow.Spread);
+            Assert.AreEqual(1f, shadow.First.OffsetX);
+            Assert.AreEqual(2f, shadow.First.OffsetY);
+            Assert.AreEqual(8f, shadow.First.Blur);
+            Assert.AreEqual(3f, shadow.First.Spread);
         }
 
         [TestMethod]
@@ -61,8 +61,8 @@ namespace Ixen.Core.UT.StyleParser
             BoxShadowStyleDescriptor shadow =
                 Parse<BoxShadowStyleDescriptor>("box-shadow", "-3px -5px 4px #40000000");
 
-            Assert.AreEqual(-3f, shadow.OffsetX);
-            Assert.AreEqual(-5f, shadow.OffsetY);
+            Assert.AreEqual(-3f, shadow.First.OffsetX);
+            Assert.AreEqual(-5f, shadow.First.OffsetY);
         }
 
         [TestMethod]
@@ -71,9 +71,9 @@ namespace Ixen.Core.UT.StyleParser
             BoxShadowStyleDescriptor shadow =
                 Parse<BoxShadowStyleDescriptor>("box-shadow", "#40000000 0px 4px 8px");
 
-            Assert.AreEqual(4f, shadow.OffsetY);
-            Assert.AreEqual(8f, shadow.Blur);
-            Assert.AreEqual("#40000000", shadow.Color);
+            Assert.AreEqual(4f, shadow.First.OffsetY);
+            Assert.AreEqual(8f, shadow.First.Blur);
+            Assert.AreEqual("#40000000", shadow.First.Color);
         }
 
         [TestMethod]
@@ -81,8 +81,8 @@ namespace Ixen.Core.UT.StyleParser
         {
             BoxShadowStyleDescriptor shadow = Parse<BoxShadowStyleDescriptor>("box-shadow", "0 4 8 #40000000");
 
-            Assert.AreEqual(4f, shadow.OffsetY);
-            Assert.AreEqual(8f, shadow.Blur);
+            Assert.AreEqual(4f, shadow.First.OffsetY);
+            Assert.AreEqual(8f, shadow.First.Blur);
         }
 
         [TestMethod]
@@ -129,8 +129,8 @@ namespace Ixen.Core.UT.StyleParser
             TextShadowStyleDescriptor shadow =
                 Parse<TextShadowStyleDescriptor>("text-shadow", "0px 1px 3px #80000000");
 
-            Assert.AreEqual(3f, shadow.Blur);
-            Assert.AreEqual(0f, shadow.Spread);
+            Assert.AreEqual(3f, shadow.First.Blur);
+            Assert.AreEqual(0f, shadow.First.Spread);
 
             AssertRejected("text-shadow", "0px 1px 3px 2px #80000000");
         }

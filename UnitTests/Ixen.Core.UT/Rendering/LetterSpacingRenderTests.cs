@@ -248,10 +248,7 @@ namespace Ixen.Core.UT.Rendering
         {
             _label.Styles.TextShadow = new TextShadowStyleDescriptor
             {
-                OffsetX = 20,
-                OffsetY = 0,
-                Blur = 0,
-                Color = "#FF0000"
+                Shadows = { new Ixen.Core.Visual.Styles.Descriptors.Shadow { OffsetX = 20, Color = "#FF0000" } }
             };
 
             Declare("8px");
