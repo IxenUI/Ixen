@@ -20,6 +20,9 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         public SizeUnit YUnit { get; set; } = SizeUnit.Pixels;
         public float Y { get; set; }
 
+        internal static float IdentityValue(TransformKind kind)
+            => kind == TransformKind.Scale ? 1f : 0f;
+
         internal string ToSource()
         {
             var sb = new StringBuilder();
@@ -43,6 +46,80 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         public List<TransformOperation> Operations { get; set; } = new List<TransformOperation>();
 
         internal bool IsDeclared => Operations != null && Operations.Count > 0;
+
+        internal int Count => Operations == null ? 0 : Operations.Count;
+
+        internal bool Matches(TransformStyleDescriptor other)
+        {
+            if (other == null)
+            {
+                return Count == 0;
+            }
+
+            if (Count != other.Count)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < Count; index++)
+            {
+                TransformOperation mine = Operations[index];
+                TransformOperation theirs = other.Operations[index];
+
+                if (mine.Kind != theirs.Kind
+                    || mine.XUnit != theirs.XUnit || mine.X != theirs.X
+                    || mine.YUnit != theirs.YUnit || mine.Y != theirs.Y)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        internal static bool Compatible(TransformStyleDescriptor from, TransformStyleDescriptor to)
+        {
+            int fromCount = from == null ? 0 : from.Count;
+            int toCount = to == null ? 0 : to.Count;
+
+            if (fromCount == 0 || toCount == 0)
+            {
+                return true;
+            }
+
+            if (fromCount != toCount)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < fromCount; index++)
+            {
+                TransformOperation first = from.Operations[index];
+                TransformOperation second = to.Operations[index];
+
+                if (first.Kind != second.Kind)
+                {
+                    return false;
+                }
+
+                if (first.Kind != TransformKind.Translate)
+                {
+                    continue;
+                }
+
+                if (!UnitsAgree(first.XUnit, first.X, second.XUnit, second.X)
+                    || !UnitsAgree(first.YUnit, first.Y, second.YUnit, second.Y))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        internal static bool UnitsAgree(SizeUnit fromUnit, float fromValue,
+            SizeUnit toUnit, float toValue)
+            => fromUnit == toUnit || fromValue == 0 || toValue == 0;
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()

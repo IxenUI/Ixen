@@ -224,6 +224,68 @@ namespace Ixen.Core.UT.Rendering
         }
 
         [TestMethod]
+        public void AnAnimationOnAnotherPropertyLeavesTheGradientAlone()
+        {
+            var scheduler = new FakeScheduler();
+            var registry = new StyleRegistry();
+
+            registry.Add(new KeyframesSet("spin", new System.Collections.Generic.List<Keyframe>
+            {
+                new Keyframe(0f, new System.Collections.Generic.List<StyleDescriptor>
+                {
+                    Parsed<TransformStyleDescriptor>("transform", "rotate(0deg)")
+                }),
+                new Keyframe(1f, new System.Collections.Generic.List<StyleDescriptor>
+                {
+                    Parsed<TransformStyleDescriptor>("transform", "rotate(20deg)")
+                })
+            }));
+
+            _surface.Styles = registry;
+            _surface.Scheduler = scheduler;
+
+            _box.Styles.Background = Background("linear-gradient(to bottom #000000 #FFFFFF)");
+
+            _box.Styles.Animation = new AnimationStyleDescriptor
+            {
+                Name = "spin",
+                Duration = 160,
+                Iterations = 1
+            };
+
+            _box.Invalidate();
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            using (SKBitmap rendered = _surface.RenderToBitmap())
+            {
+                Assert.AreNotEqual(At(rendered, 50, 4).Red, At(rendered, 50, VIEWPORT - 5).Red,
+                    "nothing animates the background, so declaring an animation at all must not "
+                    + "hand the element a baseline brush that swallows its gradient");
+            }
+        }
+
+        [TestMethod]
+        public void ATransitionOnAnotherPropertyLeavesTheGradientAlone()
+        {
+            _box.Styles.Transition = new TransitionStyleDescriptor
+            {
+                Specs =
+                {
+                    {
+                        Visual.Styles.StyleIdentifier.WIDTH,
+                        new TransitionSpec { Duration = 120 }
+                    }
+                }
+            };
+
+            using (SKBitmap rendered = Render("linear-gradient(to bottom #000000 #FFFFFF)"))
+            {
+                Assert.AreNotEqual(At(rendered, 50, 4).Red, At(rendered, 50, VIEWPORT - 5).Red,
+                    "and a transition on some other property must not either");
+            }
+        }
+
+        [TestMethod]
         public void ARunningKeyframeAnimationBeatsTheGradient()
         {
             var scheduler = new FakeScheduler();

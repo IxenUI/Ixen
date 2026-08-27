@@ -27,7 +27,7 @@ generated_root {
     text-align: right bottom
     text-decoration: underline line-through
     @include generated_mixin
-    transition: background 150ms color 0.2s 30ms ease-out
+    transition: background 150ms color 0.2s 30ms ease-out transform 240ms ease-in-out 20ms
     cursor: hand
     object-fit: scale-down
     opacity: 0.75
@@ -102,4 +102,9 @@ generated_root {
     0%   { background: #FF0000  width: 10px }
     50%  { background: #00FF00 }
     100% { background: #0000FF  width: 30.5px }
+}
+
+@keyframes generated_wobble {
+    from { transform: rotate(-8deg) scale(1) }
+    to   { transform: rotate(4deg) scale(1.1) }
 }

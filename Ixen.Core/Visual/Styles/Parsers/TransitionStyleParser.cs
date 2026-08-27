@@ -80,6 +80,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 || property == StyleIdentifier.LEFT
                 || property == StyleIdentifier.TOP
                 || property == StyleIdentifier.RIGHT
-                || property == StyleIdentifier.BOTTOM;
+                || property == StyleIdentifier.BOTTOM
+                || property == StyleIdentifier.TRANSFORM;
     }
 }

@@ -7,7 +7,9 @@ namespace Ixen.Core.Visual
     {
         internal static Matrix2D Of(VisualElement element)
         {
-            TransformStyleDescriptor transform = element.StylesHandlers.Transform.Descriptor;
+            TransformStyleDescriptor transform = element.HasAnimations
+                ? element.AnimatedTransform() ?? element.StylesHandlers.Transform.Descriptor
+                : element.StylesHandlers.Transform.Descriptor;
 
             if (transform == null || !transform.IsDeclared)
             {

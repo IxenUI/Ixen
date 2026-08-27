@@ -117,11 +117,24 @@ namespace Ixen.Core.Visual
 
             for (int index = 0; index < properties.Count; index++)
             {
-                SizeTransition transition = _element.Animations.SizeIfAny(properties[index]);
+                string identifier = properties[index];
 
-                if (transition != null)
+                SizeTransition size = _element.Animations.SizeIfAny(identifier);
+
+                if (size != null)
                 {
-                    transition.Held = false;
+                    size.Held = false;
+                }
+
+                if (KeyframesSet.IsColorProperty(identifier))
+                {
+                    _element.Animations.For(identifier).Held = false;
+                }
+
+                if (KeyframesSet.IsTransformProperty(identifier)
+                    && _element.Animations.Transform != null)
+                {
+                    _element.Animations.Transform.Held = false;
                 }
             }
         }
@@ -186,7 +199,7 @@ namespace Ixen.Core.Visual
                 if (colors != null)
                 {
                     _element.Animations.For(identifier)
-                        .Jump(SampleColor(colors, progress, _spec.Easing));
+                        .Hold(SampleColor(colors, progress, _spec.Easing));
 
                     continue;
                 }
@@ -197,8 +210,63 @@ namespace Ixen.Core.Visual
                 {
                     SizeStop sampled = SampleSize(sizes, progress, _spec.Easing);
                     _element.Animations.SizeFor(identifier).Hold(sampled.Unit, sampled.Value);
+                    continue;
+                }
+
+                TransformStop[] transforms = _set.TransformTrack(identifier);
+
+                if (transforms != null)
+                {
+                    _element.Animations.TransformFor()
+                        .Hold(SampleTransform(transforms, progress, _spec.Easing));
                 }
             }
+        }
+
+        private readonly TransformBlend _blend = new TransformBlend();
+
+        private TransformStyleDescriptor SampleTransform(TransformStop[] track, float progress,
+            EasingKind easing)
+        {
+            int last = track.Length - 1;
+
+            if (progress <= track[0].Offset)
+            {
+                return track[0].Value;
+            }
+
+            if (progress >= track[last].Offset)
+            {
+                return track[last].Value;
+            }
+
+            for (int index = 0; index < last; index++)
+            {
+                TransformStop from = track[index];
+                TransformStop to = track[index + 1];
+
+                if (progress > to.Offset)
+                {
+                    continue;
+                }
+
+                if (!TransformStyleDescriptor.Compatible(from.Value, to.Value))
+                {
+                    return from.Value;
+                }
+
+                float span = to.Offset - from.Offset;
+
+                if (span <= 0)
+                {
+                    return to.Value;
+                }
+
+                return _blend.Of(from.Value, to.Value,
+                    Easing.Apply(easing, (progress - from.Offset) / span));
+            }
+
+            return track[last].Value;
         }
 
         private static Color SampleColor(ColorStop[] track, float progress, EasingKind easing)

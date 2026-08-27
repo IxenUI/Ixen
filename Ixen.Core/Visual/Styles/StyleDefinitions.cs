@@ -183,7 +183,7 @@ namespace Ixen.Core.Visual.Styles
                 Define(StyleIdentifier.TRANSITION, v => new TransitionStyleParser(v),
                     p => ((TransitionStyleParser)p).Descriptor,
                     null, new[] { "all", "background", "color", "border",
-                        "width", "height", "left", "top", "right", "bottom",
+                        "width", "height", "left", "top", "right", "bottom", "transform",
                         Easing.LINEAR, Easing.EASE_IN, Easing.EASE_OUT, Easing.EASE_IN_OUT }),
 
                 Define(StyleIdentifier.WIDTH, v => new WidthStyleParser(v),

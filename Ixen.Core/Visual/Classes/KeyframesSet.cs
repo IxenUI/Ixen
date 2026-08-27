@@ -34,10 +34,17 @@ namespace Ixen.Core.Visual.Classes
         internal float Value;
     }
 
+    internal struct TransformStop
+    {
+        internal float Offset;
+        internal TransformStyleDescriptor Value;
+    }
+
     public class KeyframesSet
     {
         private Dictionary<string, ColorStop[]> _colorTracks;
         private Dictionary<string, SizeStop[]> _sizeTracks;
+        private Dictionary<string, TransformStop[]> _transformTracks;
         private List<string> _properties;
 
         public string Name { get; set; }
@@ -75,6 +82,15 @@ namespace Ixen.Core.Visual.Classes
             return _sizeTracks.TryGetValue(identifier, out SizeStop[] track) ? track : null;
         }
 
+        internal TransformStop[] TransformTrack(string identifier)
+        {
+            Prepare();
+            return _transformTracks.TryGetValue(identifier, out TransformStop[] track) ? track : null;
+        }
+
+        internal static bool IsTransformProperty(string identifier)
+            => identifier == StyleIdentifier.TRANSFORM;
+
         internal static bool IsColorProperty(string identifier)
             => identifier == StyleIdentifier.BACKGROUND
                 || identifier == StyleIdentifier.COLOR
@@ -98,6 +114,7 @@ namespace Ixen.Core.Visual.Classes
             _properties = new List<string>();
             var colors = new Dictionary<string, List<ColorStop>>();
             var sizes = new Dictionary<string, List<SizeStop>>();
+            var transforms = new Dictionary<string, List<TransformStop>>();
 
             Frames.Sort((a, b) => a.Offset.CompareTo(b.Offset));
 
@@ -138,12 +155,24 @@ namespace Ixen.Core.Visual.Classes
                             Unit = size.Unit,
                             Value = size.Value
                         });
+
+                        continue;
+                    }
+
+                    if (IsTransformProperty(identifier) && descriptor is TransformStyleDescriptor transform)
+                    {
+                        Track(transforms, identifier).Add(new TransformStop
+                        {
+                            Offset = frame.Offset,
+                            Value = transform
+                        });
                     }
                 }
             }
 
             _colorTracks = new Dictionary<string, ColorStop[]>();
             _sizeTracks = new Dictionary<string, SizeStop[]>();
+            _transformTracks = new Dictionary<string, TransformStop[]>();
 
             foreach (KeyValuePair<string, List<ColorStop>> entry in colors)
             {
@@ -164,6 +193,17 @@ namespace Ixen.Core.Visual.Classes
                 }
 
                 _sizeTracks[entry.Key] = entry.Value.ToArray();
+                _properties.Add(entry.Key);
+            }
+
+            foreach (KeyValuePair<string, List<TransformStop>> entry in transforms)
+            {
+                if (entry.Value.Count < 2)
+                {
+                    continue;
+                }
+
+                _transformTracks[entry.Key] = entry.Value.ToArray();
                 _properties.Add(entry.Key);
             }
         }

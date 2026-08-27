@@ -8,6 +8,7 @@ namespace Ixen.Core.Visual
         internal Color To;
         internal Color Current;
         internal bool HasValue;
+        internal bool Held;
         internal int Step;
         internal int Steps;
         internal int Delay;
@@ -56,8 +57,15 @@ namespace Ixen.Core.Visual
             To = color;
             Current = color;
             HasValue = true;
+            Held = false;
             Step = 0;
             Steps = 0;
+        }
+
+        internal void Hold(Color color)
+        {
+            Jump(color);
+            Held = true;
         }
 
         internal void Start(Color target, int steps, int delay, Styles.EasingKind easing)
@@ -68,6 +76,7 @@ namespace Ixen.Core.Visual
             Steps = steps;
             Delay = delay;
             Easing = easing;
+            Held = false;
         }
 
         internal void Advance()
@@ -196,6 +205,8 @@ namespace Ixen.Core.Visual
         internal SizeTransition Right;
         internal SizeTransition Bottom;
 
+        internal TransformTransition Transform;
+
         private KeyframeAnimation _keyframes;
 
         internal ElementAnimations(VisualElement element)
@@ -282,10 +293,14 @@ namespace Ixen.Core.Visual
             }
         }
 
+        internal TransformTransition TransformFor()
+            => Transform ?? (Transform = new TransformTransition());
+
         internal bool Running
             => (Background != null && Background.Running)
                 || (Color != null && Color.Running)
                 || (Border != null && Border.Running)
+                || (Transform != null && Transform.Running)
                 || HasKeyframes
                 || SizeRunning;
 
@@ -367,6 +382,22 @@ namespace Ixen.Core.Visual
             }
         }
 
+        private void AdvanceTransform()
+        {
+            if (Transform == null || !Transform.Running)
+            {
+                return;
+            }
+
+            Transform.Advance();
+
+            if (!Transform.Running && _element.HasTransitionEndedHandler)
+            {
+                _element.RaiseTransitionEnded(
+                    new TransitionEventArgs(Styles.StyleIdentifier.TRANSFORM, _element));
+            }
+        }
+
         internal bool Tick()
         {
             bool sizes = SizeRunning;
@@ -383,6 +414,8 @@ namespace Ixen.Core.Visual
             Advance(Top, Styles.StyleIdentifier.TOP);
             Advance(Right, Styles.StyleIdentifier.RIGHT);
             Advance(Bottom, Styles.StyleIdentifier.BOTTOM);
+
+            AdvanceTransform();
 
             if (sizes)
             {
@@ -412,6 +445,8 @@ namespace Ixen.Core.Visual
             Top?.Jump(Top.Unit, Top.To);
             Right?.Jump(Right.Unit, Right.To);
             Bottom?.Jump(Bottom.Unit, Bottom.To);
+
+            Transform?.Jump(Transform.To);
         }
     }
 }

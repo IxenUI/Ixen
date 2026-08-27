@@ -315,7 +315,24 @@ namespace Ixen.Core.Visual
                 && !string.IsNullOrEmpty(StylesHandlers.Anchor.Descriptor.Name);
 
         internal bool HasTransform
-            => StylesHandlers != null && StylesHandlers.Transform.Descriptor.IsDeclared;
+        {
+            get
+            {
+                if (StylesHandlers == null)
+                {
+                    return false;
+                }
+
+                if (StylesHandlers.Transform.Descriptor.IsDeclared)
+                {
+                    return true;
+                }
+
+                Styles.Descriptors.TransformStyleDescriptor animated = AnimatedTransform();
+
+                return animated != null && animated.IsDeclared;
+            }
+        }
 
         private List<VisualElement> _overlays;
 
@@ -334,7 +351,9 @@ namespace Ixen.Core.Visual
         {
             ColorTransition transition = _animations?.For(identifier);
 
-            return transition != null && transition.HasValue ? transition.Brush : null;
+            return transition != null && (transition.Running || transition.Held)
+                ? transition.Brush
+                : null;
         }
 
         public event EventHandler<TransitionEventArgs> TransitionEnded;
@@ -350,11 +369,22 @@ namespace Ixen.Core.Visual
             return transition != null && (transition.Running || transition.Held) ? transition.Descriptor : null;
         }
 
+        internal Styles.Descriptors.TransformStyleDescriptor AnimatedTransform()
+        {
+            TransformTransition transition = _animations?.Transform;
+
+            return transition != null && (transition.Running || transition.Held)
+                ? transition.Descriptor
+                : null;
+        }
+
         internal Rendering.Pen AnimatedPen(string identifier, Rendering.Pen source)
         {
             ColorTransition transition = _animations?.For(identifier);
 
-            return transition != null && transition.HasValue ? transition.PenLike(source) : null;
+            return transition != null && (transition.Running || transition.Held)
+                ? transition.PenLike(source)
+                : null;
         }
 
         internal void AddChrome(VisualElement element)

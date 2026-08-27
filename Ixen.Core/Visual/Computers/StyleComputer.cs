@@ -244,6 +244,8 @@ namespace Ixen.Core.Visual.Computers
             RetargetSize(element, transitions, StyleIdentifier.RIGHT, handlers.Right.Descriptor, keyframes);
             RetargetSize(element, transitions, StyleIdentifier.BOTTOM, handlers.Bottom.Descriptor, keyframes);
 
+            RetargetTransform(element, transitions, handlers.Transform.Descriptor, keyframes);
+
             element.Animations.Sync();
         }
 
@@ -333,6 +335,41 @@ namespace Ixen.Core.Visual.Computers
             }
 
             transition.Start(target.Value, Math.Max(1, spec.Duration / ElementAnimations.TICK),
+                spec.Delay / ElementAnimations.TICK, spec.Easing);
+        }
+
+        private void RetargetTransform(VisualElement element, TransitionStyleDescriptor transitions,
+            TransformStyleDescriptor target, KeyframeAnimation keyframes)
+        {
+            if (keyframes.Drives(StyleIdentifier.TRANSFORM))
+            {
+                return;
+            }
+
+            TransformTransition transition = element.Animations.TransformFor();
+
+            if (!transition.HasValue)
+            {
+                transition.Jump(target);
+                return;
+            }
+
+            if (target.Matches(transition.To))
+            {
+                return;
+            }
+
+            TransitionSpec spec = transitions == null
+                ? default
+                : transitions.SpecOf(StyleIdentifier.TRANSFORM);
+
+            if (spec.Duration <= 0 || !TransformStyleDescriptor.Compatible(transition.To, target))
+            {
+                transition.Jump(target);
+                return;
+            }
+
+            transition.Start(target, Math.Max(1, spec.Duration / ElementAnimations.TICK),
                 spec.Delay / ElementAnimations.TICK, spec.Easing);
         }
 
