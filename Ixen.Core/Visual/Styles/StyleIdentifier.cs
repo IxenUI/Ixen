@@ -28,6 +28,7 @@
         public const string CURSOR = "cursor";
         public const string DOCK = "dock";
         public const string GAP = "gap";
+        public const string FILTER = "filter";
         public const string FONT_FAMILY = "font-family";
         public const string FONT_SIZE = "font-size";
         public const string FONT_STYLE = "font-style";

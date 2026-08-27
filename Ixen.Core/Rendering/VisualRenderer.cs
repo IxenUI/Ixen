@@ -53,10 +53,22 @@ namespace Ixen.Core.Rendering
                 context.PushOpacity(opacity.Value);
             }
 
+            bool filtered = element.HasFilter;
+
+            if (filtered)
+            {
+                context.PushFilter(element.StylesHandlers.Filter.Chain);
+            }
+
             RenderElement(element, context);
 
             if (element.Children.Count == 0 && !element.HasChrome)
             {
+                if (filtered)
+                {
+                    context.PopClip();
+                }
+
                 if (layered)
                 {
                     context.PopClip();
@@ -98,6 +110,11 @@ namespace Ixen.Core.Rendering
             }
 
             context.PopClip();
+
+            if (filtered)
+            {
+                context.PopClip();
+            }
 
             if (layered)
             {

@@ -33,6 +33,7 @@ generated_root {
     cursor: hand
     object-fit: scale-down
     opacity: 0.75
+    filter: blur(2.5px)
     overflow: scroll
     animation: generated_pulse 480ms ease-out 60ms infinite alternate
 

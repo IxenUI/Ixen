@@ -314,6 +314,9 @@ namespace Ixen.Core.Visual
             => StylesHandlers != null
                 && !string.IsNullOrEmpty(StylesHandlers.Anchor.Descriptor.Name);
 
+        internal bool HasFilter
+            => StylesHandlers != null && StylesHandlers.Filter.Descriptor.IsDeclared;
+
         internal bool HasTransform
         {
             get

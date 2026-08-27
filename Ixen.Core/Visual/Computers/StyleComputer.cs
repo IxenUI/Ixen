@@ -406,6 +406,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultColor;
             }
 
+            if (handlers.Filter.Descriptor != styles.Filter)
+            {
+                handlers.Filter = styles.Filter != null && styles.Filter.IsDeclared
+                    ? new FilterStyleHandler(styles.Filter)
+                    : VisualElementStylesHandlers.DefaultFilter;
+            }
+
             if (handlers.FontFamily.Descriptor != styles.FontFamily)
             {
                 handlers.FontFamily = styles.FontFamily != null && styles.FontFamily.Value != null
@@ -742,6 +749,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.CORNER_RADIUS:
                     handlers.CornerRadius = new CornerRadiusStyleHandler((CornerRadiusStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.FILTER:
+                    handlers.Filter = new FilterStyleHandler((FilterStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.FONT_FAMILY:

@@ -25,6 +25,7 @@ namespace Ixen.Core.Visual
         public CursorStyleDescriptor Cursor { get; set; } = new();
         public DockStyleDescriptor Dock { get; set; } = new();
         public GapStyleDescriptor Gap { get; set; } = new();
+        public FilterStyleDescriptor Filter { get; set; } = new();
         public FontFamilyStyleDescriptor FontFamily { get; set; } = new();
         public FontSizeStyleDescriptor FontSize { get; set; } = new();
         public FontStyleStyleDescriptor FontStyle { get; set; } = new();

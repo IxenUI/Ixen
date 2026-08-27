@@ -80,6 +80,12 @@ namespace Ixen.Core.Rendering
             SKCanvas.Concat(in skia);
         }
 
+        internal void PushFilter(FilterChain chain)
+        {
+            SKCanvas.SaveLayer(chain.Paint);
+            _clipDepth++;
+        }
+
         internal void PushOpacity(float opacity)
         {
             _layerPaint.Color = _layerPaint.Color.WithAlpha((byte)(opacity * 255));

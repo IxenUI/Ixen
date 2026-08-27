@@ -24,13 +24,23 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(29, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(30, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
         }
 
         [TestMethod]
         public void TheOverflowSurvivesGeneration()
         {
             Assert.AreEqual(OverflowKind.Scroll, Style<OverflowStyleDescriptor>().Value);
+        }
+
+        [TestMethod]
+        public void TheFilterSurvivesGeneration()
+        {
+            FilterStyleDescriptor filter = Style<FilterStyleDescriptor>();
+
+            Assert.AreEqual(1, filter.Count);
+            Assert.AreEqual(FilterKind.Blur, filter.Operations[0].Kind);
+            Assert.AreEqual(2.5f, filter.Operations[0].Value);
         }
 
         [TestMethod]

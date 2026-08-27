@@ -86,6 +86,11 @@ namespace Ixen.Core.Visual.Styles
                 Define(StyleIdentifier.ROW_SPAN, v => new RowSpanStyleParser(v),
                     p => ((RowSpanStyleParser)p).Descriptor),
 
+                Define(StyleIdentifier.FILTER, v => new FilterStyleParser(v),
+                    p => ((FilterStyleParser)p).Descriptor,
+                    new[] { FilterStyleParser.NONE },
+                    new[] { FilterStyleParser.BLUR }),
+
                 Define(StyleIdentifier.FONT_FAMILY, v => new FontFamilyStyleParser(v),
                     p => ((FontFamilyStyleParser)p).Descriptor),
 

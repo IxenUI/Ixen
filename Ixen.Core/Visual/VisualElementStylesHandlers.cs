@@ -23,6 +23,7 @@ namespace Ixen.Core.Visual
         internal static readonly CursorStyleHandler DefaultCursor = new();
         internal static readonly DockStyleHandler DefaultDock = new();
         internal static readonly GapStyleHandler DefaultGap = new();
+        internal static readonly FilterStyleHandler DefaultFilter = new();
         internal static readonly FontFamilyStyleHandler DefaultFontFamily = new();
         internal static readonly FontSizeStyleHandler DefaultFontSize = new();
         internal static readonly FontStyleStyleHandler DefaultFontStyle = new();
@@ -72,6 +73,7 @@ namespace Ixen.Core.Visual
         public CursorStyleHandler Cursor { get; set; } = DefaultCursor;
         public DockStyleHandler Dock { get; set; } = DefaultDock;
         public GapStyleHandler Gap { get; set; } = DefaultGap;
+        public FilterStyleHandler Filter { get; set; } = DefaultFilter;
         public FontFamilyStyleHandler FontFamily { get; set; } = DefaultFontFamily;
         public FontSizeStyleHandler FontSize { get; set; } = DefaultFontSize;
         public FontStyleStyleHandler FontStyle { get; set; } = DefaultFontStyle;
