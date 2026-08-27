@@ -111,6 +111,10 @@ namespace Ixen.Core.Visual.Styles
                 Define(StyleIdentifier.LEFT, v => new LeftStyleParser(v),
                     p => ((LeftStyleParser)p).Descriptor),
 
+                Define(StyleIdentifier.LETTER_SPACING, v => new LetterSpacingStyleParser(v),
+                    p => ((LetterSpacingStyleParser)p).Descriptor,
+                    new[] { LetterSpacingStyleParser.NORMAL, "1px", "-0.5px" }),
+
                 Define(StyleIdentifier.LINE_HEIGHT, v => new LineHeightStyleParser(v),
                     p => ((LineHeightStyleParser)p).Descriptor,
                     new[] { LineHeightStyleParser.NORMAL, "1.5", "24px", "150%" }),

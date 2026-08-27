@@ -167,14 +167,37 @@ namespace Ixen.Core.Rendering
         }
 
         internal float MeasureTextWidth(string text, FontSpec fontSpec)
-            => FontCache.Get(fontSpec).MeasureText(text);
+            => FontCache.Get(fontSpec).MeasureText(text) + fontSpec.Advance(text);
+
+        private static float LastGap(FontSpec fontSpec) => fontSpec.LetterSpacing;
+
+        private void DrawSpaced(string text, float x, float baseline, FontSpec fontSpec,
+            SKFont font, SKPaint paint)
+        {
+            for (int index = 0; index < text.Length; index++)
+            {
+                string glyph = text[index].ToString();
+
+                SKCanvas.DrawText(glyph, x, baseline, SKTextAlign.Left, font, paint);
+                x += font.MeasureText(glyph) + fontSpec.LetterSpacing;
+            }
+        }
 
         internal void DrawText(string text, float x, float top, FontSpec fontSpec, Brush brush)
         {
             SKFont font = FontCache.Get(fontSpec);
 
             brush.Antialisasing = true;
-            SKCanvas.DrawText(text, x, Baseline(top, fontSpec, font), SKTextAlign.Left, font, brush.SKPaint);
+
+            float baseline = Baseline(top, fontSpec, font);
+
+            if (fontSpec.LetterSpacing != 0)
+            {
+                DrawSpaced(text, x, baseline, fontSpec, font, brush.SKPaint);
+                return;
+            }
+
+            SKCanvas.DrawText(text, x, baseline, SKTextAlign.Left, font, brush.SKPaint);
         }
 
         internal void DrawTextShadow(string text, float x, float top, FontSpec fontSpec,
@@ -198,8 +221,15 @@ namespace Ixen.Core.Rendering
 
             _textShadowPaint.Color = new Color(shadow.Color).SKColor;
 
-            SKCanvas.DrawText(text, x + shadow.OffsetX,
-                Baseline(top + shadow.OffsetY, fontSpec, font),
+            float shadowBaseline = Baseline(top + shadow.OffsetY, fontSpec, font);
+
+            if (fontSpec.LetterSpacing != 0)
+            {
+                DrawSpaced(text, x + shadow.OffsetX, shadowBaseline, fontSpec, font, _textShadowPaint);
+                return;
+            }
+
+            SKCanvas.DrawText(text, x + shadow.OffsetX, shadowBaseline,
                 SKTextAlign.Left, font, _textShadowPaint);
         }
 
@@ -214,7 +244,7 @@ namespace Ixen.Core.Rendering
 
             SKFont font = FontCache.Get(fontSpec);
             SKFontMetrics metrics = font.Metrics;
-            float width = font.MeasureText(text);
+            float width = MeasureTextWidth(text, fontSpec) - LastGap(fontSpec);
 
             if (width <= 0)
             {

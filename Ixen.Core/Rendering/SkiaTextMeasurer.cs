@@ -18,7 +18,8 @@ namespace Ixen.Core.Rendering
 
             SKFont skFont = FontCache.Get(font);
 
-            width = skFont.MeasureText(text);
+            width = skFont.MeasureText(text) + font.Advance(text);
+
             height = GetLineHeight(font);
         }
 

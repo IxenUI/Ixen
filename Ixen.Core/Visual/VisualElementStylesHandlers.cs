@@ -30,6 +30,7 @@ namespace Ixen.Core.Visual
         internal static readonly HeightStyleHandler DefaultHeight = new();
         internal static readonly LayoutStyleHandler DefaultLayout = new();
         internal static readonly LeftStyleHandler DefaultLeft = new();
+        internal static readonly LetterSpacingStyleHandler DefaultLetterSpacing = new();
         internal static readonly LineHeightStyleHandler DefaultLineHeight = new();
         internal static readonly MarginStyleHandler DefaultMargin = new();
         internal static readonly MaxHeightStyleHandler DefaultMaxHeight = new();
@@ -78,6 +79,7 @@ namespace Ixen.Core.Visual
         public HeightStyleHandler Height { get; set; } = DefaultHeight;
         public LayoutStyleHandler Layout { get; set; } = DefaultLayout;
         public LeftStyleHandler Left { get; set; } = DefaultLeft;
+        public LetterSpacingStyleHandler LetterSpacing { get; set; } = DefaultLetterSpacing;
         public LineHeightStyleHandler LineHeight { get; set; } = DefaultLineHeight;
         public MarginStyleHandler Margin { get; set; } = DefaultMargin;
         public MaxHeightStyleHandler MaxHeight { get; set; } = DefaultMaxHeight;

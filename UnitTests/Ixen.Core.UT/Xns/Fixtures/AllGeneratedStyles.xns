@@ -27,6 +27,7 @@ generated_root {
     text-align: right bottom
     text-decoration: underline line-through
     line-height: 1.45
+    letter-spacing: -0.5px
     @include generated_mixin
     transition: background 150ms color 0.2s 30ms ease-out transform 240ms ease-in-out 20ms
     cursor: hand

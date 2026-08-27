@@ -182,6 +182,11 @@ namespace Ixen.Core.Visual.Computers
                 handlers.LineHeight = from.LineHeight;
             }
 
+            if (!handlers.LetterSpacing.Descriptor.IsDeclared)
+            {
+                handlers.LetterSpacing = from.LetterSpacing;
+            }
+
             if (handlers.FontWeight.Descriptor.Value == FontWeight.Unset)
             {
                 handlers.FontWeight = from.FontWeight;
@@ -420,6 +425,13 @@ namespace Ixen.Core.Visual.Computers
                 handlers.LineHeight = styles.LineHeight != null && styles.LineHeight.IsDeclared
                     ? new LineHeightStyleHandler(styles.LineHeight)
                     : VisualElementStylesHandlers.DefaultLineHeight;
+            }
+
+            if (handlers.LetterSpacing.Descriptor != styles.LetterSpacing)
+            {
+                handlers.LetterSpacing = styles.LetterSpacing != null && styles.LetterSpacing.IsDeclared
+                    ? new LetterSpacingStyleHandler(styles.LetterSpacing)
+                    : VisualElementStylesHandlers.DefaultLetterSpacing;
             }
 
             if (handlers.FontStyle.Descriptor != styles.FontStyle)
@@ -866,6 +878,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.ROW_SPAN:
                     handlers.RowSpan = new RowSpanStyleHandler((RowSpanStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.LETTER_SPACING:
+                    handlers.LetterSpacing = new LetterSpacingStyleHandler((LetterSpacingStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.LINE_HEIGHT:
