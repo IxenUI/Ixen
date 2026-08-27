@@ -181,6 +181,20 @@ namespace Ixen.Core.Visual
             return _textLines;
         }
 
+        private TextLayoutCache _textLayout;
+
+        internal TextLayoutCache TextLayout => _textLayout;
+
+        internal TextLayoutCache EnsureTextLayout()
+        {
+            if (_textLayout == null)
+            {
+                _textLayout = new TextLayoutCache();
+            }
+
+            return _textLayout;
+        }
+
         internal float[] GridColumns => _gridColumns;
         internal float[] GridRows => _gridRows;
 

@@ -270,6 +270,7 @@ namespace Ixen.Core.Visual.Computers
             if (_textMeasurer == null || string.IsNullOrEmpty(element.Text))
             {
                 element.TextLines?.Clear();
+                element.TextLayout?.Reset();
                 return;
             }
 
@@ -277,10 +278,21 @@ namespace Ixen.Core.Visual.Computers
             bool wrap = element.StylesHandlers.TextWrap.Descriptor.Value == TextWrap.Wrap;
             bool ellipsis = element.StylesHandlers.TextOverflow.Descriptor.Value == TextOverflow.Ellipsis;
 
+            TextLayoutCache cache = element.EnsureTextLayout();
+
+            if (cache.Matches(_textMeasurer, element.Text, fontSpec, wrap, ellipsis, availableWidth))
+            {
+                width = cache.Width;
+                height = cache.Height;
+                return;
+            }
+
             List<string> lines = element.EnsureTextLines();
 
             width = BuildLines(element.Text, fontSpec, availableWidth, wrap, ellipsis, lines);
             height = _textMeasurer.GetLineHeight(fontSpec) * lines.Count;
+
+            cache.Set(_textMeasurer, element.Text, fontSpec, wrap, ellipsis, availableWidth, width, height);
         }
 
         private void LayoutField(TextField field, float availableWidth, out float width, out float height)

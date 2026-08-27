@@ -22,6 +22,16 @@ namespace Ixen.Core.Visual
             LetterSpacing = letterSpacing;
         }
 
+        internal bool SameAs(FontSpec other)
+        {
+            return Size == other.Size
+                && Bold == other.Bold
+                && Italic == other.Italic
+                && LineHeight == other.LineHeight
+                && LetterSpacing == other.LetterSpacing
+                && string.Equals(Family, other.Family);
+        }
+
         internal float Advance(string text)
             => LetterSpacing == 0 || string.IsNullOrEmpty(text)
                 ? 0
