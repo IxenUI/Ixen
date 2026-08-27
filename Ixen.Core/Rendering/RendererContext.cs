@@ -157,7 +157,14 @@ namespace Ixen.Core.Rendering
         }
 
         internal float GetLineHeight(FontSpec fontSpec)
-            => FontCache.Get(fontSpec).Spacing;
+            => fontSpec.LineHeight > 0 ? fontSpec.LineHeight : FontCache.Get(fontSpec).Spacing;
+
+        private static float Baseline(float top, FontSpec fontSpec, SKFont font)
+        {
+            float leading = fontSpec.LineHeight > 0 ? (fontSpec.LineHeight - font.Spacing) / 2 : 0;
+
+            return top + leading - font.Metrics.Ascent;
+        }
 
         internal float MeasureTextWidth(string text, FontSpec fontSpec)
             => FontCache.Get(fontSpec).MeasureText(text);
@@ -167,7 +174,7 @@ namespace Ixen.Core.Rendering
             SKFont font = FontCache.Get(fontSpec);
 
             brush.Antialisasing = true;
-            SKCanvas.DrawText(text, x, top - font.Metrics.Ascent, SKTextAlign.Left, font, brush.SKPaint);
+            SKCanvas.DrawText(text, x, Baseline(top, fontSpec, font), SKTextAlign.Left, font, brush.SKPaint);
         }
 
         internal void DrawTextShadow(string text, float x, float top, FontSpec fontSpec,
@@ -191,7 +198,8 @@ namespace Ixen.Core.Rendering
 
             _textShadowPaint.Color = new Color(shadow.Color).SKColor;
 
-            SKCanvas.DrawText(text, x + shadow.OffsetX, top + shadow.OffsetY - font.Metrics.Ascent,
+            SKCanvas.DrawText(text, x + shadow.OffsetX,
+                Baseline(top + shadow.OffsetY, fontSpec, font),
                 SKTextAlign.Left, font, _textShadowPaint);
         }
 
@@ -213,7 +221,7 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            float baseline = top - metrics.Ascent;
+            float baseline = Baseline(top, fontSpec, font);
             float thickness = metrics.UnderlineThickness ?? font.Size / 14f;
 
             if (thickness < 1)

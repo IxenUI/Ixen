@@ -35,6 +35,7 @@
         public const string HEIGHT = "height";
         public const string LAYOUT = "layout";
         public const string LEFT = "left";
+        public const string LINE_HEIGHT = "line-height";
         public const string MARGIN = "margin";
         public const string MAX_HEIGHT = "max-height";
         public const string MAX_WIDTH = "max-width";

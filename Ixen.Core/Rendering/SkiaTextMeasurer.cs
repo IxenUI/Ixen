@@ -19,7 +19,7 @@ namespace Ixen.Core.Rendering
             SKFont skFont = FontCache.Get(font);
 
             width = skFont.MeasureText(text);
-            height = skFont.Spacing;
+            height = GetLineHeight(font);
         }
 
         public float GetLineHeight(FontSpec font)
@@ -29,7 +29,7 @@ namespace Ixen.Core.Rendering
                 return 0;
             }
 
-            return FontCache.Get(font).Spacing;
+            return font.LineHeight > 0 ? font.LineHeight : FontCache.Get(font).Spacing;
         }
     }
 }

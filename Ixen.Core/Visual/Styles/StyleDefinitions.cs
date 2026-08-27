@@ -111,6 +111,10 @@ namespace Ixen.Core.Visual.Styles
                 Define(StyleIdentifier.LEFT, v => new LeftStyleParser(v),
                     p => ((LeftStyleParser)p).Descriptor),
 
+                Define(StyleIdentifier.LINE_HEIGHT, v => new LineHeightStyleParser(v),
+                    p => ((LineHeightStyleParser)p).Descriptor,
+                    new[] { LineHeightStyleParser.NORMAL, "1.5", "24px", "150%" }),
+
                 Define(StyleIdentifier.MARGIN, v => new MarginStyleParser(v),
                     p => ((MarginStyleParser)p).Descriptor),
 
