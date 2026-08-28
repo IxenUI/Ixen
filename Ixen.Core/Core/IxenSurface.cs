@@ -186,7 +186,7 @@ namespace Ixen.Core
             AddDamage(element);
         }
 
-        private void AddDamage(VisualElement element)
+        private void AddDamage(VisualElement element, float extra = 0)
         {
             if (element == null || element.StylesHandlers == null || element.Clip == null)
             {
@@ -194,8 +194,13 @@ namespace Ixen.Core
                 return;
             }
 
+            if (element.Clip.IsVoidOrInvalid)
+            {
+                return;
+            }
 
-            float margin = PaintMargin(element);
+
+            float margin = PaintMargin(element) + extra;
             DimensionalElement clip = element.Clip;
 
             _damage.Add(clip.X - margin, clip.Y - margin,
@@ -405,16 +410,83 @@ namespace Ixen.Core
             SyncCursor();
         }
 
+        private const float FOCUS_RING = 2f;
+
+        private static readonly Pen _focusOuter = new Pen(new Color("#FFFFFFFF"), FOCUS_RING * 2, true);
+        private static readonly Pen _focusInner = new Pen(new Color("#FF101010"), FOCUS_RING, true);
+
+        private void RenderFocusRing()
+        {
+            VisualElement focused = _keyboardDispatcher.Focused;
+
+            if (focused == null
+                || (Styles ?? StyleRegistry.Default).HasFocusClasses
+                || focused.StylesHandlers == null
+                || focused.Clip == null
+                || focused.Clip.IsVoidOrInvalid)
+            {
+                return;
+            }
+
+            CornerRadiusStyleDescriptor radius = focused.StylesHandlers.CornerRadius.Descriptor;
+
+            _rendererContext.DrawRoundRectangle(focused.X, focused.Y,
+                focused.ActualWidth, focused.ActualHeight, radius, _focusOuter, BorderType.Outer);
+
+            _rendererContext.DrawRoundRectangle(focused.X, focused.Y,
+                focused.ActualWidth, focused.ActualHeight, radius, _focusInner, BorderType.Outer);
+        }
+
         internal VisualElement FocusedElement => _keyboardDispatcher.Focused;
 
         internal void Focus(VisualElement element)
-            => _keyboardDispatcher.Focus(element, TrackStates);
+        {
+            VisualElement before = _keyboardDispatcher.Focused;
+
+            _keyboardDispatcher.Focus(element, TrackStates);
+
+            DamageFocusChange(before);
+        }
 
         internal void MoveFocus(bool backwards)
-            => _keyboardDispatcher.MoveFocus(Root, backwards, TrackStates);
+        {
+            VisualElement before = _keyboardDispatcher.Focused;
+
+            _keyboardDispatcher.MoveFocus(Root, backwards, TrackStates);
+
+            DamageFocusChange(before);
+        }
 
         internal void KeyDown(Key key, KeyModifiers modifiers)
-            => _keyboardDispatcher.KeyDown(Root, key, modifiers, TrackStates);
+        {
+            VisualElement before = _keyboardDispatcher.Focused;
+
+            _keyboardDispatcher.KeyDown(Root, key, modifiers, TrackStates);
+
+            DamageFocusChange(before);
+        }
+
+        private void DamageFocusChange(VisualElement before)
+        {
+            VisualElement after = _keyboardDispatcher.Focused;
+
+            if (before == after)
+            {
+                return;
+            }
+
+            _visualDirty = true;
+
+            if (before != null)
+            {
+                AddDamage(before, FOCUS_RING * 2);
+            }
+
+            if (after != null)
+            {
+                AddDamage(after, FOCUS_RING * 2);
+            }
+        }
 
         internal void KeyUp(Key key, KeyModifiers modifiers)
             => _keyboardDispatcher.KeyUp(Root, key, modifiers, TrackStates);
@@ -480,6 +552,7 @@ namespace Ixen.Core
             if (Root != null)
             {
                 _renderer.Render(Root, _rendererContext, _viewPort);
+                RenderFocusRing();
             }
 
             if (clipped)

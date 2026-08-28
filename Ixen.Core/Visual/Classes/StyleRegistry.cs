@@ -30,6 +30,7 @@ namespace Ixen.Core.Visual.Classes
 
         private int _count;
         private bool _hasStateClasses;
+        private bool _hasFocusClasses;
 
         public static StyleRegistry Default => _default.Value;
 
@@ -39,9 +40,18 @@ namespace Ixen.Core.Visual.Classes
 
         internal bool HasStateClasses => _hasStateClasses;
 
+        internal bool HasFocusClasses => _hasFocusClasses;
+
         internal bool HasMediaClasses => _media.Count > 0;
 
         internal bool HasKeyframes => _keyframes.Count > 0;
+
+        private static bool DeclaresFocus(StyleClass styleClass)
+            => Mentions(styleClass.Name) || Mentions(styleClass.Scope);
+
+        private static bool Mentions(string selector)
+            => selector != null
+                && selector.IndexOf(StyleScope.STATE_SEPARATOR + Styles.StyleStates.FOCUS) >= 0;
 
         private static bool DeclaresState(StyleClass styleClass)
             => styleClass.Name.IndexOf(StyleScope.STATE_SEPARATOR) >= 0
@@ -57,6 +67,11 @@ namespace Ixen.Core.Visual.Classes
             if (!_hasStateClasses && DeclaresState(styleClass))
             {
                 _hasStateClasses = true;
+            }
+
+            if (!_hasFocusClasses && DeclaresFocus(styleClass))
+            {
+                _hasFocusClasses = true;
             }
 
             var key = (styleClass.Target, styleClass.SheetScope, styleClass.Name);
@@ -228,6 +243,7 @@ namespace Ixen.Core.Visual.Classes
             _keyframes.Clear();
             _count = 0;
             _hasStateClasses = false;
+            _hasFocusClasses = false;
         }
 
         internal StyleClass GetGlobal(StyleClassTarget target, string name)
