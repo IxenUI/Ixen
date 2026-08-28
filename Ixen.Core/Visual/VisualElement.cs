@@ -45,6 +45,7 @@ namespace Ixen.Core.Visual
         internal void RaiseLostFocus() => LostFocus?.Invoke(this, EventArgs.Empty);
 
         public bool Focusable { get; set; }
+        public bool Modal { get; set; }
 
         public Accessibility.AccessibleRole Role { get; set; }
         public string Label { get; set; }

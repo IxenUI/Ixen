@@ -243,7 +243,7 @@ namespace Ixen.Core.UT.Xnl
                 {
                     "class", "click", "description", "double-click", "drag", "drag-end", "drag-start",
                     "focusable", "got-focus", "id", "key-down", "key-up", "label", "long-press",
-                    "lost-focus", "name",
+                    "lost-focus", "modal", "name",
                     "pointer-click", "pointer-double-click", "pointer-down", "pointer-drag", "pointer-drag-end",
                     "pointer-drag-start", "pointer-enter", "pointer-leave", "pointer-long-press", "pointer-move",
                     "pointer-up", "pointer-wheel", "role", "scroll-x", "scroll-y", "scrollable", "slot",

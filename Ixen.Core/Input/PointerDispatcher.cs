@@ -8,7 +8,7 @@ namespace Ixen.Core.Input
     internal class PointerDispatcher
     {
 
-        private const float WHEEL_STEP = 48f;
+        private const float WHEEL_STEP = ScrollNavigator.STEP;
         private const float DRAG_THRESHOLD = 4f;
         private const float DOUBLE_CLICK_DISTANCE = 4f;
         private const long DOUBLE_CLICK_DELAY = 500;
@@ -105,28 +105,7 @@ namespace Ixen.Core.Input
             float offsetX = (deltaX - (sideways ? deltaY : 0)) * WHEEL_STEP;
             float offsetY = (sideways ? 0 : -deltaY) * WHEEL_STEP;
 
-            for (VisualElement element = hit; element != null; element = element.Parent)
-            {
-                if (element.Scrollable && CanScroll(element, offsetX, offsetY))
-                {
-                    element.ScrollBy(offsetX, offsetY);
-                    return;
-                }
-            }
-        }
-
-        private static bool CanScroll(VisualElement element, float offsetX, float offsetY)
-            => CanScrollAxis(element.ScrollX, element.MaxScrollX, offsetX)
-                || CanScrollAxis(element.ScrollY, element.MaxScrollY, offsetY);
-
-        private static bool CanScrollAxis(float offset, float max, float delta)
-        {
-            if (delta < 0)
-            {
-                return offset > 0;
-            }
-
-            return delta > 0 && offset < max;
+            ScrollNavigator.Scroll(hit, offsetX, offsetY);
         }
 
         internal void LeaveSurface(bool trackStates)
@@ -334,17 +313,7 @@ namespace Ixen.Core.Input
         }
 
         private static VisualElement PanTarget(VisualElement from, float offsetX, float offsetY)
-        {
-            for (VisualElement element = from; element != null; element = element.Parent)
-            {
-                if (element.Scrollable && CanScroll(element, offsetX, offsetY))
-                {
-                    return element;
-                }
-            }
-
-            return null;
-        }
+            => ScrollNavigator.Find(from, offsetX, offsetY);
 
         private void Pan(float x, float y)
         {
