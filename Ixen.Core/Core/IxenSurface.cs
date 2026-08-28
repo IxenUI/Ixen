@@ -103,6 +103,8 @@ namespace Ixen.Core
                 return;
             }
 
+            _damage.SetWhole();
+
             RenderComponents(Root);
             _styleComputer.Compute(Root, styles, logicalWidth, logicalHeight);
             _measureComputer.Measure(Root, logicalWidth, logicalHeight, true, true);
@@ -166,7 +168,75 @@ namespace Ixen.Core
 
         internal bool IsDirty => _visualDirty || (Root != null && Root.IsLayoutDirty);
 
-        public void InvalidateVisual() => _visualDirty = true;
+        private DamageRegion _damage;
+
+        public void InvalidateVisual()
+        {
+            _visualDirty = true;
+            _damage.SetWhole();
+        }
+
+        public void InvalidateVisual(VisualElement element)
+        {
+            _visualDirty = true;
+
+            AddDamage(element);
+        }
+
+        private void AddDamage(VisualElement element)
+        {
+            if (element == null || element.StylesHandlers == null || element.Clip == null)
+            {
+                _damage.SetWhole();
+                return;
+            }
+
+
+            float margin = PaintMargin(element);
+            DimensionalElement clip = element.Clip;
+
+            _damage.Add(clip.X - margin, clip.Y - margin,
+                clip.ActualWidth + margin * 2, clip.ActualHeight + margin * 2);
+        }
+
+        private static float PaintMargin(VisualElement element)
+        {
+            float margin = element.BorderOutsideLeft;
+
+            margin = Math.Max(margin, element.BorderOutsideTop);
+            margin = Math.Max(margin, element.BorderOutsideRight);
+            margin = Math.Max(margin, element.BorderOutsideBottom);
+
+            margin = Math.Max(margin, ShadowMargin(element.StylesHandlers.BoxShadow.Descriptor));
+            margin = Math.Max(margin, ShadowMargin(element.StylesHandlers.TextShadow.Descriptor));
+
+            if (element.HasFilter)
+            {
+                margin = Math.Max(margin, element.StylesHandlers.Filter.Chain?.Margin ?? 0);
+            }
+
+            return margin;
+        }
+
+        private static float ShadowMargin(ShadowStyleDescriptor descriptor)
+        {
+            if (descriptor == null || !descriptor.IsDeclared)
+            {
+                return 0;
+            }
+
+            float margin = 0;
+
+            foreach (Shadow shadow in descriptor.Shadows)
+            {
+                float reach = shadow.Blur + shadow.Spread;
+
+                margin = Math.Max(margin, Math.Abs(shadow.OffsetX) + reach);
+                margin = Math.Max(margin, Math.Abs(shadow.OffsetY) + reach);
+            }
+
+            return margin;
+        }
 
         private readonly List<VisualElement> _animating = new List<VisualElement>();
         private readonly List<VisualElement> _ticking = new List<VisualElement>();
@@ -238,7 +308,12 @@ namespace Ixen.Core
                 }
             }
 
-            InvalidateVisual();
+            _visualDirty = true;
+
+            for (int index = 0; index < _ticking.Count; index++)
+            {
+                AddDamage(_ticking[index]);
+            }
 
             if (_animating.Count == 0)
             {
@@ -388,12 +463,28 @@ namespace Ixen.Core
         {
             _visualDirty = false;
             _rendererContext.BeginFrame(canvas, _scale);
+
+            bool clipped = !_damage.IsWhole && !_damage.IsEmpty;
+
+            if (clipped)
+            {
+                _rendererContext.PushClip(_damage.Left, _damage.Top,
+                    _damage.Right - _damage.Left, _damage.Bottom - _damage.Top, null);
+            }
+
             _rendererContext.Clear(_clearColor);
 
             if (Root != null)
             {
                 _renderer.Render(Root, _rendererContext, _viewPort);
             }
+
+            if (clipped)
+            {
+                _rendererContext.PopClip();
+            }
+
+            _damage.Reset();
 
             _rendererContext.EndFrame();
         }

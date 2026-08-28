@@ -123,7 +123,7 @@ namespace Ixen.Core.Visual
             _blink = Host?.Scheduler?.Schedule(BLINK_DELAY, true, () =>
             {
                 CaretVisible = !CaretVisible;
-                Host?.InvalidateVisual();
+                Host?.InvalidateVisual(this);
             });
         }
 
@@ -135,7 +135,7 @@ namespace Ixen.Core.Visual
             _blink?.Dispose();
             _blink = null;
 
-            Host?.InvalidateVisual();
+            Host?.InvalidateVisual(this);
         }
 
         private void ShowCaret()
@@ -146,7 +146,7 @@ namespace Ixen.Core.Visual
             }
 
             CaretVisible = true;
-            Host?.InvalidateVisual();
+            Host?.InvalidateVisual(this);
         }
 
         internal override void OnHostChanged()
