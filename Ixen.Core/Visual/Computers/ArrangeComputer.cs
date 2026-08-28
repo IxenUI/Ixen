@@ -215,10 +215,41 @@ namespace Ixen.Core.Visual.Computers
             float childX = ContentOriginX(element);
             float childY = ContentOriginY(element);
             float gap = MeasureComputer.GapOf(element, isRow);
+            ContentAlignStyleDescriptor align = element.StylesHandlers.ContentAlign.Descriptor;
+            bool aligned = align.IsDeclared;
+
+            if (aligned)
+            {
+                float slack = MainSlack(element, isRow, gap);
+
+                if (isRow)
+                {
+                    childX += Slide(slack, align.Horizontal);
+                }
+                else
+                {
+                    childY += Slide(slack, align.Vertical);
+                }
+            }
 
             foreach (VisualElement child in element.Children)
             {
-                Arrange(child, childX, childY);
+                float atX = childX;
+                float atY = childY;
+
+                if (aligned)
+                {
+                    if (isRow)
+                    {
+                        atY += Slide(element.ContentHeight - child.BoxHeight, align.Vertical);
+                    }
+                    else
+                    {
+                        atX += Slide(element.ContentWidth - child.BoxWidth, align.Horizontal);
+                    }
+                }
+
+                Arrange(child, atX, atY);
 
                 if (isRow)
                 {
@@ -229,6 +260,45 @@ namespace Ixen.Core.Visual.Computers
                     childY += child.BoxHeight + gap;
                 }
             }
+        }
+
+        private static float MainSlack(VisualElement element, bool isRow, float gap)
+        {
+            float used = 0;
+            int count = 0;
+
+            foreach (VisualElement child in element.Children)
+            {
+                used += isRow ? child.BoxWidth : child.BoxHeight;
+                count++;
+            }
+
+            if (count > 1)
+            {
+                used += gap * (count - 1);
+            }
+
+            return (isRow ? element.ContentWidth : element.ContentHeight) - used;
+        }
+
+        private static float Slide(float slack, ContentAlign align)
+        {
+            if (slack <= 0 || align == ContentAlign.Unset || align == ContentAlign.Left)
+            {
+                return 0;
+            }
+
+            return align == ContentAlign.Center ? slack / 2 : slack;
+        }
+
+        private static float Slide(float slack, ContentVAlign align)
+        {
+            if (slack <= 0 || align == ContentVAlign.Unset || align == ContentVAlign.Top)
+            {
+                return 0;
+            }
+
+            return align == ContentVAlign.Middle ? slack / 2 : slack;
         }
 
         private void ArrangeChrome(VisualElement element)
@@ -272,6 +342,7 @@ namespace Ixen.Core.Visual.Computers
             float originY = ContentOriginY(element);
             float columnGap = MeasureComputer.GapOf(element, true);
             float rowGap = MeasureComputer.GapOf(element, false);
+            ContentAlignStyleDescriptor align = element.StylesHandlers.ContentAlign.Descriptor;
 
             foreach (VisualElement child in element.Children)
             {
@@ -280,11 +351,22 @@ namespace Ixen.Core.Visual.Computers
                     continue;
                 }
 
-                Arrange(child,
-                    originX + Offset(columns, child.GridColumn, columnGap),
-                    originY + Offset(rows, child.GridRow, rowGap));
+                float cellX = originX + Offset(columns, child.GridColumn, columnGap);
+                float cellY = originY + Offset(rows, child.GridRow, rowGap);
+
+                if (align.IsDeclared)
+                {
+                    cellX += Slide(MeasureComputer.Extent(columns, child.GridColumn, child.GridColumnSpan, columnGap)
+                        - child.BoxWidth, align.Horizontal);
+
+                    cellY += Slide(MeasureComputer.Extent(rows, child.GridRow, child.GridRowSpan, rowGap)
+                        - child.BoxHeight, align.Vertical);
+                }
+
+                Arrange(child, cellX, cellY);
             }
         }
+
 
         private static float Offset(float[] tracks, int index, float gap)
         {

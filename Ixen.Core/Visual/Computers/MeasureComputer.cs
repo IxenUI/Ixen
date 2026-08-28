@@ -808,7 +808,7 @@ namespace Ixen.Core.Visual.Computers
             }
         }
 
-        private static float Extent(float[] tracks, int start, int span, float gap)
+        internal static float Extent(float[] tracks, int start, int span, float gap)
         {
             float extent = 0;
             int covered = 0;

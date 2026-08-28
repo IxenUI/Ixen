@@ -1,4 +1,4 @@
-﻿namespace Ixen.Core.Visual.Styles
+namespace Ixen.Core.Visual.Styles
 {
     public static class StyleIdentifier
     {
@@ -27,6 +27,7 @@
         public const string CORNER_RADIUS = "corner-radius";
         public const string CURSOR = "cursor";
         public const string DOCK = "dock";
+        public const string CONTENT_ALIGN = "content-align";
         public const string GAP = "gap";
         public const string FILTER = "filter";
         public const string FONT_FAMILY = "font-family";

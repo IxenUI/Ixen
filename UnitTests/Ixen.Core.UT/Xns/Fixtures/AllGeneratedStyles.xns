@@ -25,6 +25,7 @@ generated_root {
     row-template: 1.5* 20.5px
     column-template: 30% 2.5*
     text-align: right bottom
+    content-align: center middle
     text-decoration: underline line-through
     line-height: 1.45
     letter-spacing: -0.5px

@@ -1,4 +1,4 @@
-﻿using Ixen.Core.Visual.Styles.Handlers;
+using Ixen.Core.Visual.Styles.Handlers;
 
 namespace Ixen.Core.Visual
 {
@@ -22,6 +22,7 @@ namespace Ixen.Core.Visual
         internal static readonly CornerRadiusStyleHandler DefaultCornerRadius = new();
         internal static readonly CursorStyleHandler DefaultCursor = new();
         internal static readonly DockStyleHandler DefaultDock = new();
+        internal static readonly ContentAlignStyleHandler DefaultContentAlign = new();
         internal static readonly GapStyleHandler DefaultGap = new();
         internal static readonly FilterStyleHandler DefaultFilter = new();
         internal static readonly FontFamilyStyleHandler DefaultFontFamily = new();
@@ -72,6 +73,7 @@ namespace Ixen.Core.Visual
         public CornerRadiusStyleHandler CornerRadius { get; set; } = DefaultCornerRadius;
         public CursorStyleHandler Cursor { get; set; } = DefaultCursor;
         public DockStyleHandler Dock { get; set; } = DefaultDock;
+        public ContentAlignStyleHandler ContentAlign { get; set; } = DefaultContentAlign;
         public GapStyleHandler Gap { get; set; } = DefaultGap;
         public FilterStyleHandler Filter { get; set; } = DefaultFilter;
         public FontFamilyStyleHandler FontFamily { get; set; } = DefaultFontFamily;

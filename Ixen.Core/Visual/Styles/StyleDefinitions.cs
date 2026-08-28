@@ -103,6 +103,10 @@ namespace Ixen.Core.Visual.Styles
                 Define(StyleIdentifier.FONT_WEIGHT, v => new FontWeightStyleParser(v),
                     p => ((FontWeightStyleParser)p).Descriptor, new[] { "normal", "bold" }),
 
+                Define(StyleIdentifier.CONTENT_ALIGN, v => new ContentAlignStyleParser(v),
+                    p => ((ContentAlignStyleParser)p).Descriptor,
+                    new[] { "left", "center", "right", "top", "middle", "bottom" }),
+
                 Define(StyleIdentifier.GAP, v => new GapStyleParser(v),
                     p => ((GapStyleParser)p).Descriptor),
 

@@ -654,6 +654,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultTransformOrigin;
             }
 
+            if (handlers.ContentAlign.Descriptor != styles.ContentAlign)
+            {
+                handlers.ContentAlign = styles.ContentAlign != null && styles.ContentAlign.IsDeclared
+                    ? new ContentAlignStyleHandler(styles.ContentAlign)
+                    : VisualElementStylesHandlers.DefaultContentAlign;
+            }
+
             if (handlers.Gap.Descriptor != styles.Gap)
             {
                 handlers.Gap = styles.Gap != null && styles.Gap.IsDeclared
@@ -829,6 +836,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.TRANSFORM_ORIGIN:
                     handlers.TransformOrigin = new TransformOriginStyleHandler((TransformOriginStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.CONTENT_ALIGN:
+                    handlers.ContentAlign = new ContentAlignStyleHandler((ContentAlignStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.GAP:

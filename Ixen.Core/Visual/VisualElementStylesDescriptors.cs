@@ -1,4 +1,4 @@
-﻿using Ixen.Core.Visual.Styles.Descriptors;
+using Ixen.Core.Visual.Styles.Descriptors;
 
 namespace Ixen.Core.Visual
 {
@@ -24,6 +24,7 @@ namespace Ixen.Core.Visual
         public CornerRadiusStyleDescriptor CornerRadius { get; set; } = new();
         public CursorStyleDescriptor Cursor { get; set; } = new();
         public DockStyleDescriptor Dock { get; set; } = new();
+        public ContentAlignStyleDescriptor ContentAlign { get; set; } = new();
         public GapStyleDescriptor Gap { get; set; } = new();
         public FilterStyleDescriptor Filter { get; set; } = new();
         public FontFamilyStyleDescriptor FontFamily { get; set; } = new();
