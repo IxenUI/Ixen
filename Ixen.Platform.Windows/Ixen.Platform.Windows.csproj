@@ -29,4 +29,22 @@
 		</ProjectReference>
     </ItemGroup>
 
+	<PropertyGroup>
+		<IxenNativePlatform Condition="'$(IxenNativePlatform)' == ''">x64</IxenNativePlatform>
+		<IxenNativeDll>$(MSBuildThisFileDirectory)..\Ixen.Platform.Windows.Native\bin\$(IxenNativePlatform)\$(Configuration)\Ixen.Platform.Windows.Native.dll</IxenNativeDll>
+	</PropertyGroup>
+
+	<Target Name="IxenIncludeNativeLibrary" BeforeTargets="AssignTargetPaths">
+		<Warning Condition="!Exists('$(IxenNativeDll)')"
+				 Code="IXEN001"
+				 Text="Ixen.Platform.Windows.Native.dll was not found at $(IxenNativeDll), so it will not be copied next to the application and every window call will fail with DllNotFoundException. Build it with MSBuild.exe or Visual Studio - the dotnet CLI cannot build a .vcxproj (MSB4278)." />
+		<ItemGroup Condition="Exists('$(IxenNativeDll)')">
+			<Content Include="$(IxenNativeDll)">
+				<Link>Ixen.Platform.Windows.Native.dll</Link>
+				<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+				<Visible>false</Visible>
+			</Content>
+		</ItemGroup>
+	</Target>
+
 </Project>
