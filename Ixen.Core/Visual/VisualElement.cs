@@ -46,6 +46,10 @@ namespace Ixen.Core.Visual
 
         public bool Focusable { get; set; }
 
+        public Accessibility.AccessibleRole Role { get; set; }
+        public string Label { get; set; }
+        public string Description { get; set; }
+
         private bool _scrollable;
 
         public bool Scrollable

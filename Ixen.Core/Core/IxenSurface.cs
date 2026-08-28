@@ -166,6 +166,9 @@ namespace Ixen.Core
             _keyboardDispatcher.ElementDetached(element);
         }
 
+        public Accessibility.AccessibleNode BuildAccessibilityTree()
+            => Accessibility.AccessibilityTree.Build(Root, _keyboardDispatcher.Focused);
+
         internal bool IsDirty => _visualDirty || (Root != null && Root.IsLayoutDirty);
 
         private DamageRegion _damage;

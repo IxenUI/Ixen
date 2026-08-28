@@ -241,11 +241,13 @@ namespace Ixen.Core.UT.Xnl
             CollectionAssert.AreEqual(
                 new[]
                 {
-                    "class", "click", "double-click", "drag", "drag-end", "drag-start", "focusable",
-                    "got-focus", "id", "key-down", "key-up", "long-press", "lost-focus", "name",
+                    "class", "click", "description", "double-click", "drag", "drag-end", "drag-start",
+                    "focusable", "got-focus", "id", "key-down", "key-up", "label", "long-press",
+                    "lost-focus", "name",
                     "pointer-click", "pointer-double-click", "pointer-down", "pointer-drag", "pointer-drag-end",
                     "pointer-drag-start", "pointer-enter", "pointer-leave", "pointer-long-press", "pointer-move",
-                    "pointer-up", "pointer-wheel", "scroll-x", "scroll-y", "scrollable", "slot", "text", "text-input",
+                    "pointer-up", "pointer-wheel", "role", "scroll-x", "scroll-y", "scrollable", "slot",
+                    "text", "text-input",
                     "transition-ended", "type-name", "wheel"
                 },
                 items,
