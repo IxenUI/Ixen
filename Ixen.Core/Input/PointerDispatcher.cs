@@ -13,6 +13,7 @@ namespace Ixen.Core.Input
         private const float DOUBLE_CLICK_DISTANCE = 4f;
         private const long DOUBLE_CLICK_DELAY = 500;
         private const int LONG_PRESS_DELAY = 500;
+        private const long WHEEL_LATCH_DELAY = 150;
 
         private readonly List<VisualElement> _leftChain = new();
         private readonly List<VisualElement> _enteredChain = new();
@@ -31,6 +32,9 @@ namespace Ixen.Core.Input
         private float _lastDragY;
         private bool _dragging;
         private VisualElement _panning;
+
+        private VisualElement _scrollLatch;
+        private long _lastWheelTime;
 
         private VisualElement _lastClicked;
         private long _lastClickTime;
@@ -98,14 +102,41 @@ namespace Ixen.Core.Input
             Scroll(hit, deltaX, deltaY, modifiers);
         }
 
-        private static void Scroll(VisualElement hit, float deltaX, float deltaY, KeyModifiers modifiers)
+        private void Scroll(VisualElement hit, float deltaX, float deltaY, KeyModifiers modifiers)
         {
             bool sideways = (modifiers & KeyModifiers.Shift) == KeyModifiers.Shift;
 
             float offsetX = (deltaX - (sideways ? deltaY : 0)) * WHEEL_STEP;
             float offsetY = (sideways ? 0 : -deltaY) * WHEEL_STEP;
 
-            ScrollNavigator.Scroll(hit, offsetX, offsetY);
+            long now = TimeSource.Milliseconds;
+            VisualElement target = Latched(now) ?? ScrollNavigator.Find(hit, offsetX, offsetY);
+
+            _lastWheelTime = now;
+
+            if (target == null)
+            {
+                return;
+            }
+
+            _scrollLatch = target;
+
+            target.ScrollBy(offsetX, offsetY);
+        }
+
+        private VisualElement Latched(long now)
+        {
+            if (_scrollLatch == null)
+            {
+                return null;
+            }
+
+            if (!_scrollLatch.Scrollable || now - _lastWheelTime > WHEEL_LATCH_DELAY)
+            {
+                _scrollLatch = null;
+            }
+
+            return _scrollLatch;
         }
 
         internal void LeaveSurface(bool trackStates)
@@ -160,6 +191,11 @@ namespace Ixen.Core.Input
             if (_panning == element)
             {
                 _panning = null;
+            }
+
+            if (_scrollLatch == element)
+            {
+                _scrollLatch = null;
             }
 
             if (_lastClicked == element)

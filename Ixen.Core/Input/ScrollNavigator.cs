@@ -6,20 +6,6 @@ namespace Ixen.Core.Input
     {
         internal const float STEP = 48f;
 
-        internal static bool Scroll(VisualElement from, float offsetX, float offsetY)
-        {
-            for (VisualElement element = from; element != null; element = element.Parent)
-            {
-                if (element.Scrollable && CanScroll(element, offsetX, offsetY))
-                {
-                    element.ScrollBy(offsetX, offsetY);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         internal static VisualElement Find(VisualElement from, float offsetX, float offsetY)
         {
             for (VisualElement element = from; element != null; element = element.Parent)
