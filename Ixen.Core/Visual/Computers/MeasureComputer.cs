@@ -169,7 +169,8 @@ namespace Ixen.Core.Visual.Computers
                     break;
             }
 
-            LayoutText(element, contentWidth, out intrinsicWidth, out intrinsicHeight);
+            LayoutText(element, contentWidth, heightIsDefinite ? contentHeight : 0,
+                out intrinsicWidth, out intrinsicHeight);
 
             if (element is Image image)
             {
@@ -262,7 +263,8 @@ namespace Ixen.Core.Visual.Computers
             }
         }
 
-        private void LayoutText(VisualElement element, float availableWidth, out float width, out float height)
+        private void LayoutText(VisualElement element, float availableWidth, float availableHeight,
+            out float width, out float height)
         {
             width = 0;
             height = 0;
@@ -284,9 +286,11 @@ namespace Ixen.Core.Visual.Computers
             bool wrap = element.StylesHandlers.TextWrap.Descriptor.Value == TextWrap.Wrap;
             bool ellipsis = element.StylesHandlers.TextOverflow.Descriptor.Value == TextOverflow.Ellipsis;
 
+            float limit = ellipsis ? availableHeight : 0;
+
             TextLayoutCache cache = element.EnsureTextLayout();
 
-            if (cache.Matches(_textMeasurer, element.Text, fontSpec, wrap, ellipsis, availableWidth))
+            if (cache.Matches(_textMeasurer, element.Text, fontSpec, wrap, ellipsis, availableWidth, limit))
             {
                 width = cache.Width;
                 height = cache.Height;
@@ -296,9 +300,18 @@ namespace Ixen.Core.Visual.Computers
             List<string> lines = element.EnsureTextLines();
 
             width = BuildLines(element.Text, fontSpec, availableWidth, wrap, ellipsis, lines);
-            height = _textMeasurer.GetLineHeight(fontSpec) * lines.Count;
 
-            cache.Set(_textMeasurer, element.Text, fontSpec, wrap, ellipsis, availableWidth, width, height);
+            float lineHeight = _textMeasurer.GetLineHeight(fontSpec);
+
+            if (Truncate(lines, fontSpec, availableWidth, lineHeight, limit))
+            {
+                width = Widest(lines, fontSpec);
+            }
+
+            height = lineHeight * lines.Count;
+
+            cache.Set(_textMeasurer, element.Text, fontSpec, wrap, ellipsis, availableWidth, limit,
+                width, height);
         }
 
         private void LayoutField(TextField field, float availableWidth, out float width, out float height)
@@ -604,6 +617,55 @@ namespace Ixen.Core.Visual.Computers
             {
                 widest = width;
             }
+        }
+
+        private bool Truncate(List<string> lines, FontSpec fontSpec, float maxWidth,
+            float lineHeight, float limit)
+        {
+            if (limit <= 0 || lineHeight <= 0 || lines.Count < 2)
+            {
+                return false;
+            }
+
+            int keep = (int)(limit / lineHeight);
+
+            if (keep < 1)
+            {
+                keep = 1;
+            }
+
+            if (keep >= lines.Count)
+            {
+                return false;
+            }
+
+            lines.RemoveRange(keep, lines.Count - keep);
+
+            string last = lines[keep - 1];
+            float[] advances = EnsureAdvances(last.Length);
+
+            _textMeasurer.MeasureCharacters(last, fontSpec, advances);
+
+            lines[keep - 1] = Ellipsize(last, 0, last.Length, advances, fontSpec, maxWidth);
+
+            return true;
+        }
+
+        private float Widest(List<string> lines, FontSpec fontSpec)
+        {
+            float widest = 0;
+
+            for (int index = 0; index < lines.Count; index++)
+            {
+                _textMeasurer.MeasureText(lines[index], fontSpec, out float width, out _);
+
+                if (width > widest)
+                {
+                    widest = width;
+                }
+            }
+
+            return widest;
         }
 
         private string Ellipsize(string source, int start, int length, float[] advances,

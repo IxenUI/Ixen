@@ -8,25 +8,27 @@ namespace Ixen.Core.Visual
         private bool _wrap;
         private bool _ellipsis;
         private float _availableWidth;
+        private float _availableHeight;
         private bool _valid;
 
         internal float Width { get; private set; }
         internal float Height { get; private set; }
 
         internal bool Matches(ITextMeasurer measurer, string text, FontSpec font, bool wrap, bool ellipsis,
-            float availableWidth)
+            float availableWidth, float availableHeight)
         {
             return _valid
                 && _measurer == measurer
                 && _wrap == wrap
                 && _ellipsis == ellipsis
                 && _availableWidth == availableWidth
+                && _availableHeight == availableHeight
                 && string.Equals(_text, text)
                 && _font.SameAs(font);
         }
 
         internal void Set(ITextMeasurer measurer, string text, FontSpec font, bool wrap, bool ellipsis,
-            float availableWidth, float width, float height)
+            float availableWidth, float availableHeight, float width, float height)
         {
             _measurer = measurer;
             _text = text;
@@ -34,6 +36,7 @@ namespace Ixen.Core.Visual
             _wrap = wrap;
             _ellipsis = ellipsis;
             _availableWidth = availableWidth;
+            _availableHeight = availableHeight;
 
             Width = width;
             Height = height;
