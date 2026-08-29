@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace Ixen.Core.Visual
 {
@@ -398,6 +398,24 @@ namespace Ixen.Core.Visual
             }
         }
 
+        internal bool CanBeSeen()
+        {
+            if (_element.Clip != null && _element.Clip.IsVoidOrInvalid)
+            {
+                return false;
+            }
+
+            for (VisualElement element = _element; element != null; element = element.Parent)
+            {
+                if (element.IsHidden)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         internal bool Tick()
         {
             bool sizes = SizeRunning;
@@ -417,7 +435,7 @@ namespace Ixen.Core.Visual
 
             AdvanceTransform();
 
-            if (sizes)
+            if (sizes && CanBeSeen())
             {
                 _element.InvalidateLayout();
             }

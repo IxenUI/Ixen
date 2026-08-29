@@ -100,8 +100,11 @@ namespace Ixen.Core
 
             if (Root == null || (!viewPortChanged && !Root.IsLayoutDirty))
             {
+                LastLayoutRan = false;
                 return;
             }
+
+            LastLayoutRan = true;
 
             _damage.SetWhole();
 
@@ -206,6 +209,8 @@ namespace Ixen.Core
         }
 
         internal bool IsDirty => _visualDirty || (Root != null && Root.IsLayoutDirty);
+
+        internal bool LastLayoutRan { get; private set; }
 
         public bool PreservesFrame { get; set; } = true;
 
@@ -384,11 +389,18 @@ namespace Ixen.Core
                 }
             }
 
-            _visualDirty = true;
-
             for (int index = 0; index < _ticking.Count; index++)
             {
-                AddDamage(_ticking[index]);
+                VisualElement element = _ticking[index];
+
+                if (!element.HasAnimations || !element.Animations.CanBeSeen())
+                {
+                    continue;
+                }
+
+                _visualDirty = true;
+
+                AddDamage(element);
             }
 
             if (_animating.Count == 0)
