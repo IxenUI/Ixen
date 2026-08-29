@@ -44,6 +44,42 @@ namespace Ixen.Core.Visual
         internal void RaiseGotFocus() => GotFocus?.Invoke(this, EventArgs.Empty);
         internal void RaiseLostFocus() => LostFocus?.Invoke(this, EventArgs.Empty);
 
+        private bool _enabled = true;
+
+        public bool Enabled
+        {
+            get => _enabled;
+            set
+            {
+                if (_enabled == value)
+                {
+                    return;
+                }
+
+                _enabled = value;
+
+                ToggleState(Ixen.Core.Visual.Styles.StyleStates.DISABLED, !value);
+            }
+        }
+
+        public bool IsEnabled
+        {
+            get
+            {
+                for (VisualElement element = this; element != null; element = element.Parent)
+                {
+                    if (!element._enabled)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        public void PerformClick() => Input.PointerDispatcher.Invoke(this);
+
         public bool Focusable { get; set; }
         public bool Modal { get; set; }
 

@@ -2,6 +2,7 @@
 
 [assembly: InternalsVisibleTo("Ixen.VSExtension")]
 [assembly: InternalsVisibleTo("Ixen.Core.UT")]
+[assembly: InternalsVisibleTo("Ixen.Controls.UT")]
 [assembly: InternalsVisibleTo("Ixen.Docs")]
 [assembly: InternalsVisibleTo("Ixen.Generators")]
 [assembly: InternalsVisibleTo("Ixen.Platform")]

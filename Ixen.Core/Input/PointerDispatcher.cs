@@ -59,7 +59,7 @@ namespace Ixen.Core.Input
                 return;
             }
 
-            VisualElement hit = HitTester.HitTest(root, x, y);
+            VisualElement hit = Enabled(HitTester.HitTest(root, x, y));
 
             if (_captured != null)
             {
@@ -175,7 +175,7 @@ namespace Ixen.Core.Input
             _kind = kind;
             _panning = null;
 
-            VisualElement hit = HitTester.HitTest(root, x, y);
+            VisualElement hit = Enabled(HitTester.HitTest(root, x, y));
 
             UpdateHover(hit, x, y);
 
@@ -354,7 +354,7 @@ namespace Ixen.Core.Input
                 return;
             }
 
-            VisualElement hit = HitTester.HitTest(root, x, y);
+            VisualElement hit = Enabled(HitTester.HitTest(root, x, y));
             VisualElement target = _captured ?? hit;
 
             _captured = null;
@@ -453,6 +453,9 @@ namespace Ixen.Core.Input
 
             Bubble(element, args, PointerEventKind.Click);
         }
+
+        private static VisualElement Enabled(VisualElement hit)
+            => hit == null || hit.IsEnabled ? hit : null;
 
         private static void Bubble(VisualElement hit, PointerEventArgs args, PointerEventKind kind)
         {

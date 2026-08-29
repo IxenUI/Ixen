@@ -180,7 +180,7 @@ namespace Ixen.Core
             switch (action)
             {
                 case Accessibility.AccessibleActions.Invoke:
-                    PointerDispatcher.Invoke(node.Element);
+                    node.Element.PerformClick();
                     return true;
 
                 case Accessibility.AccessibleActions.Focus:

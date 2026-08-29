@@ -6,7 +6,6 @@ namespace Ixen.Core.Visual
     {
         public string Path { get; set; }
         public int Count { get; set; }
-        public bool Enabled { get; set; }
         public float Ratio { get; set; }
         public double Precision { get; set; }
         public decimal Amount { get; set; }

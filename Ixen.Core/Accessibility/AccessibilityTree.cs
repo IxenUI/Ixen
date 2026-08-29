@@ -168,6 +168,11 @@ namespace Ixen.Core.Accessibility
         {
             AccessibleActions actions = AccessibleActions.None;
 
+            if (!element.IsEnabled)
+            {
+                return actions;
+            }
+
             if (IsInvocable(role))
             {
                 actions |= AccessibleActions.Invoke;
@@ -233,6 +238,11 @@ namespace Ixen.Core.Accessibility
                 {
                     states |= AccessibleStates.Protected;
                 }
+            }
+
+            if (!element.IsEnabled)
+            {
+                states |= AccessibleStates.Disabled;
             }
 
             if (element.Clip == null || element.Clip.IsVoidOrInvalid)

@@ -654,7 +654,9 @@ namespace Ixen.Generators.Xnl
             }
             else
             {
-                string elementType = resolved.UseDeclaredType ? node.Type : DEFAULT_ELEMENT_TYPE;
+                string elementType = resolved.Qualified
+                    ? "global::" + resolved.Symbol.ToDisplayString()
+                    : resolved.UseDeclaredType ? node.Type : DEFAULT_ELEMENT_TYPE;
 
                 sb.AppendLine($"{tabs}{Declarator(file, bound, elementType, nodeId)} = new {elementType}();");
 
@@ -1302,6 +1304,7 @@ namespace Ixen.Generators.Xnl
             internal INamedTypeSymbol Symbol;
             internal bool UseDeclaredType;
             internal bool IsComponent;
+            internal bool Qualified;
         }
 
         class TypeResolver
@@ -1335,6 +1338,18 @@ namespace Ixen.Generators.Xnl
                     return Instantiable(node, symbol, diagnostics)
                         ? new ResolvedType { Symbol = symbol, UseDeclaredType = true }
                         : new ResolvedType();
+                }
+
+                if (symbol == null)
+                {
+                    INamedTypeSymbol found = FindVisualElement(node, diagnostics);
+
+                    if (found != null)
+                    {
+                        return Instantiable(node, found, diagnostics)
+                            ? new ResolvedType { Symbol = found, UseDeclaredType = true, Qualified = true }
+                            : new ResolvedType();
+                    }
                 }
 
                 INamedTypeSymbol component = FindComponent(node, diagnostics);
@@ -1405,6 +1420,63 @@ namespace Ixen.Generators.Xnl
 
             private bool IsVisualElement(INamedTypeSymbol symbol)
                 => _visualElementSymbol == null || DerivesFrom(symbol, _visualElementSymbol);
+
+            private INamedTypeSymbol FindVisualElement(XnlNode node, List<LanguageError> diagnostics)
+            {
+                if (_visualElementSymbol == null)
+                {
+                    return null;
+                }
+
+                var found = new List<INamedTypeSymbol>();
+
+                found.AddRange(_compilation
+                    .GetSymbolsWithName(name => name == node.Type, SymbolFilter.Type)
+                    .OfType<INamedTypeSymbol>());
+
+                foreach (MetadataReference reference in _compilation.References)
+                {
+                    if (_compilation.GetAssemblyOrModuleSymbol(reference) is IAssemblySymbol assembly
+                        && assembly.TypeNames.Contains(node.Type))
+                    {
+                        CollectNamed(assembly.GlobalNamespace, node.Type, found);
+                    }
+                }
+
+                List<INamedTypeSymbol> candidates = found
+                    .Where(s => IsVisualElement(s))
+                    .Distinct(SymbolEqualityComparer.Default)
+                    .OfType<INamedTypeSymbol>()
+                    .OrderBy(s => s.ToDisplayString(), StringComparer.Ordinal)
+                    .ToList();
+
+                if (candidates.Count > 1)
+                {
+                    diagnostics.Add(new LanguageError(
+                        LanguageErrorCode.INVALID_ELEMENT_TYPE,
+                        $"'{node.Type}' matches several elements ({string.Join(", ", candidates.Select(c => c.ToDisplayString()))}). Rename one of them.",
+                        node.TypeIndex,
+                        node.Type.Length));
+
+                    return null;
+                }
+
+                return candidates.FirstOrDefault();
+            }
+
+            private static void CollectNamed(INamespaceSymbol space, string name,
+                List<INamedTypeSymbol> into)
+            {
+                foreach (INamedTypeSymbol type in space.GetTypeMembers(name))
+                {
+                    into.Add(type);
+                }
+
+                foreach (INamespaceSymbol nested in space.GetNamespaceMembers())
+                {
+                    CollectNamed(nested, name, into);
+                }
+            }
 
             private INamedTypeSymbol FindComponent(XnlNode node, List<LanguageError> diagnostics)
             {

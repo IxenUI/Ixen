@@ -11,6 +11,7 @@ namespace Ixen.Core.Accessibility
         Scrollable = 4,
         Multiline = 8,
         Protected = 16,
-        Offscreen = 32
+        Offscreen = 32,
+        Disabled = 64
     }
 }

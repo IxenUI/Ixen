@@ -18,7 +18,7 @@ namespace Ixen.Core.Input
         {
             _trackStates = trackStates;
 
-            if (element != null && !element.Focusable)
+            if (element != null && (!element.Focusable || !element.IsEnabled))
             {
                 return;
             }
@@ -281,7 +281,7 @@ namespace Ixen.Core.Input
                 return;
             }
 
-            if (element.Focusable)
+            if (element.Focusable && element.IsEnabled)
             {
                 result.Add(element);
             }

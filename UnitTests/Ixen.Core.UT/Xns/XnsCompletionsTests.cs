@@ -88,7 +88,7 @@ namespace Ixen.Core.UT.Xns
             XnsCompletionContext context = At("card {\r\n    action:|\r\n}");
 
             Assert.AreEqual(XnsCompletionKind.State, context.Kind);
-            CollectionAssert.AreEquivalent(new[] { "hover", "pressed", "focus" }, context.Items.ToArray());
+            CollectionAssert.AreEquivalent(new[] { "hover", "pressed", "focus", "disabled" }, context.Items.ToArray());
         }
 
         [TestMethod]
