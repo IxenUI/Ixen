@@ -68,6 +68,8 @@ namespace Ixen.Controls
 
                 if (!_open)
                 {
+                    CloseSubmenus(null);
+
                     Closed?.Invoke(this, EventArgs.Empty);
                 }
 
@@ -81,6 +83,60 @@ namespace Ixen.Controls
         internal void RaiseItemInvoked(MenuItem item)
         {
             ItemInvoked?.Invoke(this, new MenuItemEventArgs(item));
+        }
+
+        public void CloseChain()
+        {
+            VisualElement anchor = AnchorElement;
+
+            Close();
+
+            if (!(anchor is MenuItem item))
+            {
+                return;
+            }
+
+            for (VisualElement element = item.Parent; element != null; element = element.Parent)
+            {
+                if (element is Menu owner)
+                {
+                    owner.CloseChain();
+
+                    return;
+                }
+            }
+        }
+
+        internal void CloseSubmenus(MenuItem except)
+        {
+            foreach (MenuItem item in Items)
+            {
+                if (item != except)
+                {
+                    item.CloseSubmenu();
+                }
+            }
+        }
+
+        public void FocusFirst()
+        {
+            foreach (MenuItem item in Items)
+            {
+                item.Focus();
+
+                return;
+            }
+        }
+
+        public void OpenAt(float x, float y)
+        {
+            AnchorElement = null;
+
+            _panel.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = x };
+            _panel.Styles.Top = new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = y };
+            _panel.Invalidate();
+
+            Open = true;
         }
 
         public void Close()
@@ -149,7 +205,7 @@ namespace Ixen.Controls
         {
             for (VisualElement element = args.Source; element != null; element = element.Parent)
             {
-                if (element == this)
+                if (element == this || element == AnchorElement)
                 {
                     return;
                 }
@@ -175,6 +231,16 @@ namespace Ixen.Controls
                 case Key.Up:
                     args.Handled = true;
                     Step(-1);
+                    break;
+
+                case Key.Left:
+                    if (AnchorElement is MenuItem parent)
+                    {
+                        args.Handled = true;
+                        Close();
+                        parent.Focus();
+                    }
+
                     break;
             }
         }

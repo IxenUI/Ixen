@@ -143,7 +143,10 @@ namespace Ixen.Core.Accessibility
         {
             foreach (VisualElement child in element.Children)
             {
-                if (child is TextField)
+                if (child is TextField
+                    || child.Role == AccessibleRole.Presentation
+                    || child.IsHidden
+                    || child.IsOverlay)
                 {
                     continue;
                 }
@@ -169,7 +172,21 @@ namespace Ixen.Core.Accessibility
                 return field.IsMasked ? null : field.Text;
             }
 
-            return TakesValueFromText(RoleOf(element)) ? element.Text : null;
+            if (!TakesValueFromText(RoleOf(element)))
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrEmpty(element.Text))
+            {
+                return element.Text;
+            }
+
+            var builder = new StringBuilder();
+
+            AppendDescendantText(element, builder);
+
+            return builder.Length == 0 ? null : builder.ToString();
         }
 
         private static bool TakesValueFromText(AccessibleRole role)

@@ -9,13 +9,15 @@ namespace Ixen.Controls
 {
     public class ComboBox : VisualElement
     {
+        public const string LABEL = "ComboBoxLabel";
         public const string CHEVRON = "ComboBoxChevron";
         public const string OPEN = "open";
 
-        private const string ARROW = "\u25BE";
+        private const string ARROW = "\u25BC";
 
         public event EventHandler<EventArgs> SelectedIndexChanged;
 
+        private readonly VisualElement _label;
         private readonly Menu _menu;
 
         private string _placeholder;
@@ -30,21 +32,17 @@ namespace Ixen.Controls
 
             Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Row };
 
-            var chevron = new VisualElement
-            {
-                TypeName = CHEVRON,
-                Text = ARROW,
-                Role = AccessibleRole.Presentation
-            };
+            var label = Part(LABEL);
+            var chevron = Part(CHEVRON);
 
-            chevron.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Content };
-            chevron.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Content };
+            chevron.Text = ARROW;
+            chevron.Role = AccessibleRole.Presentation;
 
             var menu = new Menu();
 
-            AddChild(chevron);
-            AddChild(menu);
+            AddChildren(label, chevron, menu);
 
+            _label = label;
             _menu = menu;
             _menu.AnchorElement = this;
             _menu.ItemInvoked += OnItemInvoked;
@@ -52,6 +50,16 @@ namespace Ixen.Controls
 
             PointerClick += OnPointerClick;
             KeyDown += OnKeyDown;
+        }
+
+        private static VisualElement Part(string typeName)
+        {
+            var part = new VisualElement { TypeName = typeName };
+
+            part.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Content };
+            part.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Content };
+
+            return part;
         }
 
         protected override VisualElement ContentHost => (VisualElement)_menu ?? this;
@@ -88,6 +96,8 @@ namespace Ixen.Controls
         }
 
         public string SelectedText => SelectedItem?.Text;
+
+        public string DisplayText => _label.Text;
 
         public void Open()
         {
@@ -151,7 +161,7 @@ namespace Ixen.Controls
 
         private void Refresh()
         {
-            Text = SelectedText ?? _placeholder ?? string.Empty;
+            _label.Text = SelectedText ?? _placeholder ?? string.Empty;
         }
 
         private void Step(int direction)

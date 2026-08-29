@@ -359,7 +359,7 @@ namespace Ixen.Core.Visual
 
         internal void DetachHost() => AttachHost(null);
 
-        internal virtual void OnHostChanged()
+        protected internal virtual void OnHostChanged()
         {
             if (Host == null)
             {

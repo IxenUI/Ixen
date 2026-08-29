@@ -149,7 +149,7 @@ namespace Ixen.Core.Visual
             Host?.InvalidateVisual(this);
         }
 
-        internal override void OnHostChanged()
+        protected internal override void OnHostChanged()
         {
             if (Host == null)
             {

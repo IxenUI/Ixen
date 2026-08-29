@@ -132,7 +132,7 @@ namespace Ixen.Core.Visual
             _repeat = null;
         }
 
-        internal override void OnHostChanged()
+        protected internal override void OnHostChanged()
         {
             if (Host == null)
             {

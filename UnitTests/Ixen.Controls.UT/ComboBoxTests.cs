@@ -63,7 +63,7 @@ namespace Ixen.Controls.UT
             _combo.Placeholder = "pick a size";
 
             Assert.IsFalse(_combo.IsOpen);
-            Assert.AreEqual("pick a size", _combo.Text);
+            Assert.AreEqual("pick a size", _combo.DisplayText);
             Assert.AreEqual(-1, _combo.SelectedIndex);
         }
 
@@ -81,7 +81,7 @@ namespace Ixen.Controls.UT
             _large.PerformClick();
 
             Assert.AreEqual(1, _combo.SelectedIndex);
-            Assert.AreEqual("Large", _combo.Text, "the box shows what was chosen");
+            Assert.AreEqual("Large", _combo.DisplayText, "the box shows what was chosen");
             Assert.IsFalse(_combo.IsOpen, "and choosing closes it");
             Assert.AreEqual(1, changes);
         }
@@ -115,7 +115,7 @@ namespace Ixen.Controls.UT
 
             _combo.SelectedIndex = 1;
 
-            Assert.AreEqual("Large", _combo.Text);
+            Assert.AreEqual("Large", _combo.DisplayText);
             Assert.AreEqual(0, changes,
                 "the two-way contract: the change event fires on user edits only, or Bind would "
                 + "re-enter ApplyBindings and EnsureNotRendering would throw");
