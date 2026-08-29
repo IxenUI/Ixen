@@ -105,7 +105,7 @@ namespace Ixen.Core
 
             _damage.SetWhole();
 
-            RenderComponents(Root);
+            RenderComponents(Root, logicalWidth, logicalHeight);
             _styleComputer.Compute(Root, styles, logicalWidth, logicalHeight);
             _measureComputer.Measure(Root, logicalWidth, logicalHeight, true, true);
             _arrangeComputer.Arrange(Root, 0, 0, logicalWidth, logicalHeight);
@@ -139,13 +139,14 @@ namespace Ixen.Core
             return changed;
         }
 
-        private static void RenderComponents(VisualElement element)
+        private static void RenderComponents(VisualElement element, float width, float height)
         {
             element.Owner?.RenderIfDirty();
+            element.OnPrepass(width, height);
 
             foreach (VisualElement child in element.Children)
             {
-                RenderComponents(child);
+                RenderComponents(child, width, height);
             }
         }
 

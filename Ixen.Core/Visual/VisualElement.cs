@@ -359,6 +359,10 @@ namespace Ixen.Core.Visual
 
         internal void DetachHost() => AttachHost(null);
 
+        protected internal virtual void OnPrepass(float viewportWidth, float viewportHeight)
+        {
+        }
+
         protected internal virtual void OnHostChanged()
         {
             if (Host == null)
