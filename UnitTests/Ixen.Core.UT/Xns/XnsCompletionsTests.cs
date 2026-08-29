@@ -88,7 +88,13 @@ namespace Ixen.Core.UT.Xns
             XnsCompletionContext context = At("card {\r\n    action:|\r\n}");
 
             Assert.AreEqual(XnsCompletionKind.State, context.Kind);
-            CollectionAssert.AreEquivalent(new[] { "hover", "pressed", "focus", "disabled" }, context.Items.ToArray());
+            CollectionAssert.AreEquivalent(
+                new[] { "hover", "pressed", "focus", "disabled", "checked" },
+                context.Items.ToArray(),
+                "the first four are maintained by the framework; checked is minted by a control "
+                + "library, and it is proposed because Core reads it too - StatesOf turns it into "
+                + "AccessibleStates.Checked, which is the only way a screen reader can tell a "
+                + "ticked box from an empty one");
         }
 
         [TestMethod]

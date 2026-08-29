@@ -21,7 +21,9 @@ namespace Ixen.Core.Accessibility
         TabList,
         Menu,
         MenuItem,
+        ComboBox,
         Dialog,
-        ScrollBar
+        ScrollBar,
+        Presentation
     }
 }

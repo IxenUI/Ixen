@@ -244,5 +244,53 @@ namespace Ixen.Controls.UT
                 + "renderer with no path API can honestly do");
             Assert.IsTrue(toggle.HasState(CheckBox.CHECKED));
         }
+
+        [TestMethod]
+        public void ATickedBoxSaysSoAndIsNotNamedAfterItsMark()
+        {
+            CheckBox box = Add<CheckBox>("agree");
+            box.Label = "I agree";
+            box.Checked = true;
+
+            Layout();
+
+            AccessibleNode node = _surface.BuildAccessibilityTree().Children[0];
+
+            Assert.AreEqual(AccessibleRole.CheckBox, node.Role);
+            Assert.AreEqual("I agree", node.Name);
+            Assert.IsTrue(node.States.HasFlag(AccessibleStates.Checked),
+                "and without this a screen reader could not tell a ticked box from an empty one "
+                + "at all, since the difference was only ever a glyph and a style state");
+        }
+
+        [TestMethod]
+        public void AnUncheckedOneSaysNothingAboutBeingChecked()
+        {
+            CheckBox box = Add<CheckBox>("agree");
+            box.Label = "I agree";
+
+            Layout();
+
+            Assert.IsFalse(_surface.BuildAccessibilityTree().Children[0]
+                .States.HasFlag(AccessibleStates.Checked));
+        }
+
+        [TestMethod]
+        public void AnUnlabelledOneIsNotNamedAfterItsMark()
+        {
+            RadioButton radio = Add<RadioButton>("small");
+            radio.Checked = true;
+
+            Layout();
+
+            AccessibleNode node = _surface.BuildAccessibilityTree().Children[0];
+
+            Assert.IsNull(node.Name,
+                "the mark lives in Text and NameOf reaches Text before anything else, so a "
+                + "checked radio announced itself as a bullet. No label means no name, which "
+                + "is the truth a bridge should report rather than a decoration.");
+            Assert.IsTrue(node.States.HasFlag(AccessibleStates.Checked),
+                "the state is where being checked belongs, and it survives having no name");
+        }
     }
 }

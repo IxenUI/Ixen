@@ -373,9 +373,12 @@ namespace Ixen.Core.Visual
                 && Computers.MeasureComputer.LayoutTypeOf(this)
                     == Ixen.Core.Visual.Styles.Descriptors.LayoutType.Fixed;
 
+        public VisualElement AnchorElement { get; set; }
+
         internal bool IsAnchored
-            => StylesHandlers != null
-                && !string.IsNullOrEmpty(StylesHandlers.Anchor.Descriptor.Name);
+            => AnchorElement != null
+                || (StylesHandlers != null
+                    && !string.IsNullOrEmpty(StylesHandlers.Anchor.Descriptor.Name));
 
         internal bool HasFilter
             => StylesHandlers != null && StylesHandlers.Filter.Descriptor.IsDeclared;

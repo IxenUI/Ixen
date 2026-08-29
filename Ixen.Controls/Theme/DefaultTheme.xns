@@ -170,3 +170,47 @@ $focus:        #4C6EF5
     color: $text_off
     cursor: default
 }
+
+#ComboBox {
+    width: ?
+    height: ?
+    background: #FFFFFF
+    border: $line 1px inner
+    corner-radius: 5px
+    padding: 7px 12px
+    gap: 10px
+    color: $text
+    font-size: 13px
+    text-align: left middle
+    content-align: right middle
+    cursor: hand
+    transition: background 120ms ease-out
+}
+
+#ComboBox:hover {
+    border: $focus 1px inner
+}
+
+#ComboBox:focus {
+    border: $focus 1px inner
+}
+
+#ComboBox:open {
+    border: $focus 1px inner
+    background: #FCFCFE
+}
+
+#ComboBox:disabled {
+    background: $surface_off
+    border: $line_off 1px inner
+    color: $text_off
+    cursor: default
+}
+
+#ComboBoxChevron {
+    width: ?
+    height: ?
+    color: $text_off
+    font-size: 9px
+    text-align: center middle
+}

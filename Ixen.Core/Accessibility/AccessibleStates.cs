@@ -12,6 +12,7 @@ namespace Ixen.Core.Accessibility
         Multiline = 8,
         Protected = 16,
         Offscreen = 32,
-        Disabled = 64
+        Disabled = 64,
+        Checked = 128
     }
 }

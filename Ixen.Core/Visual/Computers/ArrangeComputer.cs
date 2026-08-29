@@ -30,7 +30,8 @@ namespace Ixen.Core.Visual.Computers
             for (int i = 0; i < _anchored.Count; i++)
             {
                 VisualElement layer = _anchored[i];
-                VisualElement anchor = _root?.FindByName(layer.StylesHandlers.Anchor.Descriptor.Name);
+                VisualElement anchor = layer.AnchorElement
+                    ?? _root?.FindByName(layer.StylesHandlers.Anchor.Descriptor.Name);
 
                 if (anchor == null || anchor == layer)
                 {

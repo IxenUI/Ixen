@@ -43,7 +43,7 @@ namespace Ixen.Core.Accessibility
         {
             foreach (VisualElement child in element.Children)
             {
-                if (child.IsHidden)
+                if (child.IsHidden || child.Role == AccessibleRole.Presentation)
                 {
                     continue;
                 }
@@ -107,12 +107,15 @@ namespace Ixen.Core.Accessibility
                 return string.IsNullOrEmpty(field.Placeholder) ? null : field.Placeholder;
             }
 
-            if (!string.IsNullOrEmpty(element.Text))
+            AccessibleRole role = RoleOf(element);
+
+            if (!string.IsNullOrEmpty(element.Text) && !TakesValueFromText(role)
+                && !TextIsAMark(role))
             {
                 return element.Text;
             }
 
-            if (!TakesNameFromContent(RoleOf(element)))
+            if (!TakesNameFromContent(role))
             {
                 return null;
             }
@@ -166,7 +169,19 @@ namespace Ixen.Core.Accessibility
                 return field.IsMasked ? null : field.Text;
             }
 
-            return null;
+            return TakesValueFromText(RoleOf(element)) ? element.Text : null;
+        }
+
+        private static bool TakesValueFromText(AccessibleRole role)
+        {
+            return role == AccessibleRole.TextField || role == AccessibleRole.ComboBox;
+        }
+
+        private static bool TextIsAMark(AccessibleRole role)
+        {
+            return role == AccessibleRole.CheckBox
+                || role == AccessibleRole.RadioButton
+                || role == AccessibleRole.Switch;
         }
 
         private static AccessibleActions ActionsOf(VisualElement element, AccessibleRole role)
@@ -210,7 +225,8 @@ namespace Ixen.Core.Accessibility
                 || role == AccessibleRole.Tab
                 || role == AccessibleRole.CheckBox
                 || role == AccessibleRole.RadioButton
-                || role == AccessibleRole.Switch;
+                || role == AccessibleRole.Switch
+                || role == AccessibleRole.ComboBox;
         }
 
         private static AccessibleStates StatesOf(VisualElement element, VisualElement focused)
@@ -243,6 +259,11 @@ namespace Ixen.Core.Accessibility
                 {
                     states |= AccessibleStates.Protected;
                 }
+            }
+
+            if (element.HasState(Visual.Styles.StyleStates.CHECKED))
+            {
+                states |= AccessibleStates.Checked;
             }
 
             if (!element.IsEnabled)

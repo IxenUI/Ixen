@@ -6,7 +6,8 @@ namespace Ixen.Core.Visual.Styles
         internal const string PRESSED = "pressed";
         internal const string FOCUS = "focus";
         internal const string DISABLED = "disabled";
+        internal const string CHECKED = "checked";
 
-        internal static readonly string[] All = { HOVER, PRESSED, FOCUS, DISABLED };
+        internal static readonly string[] All = { HOVER, PRESSED, FOCUS, DISABLED, CHECKED };
     }
 }

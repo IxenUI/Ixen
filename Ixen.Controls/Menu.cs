@@ -11,6 +11,7 @@ namespace Ixen.Controls
     {
         public const string PANEL = "MenuPanel";
 
+        public event EventHandler<MenuItemEventArgs> ItemInvoked;
         public event EventHandler<EventArgs> Closed;
         public event EventHandler<EventArgs> OpenChanged;
 
@@ -75,6 +76,11 @@ namespace Ixen.Controls
                     OpenChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
+        }
+
+        internal void RaiseItemInvoked(MenuItem item)
+        {
+            ItemInvoked?.Invoke(this, new MenuItemEventArgs(item));
         }
 
         public void Close()

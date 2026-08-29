@@ -28,7 +28,15 @@ namespace Ixen.Controls
 
             Invoked?.Invoke(this, EventArgs.Empty);
 
-            Owner()?.Close();
+            Menu owner = Owner();
+
+            if (owner == null)
+            {
+                return;
+            }
+
+            owner.RaiseItemInvoked(this);
+            owner.Close();
         }
 
         private Menu Owner()
