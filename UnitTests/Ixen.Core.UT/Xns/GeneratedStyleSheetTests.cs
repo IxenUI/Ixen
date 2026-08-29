@@ -24,7 +24,13 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(33, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(34, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+        }
+
+        [TestMethod]
+        public void ThePointerEventsSurviveGeneration()
+        {
+            Assert.AreEqual(PointerEvents.Auto, Style<PointerEventsStyleDescriptor>().Value);
         }
 
         [TestMethod]

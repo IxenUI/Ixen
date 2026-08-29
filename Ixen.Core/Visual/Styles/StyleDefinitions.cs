@@ -164,6 +164,10 @@ namespace Ixen.Core.Visual.Styles
                     new[] { OverscrollStyleParser.AUTO, OverscrollStyleParser.CONTAIN,
                         OverscrollStyleParser.NONE }),
 
+                Define(StyleIdentifier.POINTER_EVENTS, v => new PointerEventsStyleParser(v),
+                    p => ((PointerEventsStyleParser)p).Descriptor,
+                    new[] { PointerEventsStyleParser.AUTO, PointerEventsStyleParser.NONE }),
+
                 Define(StyleIdentifier.PADDING, v => new PaddingStyleParser(v),
                     p => ((PaddingStyleParser)p).Descriptor),
 

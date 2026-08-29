@@ -38,6 +38,7 @@ generated_root {
     filter: blur(2.5px)
     overflow: scroll
     overscroll-behavior: contain
+    pointer-events: auto
     animation: generated_pulse 480ms ease-out 60ms infinite alternate
 
     generated_child {

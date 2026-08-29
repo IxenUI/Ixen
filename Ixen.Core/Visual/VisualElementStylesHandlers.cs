@@ -11,6 +11,7 @@ namespace Ixen.Core.Visual
         internal static readonly OpacityStyleHandler DefaultOpacity = new();
         internal static readonly OverflowStyleHandler DefaultOverflow = new();
         internal static readonly OverscrollStyleHandler DefaultOverscroll = new();
+        internal static readonly PointerEventsStyleHandler DefaultPointerEvents = new();
         internal static readonly BackgroundStyleHandler DefaultBackground = new();
         internal static readonly BorderStyleHandler DefaultBorder = new();
         internal static readonly BoxShadowStyleHandler DefaultBoxShadow = new();
@@ -64,6 +65,7 @@ namespace Ixen.Core.Visual
         public OpacityStyleHandler Opacity { get; set; } = DefaultOpacity;
         public OverflowStyleHandler Overflow { get; set; } = DefaultOverflow;
         public OverscrollStyleHandler Overscroll { get; set; } = DefaultOverscroll;
+        public PointerEventsStyleHandler PointerEvents { get; set; } = DefaultPointerEvents;
         public BackgroundStyleHandler Background { get; set; } = DefaultBackground;
         public BorderStyleHandler Border { get; set; } = DefaultBorder;
         public BoxShadowStyleHandler BoxShadow { get; set; } = DefaultBoxShadow;

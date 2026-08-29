@@ -133,8 +133,12 @@ namespace Ixen.Core.Visual
                 }
             }
 
-            return element;
+            return IsHittable(element) ? element : null;
         }
+
+        private static bool IsHittable(VisualElement element)
+            => element.StylesHandlers == null
+                || !element.StylesHandlers.PointerEvents.Descriptor.Blocks;
 
         private static bool IsInsideRoundedShape(VisualElement element, CornerRadiusStyleDescriptor radius,
             float x, float y)

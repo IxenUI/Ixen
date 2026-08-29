@@ -13,6 +13,7 @@ namespace Ixen.Core.Visual
         public TransformOriginStyleDescriptor TransformOrigin { get; set; } = new();
         public OverflowStyleDescriptor Overflow { get; set; } = new();
         public OverscrollStyleDescriptor Overscroll { get; set; } = new();
+        public PointerEventsStyleDescriptor PointerEvents { get; set; } = new();
         public BackgroundStyleDescriptor Background { get; set; } = new();
         public BorderStyleDescriptor Border { get; set; } = new();
         public BoxShadowStyleDescriptor BoxShadow { get; set; } = new();

@@ -199,6 +199,11 @@ namespace Ixen.Core.Visual.Computers
                 handlers.LetterSpacing = from.LetterSpacing;
             }
 
+            if (!handlers.PointerEvents.Descriptor.IsDeclared)
+            {
+                handlers.PointerEvents = from.PointerEvents;
+            }
+
             if (handlers.FontWeight.Descriptor.Value == FontWeight.Unset)
             {
                 handlers.FontWeight = from.FontWeight;
@@ -617,6 +622,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultOverscroll;
             }
 
+            if (handlers.PointerEvents.Descriptor != styles.PointerEvents)
+            {
+                handlers.PointerEvents = styles.PointerEvents != null && styles.PointerEvents.IsDeclared
+                    ? new PointerEventsStyleHandler(styles.PointerEvents)
+                    : VisualElementStylesHandlers.DefaultPointerEvents;
+            }
+
             if (handlers.ObjectFit.Descriptor != styles.ObjectFit)
             {
                 handlers.ObjectFit = styles.ObjectFit != null
@@ -914,6 +926,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.OVERSCROLL_BEHAVIOR:
                     handlers.Overscroll = new OverscrollStyleHandler((OverscrollStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.POINTER_EVENTS:
+                    handlers.PointerEvents = new PointerEventsStyleHandler((PointerEventsStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.DOCK:
