@@ -13,6 +13,8 @@ namespace Ixen.Core.Accessibility
         Protected = 16,
         Offscreen = 32,
         Disabled = 64,
-        Checked = 128
+        Checked = 128,
+        Selected = 256,
+        Expanded = 512
     }
 }

@@ -89,12 +89,12 @@ namespace Ixen.Core.UT.Xns
 
             Assert.AreEqual(XnsCompletionKind.State, context.Kind);
             CollectionAssert.AreEquivalent(
-                new[] { "hover", "pressed", "focus", "disabled", "checked" },
+                new[] { "hover", "pressed", "focus", "disabled", "checked", "selected", "expanded" },
                 context.Items.ToArray(),
-                "the first four are maintained by the framework; checked is minted by a control "
-                + "library, and it is proposed because Core reads it too - StatesOf turns it into "
-                + "AccessibleStates.Checked, which is the only way a screen reader can tell a "
-                + "ticked box from an empty one");
+                "the first four are maintained by the framework; the last three are minted by a "
+                + "control library, and they are proposed because Core reads them too - StatesOf "
+                + "turns each into an AccessibleStates flag, which is the only way a screen reader "
+                + "can tell a ticked box, a chosen tab or an open branch from the rest");
         }
 
         [TestMethod]

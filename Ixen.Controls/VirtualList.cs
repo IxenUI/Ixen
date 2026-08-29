@@ -81,6 +81,13 @@ namespace Ixen.Controls
             }
         }
 
+        public int IndexOfRow(VisualElement row)
+        {
+            int slot = _rows.IndexOf(row);
+
+            return slot < 0 || slot >= _realised ? -1 : _first + slot;
+        }
+
         public void SetItems(IList items, Func<VisualElement> create, Action<VisualElement, int> bind)
         {
             _items = items;
@@ -97,6 +104,28 @@ namespace Ixen.Controls
             ScrollY = index * _itemHeight;
 
             Reset();
+        }
+
+        public void ScrollIntoView(int index)
+        {
+            float window = ContentHeight;
+
+            if (window <= 0 || index < 0)
+            {
+                return;
+            }
+
+            float top = index * _itemHeight;
+            float bottom = top + _itemHeight;
+
+            if (top < ScrollY)
+            {
+                ScrollY = top;
+            }
+            else if (bottom > ScrollY + window)
+            {
+                ScrollY = bottom - window;
+            }
         }
 
         private void Reset()

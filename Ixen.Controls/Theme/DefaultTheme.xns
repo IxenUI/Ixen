@@ -434,3 +434,289 @@ $focus:        #4C6EF5
     color: $text
     box-shadow: 0px 12px 36px #50000000
 }
+
+#TreeView {
+    width: 1*
+    height: 1*
+    background: #FFFFFF
+    border: $line 1px inner
+    corner-radius: 5px
+}
+
+#TreeView:focus {
+    border: $focus 1px inner
+}
+
+#TreeRows {
+    width: 1*
+    height: 1*
+    padding: 4px
+}
+
+#TreeRow {
+    text-align: left middle
+    color: $text
+    font-size: 13px
+    corner-radius: 4px
+    cursor: hand
+    transition: background 100ms ease-out
+}
+
+#TreeRow:hover {
+    background: $surface_over
+}
+
+#TreeRow:selected {
+    background: $focus
+    color: #FFFFFF
+}
+
+#TreeExpander {
+    width: 14px
+    height: 1*
+    font-size: 7px
+    text-align: center middle
+    opacity: 0.6
+    transform: rotate(-90deg)
+    transition: transform 120ms ease-out
+}
+
+#TreeExpander:expanded {
+    transform: rotate(0deg)
+}
+
+#TreeExpander:leaf {
+    visibility: hidden
+}
+
+#DataGrid {
+    width: 1*
+    height: 1*
+    background: #FFFFFF
+    border: $line 1px inner
+    corner-radius: 5px
+}
+
+#DataGrid:focus {
+    border: $focus 1px inner
+}
+
+#DataGridHeader {
+    width: 1*
+    height: 30px
+    padding: 0px 14px 0px 0px
+    background: $surface
+    border: $line 0px 0px 1px 0px inner
+}
+
+#DataGridHeaderCell {
+    height: 1*
+    padding: 0px 10px
+    color: $text_off
+    font-size: 12px
+    cursor: hand
+    transition: background 100ms ease-out
+}
+
+#DataGridHeaderCell:hover {
+    background: $surface_over
+}
+
+#DataGridHeaderCell:sorted {
+    color: $text
+}
+
+#DataGridHeaderCell:focus {
+    background: $surface_over
+}
+
+#DataGridHeaderLabel {
+    width: 1*
+    height: 1*
+    text-align: left middle
+}
+
+#DataGridSortMark {
+    width: 10px
+    height: 1*
+    font-size: 7px
+    text-align: center middle
+    opacity: 0.6
+    visibility: hidden
+    transform: rotate(180deg)
+}
+
+#DataGridSortMark:sorted {
+    visibility: visible
+}
+
+#DataGridSortMark:descending {
+    transform: rotate(0deg)
+}
+
+#DataGridBody {
+    width: 1*
+    height: 1*
+}
+
+#DataGridRow {
+    color: $text
+    font-size: 13px
+    cursor: hand
+}
+
+#DataGridRow:hover {
+    background: $surface_over
+}
+
+#DataGridRow:selected {
+    background: $focus
+    color: #FFFFFF
+}
+
+#DataGridCell {
+    height: 1*
+    padding: 0px 10px
+    text-align: left middle
+}
+
+#DatePicker {
+    width: ?
+    height: ?
+    background: #FFFFFF
+    border: $line 1px inner
+    corner-radius: 5px
+    padding: 7px 12px
+    color: $text
+    font-size: 13px
+    content-align: middle
+    gap: 10px
+    cursor: hand
+}
+
+#DatePicker:hover {
+    background: $surface
+}
+
+#DatePicker:focus {
+    border: $focus 1px inner
+}
+
+#DatePicker:disabled {
+    background: $surface_off
+    border: $line_off 1px inner
+    color: $text_off
+    cursor: default
+}
+
+#DatePickerLabel {
+    width: 90px
+    text-align: left middle
+}
+
+#DatePickerChevron {
+    font-size: 7px
+    opacity: 0.6
+}
+
+#DatePickerCalendar {
+    width: 224px
+    height: ?
+    gap: 4px
+}
+
+#DatePickerNav {
+    width: 1*
+    height: 26px
+}
+
+#DatePickerTitle {
+    width: 1*
+    height: 1*
+    color: $text
+    font-size: 13px
+    font-weight: bold
+    text-align: center middle
+}
+
+#DatePickerPrevious {
+    width: 24px
+    height: 1*
+    font-size: 7px
+    text-align: center middle
+    color: $text_off
+    corner-radius: 4px
+    cursor: hand
+    transform: rotate(90deg)
+}
+
+#DatePickerNext {
+    width: 24px
+    height: 1*
+    font-size: 7px
+    text-align: center middle
+    color: $text_off
+    corner-radius: 4px
+    cursor: hand
+    transform: rotate(-90deg)
+}
+
+#DatePickerPrevious:hover {
+    background: $surface_over
+}
+
+#DatePickerNext:hover {
+    background: $surface_over
+}
+
+#DatePickerWeek {
+    width: 1*
+    height: 22px
+}
+
+#DatePickerWeekday {
+    width: 1*
+    height: 1*
+    color: $text_off
+    font-size: 11px
+    text-align: center middle
+}
+
+#DatePickerDays {
+    width: 1*
+    height: ?
+    row-template: 1* 1* 1* 1* 1* 1* 1*
+}
+
+#DatePickerDay {
+    width: 1*
+    height: 28px
+    color: $text
+    font-size: 12px
+    text-align: center middle
+    corner-radius: 4px
+    cursor: hand
+    transition: background 100ms ease-out
+}
+
+#DatePickerDay:hover {
+    background: $surface_over
+}
+
+#DatePickerDay:outside {
+    color: $line_off
+}
+
+#DatePickerDay:today {
+    border: $focus 1px inner
+}
+
+#DatePickerDay:selected {
+    background: $focus
+    color: #FFFFFF
+}
+
+#DatePickerDay:disabled {
+    color: $line_off
+    cursor: default
+}

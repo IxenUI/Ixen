@@ -135,6 +135,8 @@ namespace Ixen.Core.Accessibility
                 || role == AccessibleRole.Switch
                 || role == AccessibleRole.Tab
                 || role == AccessibleRole.MenuItem
+                || role == AccessibleRole.TreeItem
+                || role == AccessibleRole.ColumnHeader
                 || role == AccessibleRole.Heading;
         }
 
@@ -240,6 +242,8 @@ namespace Ixen.Core.Accessibility
                 || role == AccessibleRole.CheckBox
                 || role == AccessibleRole.RadioButton
                 || role == AccessibleRole.Switch
+                || role == AccessibleRole.TreeItem
+                || role == AccessibleRole.ColumnHeader
                 || role == AccessibleRole.ComboBox;
         }
 
@@ -278,6 +282,16 @@ namespace Ixen.Core.Accessibility
             if (element.HasState(Visual.Styles.StyleStates.CHECKED))
             {
                 states |= AccessibleStates.Checked;
+            }
+
+            if (element.HasState(Visual.Styles.StyleStates.SELECTED))
+            {
+                states |= AccessibleStates.Selected;
+            }
+
+            if (element.HasState(Visual.Styles.StyleStates.EXPANDED))
+            {
+                states |= AccessibleStates.Expanded;
             }
 
             if (!element.IsEnabled)
