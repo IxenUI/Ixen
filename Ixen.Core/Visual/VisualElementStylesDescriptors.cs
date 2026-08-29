@@ -30,6 +30,7 @@ namespace Ixen.Core.Visual
         public GapStyleDescriptor Gap { get; set; } = new();
         public VisibilityStyleDescriptor Visibility { get; set; } = new();
         public FilterStyleDescriptor Filter { get; set; } = new();
+        public BackdropFilterStyleDescriptor BackdropFilter { get; set; } = new();
         public FontFamilyStyleDescriptor FontFamily { get; set; } = new();
         public FontSizeStyleDescriptor FontSize { get; set; } = new();
         public FontStyleStyleDescriptor FontStyle { get; set; } = new();

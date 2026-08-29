@@ -97,6 +97,23 @@ namespace Ixen.Core.Rendering
             _filtered = true;
         }
 
+        internal void PushBackdrop(FilterChain chain, float x, float y, float width, float height,
+            CornerRadiusStyleDescriptor radius)
+        {
+            PushClip(x, y, width, height, radius);
+
+            var rect = new SKRect(x, y, x + width, y + height);
+            var rec = new SKCanvasSaveLayerRec
+            {
+                Bounds = rect,
+                Backdrop = chain.Paint?.ImageFilter
+            };
+
+            SKCanvas.SaveLayer(in rec);
+            _clipDepth++;
+            _filtered = true;
+        }
+
         internal void PushOpacity(float opacity)
         {
             _layerPaint.Color = _layerPaint.Color.WithAlpha((byte)(opacity * 255));

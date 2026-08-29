@@ -395,6 +395,9 @@ namespace Ixen.Core.Visual
         internal bool HasFilter
             => StylesHandlers != null && StylesHandlers.Filter.Descriptor.IsDeclared;
 
+        internal bool HasBackdropFilter
+            => StylesHandlers != null && StylesHandlers.BackdropFilter.Descriptor.IsDeclared;
+
         internal bool HasTransform
         {
             get

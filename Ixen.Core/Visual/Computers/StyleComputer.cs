@@ -430,6 +430,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultFilter;
             }
 
+            if (handlers.BackdropFilter.Descriptor != styles.BackdropFilter)
+            {
+                handlers.BackdropFilter = styles.BackdropFilter != null && styles.BackdropFilter.IsDeclared
+                    ? FilterStyleHandler.For(styles.BackdropFilter)
+                    : VisualElementStylesHandlers.DefaultBackdropFilter;
+            }
+
             if (handlers.FontFamily.Descriptor != styles.FontFamily)
             {
                 handlers.FontFamily = styles.FontFamily != null && styles.FontFamily.Value != null
@@ -798,6 +805,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.FILTER:
                     handlers.Filter = FilterStyleHandler.For((FilterStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.BACKDROP_FILTER:
+                    handlers.BackdropFilter = FilterStyleHandler.For((FilterStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.FONT_FAMILY:

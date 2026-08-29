@@ -54,6 +54,15 @@ namespace Ixen.Core.Rendering
                 context.PushOpacity(opacity.Value);
             }
 
+            bool backdrop = element.HasBackdropFilter;
+
+            if (backdrop)
+            {
+                context.PushBackdrop(element.StylesHandlers.BackdropFilter.Chain,
+                    element.X, element.Y, element.ActualWidth, element.ActualHeight,
+                    element.StylesHandlers.CornerRadius.Descriptor);
+            }
+
             bool filtered = element.HasFilter;
 
             if (filtered)
@@ -74,6 +83,12 @@ namespace Ixen.Core.Rendering
             {
                 if (filtered)
                 {
+                    context.PopClip();
+                }
+
+                if (backdrop)
+                {
+                    context.PopClip();
                     context.PopClip();
                 }
 
@@ -121,6 +136,12 @@ namespace Ixen.Core.Rendering
 
             if (filtered)
             {
+                context.PopClip();
+            }
+
+            if (backdrop)
+            {
+                context.PopClip();
                 context.PopClip();
             }
 

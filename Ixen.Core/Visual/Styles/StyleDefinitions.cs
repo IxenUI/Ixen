@@ -164,6 +164,11 @@ namespace Ixen.Core.Visual.Styles
                     new[] { OverscrollStyleParser.AUTO, OverscrollStyleParser.CONTAIN,
                         OverscrollStyleParser.NONE }),
 
+                Define(StyleIdentifier.BACKDROP_FILTER, v => new BackdropFilterStyleParser(v),
+                    p => ((BackdropFilterStyleParser)p).Descriptor,
+                    new[] { FilterStyleParser.NONE },
+                    new[] { FilterStyleParser.BLUR }),
+
                 Define(StyleIdentifier.POINTER_EVENTS, v => new PointerEventsStyleParser(v),
                     p => ((PointerEventsStyleParser)p).Descriptor,
                     new[] { PointerEventsStyleParser.AUTO, PointerEventsStyleParser.NONE }),

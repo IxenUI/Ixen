@@ -24,7 +24,16 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(34, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(35, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+        }
+
+        [TestMethod]
+        public void TheBackdropFilterSurvivesGeneration()
+        {
+            var descriptor = Style<BackdropFilterStyleDescriptor>();
+
+            Assert.AreEqual(1, descriptor.Operations.Count);
+            Assert.AreEqual(3f, descriptor.Operations[0].Value);
         }
 
         [TestMethod]

@@ -30,6 +30,20 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 
         internal bool IsDeclared => Count > 0;
 
+        internal void Set(FilterStyleDescriptor other)
+        {
+            Operations.Clear();
+
+            for (int index = 0; index < other.Count; index++)
+            {
+                Operations.Add(new FilterOperation
+                {
+                    Kind = other.Operations[index].Kind,
+                    Value = other.Operations[index].Value
+                });
+            }
+        }
+
         internal FilterStyleDescriptor Snapshot()
         {
             var copy = new FilterStyleDescriptor();

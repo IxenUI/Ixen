@@ -49,6 +49,7 @@ namespace Ixen.Core.Visual.Styles
         public const string OVERFLOW = "overflow";
         public const string OVERSCROLL_BEHAVIOR = "overscroll-behavior";
         public const string POINTER_EVENTS = "pointer-events";
+        public const string BACKDROP_FILTER = "backdrop-filter";
         public const string VISIBILITY = "visibility";
         public const string PADDING = "padding";
         public const string RIGHT = "right";
