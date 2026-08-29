@@ -1,0 +1,12 @@
+<Project>
+
+  <PropertyGroup>
+    <IxenIncludeViews Condition="'$(IxenIncludeViews)' == ''">true</IxenIncludeViews>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IxenIncludeViews)' == 'true'">
+    <AdditionalFiles Include="**\*.xnl" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)" />
+    <AdditionalFiles Include="**\*.xns" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)" />
+  </ItemGroup>
+
+</Project>

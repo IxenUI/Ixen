@@ -9,6 +9,11 @@
 		<AssemblyVersion>0.0.1</AssemblyVersion>
 		<FileVersion>0.0.1</FileVersion>
 		<LangVersion>latest</LangVersion>
+		<PackageId>Ixen.Core</PackageId>
+		<Version>0.0.1</Version>
+		<Authors>kipy</Authors>
+		<Description>The Ixen UI framework: the XNL and XNS languages, the visual tree, the style system, layout and Skia rendering.</Description>
+		<PackageTags>ixen;ui;skiasharp;xnl;xns</PackageTags>
 	</PropertyGroup>
 
 	<ItemGroup>

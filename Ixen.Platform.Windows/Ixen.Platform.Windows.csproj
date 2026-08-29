@@ -9,11 +9,20 @@
 		<Copyright>©2026 by kipy</Copyright>
 		<AssemblyVersion>0.0.1</AssemblyVersion>
 		<FileVersion>0.0.1</FileVersion>
+		<PackageId>Ixen.Platform.Windows</PackageId>
+		<Version>0.0.1</Version>
+		<Authors>kipy</Authors>
+		<Description>The Win32 host for Ixen. Reference this from a Windows application; it carries the native window library.</Description>
+		<PackageTags>ixen;ui;win32</PackageTags>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
         <PlatformTarget>AnyCPU</PlatformTarget>
     </PropertyGroup>
+
+	<PropertyGroup>
+		<IxenNativePlatform Condition="'$(IxenNativePlatform)' == ''">x64</IxenNativePlatform>
+	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="SkiaSharp" Version="4.151.1" />
@@ -22,7 +31,8 @@
     <ItemGroup>
         <ProjectReference Include="..\Ixen.Core\Ixen.Core.csproj" />
 		<ProjectReference Include="..\Ixen.Platform\Ixen.Platform.csproj" />
-		<ProjectReference Include="..\Ixen.Platform.Windows.Native\Ixen.Platform.Windows.Native.vcxproj">
+		<ProjectReference Include="..\Ixen.Platform.Windows.Native\Ixen.Platform.Windows.Native.vcxproj"
+							  Properties="Platform=$(IxenNativePlatform)">
 			<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
 			<OutputItemType>Content</OutputItemType>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -43,6 +53,8 @@
 				<Link>Ixen.Platform.Windows.Native.dll</Link>
 				<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 				<Visible>false</Visible>
+				<Pack>true</Pack>
+				<PackagePath>runtimes/win-$(IxenNativePlatform)/native</PackagePath>
 			</Content>
 		</ItemGroup>
 	</Target>

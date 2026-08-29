@@ -4,7 +4,6 @@ namespace Ixen.Core.Visual
 {
     public class XnlTestWidget : VisualElement
     {
-        public string Label { get; set; }
         public string Path { get; set; }
         public int Count { get; set; }
         public bool Enabled { get; set; }
