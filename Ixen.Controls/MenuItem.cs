@@ -48,7 +48,7 @@ namespace Ixen.Controls
                     _submenu.AnchorElement = this;
                     _submenu.Styles.AnchorPlacement = new AnchorPlacementStyleDescriptor
                     {
-                        Side = AnchorSide.Right,
+                        Side = Vertical ? AnchorSide.Right : AnchorSide.Below,
                         Align = AnchorAlign.Start
                     };
 
@@ -62,6 +62,8 @@ namespace Ixen.Controls
         }
 
         public bool HasSubmenu => Submenu != null;
+
+        private bool Vertical => Owner()?.IsVertical ?? true;
 
         protected override void OnHostChanged()
         {
@@ -82,22 +84,21 @@ namespace Ixen.Controls
 
             if (HasSubmenu)
             {
-                OpenSubmenu();
+                if (SubmenuIsOpen && !Vertical)
+                {
+                    CloseSubmenu();
+                }
+                else
+                {
+                    OpenSubmenu();
+                }
 
                 return;
             }
 
             Invoked?.Invoke(this, EventArgs.Empty);
 
-            Menu owner = Owner();
-
-            if (owner == null)
-            {
-                return;
-            }
-
-            owner.RaiseItemInvoked(this);
-            owner.CloseChain();
+            Owner()?.ItemActivated(this);
         }
 
         public void OpenSubmenu()
@@ -109,29 +110,37 @@ namespace Ixen.Controls
                 return;
             }
 
-            Owner()?.CloseSubmenus(this);
+            IMenuOwner owner = Owner();
+
+            owner?.CloseSubmenus(this);
 
             submenu.Open = true;
             submenu.FocusFirst();
+
+            owner?.Changed();
         }
 
         public void CloseSubmenu()
         {
-            if (_looked)
+            if (!_looked || _submenu == null || !_submenu.Open)
             {
-                _submenu?.Close();
+                return;
             }
+
+            _submenu.Close();
+
+            Owner()?.Changed();
         }
 
         internal bool SubmenuIsOpen => _looked && _submenu != null && _submenu.Open;
 
-        private Menu Owner()
+        private IMenuOwner Owner()
         {
             for (VisualElement element = Parent; element != null; element = element.Parent)
             {
-                if (element is Menu menu)
+                if (element is IMenuOwner owner)
                 {
-                    return menu;
+                    return owner;
                 }
             }
 
@@ -155,13 +164,23 @@ namespace Ixen.Controls
                 return;
             }
 
+            IMenuOwner owner = Owner();
+
+            if (owner == null)
+            {
+                return;
+            }
+
             if (HasSubmenu)
             {
-                OpenSubmenu();
+                if (owner.HoverOpens)
+                {
+                    OpenSubmenu();
+                }
             }
             else
             {
-                Owner()?.CloseSubmenus(null);
+                owner.CloseSubmenus(null);
             }
         }
 
@@ -176,7 +195,8 @@ namespace Ixen.Controls
                     break;
 
                 case Key.Right:
-                    if (HasSubmenu)
+                case Key.Down:
+                    if (HasSubmenu && Vertical == (args.Key == Key.Right))
                     {
                         args.Handled = true;
                         OpenSubmenu();

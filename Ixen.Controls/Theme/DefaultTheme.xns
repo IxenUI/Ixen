@@ -224,3 +224,16 @@ $focus:        #4C6EF5
 #MenuItem:submenu {
     background: #F2F4FE
 }
+
+#MenuBar {
+    width: 1*
+    height: ?
+    background: $surface
+    border: $line 0px 0px 1px 0px inner
+    padding: 2px 6px
+    gap: 2px
+
+    #MenuItem {
+        padding: 5px 10px
+    }
+}

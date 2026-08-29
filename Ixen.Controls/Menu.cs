@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Ixen.Controls
 {
-    public class Menu : VisualElement
+    public class Menu : VisualElement, IMenuOwner
     {
         public const string PANEL = "MenuPanel";
 
@@ -98,13 +98,36 @@ namespace Ixen.Controls
 
             for (VisualElement element = item.Parent; element != null; element = element.Parent)
             {
-                if (element is Menu owner)
+                if (element is Menu menu)
                 {
-                    owner.CloseChain();
+                    menu.CloseChain();
+
+                    return;
+                }
+
+                if (element is IMenuOwner owner)
+                {
+                    owner.Changed();
 
                     return;
                 }
             }
+        }
+
+        bool IMenuOwner.IsVertical => true;
+
+        bool IMenuOwner.HoverOpens => true;
+
+        void IMenuOwner.ItemActivated(MenuItem item)
+        {
+            RaiseItemInvoked(item);
+            CloseChain();
+        }
+
+        void IMenuOwner.CloseSubmenus(MenuItem except) => CloseSubmenus(except);
+
+        void IMenuOwner.Changed()
+        {
         }
 
         internal void CloseSubmenus(MenuItem except)
