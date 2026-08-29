@@ -12,6 +12,7 @@ namespace Ixen.Core.Accessibility
         public string Description { get; internal set; }
         public string Value { get; internal set; }
         public AccessibleStates States { get; internal set; }
+        public AccessibleActions Actions { get; internal set; }
 
         public float X { get; internal set; }
         public float Y { get; internal set; }
@@ -25,5 +26,7 @@ namespace Ixen.Core.Accessibility
         internal List<AccessibleNode> ChildList => _children;
 
         public bool HasState(AccessibleStates state) => (States & state) == state;
+
+        public bool Supports(AccessibleActions action) => (Actions & action) == action;
     }
 }

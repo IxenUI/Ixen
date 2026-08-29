@@ -169,6 +169,41 @@ namespace Ixen.Core
         public Accessibility.AccessibleNode BuildAccessibilityTree()
             => Accessibility.AccessibilityTree.Build(Root, _keyboardDispatcher.Focused);
 
+        public bool Perform(Accessibility.AccessibleNode node, Accessibility.AccessibleActions action,
+            string value = null)
+        {
+            if (node?.Element == null || !node.Supports(action))
+            {
+                return false;
+            }
+
+            switch (action)
+            {
+                case Accessibility.AccessibleActions.Invoke:
+                    PointerDispatcher.Invoke(node.Element);
+                    return true;
+
+                case Accessibility.AccessibleActions.Focus:
+                    Focus(node.Element);
+                    return _keyboardDispatcher.Focused == node.Element;
+
+                case Accessibility.AccessibleActions.SetValue:
+                    if (!(node.Element is TextField field))
+                    {
+                        return false;
+                    }
+
+                    field.Text = value ?? string.Empty;
+                    return true;
+
+                case Accessibility.AccessibleActions.ScrollIntoView:
+                    return ScrollNavigator.IntoView(node.Element);
+
+                default:
+                    return false;
+            }
+        }
+
         internal bool IsDirty => _visualDirty || (Root != null && Root.IsLayoutDirty);
 
         private DamageRegion _damage;

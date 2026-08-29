@@ -23,6 +23,7 @@ namespace Ixen.Core.Accessibility
                 Description = string.IsNullOrEmpty(element.Description) ? null : element.Description,
                 Value = ValueOf(element),
                 States = StatesOf(element, focused),
+                Actions = ActionsOf(element, role),
                 X = element.X,
                 Y = element.Y,
                 Width = element.ActualWidth,
@@ -161,6 +162,45 @@ namespace Ixen.Core.Accessibility
             }
 
             return null;
+        }
+
+        private static AccessibleActions ActionsOf(VisualElement element, AccessibleRole role)
+        {
+            AccessibleActions actions = AccessibleActions.None;
+
+            if (IsInvocable(role))
+            {
+                actions |= AccessibleActions.Invoke;
+            }
+
+            if (element.Focusable)
+            {
+                actions |= AccessibleActions.Focus;
+            }
+
+            if (element is TextField)
+            {
+                actions |= AccessibleActions.SetValue;
+            }
+
+            if (Input.ScrollNavigator.Find(element.Parent, 0, 1) != null
+                || Input.ScrollNavigator.Find(element.Parent, 0, -1) != null)
+            {
+                actions |= AccessibleActions.ScrollIntoView;
+            }
+
+            return actions;
+        }
+
+        private static bool IsInvocable(AccessibleRole role)
+        {
+            return role == AccessibleRole.Button
+                || role == AccessibleRole.Link
+                || role == AccessibleRole.MenuItem
+                || role == AccessibleRole.Tab
+                || role == AccessibleRole.CheckBox
+                || role == AccessibleRole.RadioButton
+                || role == AccessibleRole.Switch;
         }
 
         private static AccessibleStates StatesOf(VisualElement element, VisualElement focused)

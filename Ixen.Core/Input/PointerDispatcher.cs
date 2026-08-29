@@ -443,6 +443,17 @@ namespace Ixen.Core.Input
             return false;
         }
 
+        internal static void Invoke(VisualElement element)
+        {
+            var args = new PointerEventArgs(
+                element.X + element.ActualWidth / 2,
+                element.Y + element.ActualHeight / 2,
+                PointerButton.Left,
+                element);
+
+            Bubble(element, args, PointerEventKind.Click);
+        }
+
         private static void Bubble(VisualElement hit, PointerEventArgs args, PointerEventKind kind)
         {
             for (VisualElement element = hit; element != null; element = element.Parent)
