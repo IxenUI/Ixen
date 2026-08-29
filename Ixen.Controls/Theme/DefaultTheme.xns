@@ -136,15 +136,15 @@ $focus:        #4C6EF5
 }
 
 #Menu {
-    layout: column
-    width: ?
-    height: ?
+    z-index: 10
+}
+
+#MenuPanel {
     background: #FFFFFF
     border: $line 1px inner
     corner-radius: 6px
     padding: 4px
     box-shadow: 0px 6px 18px #30000000
-    z-index: 10
 }
 
 #MenuItem {

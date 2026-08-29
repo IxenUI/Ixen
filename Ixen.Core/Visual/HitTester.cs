@@ -26,7 +26,7 @@ namespace Ixen.Core.Visual
 
         private static VisualElement TestOverlay(VisualElement layer, float x, float y)
         {
-            if (layer == null)
+            if (layer == null || layer.IsHidden)
             {
                 return null;
             }

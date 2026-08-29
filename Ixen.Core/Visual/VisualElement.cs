@@ -466,8 +466,16 @@ namespace Ixen.Core.Visual
             _chrome.Add(element);
         }
 
+        protected virtual VisualElement ContentHost => this;
+
         public void AddChild(VisualElement element)
         {
+            if (ContentHost != this && ContentHost != element)
+            {
+ContentHost.AddChild(element);
+                return;
+            }
+
             element.Parent = this;
             element.Invalidate();
             element.AttachHost(Host);
@@ -477,6 +485,12 @@ namespace Ixen.Core.Visual
 
         public void AddChildren(params VisualElement[] elements)
         {
+            if (ContentHost != this)
+            {
+                ContentHost.AddChildren(elements);
+                return;
+            }
+
             foreach (VisualElement element in elements)
             {
                 element.Parent = this;
@@ -503,6 +517,12 @@ namespace Ixen.Core.Visual
 
         internal void SpliceChildren(int offset, int removeCount, List<VisualElement> insert)
         {
+            if (ContentHost != this)
+            {
+                ContentHost.SpliceChildren(offset, removeCount, insert);
+                return;
+            }
+
             if (removeCount > 0)
             {
                 Children.RemoveRange(offset, removeCount);
@@ -519,6 +539,12 @@ namespace Ixen.Core.Visual
 
         public void InsertChild(int index, VisualElement element)
         {
+            if (ContentHost != this && ContentHost != element)
+            {
+ContentHost.InsertChild(index, element);
+                return;
+            }
+
             element.Parent = this;
             element.Invalidate();
             element.AttachHost(Host);
@@ -529,6 +555,12 @@ namespace Ixen.Core.Visual
 
         public void RemoveChildAt(int index)
         {
+            if (ContentHost != this)
+            {
+                ContentHost.RemoveChildAt(index);
+                return;
+            }
+
             if (index < 0 || index >= Children.Count)
             {
                 return;
@@ -546,6 +578,12 @@ namespace Ixen.Core.Visual
 
         public void RemoveChild(VisualElement element)
         {
+            if (ContentHost != this)
+            {
+                ContentHost.RemoveChild(element);
+                return;
+            }
+
             if (Children.Remove(element))
             {
                 element.Parent = null;

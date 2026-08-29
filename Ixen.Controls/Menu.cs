@@ -9,8 +9,12 @@ namespace Ixen.Controls
 {
     public class Menu : VisualElement
     {
+        public const string PANEL = "MenuPanel";
+
         public event EventHandler<EventArgs> Closed;
         public event EventHandler<EventArgs> OpenChanged;
+
+        private readonly VisualElement _panel;
 
         private bool _open;
         private bool _interacting;
@@ -22,11 +26,29 @@ namespace Ixen.Controls
             Role = AccessibleRole.Menu;
 
             Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Fixed };
+            Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+            Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+
+            var panel = new VisualElement { TypeName = PANEL };
+
+            panel.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
+            panel.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Content };
+            panel.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Content };
+            panel.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+            panel.Styles.Top = new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+
+            AddChild(panel);
+
+            _panel = panel;
 
             Apply();
 
             KeyDown += OnKeyDown;
         }
+
+        protected override VisualElement ContentHost => _panel ?? this;
+
+        public VisualElement Panel => _panel;
 
         public bool Open
         {
@@ -73,7 +95,7 @@ namespace Ixen.Controls
         {
             get
             {
-                foreach (VisualElement child in ChildElements)
+                foreach (VisualElement child in _panel.ChildElements)
                 {
                     if (child is MenuItem item)
                     {

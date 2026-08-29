@@ -129,6 +129,42 @@ namespace Ixen.Core.UT.Rendering
         }
 
         [TestMethod]
+        public void AHiddenLayerCannotBeClickedEither()
+        {
+            var layer = new VisualElement { Name = "layer" };
+            layer.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Fixed };
+            layer.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+            layer.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+
+            var sheet = new VisualElement { Name = "sheet" };
+            sheet.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
+            sheet.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
+
+            layer.AddChild(sheet);
+            _root.AddChild(layer);
+
+            int clicks = 0;
+            sheet.PointerClick += (sender, e) => clicks++;
+
+            _surface.ComputeLayout(WIDTH, HEIGHT);
+            _surface.PointerDown(20, 20, PointerButton.Left);
+            _surface.PointerUp(20, 20, PointerButton.Left);
+
+            Assert.AreEqual(1, clicks, "it answers while it is visible");
+
+            layer.Styles.Visibility = new VisibilityStyleDescriptor { Value = Visibility.Hidden };
+            layer.Invalidate();
+
+            _surface.ComputeLayout(WIDTH, HEIGHT);
+            _surface.PointerDown(20, 20, PointerButton.Left);
+            _surface.PointerUp(20, 20, PointerButton.Left);
+
+            Assert.AreEqual(1, clicks,
+                "HitTester.TestOverlay tries a layer's children BEFORE the layer itself, so the "
+                + "hidden test on the layer was never reached and a hidden dropdown went on "
+                + "swallowing clicks");
+        }
+        [TestMethod]
         public void ItLeavesTheAccessibilityTree()
         {
             _surface.ComputeLayout(WIDTH, HEIGHT);

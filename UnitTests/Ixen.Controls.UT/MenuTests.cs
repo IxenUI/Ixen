@@ -31,8 +31,6 @@ namespace Ixen.Controls.UT
             _page.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 200 };
 
             _menu = new Menu { Name = "menu" };
-            _menu.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 120 };
-            _menu.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 60 };
 
             _first = new MenuItem { Name = "open", Text = "Open" };
             _second = new MenuItem { Name = "quit", Text = "Quit" };
@@ -89,6 +87,62 @@ namespace Ixen.Controls.UT
             Assert.AreSame(_first, _menu.Items.First(),
                 "visibility hides, it does not destroy - an @if would have rebuilt these and "
                 + "thrown away anything they held");
+        }
+
+        [TestMethod]
+        public void TheMenuIsALayerAndTakesNoSpace()
+        {
+            _menu.Open = true;
+            Layout();
+
+            Assert.AreEqual(LayoutType.Fixed, _menu.Styles.Layout.Type,
+                "the control sets this inline, and the default theme must NOT restate it - the "
+                + "cascade beats inline Styles, so a #Menu { layout: column } rule silently "
+                + "turned the layer back into an ordinary box");
+
+            Assert.AreEqual(0f, _menu.BoxHeight,
+                "a layer is still laid out by its parent, so it is sized 0x0 - otherwise an open "
+                + "menu would push its siblings around and a closed one would leave a gap, since "
+                + "visibility keeps its space");
+
+            Assert.AreEqual(200f, _page.ActualHeight, "and the page is untouched");
+        }
+
+        [TestMethod]
+        public void TheItemsFlowInAPanelRatherThanStacking()
+        {
+            _menu.Open = true;
+            Layout();
+
+            Assert.AreSame(_menu.Panel, _first.Parent,
+                "a fixed container places every child at its own offsets, so items declared "
+                + "directly under the layer would all land on the same spot - ContentHost routes "
+                + "them into a column panel instead");
+
+            Assert.AreEqual(_second.Y, _first.Y + _first.BoxHeight,
+                "so the second item sits under the first");
+        }
+
+        [TestMethod]
+        public void AnAnchorMovesThePanelAndItsPainting()
+        {
+            _menu.Styles.Anchor = new AnchorStyleDescriptor { Name = "page" };
+            _menu.Styles.AnchorPlacement = new AnchorPlacementStyleDescriptor
+            {
+                Side = AnchorSide.Below,
+                Align = AnchorAlign.Start
+            };
+
+            _menu.Open = true;
+            _menu.Invalidate();
+            Layout();
+
+            Assert.AreEqual(_page.X, _menu.Panel.X,
+                "the panel is what carries the background and the border, so it has to be the "
+                + "thing that lands on the anchor - the layer's own box stays where its parent "
+                + "put it and paints nothing");
+
+            Assert.AreEqual(_page.Y + _page.ActualHeight, _menu.Panel.Y);
         }
 
         [TestMethod]
@@ -198,12 +252,21 @@ namespace Ixen.Controls.UT
             int invoked = 0;
             _first.Invoked += (sender, e) => invoked++;
 
+            _menu.Open = true;
             Layout();
 
-            _surface.PointerDown(_first.X + 2, _first.Y + 2, PointerButton.Left);
-            _surface.PointerUp(_first.X + 2, _first.Y + 2, PointerButton.Left);
+            float x = _first.X + 2;
+            float y = _first.Y + 2;
 
-            Assert.AreEqual(0, invoked, "hidden means the hit test does not see it either");
+            _menu.Open = false;
+            Layout();
+
+            _surface.PointerDown(x, y, PointerButton.Left);
+            _surface.PointerUp(x, y, PointerButton.Left);
+
+            Assert.AreEqual(0, invoked,
+                "the coordinates are taken while it is open, so this really is a click where "
+                + "the item used to be - hidden means the hit test does not see it either");
         }
     }
 }
