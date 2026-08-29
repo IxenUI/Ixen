@@ -153,10 +153,6 @@ namespace Ixen.Controls
         {
             int count = Items().Count;
 
-            // XNL sets properties BEFORE it adds children, so an index bound in a view
-            // arrives while the menu is still empty. Clamping against a count of zero
-            // would throw it away, so an index is only rejected once there is a list to
-            // reject it against.
             int clamped = index < 0 || (count > 0 && index >= count) ? -1 : index;
 
             if (_selected == clamped)

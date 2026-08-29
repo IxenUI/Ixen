@@ -41,10 +41,6 @@ $focus:        #4C6EF5
     cursor: default
 }
 
-// A mark is an ELEMENT, not a glyph, and every rule for one is written UNSCOPED. A
-// control library's stylesheets are registered as DEFAULTS, and the defaults layer
-// drops a scoped rule - so a part cannot be reached through its parent's state, and
-// carries the state itself instead.
 #CheckBox {
     width: 18px
     height: 18px
@@ -153,9 +149,6 @@ $focus:        #4C6EF5
     border: $focus 1px inner
 }
 
-// Merged, not appended: two rules with the same selector do NOT combine - the registry
-// is keyed on the selector and the last registration replaces the whole list. A second
-// #Switch:checked block silently threw this content-align away and the knob never moved.
 #Switch:checked {
     background: $focus
     border: $focus 1px inner
@@ -185,7 +178,6 @@ $focus:        #4C6EF5
 }
 
 #MenuItem {
-    width: ?
     height: ?
     padding: 6px 14px
     corner-radius: 4px
@@ -193,6 +185,10 @@ $focus:        #4C6EF5
     font-size: 13px
     text-align: left middle
     cursor: hand
+}
+
+#MenuItem:horizontal {
+    width: ?
 }
 
 #MenuItem:hover {
@@ -282,9 +278,6 @@ $focus:        #4C6EF5
     100% { left: 100% width: 20% }
 }
 
-// The thumb sits at left: <fraction>% of the CONTENT box, so the content box has to be
-// the travel range: a gutter of one thumb width on the right is what keeps the thumb
-// inside its own bounds at 100% rather than hanging over the edge.
 #Slider {
     width: 176px
     height: 18px
@@ -338,8 +331,6 @@ $focus:        #4C6EF5
     animation: ixen_busy 1200ms ease-in-out infinite
 }
 
-// A ring that rotates is indistinguishable from a ring standing still, so a spinner is
-// one dot orbiting its own centre - which is where transform-origin already is.
 #Spinner {
     width: 16px
     height: 16px

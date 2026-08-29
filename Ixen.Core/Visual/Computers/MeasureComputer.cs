@@ -90,6 +90,11 @@ namespace Ixen.Core.Visual.Computers
                 element.ScrollExtentHeight = 0;
             }
 
+            if (!widthIsDefinite || !heightIsDefinite)
+            {
+                Stretch(element, type, widthIsDefinite, heightIsDefinite);
+            }
+
             element.ClampScroll();
 
             if (element is TextField field)
@@ -159,7 +164,8 @@ namespace Ixen.Core.Visual.Computers
                     break;
 
                 default:
-                    MeasureChildren(element, contentWidth, contentHeight);
+                    MeasureChildren(element, contentWidth, contentHeight,
+                        widthIsDefinite, heightIsDefinite);
                     break;
             }
 
@@ -630,7 +636,8 @@ namespace Ixen.Core.Visual.Computers
             return source.Substring(start, low).TrimEnd() + ELLIPSIS;
         }
 
-        private void MeasureChildren(VisualElement element, float contentWidth, float contentHeight)
+        private void MeasureChildren(VisualElement element, float contentWidth, float contentHeight,
+            bool widthIsDefinite, bool heightIsDefinite)
         {
             if (element.Children.Count == 0)
             {
@@ -638,6 +645,8 @@ namespace Ixen.Core.Visual.Computers
             }
 
             bool isRow = IsRow(element);
+
+            bool crossIsDefinite = isRow ? heightIsDefinite : widthIsDefinite;
 
             foreach (VisualElement child in element.Children)
             {
@@ -664,7 +673,7 @@ namespace Ixen.Core.Visual.Computers
                     continue;
                 }
 
-                MeasureChild(child, contentWidth, contentHeight, isRow, 0, false);
+                MeasureChild(child, contentWidth, contentHeight, isRow, 0, false, crossIsDefinite);
                 pool -= isRow ? child.BoxWidth : child.BoxHeight;
             }
 
@@ -687,7 +696,58 @@ namespace Ixen.Core.Visual.Computers
                 }
 
                 float share = (pool / totalWeight) * mainStyle.Value;
-                MeasureChild(child, contentWidth, contentHeight, isRow, share, true);
+                MeasureChild(child, contentWidth, contentHeight, isRow, share, true, crossIsDefinite);
+            }
+        }
+
+        private void Stretch(VisualElement element, LayoutType type, bool widthIsDefinite, bool heightIsDefinite)
+        {
+            if (type != LayoutType.Row && type != LayoutType.Column)
+            {
+                return;
+            }
+
+            bool isRow = IsRow(element);
+
+            if (isRow ? heightIsDefinite : widthIsDefinite)
+            {
+                return;
+            }
+
+            float contentWidth = element.ContentWidth;
+            float contentHeight = element.ContentHeight;
+
+            foreach (VisualElement child in element.Children)
+            {
+                SizeStyleDescriptor crossStyle = GetSizeStyleDescriptor(child, isRow
+                    ? SizeStyleDescriptorType.Height
+                    : SizeStyleDescriptorType.Width);
+
+                if (!IsFilling(crossStyle))
+                {
+                    continue;
+                }
+
+                float margin = isRow
+                    ? child.VerticalMargin + child.VerticalBorderOutside
+                    : child.HorizontalMargin + child.HorizontalBorderOutside;
+
+                float target = Math.Max(0, (isRow ? contentHeight : contentWidth) - margin)
+                    * crossStyle.Value;
+
+                if (Math.Abs((isRow ? child.Height : child.Width) - target) < 0.01f)
+                {
+                    continue;
+                }
+
+                if (isRow)
+                {
+                    Measure(child, child.Width, target, true, true);
+                }
+                else
+                {
+                    Measure(child, target, child.Height, true, true);
+                }
             }
         }
 
@@ -719,27 +779,41 @@ namespace Ixen.Core.Visual.Computers
             return count < 2 ? 0 : GapOf(element, isRow) * (count - 1);
         }
 
-        private void MeasureChild(VisualElement child, float contentWidth, float contentHeight, bool isRow, float mainShare, bool useMainShare)
+        private void MeasureChild(VisualElement child, float contentWidth, float contentHeight, bool isRow,
+            float mainShare, bool useMainShare, bool crossIsDefinite)
         {
             SizeStyleDescriptor widthStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width);
             SizeStyleDescriptor heightStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Height);
 
             ResolveAxis(widthStyle, contentWidth, child.HorizontalMargin + child.HorizontalBorderOutside,
-                useMainShare && isRow, mainShare, out float availableWidth, out bool widthIsDefinite);
+                useMainShare && isRow, mainShare, !isRow && !crossIsDefinite,
+                out float availableWidth, out bool widthIsDefinite);
 
             ResolveAxis(heightStyle, contentHeight, child.VerticalMargin + child.VerticalBorderOutside,
-                useMainShare && !isRow, mainShare, out float availableHeight, out bool heightIsDefinite);
+                useMainShare && !isRow, mainShare, isRow && !crossIsDefinite,
+                out float availableHeight, out bool heightIsDefinite);
 
             Measure(child, availableWidth, availableHeight, widthIsDefinite, heightIsDefinite);
         }
 
         private void ResolveAxis(SizeStyleDescriptor style, float contentAvailable, float margin, bool useShare, float share,
             out float available, out bool isDefinite)
+            => ResolveAxis(style, contentAvailable, margin, useShare, share, false, out available, out isDefinite);
+
+        private void ResolveAxis(SizeStyleDescriptor style, float contentAvailable, float margin, bool useShare, float share,
+            bool fillAsContent, out float available, out bool isDefinite)
         {
             if (useShare)
             {
                 available = share;
                 isDefinite = true;
+                return;
+            }
+
+            if (fillAsContent && IsFilling(style))
+            {
+                available = Math.Max(0, contentAvailable - margin);
+                isDefinite = false;
                 return;
             }
 

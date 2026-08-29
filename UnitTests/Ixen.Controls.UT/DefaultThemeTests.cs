@@ -173,13 +173,6 @@ namespace Ixen.Controls.UT
                 + "pays one bool test");
         }
 
-        // ------------------------------------------------------------------------
-        // The theme's effect on a control's PARTS. Nothing asserted on a default
-        // stylesheet before these, and three defects shipped because of it: a rule
-        // nested inside another is dropped by the defaults layer, and a second block
-        // for the same selector replaces the first outright rather than merging.
-        // ------------------------------------------------------------------------
-
         private T Add<T>(string name) where T : VisualElement, new()
         {
             var control = new T { Name = name };
@@ -268,7 +261,7 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
-        public void AMenuItemHugsItsOwnLabelAndTheHighlightIsThatWide()
+        public void EveryMenuItemSpansThePanelWhileThePanelHugsItsWidest()
         {
             var menu = new Menu { Name = "menu" };
             var wide = new MenuItem { Name = "wide", Text = "Comfortable" };
@@ -280,18 +273,14 @@ namespace Ixen.Controls.UT
             menu.Open = true;
             Layout();
 
-            // This pins CURRENT behaviour, and it is a known wart rather than a design: a
-            // hover or a selection paints the item, so a short entry gets a short bar in a
-            // panel as wide as the longest one.
-            //
-            // The fix is NOT a theme rule. Dropping the width makes the item fill on the
-            // panel's cross axis, which is right - but the panel is itself `?`, and a
-            // shrink-to-fit container holding fill children is the documented circular case:
-            // the panel swelled to the whole viewport (1272 units wide, measured). Ixen has
-            // no "size me from my children, then stretch them back to that size" pass.
-            Assert.IsTrue(wide.ActualWidth > narrow.ActualWidth + 20);
+            Assert.AreEqual(wide.ActualWidth, narrow.ActualWidth,
+                "a hover or a selection paints the ITEM, so every row has to span the panel or "
+                + "a short entry gets a short bar");
+            Assert.AreEqual(menu.Panel.ContentWidth, narrow.ActualWidth);
+
             Assert.IsTrue(menu.Panel.ContentWidth < 200,
-                "and the panel does hug its widest item, which is what must not be lost");
+                "and the panel still hugs its widest item rather than swelling to the whole "
+                + "viewport, which is what filling children used to do to a ? container");
         }
 
         [TestMethod]

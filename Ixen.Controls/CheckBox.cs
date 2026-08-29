@@ -34,10 +34,6 @@ namespace Ixen.Controls
             KeyDown += OnKeyDown;
         }
 
-        // The mark is an ELEMENT, not a glyph. The default face has no tick at all - every
-        // candidate in the Dingbats block renders as a missing-glyph box - and a glyph is
-        // centred by its advance rather than by its ink, which left the radio dot visibly
-        // off-centre. A styled child is crisp at any size and needs no font.
         protected virtual string MarkTypeName => "CheckBoxMark";
 
         public VisualElement Mark => _mark;
@@ -59,9 +55,6 @@ namespace Ixen.Controls
 
             ToggleState(CHECKED, value);
 
-            // The mark carries the state too, because a control library's stylesheets are
-            // registered as DEFAULTS and the defaults layer drops scoped rules - so the theme
-            // cannot reach a part through its parent's state and has to match on the part.
             _mark.ToggleState(CHECKED, value);
 
             if (_interacting)

@@ -61,8 +61,6 @@ namespace Ixen.Core.UT.Layout
             _image.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = height };
         }
 
-        // Red, with a blue band over the leftmost quarter. The band is what makes the
-        // horizontal scale readable: a flat colour cannot tell `cover` from `fill`.
         private static byte[] Png(int width, int height)
         {
             using (var bitmap = new SKBitmap(width, height))

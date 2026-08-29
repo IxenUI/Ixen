@@ -9,6 +9,7 @@ namespace Ixen.Controls
     public class MenuItem : VisualElement
     {
         public const string SUBMENU = "submenu";
+        public const string HORIZONTAL = "horizontal";
 
         public event EventHandler<EventArgs> Invoked;
 
@@ -69,10 +70,14 @@ namespace Ixen.Controls
         {
             base.OnHostChanged();
 
-            if (Host != null)
+            if (Host == null)
             {
-                _ = Submenu;
+                return;
             }
+
+            _ = Submenu;
+
+            ToggleState(HORIZONTAL, !Vertical);
         }
 
         public void Activate()
