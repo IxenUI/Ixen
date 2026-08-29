@@ -104,6 +104,31 @@ namespace Ixen.Core.UT.Rendering
         }
 
         [TestMethod]
+        public void ABackendThatDoesNotKeepTheLastFrameRepaintsEverything()
+        {
+            _surface.PreservesFrame = false;
+
+            Mark(320, 240);
+
+            _surface.InvalidateVisual(_near);
+            Frame();
+
+            Assert.IsFalse(Survived(320, 240),
+                "clipping the render to the damage is only safe while something keeps the pixels "
+                + "outside it. A double-buffered GL swap chain does not: after the swap the back "
+                + "buffer holds the frame before last, so a damaged frame would show two frames "
+                + "alternating everywhere except the damaged rectangle.");
+        }
+
+        [TestMethod]
+        public void AndItIsTheDefaultThatKeepsThemBecauseARasterBufferDoes()
+        {
+            Assert.IsTrue(_surface.PreservesFrame,
+                "the pixel buffer the raster host blits from persists between frames, so the "
+                + "default must stay true or damage rectangles buy nothing anywhere");
+        }
+
+        [TestMethod]
         public void AWholeSurfaceInvalidationStillRepaintsEverything()
         {
             Mark(320, 240);

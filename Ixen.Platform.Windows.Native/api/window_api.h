@@ -18,5 +18,7 @@ IXEN_API_ENTRY void WA_RegisterWheelCallBack(NativeWindow* window, void __stdcal
 IXEN_API_ENTRY void WA_InvalidateWindow(NativeWindow* window);
 IXEN_API_ENTRY void WA_SetWindowCursor(NativeWindow* window, int kind);
 IXEN_API_ENTRY unsigned int WA_GetWindowDpi(NativeWindow* window);
+IXEN_API_ENTRY int WA_CreateGlContext(NativeWindow* window);
+IXEN_API_ENTRY void WA_SwapGlBuffers(NativeWindow* window);
 
 #endif

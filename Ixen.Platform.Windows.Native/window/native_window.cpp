@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <GL/gl.h>
 
 #define IXEN_POINTER_MOVE 0
 #define IXEN_POINTER_DOWN 1
@@ -110,7 +111,7 @@ NativeWindow::NativeWindow(LPCWSTR title, int width, int height)
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
     wc.hCursor = nullptr;
-    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     wc.lpfnWndProc = &WindowProc;
 
     if (!RegisterClassEx(&wc))
@@ -186,8 +187,94 @@ void NativeWindow::Invalidate()
     }
 }
 
+typedef BOOL(WINAPI* PFN_wglSwapInterval)(int);
+
+bool NativeWindow::CreateGlContext()
+{
+    if (_glContext != nullptr)
+    {
+        return true;
+    }
+
+    if (_handle == nullptr)
+    {
+        return false;
+    }
+
+    _deviceContext = GetDC(_handle);
+
+    if (_deviceContext == nullptr)
+    {
+        return false;
+    }
+
+    PIXELFORMATDESCRIPTOR descriptor = {};
+    descriptor.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+    descriptor.nVersion = 1;
+    descriptor.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    descriptor.iPixelType = PFD_TYPE_RGBA;
+    descriptor.cColorBits = 32;
+    descriptor.cAlphaBits = 8;
+    descriptor.cStencilBits = 8;
+    descriptor.iLayerType = PFD_MAIN_PLANE;
+
+    int format = ChoosePixelFormat(_deviceContext, &descriptor);
+
+    if (format == 0 || !SetPixelFormat(_deviceContext, format, &descriptor))
+    {
+        ReleaseDC(_handle, _deviceContext);
+        _deviceContext = nullptr;
+
+        return false;
+    }
+
+    _glContext = wglCreateContext(_deviceContext);
+
+    if (_glContext == nullptr || !wglMakeCurrent(_deviceContext, _glContext))
+    {
+        DestroyGlContext();
+
+        return false;
+    }
+
+    PFN_wglSwapInterval swapInterval = (PFN_wglSwapInterval)wglGetProcAddress("wglSwapIntervalEXT");
+
+    if (swapInterval != nullptr)
+    {
+        swapInterval(0);
+    }
+
+    return true;
+}
+
+void NativeWindow::SwapGlBuffers()
+{
+    if (_deviceContext != nullptr)
+    {
+        SwapBuffers(_deviceContext);
+    }
+}
+
+void NativeWindow::DestroyGlContext()
+{
+    if (_glContext != nullptr)
+    {
+        wglMakeCurrent(nullptr, nullptr);
+        wglDeleteContext(_glContext);
+        _glContext = nullptr;
+    }
+
+    if (_deviceContext != nullptr)
+    {
+        ReleaseDC(_handle, _deviceContext);
+        _deviceContext = nullptr;
+    }
+}
+
 LRESULT NativeWindow::HandleDestroy()
 {
+    DestroyGlContext();
+
     PostQuitMessage(0);
     return 0;
 }
@@ -199,7 +286,7 @@ LRESULT NativeWindow::HandlePaint()
 
     GetClientRect(_handle, &_clientRect);
 
-    if (_pixelsBuffer == nullptr)
+    if (_pixelsBuffer == nullptr && _glContext == nullptr)
     {
         FillRect(hdc, &_clientRect, GetSysColorBrush(COLOR_WINDOW));
     }
@@ -209,7 +296,7 @@ LRESULT NativeWindow::HandlePaint()
         _paintCallBack(_clientRect.right, _clientRect.bottom);
     }
 
-    if (_pixelsBuffer != nullptr)
+    if (_pixelsBuffer != nullptr && _glContext == nullptr)
     {
         _bitmapInfoHeader.biWidth = _clientRect.right;
         _bitmapInfoHeader.biHeight = -_clientRect.bottom;

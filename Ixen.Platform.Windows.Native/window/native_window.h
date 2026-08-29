@@ -24,6 +24,8 @@ namespace IxenWindowsNative
         void (*_wheelCallBack)(int, int, int, int, int) = nullptr;
         void* _pixelsBuffer = nullptr;
         HCURSOR _cursor = nullptr;
+        HDC _deviceContext = nullptr;
+        HGLRC _glContext = nullptr;
 
         bool _trackingMouse = false;
 
@@ -41,6 +43,7 @@ namespace IxenWindowsNative
         LRESULT HandleKey(int kind, WPARAM wParam);
         LRESULT HandleWheel(WPARAM wParam, LPARAM lParam, bool horizontal);
         LRESULT HandleSetCursor(LPARAM lParam);
+        void DestroyGlContext();
         static int GetModifiers();
         void ApplyLogicalSize(int logicalWidth, int logicalHeight);
 
@@ -55,6 +58,9 @@ namespace IxenWindowsNative
         void Invalidate();
         void SetCursorKind(int kind);
         UINT GetDpi();
+        bool CreateGlContext();
+        void SwapGlBuffers();
+        bool HasGlContext() { return _glContext != nullptr; }
 
         HWND GetHandle() { return _handle; }
         void SetPixelsBuffer(void* buffer) { _pixelsBuffer = buffer; }

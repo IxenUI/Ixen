@@ -207,6 +207,8 @@ namespace Ixen.Core
 
         internal bool IsDirty => _visualDirty || (Root != null && Root.IsLayoutDirty);
 
+        public bool PreservesFrame { get; set; } = true;
+
         private DamageRegion _damage;
 
         public void InvalidateVisual()
@@ -605,7 +607,7 @@ namespace Ixen.Core
             _visualDirty = false;
             _rendererContext.BeginFrame(canvas, _scale);
 
-            bool clipped = !_damage.IsWhole && !_damage.IsEmpty;
+            bool clipped = PreservesFrame && !_damage.IsWhole && !_damage.IsEmpty;
 
             if (clipped)
             {

@@ -48,5 +48,11 @@ namespace Ixen.Platform.Windows.NativeApi
 
         [DllImport(LIB_NAME, EntryPoint = "WA_GetWindowDpi", CallingConvention = CallingConvention.Cdecl)]
         public static extern uint GetWindowDpi(IntPtr windowPtr);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_CreateGlContext", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int CreateGlContext(IntPtr windowPtr);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_SwapGlBuffers", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SwapGlBuffers(IntPtr windowPtr);
     }
 }

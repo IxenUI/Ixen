@@ -10,22 +10,18 @@ namespace Ixen.Platform.Windows
     {
         private IntPtr _windowPtr;
 
-        private readonly PixelBuffer _pixelBuffer;
-        private bool _painted;
+        private WindowRenderer _renderer;
 
         private readonly WindowApi.OnPaintCallBack _onPaint;
         private readonly WindowApi.OnPointerCallBack _onPointer;
         private readonly WindowApi.OnKeyCallBack _onKey;
         private readonly WindowApi.OnWheelCallBack _onWheel;
 
-        private SKImageInfo _skImageInfo;
-        private SKSurface _skSurface;
         private IxenSurface _ixenSurface;
         private readonly IxenHost _host;
 
         public IxenWindow(IxenSurface ixenSurface)
         {
-            _pixelBuffer = new PixelBuffer();
             _ixenSurface = ixenSurface;
             _ixenSurface.ReducedMotion = SystemPreferences.PrefersReducedMotion();
             _host = new IxenHost(ixenSurface, RequestRepaint, new MessageScheduler(), new WindowsClipboard(),
@@ -40,6 +36,12 @@ namespace Ixen.Platform.Windows
             {
                 throw new Exception("Could not initialize WIN32 Window");
             }
+
+            _renderer = ixenSurface.InitOptions.PreferGpu
+                ? GpuWindowRenderer.TryCreate(_windowPtr) ?? (WindowRenderer)new RasterWindowRenderer(_windowPtr)
+                : new RasterWindowRenderer(_windowPtr);
+
+            _ixenSurface.PreservesFrame = _renderer.PreservesFrame;
         }
 
         public int Show()
@@ -137,33 +139,14 @@ namespace Ixen.Platform.Windows
         {
             _ixenSurface.Scale = WindowApi.GetWindowDpi(_windowPtr) / DEFAULT_DPI;
 
-            _pixelBuffer.EnsureAlloc(width, height);
-            _skImageInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
-            _painted = false;
-
-            try
-            {
-                using(_skSurface = SKSurface.Create(_skImageInfo, _pixelBuffer.Ptr, _pixelBuffer.RowBytes))
-                {
-                    if (_skSurface != null)
-                    {
-                        _host.Paint(_skSurface.Canvas, width, height);
-                        _painted = true;
-                    }
-                }
-            }
-            finally
-            {
-                if (_painted)
-                {
-                    WindowApi.SetWindowPixelsBuffer(_windowPtr, _pixelBuffer.Ptr);
-                }
-            }
+            _renderer.Paint(width, height, canvas => _host.Paint(canvas, width, height));
         }
+
+        internal string Backend => _renderer.Backend;
 
         public void Dispose()
         {
-            _pixelBuffer.Dispose();
+            _renderer.Dispose();
         }
     }
 }

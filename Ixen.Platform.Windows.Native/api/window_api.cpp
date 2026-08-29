@@ -120,3 +120,21 @@ unsigned int WA_GetWindowDpi(NativeWindow* window)
 
     return window->GetDpi();
 }
+
+int WA_CreateGlContext(NativeWindow* window)
+{
+    if (!window)
+    {
+        return 0;
+    }
+
+    return window->CreateGlContext() ? 1 : 0;
+}
+
+void WA_SwapGlBuffers(NativeWindow* window)
+{
+    if (window)
+    {
+        window->SwapGlBuffers();
+    }
+}
