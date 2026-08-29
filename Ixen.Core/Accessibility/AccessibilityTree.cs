@@ -167,6 +167,11 @@ namespace Ixen.Core.Accessibility
 
         private static string ValueOf(VisualElement element)
         {
+            if (!string.IsNullOrEmpty(element.AccessibleValue))
+            {
+                return element.AccessibleValue;
+            }
+
             if (element is TextField field)
             {
                 return field.IsMasked ? null : field.Text;

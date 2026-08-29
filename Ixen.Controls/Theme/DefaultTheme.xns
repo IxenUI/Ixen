@@ -237,3 +237,86 @@ $focus:        #4C6EF5
         padding: 5px 10px
     }
 }
+
+@keyframes ixen_spin {
+    0%   { transform: rotate(0deg) }
+    100% { transform: rotate(360deg) }
+}
+
+@keyframes ixen_busy {
+    0%   { left: 0%   width: 20% }
+    50%  { left: 40%  width: 40% }
+    100% { left: 100% width: 20% }
+}
+
+#Slider {
+    width: 160px
+    height: 18px
+    cursor: hand
+}
+
+#Slider:disabled {
+    cursor: default
+}
+
+#SliderTrack {
+    top: 7px
+    height: 4px
+    background: $surface_down
+    corner-radius: 2px
+}
+
+#SliderFill {
+    top: 7px
+    height: 4px
+    background: $focus
+    corner-radius: 2px
+}
+
+#SliderThumb {
+    top: 1px
+    width: 16px
+    height: 16px
+    background: #FFFFFF
+    border: $focus 2px inner
+    corner-radius: 8px
+    transition: border 120ms ease-out
+}
+
+#Slider:disabled {
+    #SliderFill {
+        background: $line_off
+    }
+
+    #SliderThumb {
+        border: $line_off 2px inner
+    }
+}
+
+#ProgressBar {
+    width: 160px
+    height: 6px
+    background: $surface_down
+    corner-radius: 3px
+}
+
+#ProgressBarFill {
+    top: 0px
+    height: 6px
+    background: $focus
+    corner-radius: 3px
+}
+
+#ProgressBar:busy {
+    #ProgressBarFill {
+        animation: ixen_busy 1200ms ease-in-out infinite
+    }
+}
+
+#Spinner {
+    width: 16px
+    height: 16px
+    border: $focus 2px 2px 0px 0px inner
+    corner-radius: 8px
+    animation: ixen_spin 900ms linear infinite
+}

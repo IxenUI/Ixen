@@ -323,11 +323,9 @@ namespace Ixen.Core.Visual.Computers
             }
         }
 
-        private static float ContentOriginX(VisualElement element)
-            => element.X + element.PaddingLeft + element.BorderInsideLeft - element.ScrollX;
+        private static float ContentOriginX(VisualElement element) => element.ContentX;
 
-        private static float ContentOriginY(VisualElement element)
-            => element.Y + element.PaddingTop + element.BorderInsideTop - element.ScrollY;
+        private static float ContentOriginY(VisualElement element) => element.ContentY;
 
         private void ArrangeGrid(VisualElement element)
         {

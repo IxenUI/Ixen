@@ -83,7 +83,7 @@
         internal float ScrollbarGutterWidth { get; set; }
         internal float ScrollbarGutterHeight { get; set; }
 
-        internal float ContentWidth
+        public float ContentWidth
         {
             get
             {
@@ -92,7 +92,7 @@
             }
         }
 
-        internal float ContentHeight
+        public float ContentHeight
         {
             get
             {

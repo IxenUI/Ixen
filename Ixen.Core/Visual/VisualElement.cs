@@ -375,6 +375,14 @@ namespace Ixen.Core.Visual
 
         public VisualElement AnchorElement { get; set; }
 
+        public string AccessibleValue { get; set; }
+
+        public float ContentX
+            => X + PaddingLeft + BorderInsideLeft - ScrollX;
+
+        public float ContentY
+            => Y + PaddingTop + BorderInsideTop - ScrollY;
+
         internal bool IsAnchored
             => AnchorElement != null
                 || (StylesHandlers != null
