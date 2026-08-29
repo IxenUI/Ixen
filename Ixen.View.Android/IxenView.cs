@@ -56,10 +56,32 @@ namespace Ixen.View.Android
                 new AndroidScheduler(), new AndroidClipboard(Context), null,
                 new AssetImageSource(Context?.Assets));
 
+            _host.Surface.ReducedMotion = PrefersReducedMotion();
+
             _skCanvasView.PaintSurface += OnPaintSurface;
             _skCanvasView.Touch += OnTouch;
 
             AddView(_skCanvasView);
+        }
+
+        private bool PrefersReducedMotion()
+        {
+            ContentResolver resolver = Context?.ContentResolver;
+
+            if (resolver == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                return global::Android.Provider.Settings.Global.GetFloat(resolver,
+                    global::Android.Provider.Settings.Global.AnimatorDurationScale, 1f) == 0f;
+            }
+            catch (Java.Lang.Exception)
+            {
+                return false;
+            }
         }
 
         private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)

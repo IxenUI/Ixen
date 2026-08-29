@@ -1,4 +1,4 @@
-﻿using Ixen.Core;
+using Ixen.Core;
 using Ixen.Core.Input;
 using Ixen.Platform.Windows.NativeApi;
 using SkiaSharp;
@@ -27,6 +27,7 @@ namespace Ixen.Platform.Windows
         {
             _pixelBuffer = new PixelBuffer();
             _ixenSurface = ixenSurface;
+            _ixenSurface.ReducedMotion = SystemPreferences.PrefersReducedMotion();
             _host = new IxenHost(ixenSurface, RequestRepaint, new MessageScheduler(), new WindowsClipboard(),
                 SetCursor, new WindowsImageSource());
             _onPaint = OnPaint;

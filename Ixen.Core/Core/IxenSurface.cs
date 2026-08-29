@@ -252,6 +252,36 @@ namespace Ixen.Core
 
         internal int AnimatingCount => _animating.Count;
 
+        private bool _reducedMotion;
+
+        public bool ReducedMotion
+        {
+            get => _reducedMotion;
+            set
+            {
+                if (_reducedMotion == value)
+                {
+                    return;
+                }
+
+                _reducedMotion = value;
+
+                if (!value)
+                {
+                    return;
+                }
+
+                for (int index = 0; index < _animating.Count; index++)
+                {
+                    _animating[index].Animations.Finish();
+                }
+
+                _animating.Clear();
+                StopAnimationTicker();
+                InvalidateVisual();
+            }
+        }
+
         public void StartAnimating(VisualElement element)
         {
             if (element == null)
@@ -259,7 +289,7 @@ namespace Ixen.Core
                 return;
             }
 
-            if (_scheduler == null)
+            if (_scheduler == null || _reducedMotion)
             {
                 element.Animations.Finish();
                 return;
