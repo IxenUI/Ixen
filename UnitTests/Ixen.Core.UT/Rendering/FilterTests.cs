@@ -321,7 +321,6 @@ namespace Ixen.Core.UT.Rendering
             AssertRejected("blur(2em)");
             AssertRejected("wobble(2px)");
             AssertRejected("4px");
-            AssertRejected("grayscale(1)");
         }
 
         [TestMethod]

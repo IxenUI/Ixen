@@ -6,7 +6,15 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 {
     public enum FilterKind
     {
-        Blur
+        Blur,
+        Grayscale,
+        Sepia,
+        Saturate,
+        Invert,
+        Brightness,
+        Contrast,
+        HueRotate,
+        Opacity
     }
 
     public class FilterOperation
