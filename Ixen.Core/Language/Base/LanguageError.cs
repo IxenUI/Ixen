@@ -9,6 +9,7 @@ namespace Ixen.Core.Language.Base
         public const string INVALID_ELEMENT_TYPE = "XN006";
         public const string INVALID_PROPERTY = "XN007";
         public const string INVALID_PROPERTY_VALUE = "XN008";
+        public const string DROPPED_DEFAULT = "XN009";
     }
 
     internal enum LanguageErrorSeverity

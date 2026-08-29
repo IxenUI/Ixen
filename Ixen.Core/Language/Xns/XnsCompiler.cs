@@ -76,7 +76,11 @@ namespace Ixen.Core.Language.Xns
                 name = name.Substring(1);
             }
 
-            return new StyleClass(target, null, GetScope(selector), name, ToStyles(node, errors), media);
+            return new StyleClass(target, null, GetScope(selector), name, ToStyles(node, errors), media)
+            {
+                SourceIndex = node.NameIndex,
+                SourceLength = node.Name == null ? 0 : node.Name.Length
+            };
         }
 
         private void Add(XnsNode node, ClassesSet set, List<LanguageError> errors)

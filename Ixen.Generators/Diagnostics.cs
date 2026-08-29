@@ -18,7 +18,8 @@ namespace Ixen.Generators
             [LanguageErrorCode.STRUCTURE] = "Ixen structure problem",
             [LanguageErrorCode.INVALID_ELEMENT_TYPE] = "Invalid XNL element type",
             [LanguageErrorCode.INVALID_PROPERTY] = "Invalid XNL property",
-            [LanguageErrorCode.INVALID_PROPERTY_VALUE] = "Invalid XNL property value"
+            [LanguageErrorCode.INVALID_PROPERTY_VALUE] = "Invalid XNL property value",
+            [LanguageErrorCode.DROPPED_DEFAULT] = "Ixen default style rule is dropped"
         };
 
         private static readonly Dictionary<(string code, DiagnosticSeverity severity), DiagnosticDescriptor> _descriptors

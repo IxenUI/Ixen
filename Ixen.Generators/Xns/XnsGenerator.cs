@@ -1,5 +1,8 @@
+using Ixen.Core.Language.Base;
 using Ixen.Core.Language.Xns;
+using Ixen.Core.Visual.Classes;
 using Microsoft.CodeAnalysis;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Globalization;
@@ -30,9 +33,63 @@ namespace Ixen.Generators.Xns
             context.RegisterSourceOutput(compilationAndNC, (spc, source) => Execute(source.Item1, source.Item2, spc));
         }
 
+        private const string DEFAULTS_ATTRIBUTE = "Ixen.Core.Visual.Classes.IxenDefaultStylesAttribute";
+
+        private static bool ShipsDefaultStyles(Compilation compilation)
+        {
+            INamedTypeSymbol attribute = compilation.GetTypeByMetadataName(DEFAULTS_ATTRIBUTE);
+
+            if (attribute == null)
+            {
+                return false;
+            }
+
+            foreach (AttributeData data in compilation.Assembly.GetAttributes())
+            {
+                if (SymbolEqualityComparer.Default.Equals(data.AttributeClass, attribute))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static List<LanguageError> DroppedDefaults(ClassesSet sheet)
+        {
+            var dropped = new List<LanguageError>();
+
+            foreach (StyleClass styleClass in sheet.Classes)
+            {
+                if (StyleRegistry.CanBeDefault(styleClass))
+                {
+                    continue;
+                }
+
+                string reason = styleClass.Media != null
+                    ? "sits inside an @media block"
+                    : "is nested inside another selector";
+
+                dropped.Add(new LanguageError(
+                    LanguageErrorCode.DROPPED_DEFAULT,
+                    $"This rule {reason}, and this assembly ships its stylesheets as defaults "
+                    + "([assembly: IxenDefaultStyles]). A default rule can be neither scoped nor "
+                    + "conditional, so this one is dropped and will never apply to anything. "
+                    + "Write it at the top level; if it has to change with its parent's state, "
+                    + "put the state on the part itself.",
+                    styleClass.SourceIndex,
+                    styleClass.SourceLength,
+                    LanguageErrorSeverity.Warning));
+            }
+
+            return dropped;
+        }
+
         static void Execute(Compilation compilation, ImmutableArray<(string name, string content, string path)> texts, SourceProductionContext context)
         {
             Debug.WriteLine("Execute Ixen XNS code generator");
+
+            bool defaults = ShipsDefaultStyles(compilation);
 
             foreach ((string name, string content, string path) in texts)
             {
@@ -44,6 +101,11 @@ namespace Ixen.Generators.Xns
                 if (sheet == null)
                 {
                     continue;
+                }
+
+                if (defaults)
+                {
+                    Diagnostics.Report(context, path, content, DroppedDefaults(sheet));
                 }
 
                 var sb = new StringBuilder();

@@ -19,6 +19,9 @@ namespace Ixen.Core.Visual.Classes
         public MediaQuery Media { get; set; }
         public List<StyleDescriptor> Styles { get; set; }
 
+        internal int SourceIndex { get; set; }
+        internal int SourceLength { get; set; }
+
         public StyleClass(StyleClassTarget target, string sheetScope, string scope, string name, List<StyleDescriptor> styles)
             : this(target, sheetScope, scope, name, styles, null)
         { }

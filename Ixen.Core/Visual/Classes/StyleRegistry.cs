@@ -215,10 +215,13 @@ namespace Ixen.Core.Visual.Classes
             AddRange(set?.Keyframes);
         }
 
+        internal static bool CanBeDefault(StyleClass styleClass)
+            => styleClass != null && styleClass.Name != null && styleClass.Scope == null
+                && styleClass.Media == null;
+
         private void AddDefault(StyleClass styleClass)
         {
-            if (styleClass == null || styleClass.Name == null || styleClass.Scope != null
-                || styleClass.Media != null)
+            if (!CanBeDefault(styleClass))
             {
                 return;
             }
