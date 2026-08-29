@@ -127,13 +127,19 @@ namespace Ixen.Controls.UT
         {
             CheckBox box = Add<CheckBox>("box");
 
-            Assert.AreEqual(string.Empty, box.Text ?? string.Empty);
+            Assert.AreEqual("CheckBoxMark", box.Mark.TypeName,
+                "the mark is an ELEMENT, not a glyph: the default face has no tick at all, and "
+                + "a glyph is centred by its advance rather than by its ink, which left the "
+                + "radio dot visibly off-centre");
+
+            Assert.IsFalse(box.HasState(CheckBox.CHECKED));
 
             box.Checked = true;
 
-            Assert.AreEqual("\u2713", box.Text,
-                "RendererContext has no path API, so the mark is a glyph in Text - the same "
-                + "answer the scrollbar arrows already use");
+            Assert.IsTrue(box.HasState(CheckBox.CHECKED),
+                "so the theme shows and hides the mark with #CheckBox:checked, and the control "
+                + "writes no text at all");
+            Assert.AreEqual(string.Empty, box.Text ?? string.Empty);
         }
 
         [TestMethod]
@@ -239,9 +245,10 @@ namespace Ixen.Controls.UT
 
             toggle.Checked = true;
 
-            Assert.AreEqual(string.Empty, toggle.Text,
-                "a switch has no mark to draw - the theme fills it instead, which is all a "
-                + "renderer with no path API can honestly do");
+            Assert.AreEqual("SwitchKnob", toggle.Mark.TypeName,
+                "a switch is the same control wearing a different mark - its knob slides "
+                + "because the theme flips content-align on the checked state");
+            Assert.AreEqual(string.Empty, toggle.Text ?? string.Empty);
             Assert.IsTrue(toggle.HasState(CheckBox.CHECKED));
         }
 
@@ -276,7 +283,7 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
-        public void AnUnlabelledOneIsNotNamedAfterItsMark()
+        public void AnUnlabelledToggleHasNoName()
         {
             RadioButton radio = Add<RadioButton>("small");
             radio.Checked = true;
@@ -286,9 +293,10 @@ namespace Ixen.Controls.UT
             AccessibleNode node = _surface.BuildAccessibilityTree().Children[0];
 
             Assert.IsNull(node.Name,
-                "the mark lives in Text and NameOf reaches Text before anything else, so a "
-                + "checked radio announced itself as a bullet. No label means no name, which "
-                + "is the truth a bridge should report rather than a decoration.");
+                "a checked radio used to announce itself as a bullet, because its mark lived in "
+                + "Text and NameOf reaches Text first. The mark is an element now, so there is "
+                + "no text to mistake - and no label means no name, which is the truth a bridge "
+                + "should report rather than a decoration.");
             Assert.IsTrue(node.States.HasFlag(AccessibleStates.Checked),
                 "the state is where being checked belongs, and it survives having no name");
         }

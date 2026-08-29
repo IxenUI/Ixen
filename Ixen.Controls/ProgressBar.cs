@@ -82,6 +82,7 @@ namespace Ixen.Controls
                 _busy = value;
 
                 ToggleState(BUSY, value);
+                _fill.ToggleState(BUSY, value);
 
                 Sync();
             }

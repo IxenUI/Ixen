@@ -10,6 +10,6 @@ namespace Ixen.Controls
             Role = AccessibleRole.Switch;
         }
 
-        protected override string Glyph => string.Empty;
+        protected override string MarkTypeName => "SwitchKnob";
     }
 }

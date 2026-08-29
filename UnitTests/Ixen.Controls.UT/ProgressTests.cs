@@ -114,9 +114,10 @@ namespace Ixen.Controls.UT
             Assert.AreEqual(AccessibleRole.ProgressBar, node.Role);
             Assert.AreEqual("Busy", node.Name);
             Assert.IsNull(node.Value, "it is indeterminate by nature");
-            Assert.AreEqual(0, spinner.ChildElements.Count,
-                "a spinner is a bordered box that the theme rotates with a keyframe animation - "
-                + "there is no path API to draw an arc with, and none is needed");
+            Assert.AreEqual(1, spinner.ChildElements.Count,
+                "a spinner is one dot that the theme orbits with a keyframe animation over a "
+                + "rotate - a RING that rotates is indistinguishable from a ring standing still");
+            Assert.AreEqual(0, node.Children.Count, "and the dot is decoration");
         }
     }
 }

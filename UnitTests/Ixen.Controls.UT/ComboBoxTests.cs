@@ -227,5 +227,29 @@ namespace Ixen.Controls.UT
 
             Assert.IsFalse(_combo.IsOpen);
         }
+
+        [TestMethod]
+        public void AnIndexSetBeforeTheItemsExistSurvives()
+        {
+            var fresh = new ComboBox { Name = "later" };
+
+            fresh.SelectedIndex = 1;
+
+            Assert.AreEqual(1, fresh.SelectedIndex,
+                "XNL sets properties BEFORE it adds children, so a bound selected-index "
+                + "arrives while the menu is still empty - clamping it against a count of zero "
+                + "silently threw the binding away");
+
+            fresh.AddChildren(
+                new MenuItem { Text = "Small" },
+                new MenuItem { Text = "Large" });
+
+            _root.AddChild(fresh);
+            Layout();
+
+            Assert.AreEqual("Large", fresh.SelectedText);
+            Assert.AreEqual("Large", fresh.DisplayText,
+                "and the box catches up on attach, which is the first moment the items are known");
+        }
     }
 }

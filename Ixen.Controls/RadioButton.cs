@@ -6,8 +6,6 @@ namespace Ixen.Controls
 {
     public class RadioButton : CheckBox
     {
-        private const string DOT = "\u25CF";
-
         public RadioButton()
         {
             TypeName = nameof(RadioButton);
@@ -16,7 +14,7 @@ namespace Ixen.Controls
 
         public string Group { get; set; }
 
-        protected override string Glyph => DOT;
+        protected override string MarkTypeName => "RadioButtonMark";
 
         protected override void OnActivated()
         {

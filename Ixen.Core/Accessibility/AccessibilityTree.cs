@@ -109,8 +109,7 @@ namespace Ixen.Core.Accessibility
 
             AccessibleRole role = RoleOf(element);
 
-            if (!string.IsNullOrEmpty(element.Text) && !TakesValueFromText(role)
-                && !TextIsAMark(role))
+            if (!string.IsNullOrEmpty(element.Text) && !TakesValueFromText(role))
             {
                 return element.Text;
             }
@@ -197,13 +196,6 @@ namespace Ixen.Core.Accessibility
         private static bool TakesValueFromText(AccessibleRole role)
         {
             return role == AccessibleRole.TextField || role == AccessibleRole.ComboBox;
-        }
-
-        private static bool TextIsAMark(AccessibleRole role)
-        {
-            return role == AccessibleRole.CheckBox
-                || role == AccessibleRole.RadioButton
-                || role == AccessibleRole.Switch;
         }
 
         private static AccessibleActions ActionsOf(VisualElement element, AccessibleRole role)

@@ -41,17 +41,31 @@ $focus:        #4C6EF5
     cursor: default
 }
 
+// A mark is an ELEMENT, not a glyph, and every rule for one is written UNSCOPED. A
+// control library's stylesheets are registered as DEFAULTS, and the defaults layer
+// drops a scoped rule - so a part cannot be reached through its parent's state, and
+// carries the state itself instead.
 #CheckBox {
     width: 18px
     height: 18px
     background: #FFFFFF
     border: $line 1px inner
     corner-radius: 3px
-    color: $focus
-    font-size: 12px
-    text-align: center middle
+    content-align: center middle
     cursor: hand
     transition: background 120ms ease-out
+}
+
+#CheckBoxMark {
+    width: 10px
+    height: 10px
+    background: $focus
+    corner-radius: 2px
+    visibility: hidden
+}
+
+#CheckBoxMark:checked {
+    visibility: visible
 }
 
 #CheckBox:hover {
@@ -80,11 +94,21 @@ $focus:        #4C6EF5
     background: #FFFFFF
     border: $line 1px inner
     corner-radius: 9px
-    color: $focus
-    font-size: 10px
-    text-align: center middle
+    content-align: center middle
     cursor: hand
     transition: background 120ms ease-out
+}
+
+#RadioButtonMark {
+    width: 8px
+    height: 8px
+    background: $focus
+    corner-radius: 4px
+    visibility: hidden
+}
+
+#RadioButtonMark:checked {
+    visibility: visible
 }
 
 #RadioButton:hover {
@@ -112,17 +136,30 @@ $focus:        #4C6EF5
     background: $surface_down
     border: $line 1px inner
     corner-radius: 9px
+    padding: 2px
+    content-align: left middle
     cursor: hand
     transition: background 140ms ease-out
+}
+
+#SwitchKnob {
+    width: 12px
+    height: 12px
+    background: #FFFFFF
+    corner-radius: 6px
 }
 
 #Switch:hover {
     border: $focus 1px inner
 }
 
+// Merged, not appended: two rules with the same selector do NOT combine - the registry
+// is keyed on the selector and the last registration replaces the whole list. A second
+// #Switch:checked block silently threw this content-align away and the knob never moved.
 #Switch:checked {
     background: $focus
     border: $focus 1px inner
+    content-align: right middle
 }
 
 #Switch:focus {
@@ -232,10 +269,6 @@ $focus:        #4C6EF5
     border: $line 0px 0px 1px 0px inner
     padding: 2px 6px
     gap: 2px
-
-    #MenuItem {
-        padding: 5px 10px
-    }
 }
 
 @keyframes ixen_spin {
@@ -249,9 +282,13 @@ $focus:        #4C6EF5
     100% { left: 100% width: 20% }
 }
 
+// The thumb sits at left: <fraction>% of the CONTENT box, so the content box has to be
+// the travel range: a gutter of one thumb width on the right is what keeps the thumb
+// inside its own bounds at 100% rather than hanging over the edge.
 #Slider {
-    width: 160px
+    width: 176px
     height: 18px
+    padding: 0px 16px 0px 0px
     cursor: hand
 }
 
@@ -283,16 +320,6 @@ $focus:        #4C6EF5
     transition: border 120ms ease-out
 }
 
-#Slider:disabled {
-    #SliderFill {
-        background: $line_off
-    }
-
-    #SliderThumb {
-        border: $line_off 2px inner
-    }
-}
-
 #ProgressBar {
     width: 160px
     height: 6px
@@ -307,16 +334,23 @@ $focus:        #4C6EF5
     corner-radius: 3px
 }
 
-#ProgressBar:busy {
-    #ProgressBarFill {
-        animation: ixen_busy 1200ms ease-in-out infinite
-    }
+#ProgressBarFill:busy {
+    animation: ixen_busy 1200ms ease-in-out infinite
 }
 
+// A ring that rotates is indistinguishable from a ring standing still, so a spinner is
+// one dot orbiting its own centre - which is where transform-origin already is.
 #Spinner {
     width: 16px
     height: 16px
-    border: $focus 2px 2px 0px 0px inner
-    corner-radius: 8px
     animation: ixen_spin 900ms linear infinite
+}
+
+#SpinnerDot {
+    left: 6px
+    top: 0px
+    width: 4px
+    height: 4px
+    background: $focus
+    corner-radius: 2px
 }
