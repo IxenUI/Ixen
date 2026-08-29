@@ -24,6 +24,7 @@ namespace Ixen.Core.Visual
         internal static readonly DockStyleHandler DefaultDock = new();
         internal static readonly ContentAlignStyleHandler DefaultContentAlign = new();
         internal static readonly GapStyleHandler DefaultGap = new();
+        internal static readonly VisibilityStyleHandler DefaultVisibility = new();
         internal static readonly FilterStyleHandler DefaultFilter = new();
         internal static readonly FontFamilyStyleHandler DefaultFontFamily = new();
         internal static readonly FontSizeStyleHandler DefaultFontSize = new();
@@ -75,6 +76,7 @@ namespace Ixen.Core.Visual
         public DockStyleHandler Dock { get; set; } = DefaultDock;
         public ContentAlignStyleHandler ContentAlign { get; set; } = DefaultContentAlign;
         public GapStyleHandler Gap { get; set; } = DefaultGap;
+        public VisibilityStyleHandler Visibility { get; set; } = DefaultVisibility;
         public FilterStyleHandler Filter { get; set; } = DefaultFilter;
         public FontFamilyStyleHandler FontFamily { get; set; } = DefaultFontFamily;
         public FontSizeStyleHandler FontSize { get; set; } = DefaultFontSize;

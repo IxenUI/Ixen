@@ -33,7 +33,8 @@ namespace Ixen.Core.Rendering
 
         private void RenderTree(VisualElement element, RendererContext context, ViewPort viewPort)
         {
-            if (element.StylesHandlers == null || element.Clip.IsVoidOrInvalid)
+            if (element.StylesHandlers == null || element.Clip.IsVoidOrInvalid
+                || element.IsHidden)
             {
                 return;
             }

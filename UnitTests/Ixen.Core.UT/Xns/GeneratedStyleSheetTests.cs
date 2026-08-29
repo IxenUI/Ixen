@@ -24,7 +24,7 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(31, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(32, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
         }
 
         [TestMethod]

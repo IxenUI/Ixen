@@ -26,6 +26,7 @@ namespace Ixen.Core.Visual
         public DockStyleDescriptor Dock { get; set; } = new();
         public ContentAlignStyleDescriptor ContentAlign { get; set; } = new();
         public GapStyleDescriptor Gap { get; set; } = new();
+        public VisibilityStyleDescriptor Visibility { get; set; } = new();
         public FilterStyleDescriptor Filter { get; set; } = new();
         public FontFamilyStyleDescriptor FontFamily { get; set; } = new();
         public FontSizeStyleDescriptor FontSize { get; set; } = new();

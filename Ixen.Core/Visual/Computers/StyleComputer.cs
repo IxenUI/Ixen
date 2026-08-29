@@ -673,6 +673,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultContentAlign;
             }
 
+            if (handlers.Visibility.Descriptor != styles.Visibility)
+            {
+                handlers.Visibility = styles.Visibility != null && styles.Visibility.IsDeclared
+                    ? new VisibilityStyleHandler(styles.Visibility)
+                    : VisualElementStylesHandlers.DefaultVisibility;
+            }
+
             if (handlers.Gap.Descriptor != styles.Gap)
             {
                 handlers.Gap = styles.Gap != null && styles.Gap.IsDeclared
@@ -852,6 +859,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.CONTENT_ALIGN:
                     handlers.ContentAlign = new ContentAlignStyleHandler((ContentAlignStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.VISIBILITY:
+                    handlers.Visibility = new VisibilityStyleHandler((VisibilityStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.GAP:

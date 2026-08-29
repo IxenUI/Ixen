@@ -107,6 +107,10 @@ namespace Ixen.Core.Visual.Styles
                     p => ((ContentAlignStyleParser)p).Descriptor,
                     new[] { "left", "center", "right", "top", "middle", "bottom" }),
 
+                Define(StyleIdentifier.VISIBILITY, v => new VisibilityStyleParser(v),
+                    p => ((VisibilityStyleParser)p).Descriptor,
+                    new[] { VisibilityStyleParser.VISIBLE, VisibilityStyleParser.HIDDEN }),
+
                 Define(StyleIdentifier.GAP, v => new GapStyleParser(v),
                     p => ((GapStyleParser)p).Descriptor),
 

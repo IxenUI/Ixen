@@ -72,7 +72,7 @@ namespace Ixen.Core.Visual
 
         private static VisualElement Test(VisualElement element, float x, float y)
         {
-            if (element == null || element.IsVoidOrInvalid)
+            if (element == null || element.IsVoidOrInvalid || element.IsHidden)
             {
                 return null;
             }

@@ -78,6 +78,10 @@ namespace Ixen.Core.Visual
             }
         }
 
+        internal bool IsHidden
+            => StylesHandlers != null
+                && StylesHandlers.Visibility.Descriptor.Value == Ixen.Core.Visual.Styles.Descriptors.Visibility.Hidden;
+
         public void PerformClick() => Input.PointerDispatcher.Invoke(this);
 
         public bool Focusable { get; set; }

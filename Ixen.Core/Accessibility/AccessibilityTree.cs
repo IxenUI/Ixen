@@ -43,6 +43,11 @@ namespace Ixen.Core.Accessibility
         {
             foreach (VisualElement child in element.Children)
             {
+                if (child.IsHidden)
+                {
+                    continue;
+                }
+
                 if (IsExposed(child))
                 {
                     into.Add(NodeFor(child, focused));
