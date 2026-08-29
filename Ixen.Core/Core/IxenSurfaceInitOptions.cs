@@ -7,6 +7,6 @@
         public int Height { get; set; } = 480;
         public bool Maximized { get; set; } = false;
         public bool Minimized { get; set; } = false;
-        public bool PreferGpu { get; set; } = true;
+        public bool PreferGpu { get; set; } = false;
     }
 }
