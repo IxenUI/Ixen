@@ -197,6 +197,8 @@ namespace Ixen.Core.Visual
         internal int ChildIndex { get; set; }
         internal List<VisualElement> Children { get; private set; } = new();
 
+        public System.Collections.Generic.IReadOnlyList<VisualElement> ChildElements => Children;
+
         internal int GridColumn { get; set; }
         internal int GridRow { get; set; }
         internal int GridColumnSpan { get; set; } = 1;
@@ -259,7 +261,7 @@ namespace Ixen.Core.Visual
             return _gridRows;
         }
 
-        internal VisualElement Parent { get; private set; }
+        public VisualElement Parent { get; private set; }
         internal DimensionalElement Clip { get; set; }
         internal bool MustRefreshStyles { get; set; } = true;
         internal bool IsLayoutDirty { get; private set; } = true;

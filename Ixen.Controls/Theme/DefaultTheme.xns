@@ -40,3 +40,97 @@ $focus:        #4C6EF5
     color: $text_off
     cursor: default
 }
+
+#CheckBox {
+    width: 18px
+    height: 18px
+    background: #FFFFFF
+    border: $line 1px inner
+    corner-radius: 3px
+    color: $focus
+    font-size: 12px
+    text-align: center middle
+    cursor: hand
+    transition: background 120ms ease-out
+}
+
+#CheckBox:hover {
+    border: $focus 1px inner
+}
+
+#CheckBox:checked {
+    background: #EEF1FE
+    border: $focus 1px inner
+}
+
+#CheckBox:focus {
+    border: $focus 1px inner
+}
+
+#CheckBox:disabled {
+    background: $surface_off
+    border: $line_off 1px inner
+    color: $text_off
+    cursor: default
+}
+
+#RadioButton {
+    width: 18px
+    height: 18px
+    background: #FFFFFF
+    border: $line 1px inner
+    corner-radius: 9px
+    color: $focus
+    font-size: 10px
+    text-align: center middle
+    cursor: hand
+    transition: background 120ms ease-out
+}
+
+#RadioButton:hover {
+    border: $focus 1px inner
+}
+
+#RadioButton:checked {
+    border: $focus 1px inner
+}
+
+#RadioButton:focus {
+    border: $focus 1px inner
+}
+
+#RadioButton:disabled {
+    background: $surface_off
+    border: $line_off 1px inner
+    color: $text_off
+    cursor: default
+}
+
+#Switch {
+    width: 34px
+    height: 18px
+    background: $surface_down
+    border: $line 1px inner
+    corner-radius: 9px
+    cursor: hand
+    transition: background 140ms ease-out
+}
+
+#Switch:hover {
+    border: $focus 1px inner
+}
+
+#Switch:checked {
+    background: $focus
+    border: $focus 1px inner
+}
+
+#Switch:focus {
+    border: $focus 1px inner
+}
+
+#Switch:disabled {
+    background: $surface_off
+    border: $line_off 1px inner
+    cursor: default
+}
