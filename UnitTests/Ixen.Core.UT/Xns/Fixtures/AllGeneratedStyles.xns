@@ -37,6 +37,7 @@ generated_root {
     opacity: 0.75
     filter: blur(2.5px)
     overflow: scroll
+    overscroll-behavior: contain
     animation: generated_pulse 480ms ease-out 60ms infinite alternate
 
     generated_child {

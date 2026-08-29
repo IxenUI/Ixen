@@ -7,17 +7,39 @@ namespace Ixen.Core.Input
         internal const float STEP = 48f;
 
         internal static VisualElement Find(VisualElement from, float offsetX, float offsetY)
+            => Find(from, offsetX, offsetY, out _);
+
+        internal static VisualElement Find(VisualElement from, float offsetX, float offsetY,
+            out bool contained)
         {
+            contained = false;
+
             for (VisualElement element = from; element != null; element = element.Parent)
             {
-                if (element.Scrollable && CanScroll(element, offsetX, offsetY))
+                if (!element.Scrollable)
+                {
+                    continue;
+                }
+
+                if (CanScroll(element, offsetX, offsetY))
                 {
                     return element;
+                }
+
+                if (Contains(element))
+                {
+                    contained = true;
+
+                    return null;
                 }
             }
 
             return null;
         }
+
+        private static bool Contains(VisualElement element)
+            => element.StylesHandlers != null
+                && element.StylesHandlers.Overscroll.Descriptor.Contains;
 
         internal static VisualElement FindDefault(VisualElement root, float offsetX, float offsetY)
         {

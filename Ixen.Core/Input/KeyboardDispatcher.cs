@@ -151,8 +151,16 @@ namespace Ixen.Core.Input
 
         private static VisualElement Target(VisualElement from, VisualElement root,
             float offsetX, float offsetY)
-            => ScrollNavigator.Find(from, offsetX, offsetY)
-                ?? ScrollNavigator.FindDefault(root, offsetX, offsetY);
+        {
+            VisualElement found = ScrollNavigator.Find(from, offsetX, offsetY, out bool contained);
+
+            if (found != null || contained)
+            {
+                return found;
+            }
+
+            return ScrollNavigator.FindDefault(root, offsetX, offsetY);
+        }
 
         private static float PageStep(Key key, bool horizontal)
         {

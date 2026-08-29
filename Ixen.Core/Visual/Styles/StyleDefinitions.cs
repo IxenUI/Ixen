@@ -159,6 +159,11 @@ namespace Ixen.Core.Visual.Styles
                     new[] { OverflowStyleParser.SCROLL, OverflowStyleParser.HIDDEN,
                         OverflowStyleParser.AUTO }),
 
+                Define(StyleIdentifier.OVERSCROLL_BEHAVIOR, v => new OverscrollStyleParser(v),
+                    p => ((OverscrollStyleParser)p).Descriptor,
+                    new[] { OverscrollStyleParser.AUTO, OverscrollStyleParser.CONTAIN,
+                        OverscrollStyleParser.NONE }),
+
                 Define(StyleIdentifier.PADDING, v => new PaddingStyleParser(v),
                     p => ((PaddingStyleParser)p).Descriptor),
 

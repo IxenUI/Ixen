@@ -610,6 +610,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultOverflow;
             }
 
+            if (handlers.Overscroll.Descriptor != styles.Overscroll)
+            {
+                handlers.Overscroll = styles.Overscroll != null && styles.Overscroll.Value != OverscrollKind.Unset
+                    ? new OverscrollStyleHandler(styles.Overscroll)
+                    : VisualElementStylesHandlers.DefaultOverscroll;
+            }
+
             if (handlers.ObjectFit.Descriptor != styles.ObjectFit)
             {
                 handlers.ObjectFit = styles.ObjectFit != null
@@ -903,6 +910,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.OVERFLOW:
                     handlers.Overflow = new OverflowStyleHandler((OverflowStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.OVERSCROLL_BEHAVIOR:
+                    handlers.Overscroll = new OverscrollStyleHandler((OverscrollStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.DOCK:
