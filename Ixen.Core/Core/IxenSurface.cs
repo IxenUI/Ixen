@@ -502,9 +502,9 @@ namespace Ixen.Core
                 focused.ActualWidth, focused.ActualHeight, radius, _focusInner, BorderType.Outer);
         }
 
-        internal VisualElement FocusedElement => _keyboardDispatcher.Focused;
+        public VisualElement FocusedElement => _keyboardDispatcher.Focused;
 
-        internal void Focus(VisualElement element)
+        public void Focus(VisualElement element)
         {
             VisualElement before = _keyboardDispatcher.Focused;
 

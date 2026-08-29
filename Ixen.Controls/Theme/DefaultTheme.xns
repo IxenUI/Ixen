@@ -134,3 +134,39 @@ $focus:        #4C6EF5
     border: $line_off 1px inner
     cursor: default
 }
+
+#Menu {
+    layout: column
+    width: ?
+    height: ?
+    background: #FFFFFF
+    border: $line 1px inner
+    corner-radius: 6px
+    padding: 4px
+    box-shadow: 0px 6px 18px #30000000
+    z-index: 10
+}
+
+#MenuItem {
+    width: ?
+    height: ?
+    padding: 6px 14px
+    corner-radius: 4px
+    color: $text
+    font-size: 13px
+    text-align: left middle
+    cursor: hand
+}
+
+#MenuItem:hover {
+    background: $surface_over
+}
+
+#MenuItem:focus {
+    background: #EEF1FE
+}
+
+#MenuItem:disabled {
+    color: $text_off
+    cursor: default
+}

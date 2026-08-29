@@ -5,6 +5,9 @@ namespace Ixen.Core
         IScheduler Scheduler { get; }
         IClipboard Clipboard { get; }
         Visual.VisualElement PressedElement { get; }
+        Visual.VisualElement FocusedElement { get; }
+
+        void Focus(Visual.VisualElement element);
 
         void InvalidateVisual();
         void InvalidateVisual(Visual.VisualElement element);
