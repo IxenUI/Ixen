@@ -101,6 +101,11 @@ namespace Ixen.Core.Visual
         {
             Focusable = true;
             Styles.Cursor = new CursorStyleDescriptor { Value = CursorKind.Text };
+            Styles.TextAlign = new TextAlignStyleDescriptor
+            {
+                Horizontal = TextAlign.Left,
+                Vertical = TextVAlign.Middle
+            };
 
             TextInput += OnTextInput;
             KeyDown += OnKeyDown;
