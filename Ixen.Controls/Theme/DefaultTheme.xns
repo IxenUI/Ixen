@@ -1,0 +1,42 @@
+$surface:      #F4F5F8
+$surface_over: #E8EAF0
+$surface_down: #DCDFE8
+$surface_off:  #F0F1F4
+$line:         #C3C8D4
+$line_off:     #DDE0E8
+$text:         #1F2430
+$text_off:     #A0A6B4
+$focus:        #4C6EF5
+
+#Button {
+    width: ?
+    height: ?
+    background: $surface
+    border: $line 1px inner
+    corner-radius: 5px
+    padding: 7px 14px
+    color: $text
+    font-size: 13px
+    text-align: center middle
+    cursor: hand
+    transition: background 120ms ease-out
+}
+
+#Button:hover {
+    background: $surface_over
+}
+
+#Button:pressed {
+    background: $surface_down
+}
+
+#Button:focus {
+    border: $focus 1px inner
+}
+
+#Button:disabled {
+    background: $surface_off
+    border: $line_off 1px inner
+    color: $text_off
+    cursor: default
+}

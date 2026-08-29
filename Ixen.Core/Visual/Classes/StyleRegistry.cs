@@ -25,6 +25,7 @@ namespace Ixen.Core.Visual.Classes
         private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), StyleClass> _unscoped = new();
         private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), List<ScopedClass>> _scoped = new();
         private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), List<ScopedClass>> _media = new();
+        private readonly Dictionary<(StyleClassTarget target, string name), StyleClass> _defaults = new();
         private readonly Dictionary<string, KeyframesSet> _keyframes = new();
         private readonly List<MediaQuery> _queries = new();
 
@@ -43,6 +44,8 @@ namespace Ixen.Core.Visual.Classes
         internal bool HasFocusClasses => _hasFocusClasses;
 
         internal bool HasMediaClasses => _media.Count > 0;
+
+        internal bool HasDefaultClasses => _defaults.Count > 0;
 
         internal bool HasKeyframes => _keyframes.Count > 0;
 
@@ -197,6 +200,45 @@ namespace Ixen.Core.Visual.Classes
             _keyframes[keyframes.Name] = keyframes;
         }
 
+        public void AddDefaults(StyleSheet sheet) => AddDefaults((ClassesSet)sheet);
+
+        public void AddDefaults(ClassesSet set)
+        {
+            if (set?.Classes != null)
+            {
+                foreach (StyleClass styleClass in set.Classes)
+                {
+                    AddDefault(styleClass);
+                }
+            }
+
+            AddRange(set?.Keyframes);
+        }
+
+        private void AddDefault(StyleClass styleClass)
+        {
+            if (styleClass == null || styleClass.Name == null || styleClass.Scope != null
+                || styleClass.Media != null)
+            {
+                return;
+            }
+
+            if (!_hasStateClasses && DeclaresState(styleClass))
+            {
+                _hasStateClasses = true;
+            }
+
+            if (!_hasFocusClasses && DeclaresFocus(styleClass))
+            {
+                _hasFocusClasses = true;
+            }
+
+            _defaults[(styleClass.Target, styleClass.Name)] = styleClass;
+        }
+
+        internal StyleClass GetDefault(StyleClassTarget target, string name)
+            => name != null && _defaults.TryGetValue((target, name), out StyleClass found) ? found : null;
+
         public void Add(StyleSheet sheet) => Add((ClassesSet)sheet);
 
         public void Add(ClassesSet set)
@@ -332,7 +374,14 @@ namespace Ixen.Core.Visual.Classes
                 {
                     if (Activator.CreateInstance(sheetType) is StyleSheet sheet)
                     {
-                        registry.Add(sheet);
+                        if (sheetType.Assembly.IsDefined(typeof(IxenDefaultStylesAttribute), false))
+                        {
+                            registry.AddDefaults(sheet);
+                        }
+                        else
+                        {
+                            registry.Add(sheet);
+                        }
                     }
                 }
                 catch

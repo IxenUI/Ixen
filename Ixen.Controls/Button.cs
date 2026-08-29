@@ -8,6 +8,7 @@ namespace Ixen.Controls
     {
         public Button()
         {
+            TypeName = nameof(Button);
             Focusable = true;
             Role = AccessibleRole.Button;
 

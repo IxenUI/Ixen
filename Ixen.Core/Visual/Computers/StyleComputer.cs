@@ -82,12 +82,24 @@ namespace Ixen.Core.Visual.Computers
                 return;
             }
 
+            bool defaults = registry.HasDefaultClasses;
+
+            if (defaults)
+            {
+                ApplyClass(handlers, registry.GetDefault(target, name));
+            }
+
             ApplyClass(handlers, registry.GetGlobal(target, name));
             ApplyScopedClasses(handlers, registry, target, name, element, scoped);
 
             for (int i = 0; i < element.States.Count; i++)
             {
                 string stated = name + StyleScope.STATE_SEPARATOR + element.States[i];
+
+                if (defaults)
+                {
+                    ApplyClass(handlers, registry.GetDefault(target, stated));
+                }
 
                 ApplyClass(handlers, registry.GetGlobal(target, stated));
                 ApplyScopedClasses(handlers, registry, target, stated, element, scoped);

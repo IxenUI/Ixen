@@ -17,6 +17,11 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Ixen.Core\Ixen.Core.csproj" />
+		<ProjectReference Include="..\Ixen.Generators\Ixen.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<AdditionalFiles Include="Theme\DefaultTheme.xns" />
 	</ItemGroup>
 
 </Project>
