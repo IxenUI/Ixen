@@ -345,3 +345,62 @@ $focus:        #4C6EF5
     background: $focus
     corner-radius: 2px
 }
+
+#TabControl {
+    width: 1*
+    height: 1*
+}
+
+#TabStrip {
+    width: 1*
+    height: ?
+    border: $line 0px 0px 1px 0px inner
+    gap: 2px
+    padding: 0px 4px
+}
+
+#TabHeader {
+    width: ?
+    height: ?
+    padding: 8px 16px
+    color: $text_off
+    font-size: 13px
+    text-align: center middle
+    corner-radius: 6px 6px 0px 0px
+    cursor: hand
+    transition: background 120ms ease-out
+}
+
+#TabHeader:hover {
+    background: $surface_over
+    color: $text
+}
+
+#TabHeader:selected {
+    background: $surface
+    border: $focus 0px 0px 2px 0px inner
+    color: $text
+}
+
+#TabHeader:focus {
+    background: $surface_over
+}
+
+#TabHeader:disabled {
+    color: $line_off
+    cursor: default
+}
+
+#TabContent {
+    width: 1*
+    height: 1*
+    padding: 12px 4px
+}
+
+#TabItem {
+    visibility: hidden
+}
+
+#TabItem:selected {
+    visibility: visible
+}
