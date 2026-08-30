@@ -69,6 +69,36 @@ namespace Ixen.Core.Input
             Focus(null, trackStates);
         }
 
+        private readonly bool[] _held = new bool[HELD_KEYS];
+
+        private const int HELD_KEYS = 256;
+
+        private bool PressAndTellIfRepeat(Key key)
+        {
+            int index = (int)key;
+
+            if (key == Key.None || index < 0 || index >= HELD_KEYS)
+            {
+                return false;
+            }
+
+            bool repeat = _held[index];
+
+            _held[index] = true;
+
+            return repeat;
+        }
+
+        private void Release(Key key)
+        {
+            int index = (int)key;
+
+            if (index >= 0 && index < HELD_KEYS)
+            {
+                _held[index] = false;
+            }
+        }
+
         internal void KeyDown(VisualElement root, Key key, KeyModifiers modifiers, bool trackStates)
         {
             _trackStates = trackStates;
@@ -80,7 +110,7 @@ namespace Ixen.Core.Input
                 return;
             }
 
-            var args = new KeyEventArgs(key, modifiers, target);
+            var args = new KeyEventArgs(key, modifiers, target, PressAndTellIfRepeat(key));
 
             for (VisualElement element = target; element != null; element = element.Parent)
             {
@@ -185,6 +215,8 @@ namespace Ixen.Core.Input
         internal void KeyUp(VisualElement root, Key key, KeyModifiers modifiers, bool trackStates)
         {
             _trackStates = trackStates;
+
+            Release(key);
 
             VisualElement target = _focused ?? root;
 

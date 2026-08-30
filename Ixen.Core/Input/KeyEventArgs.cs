@@ -9,13 +9,17 @@ namespace Ixen.Core.Input
         public KeyModifiers Modifiers { get; private set; }
         public VisualElement Source { get; private set; }
 
+        public bool IsRepeat { get; private set; }
+
         public bool Handled { get; set; }
 
         public bool HasModifier(KeyModifiers modifier)
             => (Modifiers & modifier) == modifier;
 
-        internal KeyEventArgs(Key key, KeyModifiers modifiers, VisualElement source)
+        internal KeyEventArgs(Key key, KeyModifiers modifiers, VisualElement source,
+            bool isRepeat = false)
         {
+            IsRepeat = isRepeat;
             Key = key;
             Modifiers = modifiers;
             Source = source;
