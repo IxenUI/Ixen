@@ -4,6 +4,7 @@ using Ixen.Core.Visual.Styles.Descriptors;
 using Ixen.Core.Visual.Styles.Handlers;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Ixen.Core.Visual.Computers
 {
@@ -413,13 +414,13 @@ namespace Ixen.Core.Visual.Computers
                 : VisualElementStylesHandlers.DefaultBackground;
 
             handlers.Border = IsPainting(styles.Border)
-                ? new BorderStyleHandler(styles.Border)
+                ? BorderStyleHandler.For(styles.Border)
                 : VisualElementStylesHandlers.DefaultBorder;
 
             if (handlers.Color.Descriptor != styles.Color)
             {
                 handlers.Color = styles.Color != null && styles.Color.Value != null
-                    ? new ColorStyleHandler(styles.Color)
+                    ? ColorStyleHandler.For(styles.Color)
                     : VisualElementStylesHandlers.DefaultColor;
             }
 
@@ -440,332 +441,332 @@ namespace Ixen.Core.Visual.Computers
             if (handlers.FontFamily.Descriptor != styles.FontFamily)
             {
                 handlers.FontFamily = styles.FontFamily != null && styles.FontFamily.Value != null
-                    ? new FontFamilyStyleHandler(styles.FontFamily)
+                    ? Cached<FontFamilyStyleDescriptor, FontFamilyStyleHandler>(styles.FontFamily, static d => new FontFamilyStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultFontFamily;
             }
 
             if (handlers.FontSize.Descriptor != styles.FontSize)
             {
                 handlers.FontSize = styles.FontSize != null && styles.FontSize.Value > 0
-                    ? new FontSizeStyleHandler(styles.FontSize)
+                    ? Cached<FontSizeStyleDescriptor, FontSizeStyleHandler>(styles.FontSize, static d => new FontSizeStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultFontSize;
             }
 
             if (handlers.LineHeight.Descriptor != styles.LineHeight)
             {
                 handlers.LineHeight = styles.LineHeight != null && styles.LineHeight.IsDeclared
-                    ? new LineHeightStyleHandler(styles.LineHeight)
+                    ? Cached<LineHeightStyleDescriptor, LineHeightStyleHandler>(styles.LineHeight, static d => new LineHeightStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultLineHeight;
             }
 
             if (handlers.LetterSpacing.Descriptor != styles.LetterSpacing)
             {
                 handlers.LetterSpacing = styles.LetterSpacing != null && styles.LetterSpacing.IsDeclared
-                    ? new LetterSpacingStyleHandler(styles.LetterSpacing)
+                    ? Cached<LetterSpacingStyleDescriptor, LetterSpacingStyleHandler>(styles.LetterSpacing, static d => new LetterSpacingStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultLetterSpacing;
             }
 
             if (handlers.FontStyle.Descriptor != styles.FontStyle)
             {
                 handlers.FontStyle = styles.FontStyle != null && styles.FontStyle.Value != FontStyle.Unset
-                    ? new FontStyleStyleHandler(styles.FontStyle)
+                    ? Cached<FontStyleStyleDescriptor, FontStyleStyleHandler>(styles.FontStyle, static d => new FontStyleStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultFontStyle;
             }
 
             if (handlers.FontWeight.Descriptor != styles.FontWeight)
             {
                 handlers.FontWeight = styles.FontWeight != null && styles.FontWeight.Value != FontWeight.Unset
-                    ? new FontWeightStyleHandler(styles.FontWeight)
+                    ? Cached<FontWeightStyleDescriptor, FontWeightStyleHandler>(styles.FontWeight, static d => new FontWeightStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultFontWeight;
             }
 
             if (handlers.CornerRadius.Descriptor != styles.CornerRadius)
             {
                 handlers.CornerRadius = styles.CornerRadius != null
-                    ? new CornerRadiusStyleHandler(styles.CornerRadius)
+                    ? Cached<CornerRadiusStyleDescriptor, CornerRadiusStyleHandler>(styles.CornerRadius, static d => new CornerRadiusStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultCornerRadius;
             }
 
             if (handlers.ColumnTemplate.Descriptor != styles.ColumnTemplate)
             {
                 handlers.ColumnTemplate = styles.ColumnTemplate != null
-                    ? new ColumnTemplateStyleHandler(styles.ColumnTemplate)
+                    ? Cached<ColumnTemplateStyleDescriptor, ColumnTemplateStyleHandler>(styles.ColumnTemplate, static d => new ColumnTemplateStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultColumnTemplate;
             }
 
             if (handlers.RowTemplate.Descriptor != styles.RowTemplate)
             {
                 handlers.RowTemplate = styles.RowTemplate != null
-                    ? new RowTemplateStyleHandler(styles.RowTemplate)
+                    ? Cached<RowTemplateStyleDescriptor, RowTemplateStyleHandler>(styles.RowTemplate, static d => new RowTemplateStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultRowTemplate;
             }
 
             if (handlers.Height.Descriptor != styles.Height)
             {
-                handlers.Height = new HeightStyleHandler(styles.Height);
+                handlers.Height = Cached<HeightStyleDescriptor, HeightStyleHandler>(styles.Height, static d => new HeightStyleHandler(d));
             }
 
             if (handlers.Layout.Descriptor != styles.Layout)
             {
-                handlers.Layout = new LayoutStyleHandler(styles.Layout);
+                handlers.Layout = Cached<LayoutStyleDescriptor, LayoutStyleHandler>(styles.Layout, static d => new LayoutStyleHandler(d));
             }
 
             if (handlers.Margin.Descriptor != styles.Margin)
             {
-                handlers.Margin = new MarginStyleHandler(styles.Margin);
+                handlers.Margin = Cached<MarginStyleDescriptor, MarginStyleHandler>(styles.Margin, static d => new MarginStyleHandler(d));
             }
 
             if (handlers.Padding.Descriptor != styles.Padding)
             {
-                handlers.Padding = new PaddingStyleHandler(styles.Padding);
+                handlers.Padding = Cached<PaddingStyleDescriptor, PaddingStyleHandler>(styles.Padding, static d => new PaddingStyleHandler(d));
             }
 
             if (handlers.TextAlign.Descriptor != styles.TextAlign)
             {
                 handlers.TextAlign = styles.TextAlign != null
-                    ? new TextAlignStyleHandler(styles.TextAlign)
+                    ? Cached<TextAlignStyleDescriptor, TextAlignStyleHandler>(styles.TextAlign, static d => new TextAlignStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultTextAlign;
             }
 
             if (handlers.TextOverflow.Descriptor != styles.TextOverflow)
             {
                 handlers.TextOverflow = styles.TextOverflow != null
-                    ? new TextOverflowStyleHandler(styles.TextOverflow)
+                    ? Cached<TextOverflowStyleDescriptor, TextOverflowStyleHandler>(styles.TextOverflow, static d => new TextOverflowStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultTextOverflow;
             }
 
             if (handlers.TextWrap.Descriptor != styles.TextWrap)
             {
                 handlers.TextWrap = styles.TextWrap != null
-                    ? new TextWrapStyleHandler(styles.TextWrap)
+                    ? Cached<TextWrapStyleDescriptor, TextWrapStyleHandler>(styles.TextWrap, static d => new TextWrapStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultTextWrap;
             }
 
             if (handlers.Width.Descriptor != styles.Width)
             {
-                handlers.Width = new WidthStyleHandler(styles.Width);
+                handlers.Width = Cached<WidthStyleDescriptor, WidthStyleHandler>(styles.Width, static d => new WidthStyleHandler(d));
             }
 
             if (handlers.Left.Descriptor != styles.Left)
             {
-                handlers.Left = new LeftStyleHandler(styles.Left);
+                handlers.Left = Cached<LeftStyleDescriptor, LeftStyleHandler>(styles.Left, static d => new LeftStyleHandler(d));
             }
 
             if (handlers.Top.Descriptor != styles.Top)
             {
-                handlers.Top = new TopStyleHandler(styles.Top);
+                handlers.Top = Cached<TopStyleDescriptor, TopStyleHandler>(styles.Top, static d => new TopStyleHandler(d));
             }
 
             if (handlers.Right.Descriptor != styles.Right)
             {
-                handlers.Right = new RightStyleHandler(styles.Right);
+                handlers.Right = Cached<RightStyleDescriptor, RightStyleHandler>(styles.Right, static d => new RightStyleHandler(d));
             }
 
             if (handlers.Bottom.Descriptor != styles.Bottom)
             {
-                handlers.Bottom = new BottomStyleHandler(styles.Bottom);
+                handlers.Bottom = Cached<BottomStyleDescriptor, BottomStyleHandler>(styles.Bottom, static d => new BottomStyleHandler(d));
             }
 
             if (handlers.Dock.Descriptor != styles.Dock)
             {
                 handlers.Dock = styles.Dock != null
-                    ? new DockStyleHandler(styles.Dock)
+                    ? Cached<DockStyleDescriptor, DockStyleHandler>(styles.Dock, static d => new DockStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultDock;
             }
 
             if (handlers.ColumnIndex.Descriptor != styles.ColumnIndex)
             {
                 handlers.ColumnIndex = styles.ColumnIndex != null
-                    ? new ColumnIndexStyleHandler(styles.ColumnIndex)
+                    ? Cached<ColumnIndexStyleDescriptor, ColumnIndexStyleHandler>(styles.ColumnIndex, static d => new ColumnIndexStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultColumnIndex;
             }
 
             if (handlers.RowIndex.Descriptor != styles.RowIndex)
             {
                 handlers.RowIndex = styles.RowIndex != null
-                    ? new RowIndexStyleHandler(styles.RowIndex)
+                    ? Cached<RowIndexStyleDescriptor, RowIndexStyleHandler>(styles.RowIndex, static d => new RowIndexStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultRowIndex;
             }
 
             if (handlers.ColumnSpan.Descriptor != styles.ColumnSpan)
             {
                 handlers.ColumnSpan = styles.ColumnSpan != null
-                    ? new ColumnSpanStyleHandler(styles.ColumnSpan)
+                    ? Cached<ColumnSpanStyleDescriptor, ColumnSpanStyleHandler>(styles.ColumnSpan, static d => new ColumnSpanStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultColumnSpan;
             }
 
             if (handlers.RowSpan.Descriptor != styles.RowSpan)
             {
                 handlers.RowSpan = styles.RowSpan != null
-                    ? new RowSpanStyleHandler(styles.RowSpan)
+                    ? Cached<RowSpanStyleDescriptor, RowSpanStyleHandler>(styles.RowSpan, static d => new RowSpanStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultRowSpan;
             }
 
             if (handlers.Cursor.Descriptor != styles.Cursor)
             {
                 handlers.Cursor = styles.Cursor != null && styles.Cursor.Value != CursorKind.Unset
-                    ? new CursorStyleHandler(styles.Cursor)
+                    ? Cached<CursorStyleDescriptor, CursorStyleHandler>(styles.Cursor, static d => new CursorStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultCursor;
             }
 
             if (handlers.Transition.Descriptor != styles.Transition)
             {
                 handlers.Transition = styles.Transition != null
-                    ? new TransitionStyleHandler(styles.Transition)
+                    ? Cached<TransitionStyleDescriptor, TransitionStyleHandler>(styles.Transition, static d => new TransitionStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultTransition;
             }
 
             if (handlers.Overflow.Descriptor != styles.Overflow)
             {
                 handlers.Overflow = styles.Overflow != null && styles.Overflow.Value != OverflowKind.Unset
-                    ? new OverflowStyleHandler(styles.Overflow)
+                    ? Cached<OverflowStyleDescriptor, OverflowStyleHandler>(styles.Overflow, static d => new OverflowStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultOverflow;
             }
 
             if (handlers.Overscroll.Descriptor != styles.Overscroll)
             {
                 handlers.Overscroll = styles.Overscroll != null && styles.Overscroll.Value != OverscrollKind.Unset
-                    ? new OverscrollStyleHandler(styles.Overscroll)
+                    ? Cached<OverscrollStyleDescriptor, OverscrollStyleHandler>(styles.Overscroll, static d => new OverscrollStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultOverscroll;
             }
 
             if (handlers.PointerEvents.Descriptor != styles.PointerEvents)
             {
                 handlers.PointerEvents = styles.PointerEvents != null && styles.PointerEvents.IsDeclared
-                    ? new PointerEventsStyleHandler(styles.PointerEvents)
+                    ? Cached<PointerEventsStyleDescriptor, PointerEventsStyleHandler>(styles.PointerEvents, static d => new PointerEventsStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultPointerEvents;
             }
 
             if (handlers.ObjectPosition.Descriptor != styles.ObjectPosition)
             {
                 handlers.ObjectPosition = styles.ObjectPosition != null && !styles.ObjectPosition.IsDefault
-                    ? new ObjectPositionStyleHandler(styles.ObjectPosition)
+                    ? Cached<ObjectPositionStyleDescriptor, ObjectPositionStyleHandler>(styles.ObjectPosition, static d => new ObjectPositionStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultObjectPosition;
             }
 
             if (handlers.ObjectFit.Descriptor != styles.ObjectFit)
             {
                 handlers.ObjectFit = styles.ObjectFit != null
-                    ? new ObjectFitStyleHandler(styles.ObjectFit)
+                    ? Cached<ObjectFitStyleDescriptor, ObjectFitStyleHandler>(styles.ObjectFit, static d => new ObjectFitStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultObjectFit;
             }
 
             if (handlers.Animation.Descriptor != styles.Animation)
             {
                 handlers.Animation = styles.Animation != null && styles.Animation.IsDeclared
-                    ? new AnimationStyleHandler(styles.Animation)
+                    ? Cached<AnimationStyleDescriptor, AnimationStyleHandler>(styles.Animation, static d => new AnimationStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultAnimation;
             }
 
             if (handlers.Anchor.Descriptor != styles.Anchor)
             {
                 handlers.Anchor = styles.Anchor != null && !string.IsNullOrEmpty(styles.Anchor.Name)
-                    ? new AnchorStyleHandler(styles.Anchor)
+                    ? Cached<AnchorStyleDescriptor, AnchorStyleHandler>(styles.Anchor, static d => new AnchorStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultAnchor;
             }
 
             if (handlers.AnchorPlacement.Descriptor != styles.AnchorPlacement)
             {
                 handlers.AnchorPlacement = styles.AnchorPlacement != null
-                    ? new AnchorPlacementStyleHandler(styles.AnchorPlacement)
+                    ? Cached<AnchorPlacementStyleDescriptor, AnchorPlacementStyleHandler>(styles.AnchorPlacement, static d => new AnchorPlacementStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultAnchorPlacement;
             }
 
             if (handlers.TextDecoration.Descriptor != styles.TextDecoration)
             {
                 handlers.TextDecoration = styles.TextDecoration != null && styles.TextDecoration.IsDeclared
-                    ? new TextDecorationStyleHandler(styles.TextDecoration)
+                    ? Cached<TextDecorationStyleDescriptor, TextDecorationStyleHandler>(styles.TextDecoration, static d => new TextDecorationStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultTextDecoration;
             }
 
             if (handlers.Opacity.Descriptor != styles.Opacity)
             {
                 handlers.Opacity = styles.Opacity != null && styles.Opacity.IsTransparent
-                    ? new OpacityStyleHandler(styles.Opacity)
+                    ? Cached<OpacityStyleDescriptor, OpacityStyleHandler>(styles.Opacity, static d => new OpacityStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultOpacity;
             }
 
             if (handlers.Transform.Descriptor != styles.Transform)
             {
                 handlers.Transform = styles.Transform != null && styles.Transform.IsDeclared
-                    ? new TransformStyleHandler(styles.Transform)
+                    ? Cached<TransformStyleDescriptor, TransformStyleHandler>(styles.Transform, static d => new TransformStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultTransform;
             }
 
             if (handlers.TransformOrigin.Descriptor != styles.TransformOrigin)
             {
                 handlers.TransformOrigin = styles.TransformOrigin != null && !styles.TransformOrigin.IsDefault
-                    ? new TransformOriginStyleHandler(styles.TransformOrigin)
+                    ? Cached<TransformOriginStyleDescriptor, TransformOriginStyleHandler>(styles.TransformOrigin, static d => new TransformOriginStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultTransformOrigin;
             }
 
             if (handlers.ContentAlign.Descriptor != styles.ContentAlign)
             {
                 handlers.ContentAlign = styles.ContentAlign != null && styles.ContentAlign.IsDeclared
-                    ? new ContentAlignStyleHandler(styles.ContentAlign)
+                    ? Cached<ContentAlignStyleDescriptor, ContentAlignStyleHandler>(styles.ContentAlign, static d => new ContentAlignStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultContentAlign;
             }
 
             if (handlers.Visibility.Descriptor != styles.Visibility)
             {
                 handlers.Visibility = styles.Visibility != null && styles.Visibility.IsDeclared
-                    ? new VisibilityStyleHandler(styles.Visibility)
+                    ? Cached<VisibilityStyleDescriptor, VisibilityStyleHandler>(styles.Visibility, static d => new VisibilityStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultVisibility;
             }
 
             if (handlers.Gap.Descriptor != styles.Gap)
             {
                 handlers.Gap = styles.Gap != null && styles.Gap.IsDeclared
-                    ? new GapStyleHandler(styles.Gap)
+                    ? Cached<GapStyleDescriptor, GapStyleHandler>(styles.Gap, static d => new GapStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultGap;
             }
 
             if (handlers.MinWidth.Descriptor != styles.MinWidth)
             {
                 handlers.MinWidth = styles.MinWidth != null && styles.MinWidth.IsDeclared
-                    ? new MinWidthStyleHandler(styles.MinWidth)
+                    ? Cached<MinWidthStyleDescriptor, MinWidthStyleHandler>(styles.MinWidth, static d => new MinWidthStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultMinWidth;
             }
 
             if (handlers.MaxWidth.Descriptor != styles.MaxWidth)
             {
                 handlers.MaxWidth = styles.MaxWidth != null && styles.MaxWidth.IsDeclared
-                    ? new MaxWidthStyleHandler(styles.MaxWidth)
+                    ? Cached<MaxWidthStyleDescriptor, MaxWidthStyleHandler>(styles.MaxWidth, static d => new MaxWidthStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultMaxWidth;
             }
 
             if (handlers.MinHeight.Descriptor != styles.MinHeight)
             {
                 handlers.MinHeight = styles.MinHeight != null && styles.MinHeight.IsDeclared
-                    ? new MinHeightStyleHandler(styles.MinHeight)
+                    ? Cached<MinHeightStyleDescriptor, MinHeightStyleHandler>(styles.MinHeight, static d => new MinHeightStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultMinHeight;
             }
 
             if (handlers.MaxHeight.Descriptor != styles.MaxHeight)
             {
                 handlers.MaxHeight = styles.MaxHeight != null && styles.MaxHeight.IsDeclared
-                    ? new MaxHeightStyleHandler(styles.MaxHeight)
+                    ? Cached<MaxHeightStyleDescriptor, MaxHeightStyleHandler>(styles.MaxHeight, static d => new MaxHeightStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultMaxHeight;
             }
 
             if (handlers.BoxShadow.Descriptor != styles.BoxShadow)
             {
                 handlers.BoxShadow = styles.BoxShadow != null && styles.BoxShadow.IsDeclared
-                    ? new BoxShadowStyleHandler(styles.BoxShadow)
+                    ? Cached<BoxShadowStyleDescriptor, BoxShadowStyleHandler>(styles.BoxShadow, static d => new BoxShadowStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultBoxShadow;
             }
 
             if (handlers.TextShadow.Descriptor != styles.TextShadow)
             {
                 handlers.TextShadow = styles.TextShadow != null && styles.TextShadow.IsDeclared
-                    ? new TextShadowStyleHandler(styles.TextShadow)
+                    ? Cached<TextShadowStyleDescriptor, TextShadowStyleHandler>(styles.TextShadow, static d => new TextShadowStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultTextShadow;
             }
 
             if (handlers.ZIndex.Descriptor != styles.ZIndex)
             {
                 handlers.ZIndex = styles.ZIndex != null && styles.ZIndex.Value != 0
-                    ? new ZIndexStyleHandler(styles.ZIndex)
+                    ? Cached<ZIndexStyleDescriptor, ZIndexStyleHandler>(styles.ZIndex, static d => new ZIndexStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultZIndex;
             }
         }
@@ -779,6 +780,12 @@ namespace Ixen.Core.Visual.Computers
             => descriptor != null
                 && descriptor.HasBorder
                 && !string.IsNullOrWhiteSpace(descriptor.Color);
+
+        private static THandler Cached<TDescriptor, THandler>(StyleDescriptor style,
+            ConditionalWeakTable<TDescriptor, THandler>.CreateValueCallback create)
+            where TDescriptor : StyleDescriptor
+            where THandler : class
+            => HandlerCache<TDescriptor, THandler>.For((TDescriptor)style, create);
 
         private void ApplyStyle(VisualElementStylesHandlers handlers, StyleDescriptor style)
         {
@@ -794,20 +801,20 @@ namespace Ixen.Core.Visual.Computers
                 case StyleIdentifier.BORDER:
                     var border = (BorderStyleDescriptor)style;
                     handlers.Border = IsPainting(border)
-                        ? new BorderStyleHandler(border)
+                        ? BorderStyleHandler.For(border)
                         : VisualElementStylesHandlers.DefaultBorder;
                     break;
 
                 case StyleIdentifier.COLOR:
-                    handlers.Color = new ColorStyleHandler((ColorStyleDescriptor)style);
+                    handlers.Color = ColorStyleHandler.For((ColorStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.COLUMN_TEMPLATE:
-                    handlers.ColumnTemplate = new ColumnTemplateStyleHandler((ColumnTemplateStyleDescriptor)style);
+                    handlers.ColumnTemplate = Cached<ColumnTemplateStyleDescriptor, ColumnTemplateStyleHandler>(style, static d => new ColumnTemplateStyleHandler(d));
                     break;
 
                 case StyleIdentifier.CORNER_RADIUS:
-                    handlers.CornerRadius = new CornerRadiusStyleHandler((CornerRadiusStyleDescriptor)style);
+                    handlers.CornerRadius = Cached<CornerRadiusStyleDescriptor, CornerRadiusStyleHandler>(style, static d => new CornerRadiusStyleHandler(d));
                     break;
 
                 case StyleIdentifier.FILTER:
@@ -819,195 +826,195 @@ namespace Ixen.Core.Visual.Computers
                     break;
 
                 case StyleIdentifier.FONT_FAMILY:
-                    handlers.FontFamily = new FontFamilyStyleHandler((FontFamilyStyleDescriptor)style);
+                    handlers.FontFamily = Cached<FontFamilyStyleDescriptor, FontFamilyStyleHandler>(style, static d => new FontFamilyStyleHandler(d));
                     break;
 
                 case StyleIdentifier.FONT_SIZE:
-                    handlers.FontSize = new FontSizeStyleHandler((FontSizeStyleDescriptor)style);
+                    handlers.FontSize = Cached<FontSizeStyleDescriptor, FontSizeStyleHandler>(style, static d => new FontSizeStyleHandler(d));
                     break;
 
                 case StyleIdentifier.FONT_STYLE:
-                    handlers.FontStyle = new FontStyleStyleHandler((FontStyleStyleDescriptor)style);
+                    handlers.FontStyle = Cached<FontStyleStyleDescriptor, FontStyleStyleHandler>(style, static d => new FontStyleStyleHandler(d));
                     break;
 
                 case StyleIdentifier.FONT_WEIGHT:
-                    handlers.FontWeight = new FontWeightStyleHandler((FontWeightStyleDescriptor)style);
+                    handlers.FontWeight = Cached<FontWeightStyleDescriptor, FontWeightStyleHandler>(style, static d => new FontWeightStyleHandler(d));
                     break;
 
                 case StyleIdentifier.HEIGHT:
-                    handlers.Height = new HeightStyleHandler((HeightStyleDescriptor)style);
+                    handlers.Height = Cached<HeightStyleDescriptor, HeightStyleHandler>(style, static d => new HeightStyleHandler(d));
                     break;
 
                 case StyleIdentifier.LAYOUT:
-                    handlers.Layout = new LayoutStyleHandler((LayoutStyleDescriptor)style);
+                    handlers.Layout = Cached<LayoutStyleDescriptor, LayoutStyleHandler>(style, static d => new LayoutStyleHandler(d));
                     break;
 
                 case StyleIdentifier.LEFT:
-                    handlers.Left = new LeftStyleHandler((LeftStyleDescriptor)style);
+                    handlers.Left = Cached<LeftStyleDescriptor, LeftStyleHandler>(style, static d => new LeftStyleHandler(d));
                     break;
 
                 case StyleIdentifier.TOP:
-                    handlers.Top = new TopStyleHandler((TopStyleDescriptor)style);
+                    handlers.Top = Cached<TopStyleDescriptor, TopStyleHandler>(style, static d => new TopStyleHandler(d));
                     break;
 
                 case StyleIdentifier.RIGHT:
-                    handlers.Right = new RightStyleHandler((RightStyleDescriptor)style);
+                    handlers.Right = Cached<RightStyleDescriptor, RightStyleHandler>(style, static d => new RightStyleHandler(d));
                     break;
 
                 case StyleIdentifier.BOTTOM:
-                    handlers.Bottom = new BottomStyleHandler((BottomStyleDescriptor)style);
+                    handlers.Bottom = Cached<BottomStyleDescriptor, BottomStyleHandler>(style, static d => new BottomStyleHandler(d));
                     break;
 
                 case StyleIdentifier.CURSOR:
-                    handlers.Cursor = new CursorStyleHandler((CursorStyleDescriptor)style);
+                    handlers.Cursor = Cached<CursorStyleDescriptor, CursorStyleHandler>(style, static d => new CursorStyleHandler(d));
                     break;
 
                 case StyleIdentifier.TRANSITION:
-                    handlers.Transition = new TransitionStyleHandler((TransitionStyleDescriptor)style);
+                    handlers.Transition = Cached<TransitionStyleDescriptor, TransitionStyleHandler>(style, static d => new TransitionStyleHandler(d));
                     break;
 
                 case StyleIdentifier.ANIMATION:
-                    handlers.Animation = new AnimationStyleHandler((AnimationStyleDescriptor)style);
+                    handlers.Animation = Cached<AnimationStyleDescriptor, AnimationStyleHandler>(style, static d => new AnimationStyleHandler(d));
                     break;
 
                 case StyleIdentifier.ANCHOR:
-                    handlers.Anchor = new AnchorStyleHandler((AnchorStyleDescriptor)style);
+                    handlers.Anchor = Cached<AnchorStyleDescriptor, AnchorStyleHandler>(style, static d => new AnchorStyleHandler(d));
                     break;
 
                 case StyleIdentifier.ANCHOR_PLACEMENT:
-                    handlers.AnchorPlacement = new AnchorPlacementStyleHandler((AnchorPlacementStyleDescriptor)style);
+                    handlers.AnchorPlacement = Cached<AnchorPlacementStyleDescriptor, AnchorPlacementStyleHandler>(style, static d => new AnchorPlacementStyleHandler(d));
                     break;
 
                 case StyleIdentifier.TEXT_DECORATION:
-                    handlers.TextDecoration = new TextDecorationStyleHandler((TextDecorationStyleDescriptor)style);
+                    handlers.TextDecoration = Cached<TextDecorationStyleDescriptor, TextDecorationStyleHandler>(style, static d => new TextDecorationStyleHandler(d));
                     break;
 
                 case StyleIdentifier.OPACITY:
-                    handlers.Opacity = new OpacityStyleHandler((OpacityStyleDescriptor)style);
+                    handlers.Opacity = Cached<OpacityStyleDescriptor, OpacityStyleHandler>(style, static d => new OpacityStyleHandler(d));
                     break;
 
                 case StyleIdentifier.TRANSFORM:
-                    handlers.Transform = new TransformStyleHandler((TransformStyleDescriptor)style);
+                    handlers.Transform = Cached<TransformStyleDescriptor, TransformStyleHandler>(style, static d => new TransformStyleHandler(d));
                     break;
 
                 case StyleIdentifier.TRANSFORM_ORIGIN:
-                    handlers.TransformOrigin = new TransformOriginStyleHandler((TransformOriginStyleDescriptor)style);
+                    handlers.TransformOrigin = Cached<TransformOriginStyleDescriptor, TransformOriginStyleHandler>(style, static d => new TransformOriginStyleHandler(d));
                     break;
 
                 case StyleIdentifier.CONTENT_ALIGN:
-                    handlers.ContentAlign = new ContentAlignStyleHandler((ContentAlignStyleDescriptor)style);
+                    handlers.ContentAlign = Cached<ContentAlignStyleDescriptor, ContentAlignStyleHandler>(style, static d => new ContentAlignStyleHandler(d));
                     break;
 
                 case StyleIdentifier.VISIBILITY:
-                    handlers.Visibility = new VisibilityStyleHandler((VisibilityStyleDescriptor)style);
+                    handlers.Visibility = Cached<VisibilityStyleDescriptor, VisibilityStyleHandler>(style, static d => new VisibilityStyleHandler(d));
                     break;
 
                 case StyleIdentifier.GAP:
-                    handlers.Gap = new GapStyleHandler((GapStyleDescriptor)style);
+                    handlers.Gap = Cached<GapStyleDescriptor, GapStyleHandler>(style, static d => new GapStyleHandler(d));
                     break;
 
                 case StyleIdentifier.MIN_WIDTH:
-                    handlers.MinWidth = new MinWidthStyleHandler((MinWidthStyleDescriptor)style);
+                    handlers.MinWidth = Cached<MinWidthStyleDescriptor, MinWidthStyleHandler>(style, static d => new MinWidthStyleHandler(d));
                     break;
 
                 case StyleIdentifier.MAX_WIDTH:
-                    handlers.MaxWidth = new MaxWidthStyleHandler((MaxWidthStyleDescriptor)style);
+                    handlers.MaxWidth = Cached<MaxWidthStyleDescriptor, MaxWidthStyleHandler>(style, static d => new MaxWidthStyleHandler(d));
                     break;
 
                 case StyleIdentifier.MIN_HEIGHT:
-                    handlers.MinHeight = new MinHeightStyleHandler((MinHeightStyleDescriptor)style);
+                    handlers.MinHeight = Cached<MinHeightStyleDescriptor, MinHeightStyleHandler>(style, static d => new MinHeightStyleHandler(d));
                     break;
 
                 case StyleIdentifier.MAX_HEIGHT:
-                    handlers.MaxHeight = new MaxHeightStyleHandler((MaxHeightStyleDescriptor)style);
+                    handlers.MaxHeight = Cached<MaxHeightStyleDescriptor, MaxHeightStyleHandler>(style, static d => new MaxHeightStyleHandler(d));
                     break;
 
                 case StyleIdentifier.BOX_SHADOW:
-                    handlers.BoxShadow = new BoxShadowStyleHandler((BoxShadowStyleDescriptor)style);
+                    handlers.BoxShadow = Cached<BoxShadowStyleDescriptor, BoxShadowStyleHandler>(style, static d => new BoxShadowStyleHandler(d));
                     break;
 
                 case StyleIdentifier.TEXT_SHADOW:
-                    handlers.TextShadow = new TextShadowStyleHandler((TextShadowStyleDescriptor)style);
+                    handlers.TextShadow = Cached<TextShadowStyleDescriptor, TextShadowStyleHandler>(style, static d => new TextShadowStyleHandler(d));
                     break;
 
                 case StyleIdentifier.Z_INDEX:
-                    handlers.ZIndex = new ZIndexStyleHandler((ZIndexStyleDescriptor)style);
+                    handlers.ZIndex = Cached<ZIndexStyleDescriptor, ZIndexStyleHandler>(style, static d => new ZIndexStyleHandler(d));
                     break;
 
                 case StyleIdentifier.OBJECT_FIT:
-                    handlers.ObjectFit = new ObjectFitStyleHandler((ObjectFitStyleDescriptor)style);
+                    handlers.ObjectFit = Cached<ObjectFitStyleDescriptor, ObjectFitStyleHandler>(style, static d => new ObjectFitStyleHandler(d));
                     break;
 
                 case StyleIdentifier.OBJECT_POSITION:
-                    handlers.ObjectPosition = new ObjectPositionStyleHandler((ObjectPositionStyleDescriptor)style);
+                    handlers.ObjectPosition = Cached<ObjectPositionStyleDescriptor, ObjectPositionStyleHandler>(style, static d => new ObjectPositionStyleHandler(d));
                     break;
 
                 case StyleIdentifier.OVERFLOW:
-                    handlers.Overflow = new OverflowStyleHandler((OverflowStyleDescriptor)style);
+                    handlers.Overflow = Cached<OverflowStyleDescriptor, OverflowStyleHandler>(style, static d => new OverflowStyleHandler(d));
                     break;
 
                 case StyleIdentifier.OVERSCROLL_BEHAVIOR:
-                    handlers.Overscroll = new OverscrollStyleHandler((OverscrollStyleDescriptor)style);
+                    handlers.Overscroll = Cached<OverscrollStyleDescriptor, OverscrollStyleHandler>(style, static d => new OverscrollStyleHandler(d));
                     break;
 
                 case StyleIdentifier.POINTER_EVENTS:
-                    handlers.PointerEvents = new PointerEventsStyleHandler((PointerEventsStyleDescriptor)style);
+                    handlers.PointerEvents = Cached<PointerEventsStyleDescriptor, PointerEventsStyleHandler>(style, static d => new PointerEventsStyleHandler(d));
                     break;
 
                 case StyleIdentifier.DOCK:
-                    handlers.Dock = new DockStyleHandler((DockStyleDescriptor)style);
+                    handlers.Dock = Cached<DockStyleDescriptor, DockStyleHandler>(style, static d => new DockStyleHandler(d));
                     break;
 
                 case StyleIdentifier.COLUMN_INDEX:
-                    handlers.ColumnIndex = new ColumnIndexStyleHandler((ColumnIndexStyleDescriptor)style);
+                    handlers.ColumnIndex = Cached<ColumnIndexStyleDescriptor, ColumnIndexStyleHandler>(style, static d => new ColumnIndexStyleHandler(d));
                     break;
 
                 case StyleIdentifier.ROW_INDEX:
-                    handlers.RowIndex = new RowIndexStyleHandler((RowIndexStyleDescriptor)style);
+                    handlers.RowIndex = Cached<RowIndexStyleDescriptor, RowIndexStyleHandler>(style, static d => new RowIndexStyleHandler(d));
                     break;
 
                 case StyleIdentifier.COLUMN_SPAN:
-                    handlers.ColumnSpan = new ColumnSpanStyleHandler((ColumnSpanStyleDescriptor)style);
+                    handlers.ColumnSpan = Cached<ColumnSpanStyleDescriptor, ColumnSpanStyleHandler>(style, static d => new ColumnSpanStyleHandler(d));
                     break;
 
                 case StyleIdentifier.ROW_SPAN:
-                    handlers.RowSpan = new RowSpanStyleHandler((RowSpanStyleDescriptor)style);
+                    handlers.RowSpan = Cached<RowSpanStyleDescriptor, RowSpanStyleHandler>(style, static d => new RowSpanStyleHandler(d));
                     break;
 
                 case StyleIdentifier.LETTER_SPACING:
-                    handlers.LetterSpacing = new LetterSpacingStyleHandler((LetterSpacingStyleDescriptor)style);
+                    handlers.LetterSpacing = Cached<LetterSpacingStyleDescriptor, LetterSpacingStyleHandler>(style, static d => new LetterSpacingStyleHandler(d));
                     break;
 
                 case StyleIdentifier.LINE_HEIGHT:
-                    handlers.LineHeight = new LineHeightStyleHandler((LineHeightStyleDescriptor)style);
+                    handlers.LineHeight = Cached<LineHeightStyleDescriptor, LineHeightStyleHandler>(style, static d => new LineHeightStyleHandler(d));
                     break;
 
                 case StyleIdentifier.MARGIN:
-                    handlers.Margin = new MarginStyleHandler((MarginStyleDescriptor)style);
+                    handlers.Margin = Cached<MarginStyleDescriptor, MarginStyleHandler>(style, static d => new MarginStyleHandler(d));
                     break;
 
                 case StyleIdentifier.PADDING:
-                    handlers.Padding = new PaddingStyleHandler((PaddingStyleDescriptor)style);
+                    handlers.Padding = Cached<PaddingStyleDescriptor, PaddingStyleHandler>(style, static d => new PaddingStyleHandler(d));
                     break;
 
                 case StyleIdentifier.ROW_TEMPLATE:
-                    handlers.RowTemplate = new RowTemplateStyleHandler((RowTemplateStyleDescriptor)style);
+                    handlers.RowTemplate = Cached<RowTemplateStyleDescriptor, RowTemplateStyleHandler>(style, static d => new RowTemplateStyleHandler(d));
                     break;
 
                 case StyleIdentifier.TEXT_ALIGN:
-                    handlers.TextAlign = new TextAlignStyleHandler((TextAlignStyleDescriptor)style);
+                    handlers.TextAlign = Cached<TextAlignStyleDescriptor, TextAlignStyleHandler>(style, static d => new TextAlignStyleHandler(d));
                     break;
 
                 case StyleIdentifier.TEXT_OVERFLOW:
-                    handlers.TextOverflow = new TextOverflowStyleHandler((TextOverflowStyleDescriptor)style);
+                    handlers.TextOverflow = Cached<TextOverflowStyleDescriptor, TextOverflowStyleHandler>(style, static d => new TextOverflowStyleHandler(d));
                     break;
 
                 case StyleIdentifier.TEXT_WRAP:
-                    handlers.TextWrap = new TextWrapStyleHandler((TextWrapStyleDescriptor)style);
+                    handlers.TextWrap = Cached<TextWrapStyleDescriptor, TextWrapStyleHandler>(style, static d => new TextWrapStyleHandler(d));
                     break;
 
                 case StyleIdentifier.WIDTH:
-                    handlers.Width = new WidthStyleHandler((WidthStyleDescriptor)style);
+                    handlers.Width = Cached<WidthStyleDescriptor, WidthStyleHandler>(style, static d => new WidthStyleHandler(d));
                     break;
 
                 default:

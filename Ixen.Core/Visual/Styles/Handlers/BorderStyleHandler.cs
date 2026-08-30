@@ -1,5 +1,6 @@
 using Ixen.Core.Rendering;
 using Ixen.Core.Visual.Styles.Descriptors;
+using System.Runtime.CompilerServices;
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
@@ -9,6 +10,12 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
         private Pen _pen;
         private Color _color = Color.Black;
+
+        private readonly string _colorSource;
+        private readonly float _thickness;
+
+        private static readonly ConditionalWeakTable<BorderStyleDescriptor, BorderStyleHandler> _built =
+            new ConditionalWeakTable<BorderStyleDescriptor, BorderStyleHandler>();
 
         public BorderStyleHandler()
             : this(new())
@@ -20,7 +27,27 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
             _color = new Color(descriptor.Color);
             _pen = new Pen(_color, descriptor.Top);
+
+            _colorSource = descriptor.Color;
+            _thickness = descriptor.Top;
         }
+
+        internal static BorderStyleHandler For(BorderStyleDescriptor descriptor)
+        {
+            if (_built.TryGetValue(descriptor, out BorderStyleHandler handler) && handler.IsCurrent)
+            {
+                return handler;
+            }
+
+            handler = new BorderStyleHandler(descriptor);
+
+            _built.Remove(descriptor);
+            _built.Add(descriptor, handler);
+
+            return handler;
+        }
+
+        private bool IsCurrent => _colorSource == Descriptor.Color && _thickness == Descriptor.Top;
 
         internal Color Color => _color;
 
