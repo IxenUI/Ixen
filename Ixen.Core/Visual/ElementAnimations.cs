@@ -451,8 +451,6 @@ namespace Ixen.Core.Visual
 
         internal void Finish()
         {
-            _keyframes?.Complete();
-
             Background?.Jump(Background.To);
             Color?.Jump(Color.To);
             Border?.Jump(Border.To);
@@ -465,6 +463,8 @@ namespace Ixen.Core.Visual
             Bottom?.Jump(Bottom.Unit, Bottom.To);
 
             Transform?.Jump(Transform.To);
+
+            _keyframes?.Complete();
         }
     }
 }

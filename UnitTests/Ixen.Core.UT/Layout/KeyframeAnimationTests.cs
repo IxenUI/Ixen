@@ -414,6 +414,38 @@ namespace Ixen.Core.UT.Layout
         }
 
         [TestMethod]
+        public void WithNoSchedulerAHeldSizeSurvivesTheJumps()
+        {
+            var registry = new StyleRegistry();
+
+            registry.Add(new KeyframesSet("grow", new List<Keyframe>
+            {
+                WidthFrame(0f, 20), WidthFrame(1f, 60)
+            }));
+
+            var root = new VisualElement { Name = "root" };
+            var box = new VisualElement { Name = "box" };
+
+            box.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 100 };
+            box.Styles.Animation = new AnimationStyleDescriptor
+            {
+                Name = "grow",
+                Duration = DURATION,
+                Fill = AnimationFill.Forwards
+            };
+
+            root.AddChild(box);
+
+            var surface = new IxenSurface(root) { Styles = registry };
+
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Assert.AreEqual(60f, box.ActualWidth,
+                "Finish jumps every transition to its target after Complete held them, so the hold "
+                + "has to be posted last or measure reads the cascade again");
+        }
+
+        [TestMethod]
         public void RemovingTheAnimationStopsIt()
         {
             Keyframes("fade", Frame(0f, BLACK), Frame(1f, WHITE));
