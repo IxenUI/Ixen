@@ -148,10 +148,17 @@ namespace Ixen.Core.Visual
             float right = left + element.ActualWidth;
             float bottom = top + element.ActualHeight;
 
-            return IsInsideCorner(radius.TopLeft, left + radius.TopLeft - x, top + radius.TopLeft - y)
-                && IsInsideCorner(radius.TopRight, x - (right - radius.TopRight), top + radius.TopRight - y)
-                && IsInsideCorner(radius.BottomRight, x - (right - radius.BottomRight), y - (bottom - radius.BottomRight))
-                && IsInsideCorner(radius.BottomLeft, left + radius.BottomLeft - x, y - (bottom - radius.BottomLeft));
+            float scale = radius.ScaleFor(element.ActualWidth, element.ActualHeight);
+
+            float topLeft = radius.TopLeft * scale;
+            float topRight = radius.TopRight * scale;
+            float bottomRight = radius.BottomRight * scale;
+            float bottomLeft = radius.BottomLeft * scale;
+
+            return IsInsideCorner(topLeft, left + topLeft - x, top + topLeft - y)
+                && IsInsideCorner(topRight, x - (right - topRight), top + topRight - y)
+                && IsInsideCorner(bottomRight, x - (right - bottomRight), y - (bottom - bottomRight))
+                && IsInsideCorner(bottomLeft, left + bottomLeft - x, y - (bottom - bottomLeft));
         }
 
         private static bool IsInsideCorner(float radius, float dx, float dy)

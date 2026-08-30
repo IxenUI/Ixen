@@ -209,6 +209,13 @@ namespace Ixen.Core.Input
         {
             _trackStates = trackStates;
             _kind = kind;
+
+            if (_captured != null)
+            {
+                Bubble(_captured, new PointerEventArgs(x, y, button, _captured), PointerEventKind.Down);
+                return;
+            }
+
             _panning = null;
 
             VisualElement hit = Enabled(HitTester.HitTest(root, x, y));
@@ -381,6 +388,12 @@ namespace Ixen.Core.Input
         {
             _trackStates = trackStates;
             _kind = kind;
+
+            if (_captured != null && button != _pressedButton)
+            {
+                Bubble(_captured, new PointerEventArgs(x, y, button, _captured), PointerEventKind.Up);
+                return;
+            }
 
             if (_panning != null)
             {
