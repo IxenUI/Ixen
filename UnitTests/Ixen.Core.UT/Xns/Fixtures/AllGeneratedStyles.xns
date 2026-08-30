@@ -40,6 +40,7 @@ generated_root {
     overscroll-behavior: contain
     pointer-events: auto
     backdrop-filter: blur(3px)
+    object-position: right 25%
     animation: generated_pulse 480ms ease-out 60ms infinite alternate
 
     generated_child {

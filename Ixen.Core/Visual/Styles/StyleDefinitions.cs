@@ -154,6 +154,12 @@ namespace Ixen.Core.Visual.Styles
                 Define(StyleIdentifier.OPACITY, v => new OpacityStyleParser(v),
                     p => ((OpacityStyleParser)p).Descriptor),
 
+                Define(StyleIdentifier.OBJECT_POSITION, v => new ObjectPositionStyleParser(v),
+                    p => ((ObjectPositionStyleParser)p).Descriptor,
+                    new[] { ObjectPositionStyleParser.LEFT, ObjectPositionStyleParser.CENTER,
+                        ObjectPositionStyleParser.RIGHT, ObjectPositionStyleParser.TOP,
+                        ObjectPositionStyleParser.MIDDLE, ObjectPositionStyleParser.BOTTOM }),
+
                 Define(StyleIdentifier.OVERFLOW, v => new OverflowStyleParser(v),
                     p => ((OverflowStyleParser)p).Descriptor,
                     new[] { OverflowStyleParser.SCROLL, OverflowStyleParser.HIDDEN,

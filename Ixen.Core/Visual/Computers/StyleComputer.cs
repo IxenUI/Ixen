@@ -636,6 +636,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultPointerEvents;
             }
 
+            if (handlers.ObjectPosition.Descriptor != styles.ObjectPosition)
+            {
+                handlers.ObjectPosition = styles.ObjectPosition != null && !styles.ObjectPosition.IsDefault
+                    ? new ObjectPositionStyleHandler(styles.ObjectPosition)
+                    : VisualElementStylesHandlers.DefaultObjectPosition;
+            }
+
             if (handlers.ObjectFit.Descriptor != styles.ObjectFit)
             {
                 handlers.ObjectFit = styles.ObjectFit != null
@@ -929,6 +936,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.OBJECT_FIT:
                     handlers.ObjectFit = new ObjectFitStyleHandler((ObjectFitStyleDescriptor)style);
+                    break;
+
+                case StyleIdentifier.OBJECT_POSITION:
+                    handlers.ObjectPosition = new ObjectPositionStyleHandler((ObjectPositionStyleDescriptor)style);
                     break;
 
                 case StyleIdentifier.OVERFLOW:

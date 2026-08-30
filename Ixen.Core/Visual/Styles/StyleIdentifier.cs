@@ -45,6 +45,7 @@ namespace Ixen.Core.Visual.Styles
         public const string MIN_HEIGHT = "min-height";
         public const string MIN_WIDTH = "min-width";
         public const string OBJECT_FIT = "object-fit";
+        public const string OBJECT_POSITION = "object-position";
         public const string OPACITY = "opacity";
         public const string OVERFLOW = "overflow";
         public const string OVERSCROLL_BEHAVIOR = "overscroll-behavior";

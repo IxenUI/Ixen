@@ -8,6 +8,7 @@ namespace Ixen.Core.Visual
         public AnchorPlacementStyleDescriptor AnchorPlacement { get; set; } = new();
         public AnimationStyleDescriptor Animation { get; set; } = new();
         public ObjectFitStyleDescriptor ObjectFit { get; set; } = new();
+        public ObjectPositionStyleDescriptor ObjectPosition { get; set; } = new();
         public OpacityStyleDescriptor Opacity { get; set; } = new();
         public TransformStyleDescriptor Transform { get; set; } = new();
         public TransformOriginStyleDescriptor TransformOrigin { get; set; } = new();

@@ -149,9 +149,11 @@ namespace Ixen.Core.Rendering
                 context.PushClip(boxX, boxY, boxWidth, boxHeight, null);
             }
 
+            ObjectPositionStyleDescriptor position = element.StylesHandlers.ObjectPosition.Descriptor;
+
             context.DrawImage(bitmap,
-                boxX + (boxWidth - width) / 2f,
-                boxY + (boxHeight - height) / 2f,
+                boxX + (boxWidth - width) * position.X,
+                boxY + (boxHeight - height) * position.Y,
                 width,
                 height);
 

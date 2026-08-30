@@ -24,7 +24,16 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
-            Assert.AreEqual(35, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+            Assert.AreEqual(36, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));
+        }
+
+        [TestMethod]
+        public void TheObjectPositionSurvivesGeneration()
+        {
+            var descriptor = Style<ObjectPositionStyleDescriptor>();
+
+            Assert.AreEqual(1f, descriptor.X);
+            Assert.AreEqual(0.25f, descriptor.Y);
         }
 
         [TestMethod]
