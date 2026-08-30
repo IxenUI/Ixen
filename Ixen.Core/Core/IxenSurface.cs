@@ -115,6 +115,14 @@ namespace Ixen.Core
             _clippingComputer.Compute(Root, logicalWidth, logicalHeight);
 
             Root.ClearLayoutDirty();
+
+            RefreshHover();
+        }
+
+        private void RefreshHover()
+        {
+            _pointerDispatcher.Refresh(Root, TrackStates);
+            SyncCursor();
         }
 
         private long _mediaSignature;

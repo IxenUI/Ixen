@@ -31,6 +31,9 @@ namespace Ixen.Core.Input
         private float _lastDragX;
         private float _lastDragY;
         private bool _dragging;
+        private float _lastX;
+        private float _lastY;
+        private bool _inside;
         private VisualElement _panning;
 
         private VisualElement _scrollLatch;
@@ -56,6 +59,10 @@ namespace Ixen.Core.Input
         {
             _trackStates = trackStates;
             _kind = kind;
+
+            _lastX = x;
+            _lastY = y;
+            _inside = true;
 
             if (_panning != null)
             {
@@ -139,6 +146,20 @@ namespace Ixen.Core.Input
             return _scrollLatch;
         }
 
+        internal void Refresh(VisualElement root, bool trackStates)
+        {
+            if (!_inside || _panning != null)
+            {
+                return;
+            }
+
+            _trackStates = trackStates;
+
+            VisualElement hit = Enabled(HitTester.HitTest(root, _lastX, _lastY));
+
+            UpdateHover(_captured != null ? CaptureHoverTarget(hit) : hit, _lastX, _lastY);
+        }
+
         internal void LeaveSurface(bool trackStates)
         {
             if (_captured != null)
@@ -147,6 +168,7 @@ namespace Ixen.Core.Input
             }
 
             _trackStates = trackStates;
+            _inside = false;
 
             UpdateHover(null, 0, 0);
             _pressed = null;
@@ -209,6 +231,10 @@ namespace Ixen.Core.Input
         {
             _trackStates = trackStates;
             _kind = kind;
+
+            _lastX = x;
+            _lastY = y;
+            _inside = true;
 
             if (_captured != null)
             {
@@ -388,6 +414,10 @@ namespace Ixen.Core.Input
         {
             _trackStates = trackStates;
             _kind = kind;
+
+            _lastX = x;
+            _lastY = y;
+            _inside = true;
 
             if (_captured != null && button != _pressedButton)
             {
