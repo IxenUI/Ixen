@@ -1,12 +1,16 @@
 using Ixen.Core.Visual.Styles.Descriptors;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
     internal class BackgroundStyleParser : StyleParser
     {
+        private static readonly Regex _percent = new Regex(@"^([0-9]+(?:\.[0-9]+)?)%$");
+
         internal const string REPEAT = "repeat";
         internal const string REPEAT_X = "repeat-x";
         internal const string REPEAT_Y = "repeat-y";
@@ -111,7 +115,20 @@ namespace Ixen.Core.Visual.Styles.Parsers
         {
             int dot = value.LastIndexOf('.');
 
-            return dot > 0 && dot < value.Length - 1;
+            if (dot <= 0 || dot >= value.Length - 1)
+            {
+                return false;
+            }
+
+            for (int index = dot + 1; index < value.Length; index++)
+            {
+                if (!char.IsLetter(value[index]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private bool TryPosition(string value)
@@ -119,32 +136,65 @@ namespace Ixen.Core.Visual.Styles.Parsers
             switch (value)
             {
                 case LEFT:
-                    Descriptor.PositionX = 0f;
-                    return true;
+                    return SetX(0f);
 
                 case CENTER:
-                    Descriptor.PositionX = 0.5f;
-                    return true;
+                    return SetX(0.5f);
 
                 case RIGHT:
-                    Descriptor.PositionX = 1f;
-                    return true;
+                    return SetX(1f);
 
                 case TOP:
-                    Descriptor.PositionY = 0f;
-                    return true;
+                    return SetY(0f);
 
                 case MIDDLE:
-                    Descriptor.PositionY = 0.5f;
-                    return true;
+                    return SetY(0.5f);
 
                 case BOTTOM:
-                    Descriptor.PositionY = 1f;
-                    return true;
+                    return SetY(1f);
 
                 default:
-                    return false;
+                    return TryPercentPosition(value);
             }
+        }
+
+        private bool SetX(float value)
+        {
+            if (Descriptor.PositionX >= 0f)
+            {
+                return false;
+            }
+
+            Descriptor.PositionX = value;
+
+            return true;
+        }
+
+        private bool SetY(float value)
+        {
+            if (Descriptor.PositionY >= 0f)
+            {
+                return false;
+            }
+
+            Descriptor.PositionY = value;
+
+            return true;
+        }
+
+        private bool TryPercentPosition(string value)
+        {
+            Match match = _percent.Match(value);
+
+            if (!match.Success || !float.TryParse(match.Groups[1].Value, NumberStyles.Float,
+                CultureInfo.InvariantCulture, out float percent))
+            {
+                return false;
+            }
+
+            float fraction = percent / 100f;
+
+            return SetX(fraction) || SetY(fraction);
         }
 
         private bool TryFit(string value)

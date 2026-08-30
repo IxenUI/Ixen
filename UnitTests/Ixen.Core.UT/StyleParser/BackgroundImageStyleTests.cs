@@ -165,6 +165,52 @@ namespace Ixen.Core.UT.StyleParser
         }
 
         [TestMethod]
+        public void APercentageIsAPositionToo()
+        {
+            BackgroundStyleDescriptor descriptor = Valid("hero.jpg 30% 70%");
+
+            Assert.AreEqual(0.3f, descriptor.PositionX, 0.0001f);
+            Assert.AreEqual(0.7f, descriptor.PositionY, 0.0001f,
+                "the first percentage is the horizontal axis and the second the vertical, the "
+                + "only place in this value where order decides anything");
+        }
+
+        [TestMethod]
+        public void AndItFillsWhicheverAxisIsStillFree()
+        {
+            Assert.AreEqual(0.25f, Valid("hero.jpg center 25%").PositionY, 0.0001f,
+                "center took the horizontal axis, so the percentage takes the other one");
+            Assert.AreEqual(0.25f, Valid("hero.jpg top 25%").PositionX, 0.0001f,
+                "and a vertical keyword leaves the horizontal one to it, which is what CSS does");
+        }
+
+        [TestMethod]
+        public void AThirdPositionIsRefused()
+        {
+            Invalid("hero.jpg 10% 20% 30%");
+            Invalid("hero.jpg left right");
+        }
+
+        [TestMethod]
+        public void APercentageIsNotMistakenForAFileName()
+        {
+            Assert.IsNull(Valid("hero.jpg 12.5% 40%").ImageUrl == "12.5%" ? "wrong" : null,
+                "12.5% has an interior dot, which used to be the whole test for an image name");
+
+            Assert.AreEqual("hero.jpg", Valid("hero.jpg 12.5% 40%").ImageUrl);
+        }
+
+        [TestMethod]
+        public void AnImageNameNeedsALetterExtension()
+        {
+            Assert.AreEqual("hero.jpg", Valid("hero.jpg").ImageUrl);
+            Assert.AreEqual("Assets/Images/logo.png", Valid("Assets/Images/logo.png").ImageUrl);
+
+            Invalid("1.5");
+            Invalid("hero.2x");
+        }
+
+        [TestMethod]
         public void APositionMixesWithEverythingElseInAnyOrder()
         {
             BackgroundStyleDescriptor one = Valid("#EEF2FF hero.jpg cover right bottom");
