@@ -134,6 +134,30 @@ namespace Ixen.Core.UT.Layout
         }
 
         [TestMethod]
+        public void AForwardsAnimationStillLandsOnItsEndState()
+        {
+            _surface.ReducedMotion = true;
+
+            var box = new VisualElement { Name = "filled" };
+
+            box.Styles.Background = new BackgroundStyleDescriptor { Color = RED };
+            box.Styles.Animation = new AnimationStyleDescriptor
+            {
+                Name = "fade",
+                Duration = DURATION,
+                Fill = AnimationFill.Forwards
+            };
+
+            _root.AddChild(box);
+            Layout();
+
+            Assert.AreEqual(255,
+                box.Animations.For(StyleIdentifier.BACKGROUND).Current.SKColor.Green,
+                "less motion means the end state at once, not the base style");
+            Assert.AreEqual(0, _scheduler.PendingCount, "and nothing is ticking");
+        }
+
+        [TestMethod]
         public void TurningItOnFinishesWhatIsAlreadyRunning()
         {
             VisualElement box = Transitioned();

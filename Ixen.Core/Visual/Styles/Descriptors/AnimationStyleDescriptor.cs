@@ -12,6 +12,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         public EasingKind Easing { get; set; } = EasingKind.Linear;
         public int Iterations { get; set; } = 1;
         public bool Alternate { get; set; } = false;
+        public AnimationFill Fill { get; set; } = AnimationFill.None;
 
         public bool IsDeclared => Name != null && Duration > 0;
 
@@ -22,7 +23,8 @@ namespace Ixen.Core.Visual.Styles.Descriptors
                 && Delay == other.Delay
                 && Easing == other.Easing
                 && Iterations == other.Iterations
-                && Alternate == other.Alternate;
+                && Alternate == other.Alternate
+                && Fill == other.Fill;
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()
@@ -32,6 +34,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
                 + $"{nameof(Delay)} = {Delay}, "
                 + $"{nameof(Easing)} = global::Ixen.Core.Visual.Styles.{nameof(EasingKind)}.{Easing}, "
                 + $"{nameof(Iterations)} = {Iterations}, "
-                + $"{nameof(Alternate)} = {SourceOf(Alternate)} }}";
+                + $"{nameof(Alternate)} = {SourceOf(Alternate)}, "
+                + $"{nameof(Fill)} = global::Ixen.Core.Visual.Styles.{nameof(AnimationFill)}.{Fill} }}";
     }
 }

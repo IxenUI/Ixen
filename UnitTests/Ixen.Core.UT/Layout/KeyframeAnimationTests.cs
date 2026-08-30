@@ -61,7 +61,8 @@ namespace Ixen.Core.UT.Layout
             => _registry.Add(new KeyframesSet(name, new List<Keyframe>(frames)));
 
         private void Animate(string name, int iterations = 1, bool alternate = false,
-            int delay = 0, EasingKind easing = EasingKind.Linear)
+            int delay = 0, EasingKind easing = EasingKind.Linear,
+            AnimationFill fill = AnimationFill.None)
         {
             _box.Styles.Animation = new AnimationStyleDescriptor
             {
@@ -70,7 +71,8 @@ namespace Ixen.Core.UT.Layout
                 Delay = delay,
                 Easing = easing,
                 Iterations = iterations,
-                Alternate = alternate
+                Alternate = alternate,
+                Fill = fill
             };
 
             _box.Invalidate();
@@ -274,6 +276,141 @@ namespace Ixen.Core.UT.Layout
             surface.ComputeLayout(VIEWPORT, VIEWPORT);
 
             Assert.IsFalse(box.Animations.HasKeyframes, "a host with no timer cannot run it");
+        }
+
+        [TestMethod]
+        public void ForwardsKeepsTheLastFrame()
+        {
+            Keyframes("fade", Frame(0f, BLACK), Frame(1f, WHITE));
+            Animate("fade", fill: AnimationFill.Forwards);
+
+            Tick(4);
+            Layout();
+
+            Assert.AreEqual(255, Current.SKColor.Green,
+                "the last frame is white and it stays white");
+            Assert.AreEqual(0, _scheduler.PendingCount,
+                "holding a frame is not the same as still running");
+        }
+
+        [TestMethod]
+        public void ForwardsHoldsASizeToo()
+        {
+            _box.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 100 };
+
+            Keyframes("grow", WidthFrame(0f, 20), WidthFrame(1f, 60));
+            Animate("grow", fill: AnimationFill.Forwards);
+
+            Tick(4);
+            Layout();
+
+            Assert.AreEqual(60f, _box.ActualWidth,
+                "the declared width does not come back");
+        }
+
+        [TestMethod]
+        public void RemovingTheAnimationDropsTheHeldFrame()
+        {
+            Keyframes("fade", Frame(0f, BLACK), Frame(1f, WHITE));
+            Animate("fade", fill: AnimationFill.Forwards);
+
+            Tick(4);
+            Layout();
+
+            _box.Styles.Animation = new AnimationStyleDescriptor();
+            _box.Invalidate();
+            Layout();
+
+            Assert.AreEqual(0, Current.SKColor.Green,
+                "the hold belongs to the declaration, so undeclaring it reverts");
+        }
+
+        [TestMethod]
+        public void ANewAnimationRestartsRatherThanHolding()
+        {
+            Keyframes("fade", Frame(0f, BLACK), Frame(1f, WHITE));
+            Keyframes("other", Frame(0f, BLACK), Frame(1f, WHITE));
+            Animate("fade", fill: AnimationFill.Forwards);
+
+            Tick(4);
+            Layout();
+
+            Animate("other", fill: AnimationFill.Forwards);
+
+            Assert.AreEqual(0, Current.SKColor.Green, "it is back on its own first stop");
+            Assert.AreEqual(1, _scheduler.PendingCount, "and ticking again");
+        }
+
+        [TestMethod]
+        public void ForwardsOnAnAlternateEndsWhereItStarted()
+        {
+            Keyframes("fade", Frame(0f, BLACK), Frame(1f, WHITE));
+            Animate("fade", 2, alternate: true, fill: AnimationFill.Forwards);
+
+            Tick(8);
+            Layout();
+
+            Assert.AreEqual(0, Current.SKColor.Green,
+                "two alternating passes end on the first stop, and that is what is held");
+        }
+
+        [TestMethod]
+        public void WithNoSchedulerForwardsLandsOnTheLastFrame()
+        {
+            Assert.AreEqual(255, Unscheduled(AnimationFill.Forwards, 1, false).SKColor.Green,
+                "a host with no timer shows the end state rather than nothing");
+        }
+
+        [TestMethod]
+        public void WithNoSchedulerAndNoFillItStaysOnTheCascade()
+        {
+            Assert.AreEqual(0, Unscheduled(AnimationFill.None, 1, false).SKColor.Green);
+        }
+
+        [TestMethod]
+        public void WithNoSchedulerAnInfiniteAnimationHoldsNothing()
+        {
+            Assert.AreEqual(0, Unscheduled(AnimationFill.Forwards,
+                AnimationStyleDescriptor.INFINITE, false).SKColor.Green,
+                "an animation that never ends has no end state to fill with");
+        }
+
+        [TestMethod]
+        public void WithNoSchedulerAnAlternateLandsWhereItWouldHave()
+        {
+            Assert.AreEqual(0, Unscheduled(AnimationFill.Forwards, 2, true).SKColor.Green,
+                "the parity of the iteration count decides which stop is the end");
+        }
+
+        private static Color Unscheduled(AnimationFill fill, int iterations, bool alternate)
+        {
+            var registry = new StyleRegistry();
+
+            registry.Add(new KeyframesSet("fade", new List<Keyframe>
+            {
+                Frame(0f, BLACK), Frame(1f, WHITE)
+            }));
+
+            var root = new VisualElement { Name = "root" };
+            var box = new VisualElement { Name = "box" };
+
+            box.Styles.Background = new BackgroundStyleDescriptor { Color = RED };
+            box.Styles.Animation = new AnimationStyleDescriptor
+            {
+                Name = "fade",
+                Duration = DURATION,
+                Iterations = iterations,
+                Alternate = alternate,
+                Fill = fill
+            };
+
+            root.AddChild(box);
+
+            var surface = new IxenSurface(root) { Styles = registry };
+
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            return box.Animations.For(StyleIdentifier.BACKGROUND).Current;
         }
 
         [TestMethod]

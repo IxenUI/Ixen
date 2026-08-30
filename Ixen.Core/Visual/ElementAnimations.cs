@@ -451,7 +451,7 @@ namespace Ixen.Core.Visual
 
         internal void Finish()
         {
-            _keyframes?.Suspend();
+            _keyframes?.Complete();
 
             Background?.Jump(Background.To);
             Color?.Jump(Color.To);

@@ -20,6 +20,7 @@ namespace Ixen.Core.Visual
         private int _iteration;
         private bool _reversed;
         private bool _running;
+        private bool _holding;
 
         internal KeyframeAnimation(VisualElement element)
         {
@@ -32,7 +33,7 @@ namespace Ixen.Core.Visual
 
         internal bool Drives(string identifier)
         {
-            if (!_running || _set == null)
+            if ((!_running && !_holding) || _set == null)
             {
                 return false;
             }
@@ -67,6 +68,7 @@ namespace Ixen.Core.Visual
 
             _set = set;
             _spec = spec;
+            _holding = false;
             _steps = Math.Max(1, spec.Duration / ElementAnimations.TICK);
             _delay = spec.Delay / ElementAnimations.TICK;
             _step = 0;
@@ -96,11 +98,33 @@ namespace Ixen.Core.Visual
             _started = null;
         }
 
+        internal void Complete()
+        {
+            if (_set == null || _spec == null
+                || _spec.Fill != AnimationFill.Forwards
+                || _spec.Iterations == AnimationStyleDescriptor.INFINITE)
+            {
+                Suspend();
+                return;
+            }
+
+            _delay = 0;
+            _step = _steps;
+            _iteration = _spec.Iterations;
+            _reversed = _spec.Alternate && _spec.Iterations % 2 == 0;
+
+            Apply();
+
+            _running = false;
+            _holding = true;
+        }
+
         internal void Suspend()
         {
             Release();
 
             _running = false;
+            _holding = false;
             _set = null;
             _spec = null;
             AnimatesSize = false;
@@ -164,6 +188,7 @@ namespace Ixen.Core.Visual
                     _step = _steps;
                     Apply();
                     _running = false;
+                    _holding = _spec.Fill == AnimationFill.Forwards;
                     _element.Invalidate();
                     return;
                 }

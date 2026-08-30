@@ -10,6 +10,8 @@ namespace Ixen.Core.Visual.Styles.Parsers
         internal const string INFINITE = "infinite";
         internal const string ALTERNATE = "alternate";
         internal const string NORMAL = "normal";
+        internal const string FORWARDS = "forwards";
+        internal const string NO_FILL = "none";
 
         private const char ITERATIONS_SUFFIX = 'x';
 
@@ -62,6 +64,18 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 if (token == NORMAL)
                 {
                     Descriptor.Alternate = false;
+                    continue;
+                }
+
+                if (token == FORWARDS)
+                {
+                    Descriptor.Fill = AnimationFill.Forwards;
+                    continue;
+                }
+
+                if (token == NO_FILL)
+                {
+                    Descriptor.Fill = AnimationFill.None;
                     continue;
                 }
 

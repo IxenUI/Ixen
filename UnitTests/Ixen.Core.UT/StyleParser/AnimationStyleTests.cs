@@ -91,6 +91,22 @@ namespace Ixen.Core.UT.StyleParser
         }
 
         [TestMethod]
+        public void ForwardsKeepsTheLastFrame()
+        {
+            Assert.AreEqual(AnimationFill.Forwards, Valid("pulse 600ms forwards").Fill);
+            Assert.AreEqual(AnimationFill.None, Valid("pulse 600ms none").Fill);
+            Assert.AreEqual(AnimationFill.None, Valid("pulse 600ms").Fill,
+                "reverting to the base style is the default, as in CSS");
+        }
+
+        [TestMethod]
+        public void TheFillIsPartOfTheIdentity()
+        {
+            Assert.IsFalse(Valid("pulse 600ms forwards").Matches(Valid("pulse 600ms")),
+                "or changing only the fill would not restart the animation");
+        }
+
+        [TestMethod]
         public void ANameAloneIsNotEnough()
         {
             Invalid("pulse");
@@ -136,6 +152,8 @@ namespace Ixen.Core.UT.StyleParser
             StringAssert.Contains(source, "600");
             StringAssert.Contains(source, "EaseOut");
             StringAssert.Contains(source, "true");
+
+            StringAssert.Contains(Valid("pulse 600ms forwards").ToSource(), "AnimationFill.Forwards");
         }
 
         [TestMethod]
