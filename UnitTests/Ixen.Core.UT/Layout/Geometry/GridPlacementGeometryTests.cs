@@ -19,6 +19,9 @@ namespace Ixen.Core.UT.Layout.Geometry
         private static SizeStyleDescriptor Auto()
             => new SizeStyleDescriptor { Unit = SizeUnit.Content, Value = 1 };
 
+        private static SizeStyleDescriptor Fill()
+            => new SizeStyleDescriptor { Unit = SizeUnit.Weight, Value = 1 };
+
         private static VisualElement WithColumnWidths(VisualElement element, params SizeStyleDescriptor[] tracks)
         {
             var descriptor = new RowTemplateStyleDescriptor();
@@ -165,7 +168,7 @@ namespace Ixen.Core.UT.Layout.Geometry
         }
 
         [TestMethod]
-        public void ASpanningChildDoesNotSizeAnAutoTrack()
+        public void ASpanningChildGrowsTheAutoTracksItCrosses()
         {
             VisualElement grid = Grid(400, 100);
             WithColumnWidths(grid, Auto(), Auto());
@@ -181,8 +184,135 @@ namespace Ixen.Core.UT.Layout.Geometry
             grid.AddChildren(wide, At(narrow, 1, 0));
             Layout(grid);
 
-            Assert.AreEqual(40f, grid.GridColumns[1],
-                "an auto track sizes from its non-spanning children only");
+            Assert.AreEqual(300f, grid.GridColumns[0] + grid.GridColumns[1], 0.01f,
+                "the spanning child no longer overflows: what it needs beyond the tracks it "
+                + "crosses is distributed over the auto ones");
+
+            Assert.AreEqual(130f, grid.GridColumns[0], 0.01f,
+                "the excess is 300 - (0 + 40), shared equally between the two auto tracks");
+
+            Assert.AreEqual(170f, grid.GridColumns[1], 0.01f,
+                "and the track that already had 40 keeps it on top of its share");
+        }
+
+        [TestMethod]
+        public void ASpanThatFitsChangesNothing()
+        {
+            VisualElement grid = Grid(400, 100);
+            WithColumnWidths(grid, Auto(), Auto());
+            WithRowHeights(grid, Px(100));
+
+            VisualElement narrow = Cell("narrow");
+            narrow.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 90 };
+
+            VisualElement small = Spanning(Cell("small"), 2);
+            small.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 30 };
+            At(small, 0, 0);
+
+            grid.AddChildren(At(narrow, 1, 0), small);
+            Layout(grid);
+
+            Assert.AreEqual(90f, grid.GridColumns[1], 0.01f,
+                "a spanning child that already fits asks for nothing, so the tracks keep the "
+                + "sizes their own children gave them");
+        }
+
+        [TestMethod]
+        public void OnlyTheAutoTracksGrow()
+        {
+            VisualElement grid = Grid(400, 100);
+            WithColumnWidths(grid, Px(50), Auto());
+            WithRowHeights(grid, Px(100));
+
+            VisualElement wide = Spanning(Cell("wide"), 2);
+            wide.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 200 };
+            At(wide, 0, 0);
+
+            grid.AddChild(wide);
+            Layout(grid);
+
+            Assert.AreEqual(50f, grid.GridColumns[0], 0.01f, "a pixel track is not intrinsic");
+
+            Assert.AreEqual(150f, grid.GridColumns[1], 0.01f,
+                "so the whole excess lands on the one track that can absorb it");
+        }
+
+        [TestMethod]
+        public void ASpanOverNoAutoTrackIsLeftAlone()
+        {
+            VisualElement grid = Grid(400, 100);
+            WithColumnWidths(grid, Px(20), Px(20));
+            WithRowHeights(grid, Px(100));
+
+            VisualElement wide = Spanning(Cell("wide"), 2);
+            wide.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 300 };
+            At(wide, 0, 0);
+
+            grid.AddChild(wide);
+            Layout(grid);
+
+            Assert.AreEqual(20f, grid.GridColumns[0], 0.01f);
+            Assert.AreEqual(20f, grid.GridColumns[1], 0.01f,
+                "the author asked for two fixed tracks, so the child overflows rather than "
+                + "the tracks quietly disobeying");
+        }
+
+        [TestMethod]
+        public void TheGapCountsAsRoomTheSpanAlreadyHas()
+        {
+            VisualElement grid = Grid(400, 100);
+            WithColumnWidths(grid, Auto(), Auto());
+            WithRowHeights(grid, Px(100));
+
+            grid.Styles.Gap = new GapStyleDescriptor { Column = 20 };
+
+            VisualElement wide = Spanning(Cell("wide"), 2);
+            wide.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 100 };
+            At(wide, 0, 0);
+
+            grid.AddChild(wide);
+            Layout(grid);
+
+            Assert.AreEqual(40f, grid.GridColumns[0], 0.01f,
+                "the 20px gap is part of what the child spans, so only 80 has to come from "
+                + "the tracks themselves");
+        }
+
+        [TestMethod]
+        public void ARowSpanGrowsTheAutoRows()
+        {
+            VisualElement grid = Grid(200, 400);
+            WithColumnWidths(grid, Px(200));
+            WithRowHeights(grid, Auto(), Auto());
+
+            VisualElement tall = Spanning(Cell("tall"), 1, 2);
+            tall.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 180 };
+            At(tall, 0, 0);
+
+            grid.AddChild(tall);
+            Layout(grid);
+
+            Assert.AreEqual(90f, grid.GridRows[0], 0.01f, "the same rule on the other axis");
+            Assert.AreEqual(90f, grid.GridRows[1], 0.01f);
+        }
+
+        [TestMethod]
+        public void ASpanOverNoAutoTrackDoesNotEatTheWeightedPool()
+        {
+            VisualElement grid = Grid(400, 100);
+            WithColumnWidths(grid, Px(20), Px(20), Fill());
+            WithRowHeights(grid, Px(100));
+
+            VisualElement wide = Spanning(Cell("wide"), 2);
+            wide.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 300 };
+            At(wide, 0, 0);
+
+            grid.AddChild(wide);
+            Layout(grid);
+
+            Assert.AreEqual(360f, grid.GridColumns[2], 0.01f,
+                "nothing could absorb the excess, so nothing was taken: reporting it anyway would "
+                + "shrink the weighted track by room no fixed track ever gained");
         }
 
         [TestMethod]

@@ -1117,6 +1117,8 @@ namespace Ixen.Core.Visual.Computers
                 pool -= columns[i];
             }
 
+            pool -= GrowColumnsForSpans(element, template, columns, available);
+
             ShareRemainder(template, columns, _fillTrack, pool, totalWeight);
         }
 
@@ -1152,6 +1154,8 @@ namespace Ixen.Core.Visual.Computers
                 pool -= rows[i];
             }
 
+            pool -= GrowRowsForSpans(element, template, columns, rows, available);
+
             ShareRemainder(template, rows, _contentTrack, pool, totalWeight);
         }
 
@@ -1174,6 +1178,97 @@ namespace Ixen.Core.Visual.Computers
                     tracks[i] = (pool / totalWeight) * style.Value;
                 }
             }
+        }
+
+        private float GrowColumnsForSpans(VisualElement element, List<SizeStyleDescriptor> template,
+            float[] columns, float available)
+        {
+            float gap = GapOf(element, true);
+            float added = 0;
+
+            for (int span = 2; span <= columns.Length; span++)
+            {
+                foreach (VisualElement child in element.Children)
+                {
+                    if (child.GridColumnSpan != span)
+                    {
+                        continue;
+                    }
+
+                    MeasureCell(child, available, available, false, false);
+
+                    added += Distribute(template, columns, _fillTrack, child.GridColumn, span,
+                        child.BoxWidth, gap);
+                }
+            }
+
+            return added;
+        }
+
+        private float GrowRowsForSpans(VisualElement element, List<SizeStyleDescriptor> template,
+            float[] columns, float[] rows, float available)
+        {
+            float columnGap = GapOf(element, true);
+            float gap = GapOf(element, false);
+            float added = 0;
+
+            for (int span = 2; span <= rows.Length; span++)
+            {
+                foreach (VisualElement child in element.Children)
+                {
+                    if (child.GridRowSpan != span)
+                    {
+                        continue;
+                    }
+
+                    MeasureCell(child, Extent(columns, child.GridColumn, child.GridColumnSpan, columnGap),
+                        available, true, false);
+
+                    added += Distribute(template, rows, _contentTrack, child.GridRow, span,
+                        child.BoxHeight, gap);
+                }
+            }
+
+            return added;
+        }
+
+        private static float Distribute(List<SizeStyleDescriptor> template, float[] tracks,
+            SizeStyleDescriptor fallback, int start, int span, float wanted, float gap)
+        {
+            int last = Math.Min(start + span, tracks.Length);
+            int intrinsic = 0;
+
+            for (int index = start; index < last; index++)
+            {
+                if (TrackStyle(template, index, fallback).Unit == SizeUnit.Content)
+                {
+                    intrinsic++;
+                }
+            }
+
+            if (intrinsic == 0)
+            {
+                return 0;
+            }
+
+            float excess = wanted - Extent(tracks, start, span, gap);
+
+            if (excess <= 0)
+            {
+                return 0;
+            }
+
+            float share = excess / intrinsic;
+
+            for (int index = start; index < last; index++)
+            {
+                if (TrackStyle(template, index, fallback).Unit == SizeUnit.Content)
+                {
+                    tracks[index] += share;
+                }
+            }
+
+            return excess;
         }
 
         private float MeasureColumnExtent(VisualElement element, int columnCount, int column, float available)
