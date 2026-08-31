@@ -486,11 +486,51 @@ namespace Ixen.Core.Visual
 
         protected virtual VisualElement ContentHost => this;
 
+        internal const int MAX_DEPTH = 512;
+
+        private void CheckAdoptable(VisualElement element)
+        {
+            if (element == null)
+            {
+                throw new ArgumentNullException(nameof(element));
+            }
+
+            int depth = 1;
+
+            for (VisualElement ancestor = this; ancestor != null; ancestor = ancestor.Parent)
+            {
+                if (ancestor == element)
+                {
+                    throw new InvalidOperationException(
+                        $"Cannot add '{Naming(element)}' under '{Naming(this)}': it is the element "
+                        + "itself or one of its ancestors, and the tree would contain a cycle. Every "
+                        + "pass over the tree is recursive, so that is a StackOverflowException "
+                        + "rather than an exception you could catch.");
+                }
+
+                depth++;
+            }
+
+            if (depth > MAX_DEPTH)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot add '{Naming(element)}': the tree would be {depth} levels deep and "
+                    + $"the limit is {MAX_DEPTH}. The layout passes are recursive and the stack "
+                    + "gives out somewhere around a thousand levels, which is not an exception "
+                    + "anything can recover from.");
+            }
+        }
+
+        private static string Naming(VisualElement element)
+            => element.Name ?? element.TypeName ?? element.GetType().Name;
+
         public void AddChild(VisualElement element)
         {
+            CheckAdoptable(element);
+
             if (ContentHost != this && ContentHost != element)
             {
-ContentHost.AddChild(element);
+                ContentHost.AddChild(element);
                 return;
             }
 
@@ -503,6 +543,11 @@ ContentHost.AddChild(element);
 
         public void AddChildren(params VisualElement[] elements)
         {
+            foreach (VisualElement element in elements)
+            {
+                CheckAdoptable(element);
+            }
+
             if (ContentHost != this)
             {
                 ContentHost.AddChildren(elements);
@@ -557,9 +602,11 @@ ContentHost.AddChild(element);
 
         public void InsertChild(int index, VisualElement element)
         {
+            CheckAdoptable(element);
+
             if (ContentHost != this && ContentHost != element)
             {
-ContentHost.InsertChild(index, element);
+                ContentHost.InsertChild(index, element);
                 return;
             }
 
