@@ -104,7 +104,7 @@ namespace Ixen.Core.Input
             return null;
         }
 
-        private static bool CanScroll(VisualElement element, float offsetX, float offsetY)
+        internal static bool CanScroll(VisualElement element, float offsetX, float offsetY)
             => CanScrollAxis(element.ScrollX, element.MaxScrollX, offsetX)
                 || CanScrollAxis(element.ScrollY, element.MaxScrollY, offsetY);
 

@@ -15,6 +15,13 @@ namespace Ixen.Core.Input
         private const int LONG_PRESS_DELAY = 500;
         private const long WHEEL_LATCH_DELAY = 150;
 
+        private const int FLING_TICK = 16;
+        private const float FLING_MIN_VELOCITY = 0.15f;
+        private const float FLING_STOP_VELOCITY = 0.02f;
+        private const float FLING_FRICTION = 0.94f;
+        private const float FLING_MAX_VELOCITY = 4f;
+        private const float VELOCITY_WEIGHT = 0.6f;
+
         private readonly List<VisualElement> _leftChain = new();
         private readonly List<VisualElement> _enteredChain = new();
 
@@ -35,6 +42,11 @@ namespace Ixen.Core.Input
         private float _lastY;
         private bool _inside;
         private VisualElement _panning;
+        private VisualElement _flinging;
+        private IDisposable _fling;
+        private float _velocityX;
+        private float _velocityY;
+        private long _panTime;
 
         private VisualElement _scrollLatch;
         private long _lastWheelTime;
@@ -178,6 +190,7 @@ namespace Ixen.Core.Input
         {
             _captured = null;
             _panning = null;
+            StopFling();
             CancelLongPress();
             EndDrag(_lastDragX, _lastDragY);
             SetState(_pressed, StyleStates.PRESSED, false);
@@ -215,6 +228,11 @@ namespace Ixen.Core.Input
                 _panning = null;
             }
 
+            if (_flinging == element)
+            {
+                StopFling();
+            }
+
             if (_scrollLatch == element)
             {
                 _scrollLatch = null;
@@ -235,6 +253,8 @@ namespace Ixen.Core.Input
             _lastX = x;
             _lastY = y;
             _inside = true;
+
+            StopFling();
 
             if (_captured != null)
             {
@@ -376,6 +396,10 @@ namespace Ixen.Core.Input
             _lastDragX = _pressX;
             _lastDragY = _pressY;
 
+            _velocityX = 0f;
+            _velocityY = 0f;
+            _panTime = TimeSource.Milliseconds;
+
             Pan(x, y);
 
             return true;
@@ -386,10 +410,103 @@ namespace Ixen.Core.Input
 
         private void Pan(float x, float y)
         {
-            _panning.ScrollBy(_lastDragX - x, _lastDragY - y);
+            float offsetX = _lastDragX - x;
+            float offsetY = _lastDragY - y;
+
+            _panning.ScrollBy(offsetX, offsetY);
+
+            TrackVelocity(offsetX, offsetY);
 
             _lastDragX = x;
             _lastDragY = y;
+        }
+
+        private void TrackVelocity(float offsetX, float offsetY)
+        {
+            long now = TimeSource.Milliseconds;
+            long elapsed = now - _panTime;
+
+            _panTime = now;
+
+            if (elapsed <= 0)
+            {
+                return;
+            }
+
+            _velocityX = Blend(_velocityX, offsetX / elapsed);
+            _velocityY = Blend(_velocityY, offsetY / elapsed);
+        }
+
+        private static float Blend(float carried, float sample)
+        {
+            float blended = carried * (1f - VELOCITY_WEIGHT) + sample * VELOCITY_WEIGHT;
+
+            if (blended > FLING_MAX_VELOCITY)
+            {
+                return FLING_MAX_VELOCITY;
+            }
+
+            return blended < -FLING_MAX_VELOCITY ? -FLING_MAX_VELOCITY : blended;
+        }
+
+        private void StartFling(VisualElement target)
+        {
+            StopFling();
+
+            if (Scheduler == null || target == null
+                || (Math.Abs(_velocityX) < FLING_MIN_VELOCITY
+                    && Math.Abs(_velocityY) < FLING_MIN_VELOCITY))
+            {
+                return;
+            }
+
+            _flinging = target;
+            _fling = Scheduler.Schedule(FLING_TICK, true, AdvanceFling);
+        }
+
+        private void AdvanceFling()
+        {
+            VisualElement target = _flinging;
+
+            if (target == null)
+            {
+                StopFling();
+                return;
+            }
+
+            float offsetX = _velocityX * FLING_TICK;
+            float offsetY = _velocityY * FLING_TICK;
+
+            if (!ScrollNavigator.CanScroll(target, offsetX, offsetY))
+            {
+                StopFling();
+                return;
+            }
+
+            target.ScrollBy(offsetX, offsetY);
+
+            _velocityX *= FLING_FRICTION;
+            _velocityY *= FLING_FRICTION;
+
+            if (Math.Abs(_velocityX) < FLING_STOP_VELOCITY
+                && Math.Abs(_velocityY) < FLING_STOP_VELOCITY)
+            {
+                StopFling();
+            }
+        }
+
+        internal void StopFling()
+        {
+            _flinging = null;
+
+            if (_fling == null)
+            {
+                return;
+            }
+
+            IDisposable running = _fling;
+            _fling = null;
+            running.Dispose();
         }
 
         private bool IsDoubleClick(VisualElement hit, float x, float y)
@@ -428,6 +545,7 @@ namespace Ixen.Core.Input
             if (_panning != null)
             {
                 Pan(x, y);
+                StartFling(_panning);
                 _panning = null;
 
                 return;
