@@ -50,7 +50,13 @@ namespace Ixen.Core
 
         public IxenSurfaceInitOptions InitOptions { get; private set; }
         public string Title { get; set; }
-        public StyleRegistry Styles { get; set; } = StyleRegistry.Default;
+        private StyleRegistry _styles;
+
+        public StyleRegistry Styles
+        {
+            get => _styles ?? StyleRegistry.Default;
+            set => _styles = value;
+        }
 
         public VisualElement Root
         {

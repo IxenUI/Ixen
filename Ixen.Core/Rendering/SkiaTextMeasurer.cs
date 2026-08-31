@@ -17,7 +17,7 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            SKFont skFont = FontCache.Get(font);
+            SKFont skFont = FontCache.Get(font, text);
 
             width = skFont.MeasureText(text) + font.Advance(text);
 
@@ -37,7 +37,7 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            SKFont skFont = FontCache.Get(font);
+            SKFont skFont = FontCache.Get(font, text);
             float spacing = font.LetterSpacing;
 
             if (skFont.CountGlyphs(text) == text.Length)

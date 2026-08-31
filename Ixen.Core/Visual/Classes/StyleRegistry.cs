@@ -7,8 +7,13 @@ namespace Ixen.Core.Visual.Classes
 {
     public sealed class StyleRegistry
     {
-        private static readonly Lazy<StyleRegistry> _default =
+        private static Lazy<StyleRegistry> _default =
             new Lazy<StyleRegistry>(CreateFromLoadedAssemblies);
+
+        internal static bool DefaultIsCreated => _default.IsValueCreated;
+
+        internal static void ResetDefault()
+            => _default = new Lazy<StyleRegistry>(CreateFromLoadedAssemblies);
 
         private sealed class ScopedClass
         {

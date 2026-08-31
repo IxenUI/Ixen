@@ -201,7 +201,7 @@ namespace Ixen.Core.Rendering
         }
 
         internal float MeasureTextWidth(string text, FontSpec fontSpec)
-            => FontCache.Get(fontSpec).MeasureText(text) + fontSpec.Advance(text);
+            => FontCache.Get(fontSpec, text).MeasureText(text) + fontSpec.Advance(text);
 
         private static float LastGap(FontSpec fontSpec) => fontSpec.LetterSpacing;
 
@@ -219,7 +219,7 @@ namespace Ixen.Core.Rendering
 
         internal void DrawText(string text, float x, float top, FontSpec fontSpec, Brush brush)
         {
-            SKFont font = FontCache.Get(fontSpec);
+            SKFont font = FontCache.Get(fontSpec, text);
 
             brush.Antialisasing = true;
 
@@ -242,7 +242,7 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            SKFont font = FontCache.Get(fontSpec);
+            SKFont font = FontCache.Get(fontSpec, text);
             System.Collections.Generic.List<Shadow> shadows = shadow.Shadows;
 
             for (int index = shadows.Count - 1; index >= 0; index--)
@@ -286,7 +286,7 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            SKFont font = FontCache.Get(fontSpec);
+            SKFont font = FontCache.Get(fontSpec, text);
             SKFontMetrics metrics = font.Metrics;
             float width = MeasureTextWidth(text, fontSpec) - LastGap(fontSpec);
 
