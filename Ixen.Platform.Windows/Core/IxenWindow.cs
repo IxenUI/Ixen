@@ -15,6 +15,7 @@ namespace Ixen.Platform.Windows
         private readonly WindowApi.OnPaintCallBack _onPaint;
         private readonly WindowApi.OnPointerCallBack _onPointer;
         private readonly WindowApi.OnKeyCallBack _onKey;
+        private readonly WindowApi.OnImeCallBack _onIme;
         private readonly WindowApi.OnWheelCallBack _onWheel;
 
         private IxenSurface _ixenSurface;
@@ -29,6 +30,7 @@ namespace Ixen.Platform.Windows
             _onPaint = OnPaint;
             _onPointer = OnPointer;
             _onKey = OnKey;
+            _onIme = OnIme;
             _onWheel = OnWheel;
             _windowPtr = WindowApi.CreateWindow(_ixenSurface.InitOptions.Title, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
@@ -49,6 +51,7 @@ namespace Ixen.Platform.Windows
             WindowApi.RegisterPaintCallBack(_windowPtr, _onPaint);
             WindowApi.RegisterPointerCallBack(_windowPtr, _onPointer);
             WindowApi.RegisterKeyCallBack(_windowPtr, _onKey);
+            WindowApi.RegisterImeCallBack(_windowPtr, _onIme);
             WindowApi.RegisterWheelCallBack(_windowPtr, _onWheel);
 
             return WindowApi.ShowWindow(_windowPtr);
@@ -59,6 +62,24 @@ namespace Ixen.Platform.Windows
         private void OnWheel(int x, int y, int deltaX, int deltaY, int modifiers)
             => _host.PointerWheel(x, y, deltaX / WHEEL_DELTA, deltaY / WHEEL_DELTA,
                 NativeKeys.ToModifiers(modifiers));
+
+        private void OnIme(int kind, string text, int caret)
+        {
+            switch ((NativeImeKind)kind)
+            {
+                case NativeImeKind.Update:
+                    _host.Composition(text, caret);
+                    break;
+
+                case NativeImeKind.Commit:
+                    _host.CommitComposition(text);
+                    break;
+
+                case NativeImeKind.Cancel:
+                    _host.CancelComposition();
+                    break;
+            }
+        }
 
         private void OnKey(int kind, int keyCode, int modifiers, int repeat)
         {

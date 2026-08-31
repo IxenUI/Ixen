@@ -452,7 +452,7 @@ namespace Ixen.Core.Visual.Computers
         private static void ClampFieldOffset(TextField field, float textWidth)
         {
             float contentWidth = field.ContentWidth;
-            float caret = field.OffsetAt(field.CaretIndex);
+            float caret = field.OffsetAt(field.DisplayCaret);
             float offset = field.ContentOffset;
 
             if (caret - offset > contentWidth)
@@ -481,7 +481,7 @@ namespace Ixen.Core.Visual.Computers
 
             field.CaretMoved = false;
 
-            float top = field.LineAt(field.CaretIndex) * field.LineHeight;
+            float top = field.LineAt(field.DisplayCaret) * field.LineHeight;
             float bottom = top + field.LineHeight;
 
             if (bottom - field.ScrollY > field.ContentHeight)

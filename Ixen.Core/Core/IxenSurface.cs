@@ -588,6 +588,17 @@ namespace Ixen.Core
         internal void TextInput(string text)
             => _keyboardDispatcher.TextInput(Root, text, TrackStates);
 
+        internal void Composition(string text, int caret)
+            => Composing?.SetComposition(text, caret);
+
+        internal void CommitComposition(string text)
+            => Composing?.CommitComposition(text);
+
+        internal void CancelComposition()
+            => Composing?.CancelComposition();
+
+        private TextField Composing => _keyboardDispatcher.Focused as TextField;
+
         private bool TrackStates => (Styles ?? StyleRegistry.Default).HasStateClasses;
 
         private float ToLogical(float deviceValue) => deviceValue / _scale;

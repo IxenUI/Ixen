@@ -6,12 +6,17 @@
 #include <map>
 #include <string>
 #include <GL/gl.h>
+#include <imm.h>
 
 #define IXEN_POINTER_MOVE 0
 #define IXEN_POINTER_DOWN 1
 #define IXEN_POINTER_UP 2
 #define IXEN_POINTER_LEAVE 3
 #define IXEN_POINTER_CAPTURELOST 4
+
+#define IXEN_IME_UPDATE 0
+#define IXEN_IME_COMMIT 1
+#define IXEN_IME_CANCEL 2
 
 #define IXEN_KEY_DOWN 0
 #define IXEN_KEY_UP 1
@@ -416,6 +421,66 @@ int NativeWindow::GetModifiers()
     return modifiers;
 }
 
+static std::wstring ReadComposition(HIMC context, DWORD which)
+{
+    LONG bytes = ImmGetCompositionStringW(context, which, nullptr, 0);
+
+    if (bytes <= 0)
+    {
+        return std::wstring();
+    }
+
+    std::wstring text(bytes / sizeof(wchar_t), L'\0');
+
+    ImmGetCompositionStringW(context, which, &text[0], bytes);
+
+    return text;
+}
+
+LRESULT NativeWindow::HandleComposition(LPARAM lParam)
+{
+    if (_imeCallBack == nullptr)
+    {
+        return 0;
+    }
+
+    HIMC context = ImmGetContext(_handle);
+
+    if (context == nullptr)
+    {
+        return 0;
+    }
+
+    if ((lParam & GCS_RESULTSTR) != 0)
+    {
+        std::wstring done = ReadComposition(context, GCS_RESULTSTR);
+
+        _imeCallBack(IXEN_IME_COMMIT, done.c_str(), 0);
+    }
+
+    if ((lParam & GCS_COMPSTR) != 0)
+    {
+        std::wstring running = ReadComposition(context, GCS_COMPSTR);
+        LONG caret = ImmGetCompositionStringW(context, GCS_CURSORPOS, nullptr, 0);
+
+        _imeCallBack(IXEN_IME_UPDATE, running.c_str(), caret < 0 ? 0 : (int)caret);
+    }
+
+    ImmReleaseContext(_handle, context);
+
+    return 0;
+}
+
+LRESULT NativeWindow::HandleEndComposition()
+{
+    if (_imeCallBack != nullptr)
+    {
+        _imeCallBack(IXEN_IME_CANCEL, L"", 0);
+    }
+
+    return 0;
+}
+
 LRESULT NativeWindow::HandleKey(int kind, WPARAM wParam, LPARAM lParam)
 {
     if (_keyCallBack != nullptr)
@@ -469,6 +534,11 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
         return HandleCaptureLost();
     case WM_DPICHANGED:
         return HandleDpiChanged(lParam);
+
+    case WM_IME_COMPOSITION:
+        return HandleComposition(lParam);
+    case WM_IME_ENDCOMPOSITION:
+        return HandleEndComposition();
 
     case WM_KEYDOWN:
         return HandleKey(IXEN_KEY_DOWN, wParam, lParam);

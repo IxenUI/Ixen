@@ -271,6 +271,54 @@ namespace Ixen.Platform
             }
         }
 
+        public void Composition(string text, int caret)
+        {
+            try
+            {
+                _surface.Composition(text, caret);
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Keyboard, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
+        }
+
+        public void CommitComposition(string text)
+        {
+            try
+            {
+                _surface.CommitComposition(WithoutControlCharacters(text));
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Keyboard, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
+        }
+
+        public void CancelComposition()
+        {
+            try
+            {
+                _surface.CancelComposition();
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Keyboard, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
+        }
+
         public void TextInput(string text)
         {
             string filtered = WithoutControlCharacters(text);

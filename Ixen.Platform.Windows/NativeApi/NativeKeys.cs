@@ -2,6 +2,13 @@ using Ixen.Core.Input;
 
 namespace Ixen.Platform.Windows.NativeApi
 {
+    internal enum NativeImeKind
+    {
+        Update = 0,
+        Commit = 1,
+        Cancel = 2
+    }
+
     internal enum NativeKeyKind
     {
         Down = 0,

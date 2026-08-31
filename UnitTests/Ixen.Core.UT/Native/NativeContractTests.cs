@@ -26,6 +26,10 @@ namespace Ixen.Core.UT.Native
             { "IXEN_BUTTON_MIDDLE", "Middle" },
             { "IXEN_BUTTON_RIGHT", "Right" },
 
+            { "IXEN_IME_UPDATE", "Update" },
+            { "IXEN_IME_COMMIT", "Commit" },
+            { "IXEN_IME_CANCEL", "Cancel" },
+
             { "IXEN_KEY_DOWN", "Down" },
             { "IXEN_KEY_UP", "Up" },
             { "IXEN_KEY_CHAR", "Char" },
@@ -51,6 +55,7 @@ namespace Ixen.Core.UT.Native
             { "_paintCallBack", "OnPaintCallBack" },
             { "_pointerCallBack", "OnPointerCallBack" },
             { "_keyCallBack", "OnKeyCallBack" },
+            { "_imeCallBack", "OnImeCallBack" },
             { "_wheelCallBack", "OnWheelCallBack" }
         };
 
@@ -62,14 +67,14 @@ namespace Ixen.Core.UT.Native
 
             foreach (KeyValuePair<string, string> pair in _callbacks)
             {
-                Match native = Regex.Match(header, Regex.Escape(pair.Key) + @"\)\(([^)]*)\)");
-                Match managed = Regex.Match(api, "delegate void " + pair.Value + @"\(([^)]*)\)");
+                int nativeAt = header.IndexOf(pair.Key + ")(", StringComparison.Ordinal);
+                int managedAt = api.IndexOf("delegate void " + pair.Value + "(", StringComparison.Ordinal);
 
-                Assert.IsTrue(native.Success, pair.Key + " is gone from native_window.h");
-                Assert.IsTrue(managed.Success, pair.Value + " is gone from WindowApi");
+                Assert.IsTrue(nativeAt >= 0, pair.Key + " is gone from native_window.h");
+                Assert.IsTrue(managedAt >= 0, pair.Value + " is gone from WindowApi");
 
-                int expected = Arity(native.Groups[1].Value);
-                int actual = Arity(managed.Groups[1].Value);
+                int expected = Arity(header, nativeAt + pair.Key.Length + 1);
+                int actual = Arity(api, managedAt);
 
                 Assert.AreEqual(expected, actual,
                     $"{pair.Key} takes {expected} arguments in native_window.h and {pair.Value} "
@@ -79,11 +84,50 @@ namespace Ixen.Core.UT.Native
             }
         }
 
-        private static int Arity(string parameters)
+        private static int Arity(string source, int from)
         {
-            string trimmed = parameters.Trim();
+            int open = source.IndexOf('(', from);
+            int depth = 0;
+            int commas = 0;
+            bool empty = true;
 
-            return trimmed.Length == 0 ? 0 : trimmed.Split(',').Length;
+            for (int index = open; index < source.Length; index++)
+            {
+                char c = source[index];
+
+                if (c == '(')
+                {
+                    depth++;
+                    continue;
+                }
+
+                if (c == ')')
+                {
+                    depth--;
+
+                    if (depth == 0)
+                    {
+                        return empty ? 0 : commas + 1;
+                    }
+
+                    continue;
+                }
+
+                if (!char.IsWhiteSpace(c))
+                {
+                    empty = false;
+                }
+
+                if (c == ',' && depth == 1)
+                {
+                    commas++;
+                }
+            }
+
+            Assert.Fail("unbalanced parentheses while reading an argument list; the parser needs "
+                + "updating rather than the declaration being reshaped to suit it");
+
+            return -1;
         }
 
         private static string Read(string relative)
@@ -144,6 +188,7 @@ namespace Ixen.Core.UT.Native
             ReadEnum(kinds, "NativePointerKind", found);
             ReadEnum(kinds, "NativePointerButton", found);
             ReadEnum(keys, "NativeKeyKind", found);
+            ReadEnum(keys, "NativeImeKind", found);
 
             foreach (Match match in Regex.Matches(keys, @"const int (MOD_[A-Z]+)\s*=\s*(\d+)"))
             {
@@ -174,6 +219,11 @@ namespace Ixen.Core.UT.Native
             if (define.StartsWith("IXEN_BUTTON_", StringComparison.Ordinal))
             {
                 return "NativePointerButton." + suffix;
+            }
+
+            if (define.StartsWith("IXEN_IME_", StringComparison.Ordinal))
+            {
+                return "NativeImeKind." + suffix;
             }
 
             if (define.StartsWith("IXEN_KEY_", StringComparison.Ordinal))

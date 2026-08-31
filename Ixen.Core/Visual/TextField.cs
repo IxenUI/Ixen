@@ -14,6 +14,9 @@ namespace Ixen.Core.Visual
         private const int UNDO_LIMIT = 100;
 
         private int _caret;
+        private string _composition = string.Empty;
+        private int _compositionCaret;
+
         private int _anchor;
 
         private char _passwordChar;
@@ -113,7 +116,11 @@ namespace Ixen.Core.Visual
             PointerDrag += OnPointerDrag;
             PointerDoubleClick += OnPointerDoubleClick;
             GotFocus += (sender, args) => StartBlink();
-            LostFocus += (sender, args) => StopBlink();
+            LostFocus += (sender, args) =>
+            {
+                CancelComposition();
+                StopBlink();
+            };
         }
 
         private const int BLINK_DELAY = 530;
@@ -225,10 +232,88 @@ namespace Ixen.Core.Visual
             }
         }
 
+        internal bool IsComposing => _composition.Length > 0;
+
+        internal int CompositionStart => _caret;
+
+        internal int CompositionLength => _composition.Length;
+
+        public void SetComposition(string text, int caret)
+        {
+            string composing = text ?? string.Empty;
+
+            if (!IsComposing && composing.Length > 0 && SelectionLength > 0)
+            {
+                string value = Value;
+                int start = SelectionStart;
+
+                Replace(value.Substring(0, start) + value.Substring(start + SelectionLength), start);
+            }
+
+            _composition = composing;
+            _compositionCaret = Clamp(caret, composing.Length);
+
+            AfterComposing();
+        }
+
+        public void CommitComposition(string text)
+        {
+            _composition = string.Empty;
+            _compositionCaret = 0;
+
+            if (string.IsNullOrEmpty(text))
+            {
+                AfterComposing();
+                return;
+            }
+
+            Insert(text);
+            AfterComposing();
+        }
+
+        public void CancelComposition()
+        {
+            if (!IsComposing)
+            {
+                return;
+            }
+
+            _composition = string.Empty;
+            _compositionCaret = 0;
+
+            AfterComposing();
+        }
+
+        private void AfterComposing()
+        {
+            CaretMoved = true;
+
+            ShowCaret();
+            InvalidateLayout();
+        }
+
         internal bool IsMasked => _passwordChar != '\0';
 
         internal string DisplayText
-            => IsMasked ? new string(_passwordChar, Value.Length) : Value;
+        {
+            get
+            {
+                string value = IsMasked ? new string(_passwordChar, Value.Length) : Value;
+
+                if (!IsComposing)
+                {
+                    return value;
+                }
+
+                string composing = IsMasked
+                    ? new string(_passwordChar, _composition.Length)
+                    : _composition;
+
+                return value.Insert(_caret, composing);
+            }
+        }
+
+        internal int DisplayCaret => _caret + _compositionCaret;
 
         internal bool ShowsPlaceholder
             => Value.Length == 0 && !string.IsNullOrEmpty(_placeholder);

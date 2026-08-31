@@ -6,6 +6,8 @@ namespace Ixen.Core.Rendering
 {
     internal class TextRenderer
     {
+        private const float UNDERLINE = 1f;
+
         private const byte SELECTION_ALPHA = 0x40;
         private const byte PLACEHOLDER_ALPHA = 0x80;
 
@@ -147,15 +149,40 @@ namespace Ixen.Core.Rendering
                 }
             }
 
+            if (field.IsComposing)
+            {
+                RenderComposition(field, x, top, lineHeight, context, handlers);
+            }
+
             if (field.CaretVisible && field.IsFocused)
             {
                 context.FillRectangle(
-                    x + field.OffsetAt(field.CaretIndex),
-                    top + field.LineAt(field.CaretIndex) * lineHeight,
+                    x + field.OffsetAt(field.DisplayCaret),
+                    top + field.LineAt(field.DisplayCaret) * lineHeight,
                     1, lineHeight, handlers.Color.Brush);
             }
 
             context.PopClip();
+        }
+
+        private void RenderComposition(TextField field, float x, float top, float lineHeight,
+            RendererContext context, VisualElementStylesHandlers handlers)
+        {
+            int start = field.CompositionStart;
+            int end = start + field.CompositionLength;
+
+            int line = field.LineAt(start);
+
+            if (line != field.LineAt(end))
+            {
+                end = field.LineEnd(line);
+            }
+
+            float left = x + field.OffsetAt(start);
+            float right = x + field.OffsetAt(end);
+
+            context.FillRectangle(left, top + (line + 1) * lineHeight - UNDERLINE,
+                right - left, UNDERLINE, handlers.Color.Brush);
         }
 
         private void RenderSelection(TextField field, int line, int selectionStart, int selectionEnd,
