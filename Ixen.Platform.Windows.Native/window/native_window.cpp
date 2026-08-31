@@ -416,11 +416,13 @@ int NativeWindow::GetModifiers()
     return modifiers;
 }
 
-LRESULT NativeWindow::HandleKey(int kind, WPARAM wParam)
+LRESULT NativeWindow::HandleKey(int kind, WPARAM wParam, LPARAM lParam)
 {
     if (_keyCallBack != nullptr)
     {
-        _keyCallBack(kind, (int)wParam, GetModifiers());
+        int repeat = (lParam & (1 << 30)) != 0 ? 1 : 0;
+
+        _keyCallBack(kind, (int)wParam, GetModifiers(), repeat);
     }
 
     return 0;
@@ -469,17 +471,17 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
         return HandleDpiChanged(lParam);
 
     case WM_KEYDOWN:
-        return HandleKey(IXEN_KEY_DOWN, wParam);
+        return HandleKey(IXEN_KEY_DOWN, wParam, lParam);
     case WM_KEYUP:
-        return HandleKey(IXEN_KEY_UP, wParam);
+        return HandleKey(IXEN_KEY_UP, wParam, lParam);
     case WM_CHAR:
-        return HandleKey(IXEN_KEY_CHAR, wParam);
+        return HandleKey(IXEN_KEY_CHAR, wParam, lParam);
 
     case WM_SYSKEYDOWN:
-        HandleKey(IXEN_KEY_DOWN, wParam);
+        HandleKey(IXEN_KEY_DOWN, wParam, lParam);
         break;
     case WM_SYSKEYUP:
-        HandleKey(IXEN_KEY_UP, wParam);
+        HandleKey(IXEN_KEY_UP, wParam, lParam);
         break;
 
     case WM_SETCURSOR:

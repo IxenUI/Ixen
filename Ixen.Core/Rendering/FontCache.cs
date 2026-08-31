@@ -14,7 +14,7 @@ namespace Ixen.Core.Rendering
 
         private static readonly Dictionary<(SKTypeface face, float size), SKFont> _fallbacks = new();
 
-        private static readonly Dictionary<(SKTypeface face, int codepoint), bool> _covers = new();
+        private static readonly Dictionary<(SKFont font, int codepoint), bool> _covers = new();
 
         internal static SKFont Get(FontSpec spec)
         {
@@ -47,7 +47,7 @@ namespace Ixen.Core.Rendering
                 return font;
             }
 
-            int missing = FirstUncovered(font.Typeface, text);
+            int missing = FirstUncovered(font, text);
 
             if (missing < 0)
             {
@@ -75,9 +75,9 @@ namespace Ixen.Core.Rendering
             return false;
         }
 
-        private static int FirstUncovered(SKTypeface typeface, string text)
+        private static int FirstUncovered(SKFont font, string text)
         {
-            if (typeface == null)
+            if (font?.Typeface == null)
             {
                 return -1;
             }
@@ -100,7 +100,7 @@ namespace Ixen.Core.Rendering
                     index++;
                 }
 
-                if (!Covers(typeface, codepoint))
+                if (!Covers(font, codepoint))
                 {
                     return codepoint;
                 }
@@ -109,16 +109,16 @@ namespace Ixen.Core.Rendering
             return -1;
         }
 
-        private static bool Covers(SKTypeface typeface, int codepoint)
+        private static bool Covers(SKFont font, int codepoint)
         {
-            (SKTypeface, int) key = (typeface, codepoint);
+            (SKFont, int) key = (font, codepoint);
 
             if (_covers.TryGetValue(key, out bool covered))
             {
                 return covered;
             }
 
-            covered = typeface.ContainsGlyph(codepoint);
+            covered = font.ContainsGlyph(codepoint);
             _covers[key] = covered;
 
             return covered;

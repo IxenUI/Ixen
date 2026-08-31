@@ -551,11 +551,11 @@ namespace Ixen.Core
             DamageFocusChange(before);
         }
 
-        internal void KeyDown(Key key, KeyModifiers modifiers)
+        internal void KeyDown(Key key, KeyModifiers modifiers, bool? isRepeat = null)
         {
             VisualElement before = _keyboardDispatcher.Focused;
 
-            _keyboardDispatcher.KeyDown(Root, key, modifiers, TrackStates);
+            _keyboardDispatcher.KeyDown(Root, key, modifiers, TrackStates, isRepeat);
 
             DamageFocusChange(before);
         }

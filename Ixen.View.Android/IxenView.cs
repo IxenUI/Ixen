@@ -177,7 +177,7 @@ namespace Ixen.View.Android
             switch (e.Action)
             {
                 case KeyEventActions.Down:
-                    _host.KeyDown(AndroidKeys.ToKey(e.KeyCode), modifiers);
+                    _host.KeyDown(AndroidKeys.ToKey(e.KeyCode), modifiers, e.RepeatCount > 0);
 
                     int unicode = e.UnicodeChar;
 

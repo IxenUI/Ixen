@@ -60,12 +60,12 @@ namespace Ixen.Platform.Windows
             => _host.PointerWheel(x, y, deltaX / WHEEL_DELTA, deltaY / WHEEL_DELTA,
                 NativeKeys.ToModifiers(modifiers));
 
-        private void OnKey(int kind, int keyCode, int modifiers)
+        private void OnKey(int kind, int keyCode, int modifiers, int repeat)
         {
             switch ((NativeKeyKind)kind)
             {
                 case NativeKeyKind.Down:
-                    _host.KeyDown(NativeKeys.ToKey(keyCode), NativeKeys.ToModifiers(modifiers));
+                    _host.KeyDown(NativeKeys.ToKey(keyCode), NativeKeys.ToModifiers(modifiers), repeat != 0);
                     break;
 
                 case NativeKeyKind.Up:

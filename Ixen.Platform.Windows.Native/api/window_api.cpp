@@ -71,7 +71,7 @@ void WA_RegisterPointerCallBack(NativeWindow* window, void __stdcall callBack(in
     window->SetOnPointerCallBack(callBack);
 }
 
-void WA_RegisterKeyCallBack(NativeWindow* window, void __stdcall callBack(int, int, int))
+void WA_RegisterKeyCallBack(NativeWindow* window, void __stdcall callBack(int, int, int, int))
 {
     if (!window)
     {

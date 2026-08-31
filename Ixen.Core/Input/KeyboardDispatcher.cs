@@ -99,7 +99,8 @@ namespace Ixen.Core.Input
             }
         }
 
-        internal void KeyDown(VisualElement root, Key key, KeyModifiers modifiers, bool trackStates)
+        internal void KeyDown(VisualElement root, Key key, KeyModifiers modifiers, bool trackStates,
+            bool? isRepeat = null)
         {
             _trackStates = trackStates;
 
@@ -110,7 +111,9 @@ namespace Ixen.Core.Input
                 return;
             }
 
-            var args = new KeyEventArgs(key, modifiers, target, PressAndTellIfRepeat(key));
+            bool derived = PressAndTellIfRepeat(key);
+
+            var args = new KeyEventArgs(key, modifiers, target, isRepeat ?? derived);
 
             for (VisualElement element = target; element != null; element = element.Parent)
             {

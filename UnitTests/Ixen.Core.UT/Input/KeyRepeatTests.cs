@@ -141,6 +141,39 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void AHostThatKnowsBetterIsBelieved()
+        {
+            _surface.KeyDown(Key.A, KeyModifiers.None, isRepeat: true);
+
+            Assert.AreEqual("repeat:A", Log,
+                "Win32 carries the previous key state in bit 30 of lParam and Android has "
+                + "KeyEvent.RepeatCount; both are more authoritative than deriving it from the "
+                + "event stream, so when the platform speaks it wins");
+        }
+
+        [TestMethod]
+        public void AHostThatSaysItIsFreshIsBelievedToo()
+        {
+            Down(Key.A);
+            _surface.KeyDown(Key.A, KeyModifiers.None, isRepeat: false);
+
+            Assert.AreEqual("down:A down:A", Log,
+                "this is the case the derivation gets wrong after a lost window focus: the "
+                + "KeyUp was never delivered, so the table still thinks the key is held");
+        }
+
+        [TestMethod]
+        public void TheTableIsKeptFedEvenWhenTheHostSpeaks()
+        {
+            _surface.KeyDown(Key.A, KeyModifiers.None, isRepeat: false);
+            Down(Key.A);
+
+            Assert.AreEqual("down:A repeat:A", Log,
+                "the derivation has to keep running under the platform's answer, or a host "
+                + "that stops supplying one hands back a table that forgot everything");
+        }
+
+        [TestMethod]
         public void AnUnknownKeyIsNeverARepeat()
         {
             Down(Key.None);

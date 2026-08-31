@@ -43,6 +43,49 @@ namespace Ixen.Core.UT.Native
             { "IXEN_CURSOR_RESIZE_V", "ResizeVertical" }
         };
 
+        private const string HEADER = @"Ixen.Platform.Windows.Native\window\native_window.h";
+        private const string API = @"Ixen.Platform.Windows\NativeApi\WindowApi.cs";
+
+        private static readonly Dictionary<string, string> _callbacks = new Dictionary<string, string>
+        {
+            { "_paintCallBack", "OnPaintCallBack" },
+            { "_pointerCallBack", "OnPointerCallBack" },
+            { "_keyCallBack", "OnKeyCallBack" },
+            { "_wheelCallBack", "OnWheelCallBack" }
+        };
+
+        [TestMethod]
+        public void EveryCallbackTakesTheSameNumberOfArguments()
+        {
+            string header = Read(HEADER);
+            string api = Read(API);
+
+            foreach (KeyValuePair<string, string> pair in _callbacks)
+            {
+                Match native = Regex.Match(header, Regex.Escape(pair.Key) + @"\)\(([^)]*)\)");
+                Match managed = Regex.Match(api, "delegate void " + pair.Value + @"\(([^)]*)\)");
+
+                Assert.IsTrue(native.Success, pair.Key + " is gone from native_window.h");
+                Assert.IsTrue(managed.Success, pair.Value + " is gone from WindowApi");
+
+                int expected = Arity(native.Groups[1].Value);
+                int actual = Arity(managed.Groups[1].Value);
+
+                Assert.AreEqual(expected, actual,
+                    $"{pair.Key} takes {expected} arguments in native_window.h and {pair.Value} "
+                    + $"takes {actual} in WindowApi. Widening one without the other is not a "
+                    + "compile error on either side: the managed delegate simply reads whatever "
+                    + "is on the stack past what the C++ pushed.");
+            }
+        }
+
+        private static int Arity(string parameters)
+        {
+            string trimmed = parameters.Trim();
+
+            return trimmed.Length == 0 ? 0 : trimmed.Split(',').Length;
+        }
+
         private static string Read(string relative)
         {
             var directory = new DirectoryInfo(AppContext.BaseDirectory);
