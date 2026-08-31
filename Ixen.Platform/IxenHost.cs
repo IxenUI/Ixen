@@ -4,6 +4,7 @@ using Ixen.Core.Visual;
 using Ixen.Core.Visual.Styles.Descriptors;
 using SkiaSharp;
 using System;
+using System.Runtime.ExceptionServices;
 using System.Text;
 
 namespace Ixen.Platform
@@ -54,9 +55,45 @@ namespace Ixen.Platform
             public IDisposable Schedule(int delayMilliseconds, bool repeat, Action callback)
                 => _inner.Schedule(delayMilliseconds, repeat, () =>
                 {
-                    callback();
-                    _host.RepaintIfDirty();
+                    try
+                    {
+                        callback();
+                    }
+                    catch (Exception error)
+                    {
+                        _host.Fail(IxenErrorPhase.Timer, error);
+                    }
+                    finally
+                    {
+                        _host.RepaintIfDirty();
+                    }
                 });
+        }
+
+        public event EventHandler<IxenErrorEventArgs> UnhandledError;
+
+        private bool Report(IxenErrorPhase phase, Exception error)
+        {
+            EventHandler<IxenErrorEventArgs> handler = UnhandledError;
+
+            if (handler == null)
+            {
+                return false;
+            }
+
+            var args = new IxenErrorEventArgs(phase, error);
+
+            handler(this, args);
+
+            return args.Handled;
+        }
+
+        private void Fail(IxenErrorPhase phase, Exception error)
+        {
+            if (!Report(phase, error))
+            {
+                ExceptionDispatchInfo.Capture(error).Throw();
+            }
         }
 
         public IxenSurface Surface => _surface;
@@ -74,67 +111,164 @@ namespace Ixen.Platform
                 return;
             }
 
-            _surface.ComputeLayout(width, height);
-            _surface.Render(canvas);
+            try
+            {
+                _surface.ComputeLayout(width, height);
+                _surface.Render(canvas);
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Frame, error);
+            }
         }
 
         public void PointerMove(float x, float y, PointerKind kind = PointerKind.Mouse)
         {
-            _surface.PointerMove(x, y, kind);
-            RepaintIfDirty();
+            try
+            {
+                _surface.PointerMove(x, y, kind);
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Pointer, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
         }
 
         public void PointerDown(float x, float y, PointerButton button,
             PointerKind kind = PointerKind.Mouse)
         {
-            _surface.PointerDown(x, y, button, kind);
-            RepaintIfDirty();
+            try
+            {
+                _surface.PointerDown(x, y, button, kind);
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Pointer, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
         }
 
         public void PointerUp(float x, float y, PointerButton button,
             PointerKind kind = PointerKind.Mouse)
         {
-            _surface.PointerUp(x, y, button, kind);
-            RepaintIfDirty();
+            try
+            {
+                _surface.PointerUp(x, y, button, kind);
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Pointer, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
         }
 
         public void PointerWheel(float x, float y, float deltaX, float deltaY,
             KeyModifiers modifiers = KeyModifiers.None)
         {
-            _surface.PointerWheel(x, y, deltaX, deltaY, modifiers);
-            RepaintIfDirty();
+            try
+            {
+                _surface.PointerWheel(x, y, deltaX, deltaY, modifiers);
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Pointer, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
         }
 
         public void PointerLeave()
         {
-            _surface.PointerLeaveSurface();
-            RepaintIfDirty();
+            try
+            {
+                _surface.PointerLeaveSurface();
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Pointer, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
         }
 
         public void PointerCaptureLost()
         {
-            _surface.PointerCaptureLost();
-            RepaintIfDirty();
+            try
+            {
+                _surface.PointerCaptureLost();
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Pointer, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
         }
 
         public VisualElement FocusedElement => _surface.FocusedElement;
 
         public void Focus(VisualElement element)
         {
-            _surface.Focus(element);
-            RepaintIfDirty();
+            try
+            {
+                _surface.Focus(element);
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Keyboard, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
         }
 
         public void KeyDown(Key key, KeyModifiers modifiers)
         {
-            _surface.KeyDown(key, modifiers);
-            RepaintIfDirty();
+            try
+            {
+                _surface.KeyDown(key, modifiers);
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Keyboard, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
         }
 
         public void KeyUp(Key key, KeyModifiers modifiers)
         {
-            _surface.KeyUp(key, modifiers);
-            RepaintIfDirty();
+            try
+            {
+                _surface.KeyUp(key, modifiers);
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Keyboard, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
         }
 
         public void TextInput(string text)
@@ -146,8 +280,18 @@ namespace Ixen.Platform
                 return;
             }
 
-            _surface.TextInput(filtered);
-            RepaintIfDirty();
+            try
+            {
+                _surface.TextInput(filtered);
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Keyboard, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
         }
 
         private static string WithoutControlCharacters(string text)
