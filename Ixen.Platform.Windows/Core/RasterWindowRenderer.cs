@@ -8,6 +8,11 @@ namespace Ixen.Platform.Windows
     {
         private readonly PixelBuffer _pixelBuffer = new PixelBuffer();
 
+        private SKSurface _surface;
+        private IntPtr _pixels;
+        private int _width;
+        private int _height;
+
         public RasterWindowRenderer(IntPtr window)
             : base(window)
         {
@@ -21,31 +26,42 @@ namespace Ixen.Platform.Windows
         {
             _pixelBuffer.EnsureAlloc(width, height);
 
-            var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
-            bool painted = false;
+            SKSurface surface = Surface(width, height);
 
-            try
+            if (surface == null)
             {
-                using (SKSurface surface = SKSurface.Create(info, _pixelBuffer.Ptr, _pixelBuffer.RowBytes))
-                {
-                    if (surface != null)
-                    {
-                        render(surface.Canvas);
-                        painted = true;
-                    }
-                }
+                return;
             }
-            finally
+
+            render(surface.Canvas);
+
+            WindowApi.SetWindowPixelsBuffer(Window, _pixelBuffer.Ptr);
+        }
+
+        private SKSurface Surface(int width, int height)
+        {
+            if (_surface != null && width == _width && height == _height
+                && _pixelBuffer.Ptr == _pixels)
             {
-                if (painted)
-                {
-                    WindowApi.SetWindowPixelsBuffer(Window, _pixelBuffer.Ptr);
-                }
+                return _surface;
             }
+
+            _surface?.Dispose();
+
+            var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
+
+            _surface = SKSurface.Create(info, _pixelBuffer.Ptr, _pixelBuffer.RowBytes);
+            _pixels = _pixelBuffer.Ptr;
+            _width = width;
+            _height = height;
+
+            return _surface;
         }
 
         public override void Dispose()
         {
+            _surface?.Dispose();
+            _surface = null;
             _pixelBuffer.Dispose();
         }
     }
