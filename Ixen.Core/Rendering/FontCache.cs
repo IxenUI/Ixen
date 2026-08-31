@@ -165,8 +165,6 @@ namespace Ixen.Core.Rendering
 
             _faces[key] = face;
 
-            System.Console.Error.WriteLine( FALLBACK U+{codepoint:X4} family={spec.Family} -> {(face == null ? "none" : face.FamilyName)}");
-
             return face;
         }
     }
