@@ -1,28 +1,29 @@
-using System.Runtime.CompilerServices;
+using Ixen.Core.Visual.Styles.Descriptors;
+using System;
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
     internal static class HandlerCache<TDescriptor, THandler>
-        where TDescriptor : class
+        where TDescriptor : StyleDescriptor
         where THandler : class
     {
-        private static readonly ConditionalWeakTable<TDescriptor, THandler> _built =
-            new ConditionalWeakTable<TDescriptor, THandler>();
-
-        internal static THandler For(TDescriptor descriptor,
-            ConditionalWeakTable<TDescriptor, THandler>.CreateValueCallback create)
+        internal static THandler For(TDescriptor descriptor, Func<TDescriptor, THandler> create)
         {
             if (descriptor == null)
             {
                 return create(null);
             }
 
-            if (_built.TryGetValue(descriptor, out THandler handler))
+            if (descriptor.Handler is THandler handler)
             {
                 return handler;
             }
 
-            return _built.GetValue(descriptor, create);
+            THandler built = create(descriptor);
+
+            descriptor.Handler = built;
+
+            return built;
         }
     }
 }

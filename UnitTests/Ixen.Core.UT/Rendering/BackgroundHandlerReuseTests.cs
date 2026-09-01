@@ -196,5 +196,58 @@ namespace Ixen.Core.UT.Rendering
                     + $"compares the gradient's contents and not just its reference; got {pixel}");
             }
         }
+        [TestMethod]
+        public void MutatingAFilterInPlaceStillRepaints()
+        {
+            var registry = new StyleRegistry();
+
+            var sheet = new XnsSource("panel { background: #0000FF  filter: blur(0.01px) }");
+            ClassesSet set = sheet.Compile();
+
+            Assert.IsFalse(sheet.HasErrors, string.Join(" | ", sheet.Diagnostics.Select(d => d.Message)));
+            registry.Add(set);
+
+            var root = new VisualElement { Name = "root" };
+            root.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
+            var spacer = new VisualElement { Name = "spacer" };
+            spacer.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 40 };
+            root.AddChild(spacer);
+
+            var panel = new VisualElement { Name = "panel" };
+            panel.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 60 };
+            root.AddChild(panel);
+
+            var surface = new IxenSurface(root) { Styles = registry };
+
+            surface.ComputeLayout(200, 200);
+
+            using (SkiaSharp.SKBitmap first = surface.RenderToBitmap())
+            {
+                SkiaSharp.SKColor above = first.GetPixel(100, 34);
+
+                Assert.IsTrue(above.Alpha < 20,
+                    "a radius of nothing leaves the edge hard, so the row above the panel is "
+                    + $"untouched; got {above}");
+            }
+
+            StyleClass rule = registry.GetGlobalElementClass("panel");
+            var filter = rule.Styles.OfType<FilterStyleDescriptor>().Single();
+
+            filter.Operations[0].Value = 6f;
+
+            root.Invalidate();
+            surface.ComputeLayout(200, 200);
+
+            using (SkiaSharp.SKBitmap second = surface.RenderToBitmap())
+            {
+                SkiaSharp.SKColor above = second.GetPixel(100, 34);
+
+                Assert.IsTrue(above.Alpha > 20,
+                    "a radius mutated in place must rebuild the chain, which is why the cache "
+                    + "compares the operations by content and not just the descriptor by "
+                    + $"reference; got {above}");
+            }
+        }
+
     }
 }

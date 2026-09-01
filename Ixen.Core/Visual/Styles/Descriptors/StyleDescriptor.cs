@@ -7,6 +7,8 @@ namespace Ixen.Core.Visual.Styles.Descriptors
     {
         internal abstract string Identifier { get; }
 
+        internal object Handler;
+
         internal virtual bool CanGenerateSource { get; } = false;
         internal virtual string ToSource() => string.Empty;
 

@@ -1,6 +1,5 @@
 using Ixen.Core.Rendering;
 using Ixen.Core.Visual.Styles.Descriptors;
-using System.Runtime.CompilerServices;
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
@@ -12,9 +11,6 @@ namespace Ixen.Core.Visual.Styles.Handlers
         public Brush Brush { get; private set; }
 
         private readonly string _valueSource;
-
-        private static readonly ConditionalWeakTable<ColorStyleDescriptor, ColorStyleHandler> _built =
-            new ConditionalWeakTable<ColorStyleDescriptor, ColorStyleHandler>();
 
         public ColorStyleHandler()
             : this(new())
@@ -36,7 +32,7 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
         internal static ColorStyleHandler For(ColorStyleDescriptor descriptor)
         {
-            if (_built.TryGetValue(descriptor, out ColorStyleHandler handler)
+            if (descriptor.Handler is ColorStyleHandler handler
                 && handler._valueSource == descriptor.Value)
             {
                 return handler;
@@ -44,8 +40,7 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
             handler = new ColorStyleHandler(descriptor);
 
-            _built.Remove(descriptor);
-            _built.Add(descriptor, handler);
+            descriptor.Handler = handler;
 
             return handler;
         }

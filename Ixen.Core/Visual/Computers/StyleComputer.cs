@@ -782,7 +782,7 @@ namespace Ixen.Core.Visual.Computers
                 && !string.IsNullOrWhiteSpace(descriptor.Color);
 
         private static THandler Cached<TDescriptor, THandler>(StyleDescriptor style,
-            ConditionalWeakTable<TDescriptor, THandler>.CreateValueCallback create)
+            Func<TDescriptor, THandler> create)
             where TDescriptor : StyleDescriptor
             where THandler : class
             => HandlerCache<TDescriptor, THandler>.For((TDescriptor)style, create);

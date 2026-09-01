@@ -1,6 +1,5 @@
 ﻿using Ixen.Core.Rendering;
 using Ixen.Core.Visual.Styles.Descriptors;
-using System.Runtime.CompilerServices;
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
@@ -14,9 +13,6 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
         private readonly string _colorSource;
         private readonly Gradient _gradientSnapshot;
-
-        private static readonly ConditionalWeakTable<BackgroundStyleDescriptor, BackgroundStyleHandler> _built =
-            new ConditionalWeakTable<BackgroundStyleDescriptor, BackgroundStyleHandler>();
 
         public BackgroundStyleHandler()
             : this(new())
@@ -39,15 +35,14 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
         internal static BackgroundStyleHandler For(BackgroundStyleDescriptor descriptor)
         {
-            if (_built.TryGetValue(descriptor, out BackgroundStyleHandler handler) && handler.IsCurrent)
+            if (descriptor.Handler is BackgroundStyleHandler handler && handler.IsCurrent)
             {
                 return handler;
             }
 
             handler = new BackgroundStyleHandler(descriptor);
 
-            _built.Remove(descriptor);
-            _built.Add(descriptor, handler);
+            descriptor.Handler = handler;
 
             return handler;
         }

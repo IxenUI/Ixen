@@ -1,6 +1,5 @@
 using Ixen.Core.Rendering;
 using Ixen.Core.Visual.Styles.Descriptors;
-using System.Runtime.CompilerServices;
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
@@ -10,9 +9,6 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
         private readonly FilterChain _chain;
         private readonly FilterStyleDescriptor _snapshot;
-
-        private static readonly ConditionalWeakTable<FilterStyleDescriptor, FilterStyleHandler> _built =
-            new ConditionalWeakTable<FilterStyleDescriptor, FilterStyleHandler>();
 
         public FilterStyleHandler()
             : this(new())
@@ -32,7 +28,7 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
         internal static FilterStyleHandler For(FilterStyleDescriptor descriptor)
         {
-            if (_built.TryGetValue(descriptor, out FilterStyleHandler handler)
+            if (descriptor.Handler is FilterStyleHandler handler
                 && handler._snapshot.SameAs(descriptor))
             {
                 return handler;
@@ -40,8 +36,7 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
             handler = new FilterStyleHandler(descriptor);
 
-            _built.Remove(descriptor);
-            _built.Add(descriptor, handler);
+            descriptor.Handler = handler;
 
             return handler;
         }
