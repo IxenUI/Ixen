@@ -119,6 +119,8 @@ namespace Ixen.Core.Visual
 
         private float _scrollX;
         private float _scrollY;
+        private float _overscrollX;
+        private float _overscrollY;
 
         public float ScrollX
         {
@@ -130,6 +132,23 @@ namespace Ixen.Core.Visual
         {
             get => _scrollY;
             set => SetScroll(_scrollX, value);
+        }
+
+        public float OverscrollX => _overscrollX;
+
+        public float OverscrollY => _overscrollY;
+
+        internal void SetOverscroll(float x, float y)
+        {
+            if (_overscrollX == x && _overscrollY == y)
+            {
+                return;
+            }
+
+            _overscrollX = x;
+            _overscrollY = y;
+
+            InvalidateLayout();
         }
 
         internal float ScrollExtentWidth { get; set; }
@@ -188,6 +207,12 @@ namespace Ixen.Core.Visual
         {
             _scrollX = Clamp(_scrollX, MaxScrollX);
             _scrollY = Clamp(_scrollY, MaxScrollY);
+
+            if (!Scrollable)
+            {
+                _overscrollX = 0f;
+                _overscrollY = 0f;
+            }
         }
 
         private static float Clamp(float value, float max)
@@ -382,10 +407,10 @@ namespace Ixen.Core.Visual
         public string AccessibleValue { get; set; }
 
         public float ContentX
-            => X + PaddingLeft + BorderInsideLeft - ScrollX;
+            => X + PaddingLeft + BorderInsideLeft - ScrollX - _overscrollX;
 
         public float ContentY
-            => Y + PaddingTop + BorderInsideTop - ScrollY;
+            => Y + PaddingTop + BorderInsideTop - ScrollY - _overscrollY;
 
         internal bool IsAnchored
             => AnchorElement != null

@@ -252,7 +252,7 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
-        public void ItStopsAtTheEndOfTheContent()
+        public void ItBouncesAtTheEndOfTheContent()
         {
             _viewport.ScrollY = _viewport.MaxScrollY - 4;
 
@@ -260,10 +260,18 @@ namespace Ixen.Core.UT.Input
 
             Flick(170, 50);
 
-            Ticks(30);
+            Ticks(3);
 
             Assert.AreEqual(_viewport.MaxScrollY, _viewport.ScrollY,
-                "the clamp holds it, and the fling gives up rather than ticking against the edge");
+                "the offset itself never leaves its range, whatever the throw carried");
+
+            Assert.IsTrue(_viewport.OverscrollY > 0f,
+                "what is left of the throw pulls the content past the edge; this test used to "
+                + "pin the fling giving up there instead");
+
+            Ticks(60);
+
+            Assert.AreEqual(0f, _viewport.OverscrollY, "and the band brings it back");
             Assert.AreEqual(0, _scheduler.PendingCount);
         }
 

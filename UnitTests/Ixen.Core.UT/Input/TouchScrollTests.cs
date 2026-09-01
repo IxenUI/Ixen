@@ -199,7 +199,7 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
-        public void AContainerAtItsEndDoesNotSwallowTheGesture()
+        public void AContainerAtItsEndTakesTheGestureAndPulls()
         {
             _viewport.ScrollY = _viewport.MaxScrollY;
             _surface.ComputeLayout(VIEWPORT, VIEWPORT);
@@ -212,8 +212,37 @@ namespace Ixen.Core.UT.Input
             _surface.PointerMove(20, 10, PointerKind.Touch);
             _surface.PointerMove(20, 5, PointerKind.Touch);
 
+            Assert.IsTrue(_viewport.OverscrollY > 0f,
+                "this used to hand the gesture back as an ordinary drag because nothing could "
+                + "move; the edge pulls now, which is what every phone does");
+
+            CollectionAssert.DoesNotContain(log, "drag");
+        }
+
+        [TestMethod]
+        public void UnlessItRefusesToBounce()
+        {
+            _viewport.Styles.Overscroll = new OverscrollStyleDescriptor
+            {
+                Value = OverscrollKind.None
+            };
+
+            _viewport.Invalidate();
+
+            _viewport.ScrollY = _viewport.MaxScrollY;
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            var log = new List<string>();
+
+            _viewport.PointerDrag += (sender, e) => log.Add("drag");
+
+            _surface.PointerDown(20, 60, PointerButton.Left, PointerKind.Touch);
+            _surface.PointerMove(20, 10, PointerKind.Touch);
+            _surface.PointerMove(20, 5, PointerKind.Touch);
+
             CollectionAssert.Contains(log, "drag",
-                "it cannot move further in that direction, so the gesture is not a scroll");
+                "none is how the old behaviour is asked for: no band, so a gesture the list "
+                + "cannot use is left to whatever is under the finger");
         }
 
         [TestMethod]

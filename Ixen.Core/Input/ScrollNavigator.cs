@@ -37,6 +37,37 @@ namespace Ixen.Core.Input
             return null;
         }
 
+        internal static VisualElement Bouncer(VisualElement from, float offsetX, float offsetY)
+        {
+            for (VisualElement element = from; element != null; element = element.Parent)
+            {
+                if (!element.Scrollable)
+                {
+                    continue;
+                }
+
+                if (Bounces(element) && Overflows(element, offsetX, offsetY))
+                {
+                    return element;
+                }
+
+                if (Contains(element))
+                {
+                    return null;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool Overflows(VisualElement element, float offsetX, float offsetY)
+            => (offsetY != 0f && element.MaxScrollY > 0f)
+                || (offsetX != 0f && element.MaxScrollX > 0f);
+
+        internal static bool Bounces(VisualElement element)
+            => element.StylesHandlers == null
+                || element.StylesHandlers.Overscroll.Descriptor.Bounces;
+
         private static bool Contains(VisualElement element)
             => element.StylesHandlers != null
                 && element.StylesHandlers.Overscroll.Descriptor.Contains;

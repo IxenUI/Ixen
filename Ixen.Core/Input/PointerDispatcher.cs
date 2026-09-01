@@ -20,6 +20,10 @@ namespace Ixen.Core.Input
         private const float FLING_STOP_VELOCITY = 0.02f;
         private const float FLING_FRICTION = 0.94f;
         private const float FLING_MAX_VELOCITY = 4f;
+        private const float OVERSCROLL_LIMIT = 0.4f;
+        private const float OVERSCROLL_FRICTION = 0.5f;
+        private const float OVERSCROLL_RETURN = 0.82f;
+        private const float OVERSCROLL_MIN = 0.5f;
         private const float VELOCITY_WEIGHT = 0.6f;
 
         private readonly List<VisualElement> _leftChain = new();
@@ -46,6 +50,8 @@ namespace Ixen.Core.Input
         private IDisposable _fling;
         private float _velocityX;
         private float _velocityY;
+        private float _overscrollX;
+        private float _overscrollY;
         private long _panTime;
 
         private VisualElement _scrollLatch;
@@ -398,6 +404,8 @@ namespace Ixen.Core.Input
 
             _velocityX = 0f;
             _velocityY = 0f;
+            _overscrollX = 0f;
+            _overscrollY = 0f;
             _panTime = TimeSource.Milliseconds;
 
             Pan(x, y);
@@ -406,14 +414,15 @@ namespace Ixen.Core.Input
         }
 
         private static VisualElement PanTarget(VisualElement from, float offsetX, float offsetY)
-            => ScrollNavigator.Find(from, offsetX, offsetY);
+            => ScrollNavigator.Find(from, offsetX, offsetY)
+                ?? ScrollNavigator.Bouncer(from, offsetX, offsetY);
 
         private void Pan(float x, float y)
         {
             float offsetX = _lastDragX - x;
             float offsetY = _lastDragY - y;
 
-            _panning.ScrollBy(offsetX, offsetY);
+            Push(_panning, offsetX, offsetY);
 
             TrackVelocity(offsetX, offsetY);
 
@@ -449,15 +458,94 @@ namespace Ixen.Core.Input
             return blended < -FLING_MAX_VELOCITY ? -FLING_MAX_VELOCITY : blended;
         }
 
+        private bool Overscrolled => _overscrollX != 0f || _overscrollY != 0f;
+
+        private void Push(VisualElement target, float offsetX, float offsetY)
+        {
+            bool bounces = ScrollNavigator.Bounces(target);
+
+            float scrollX = Absorb(ref _overscrollX, offsetX, target.ScrollX, target.MaxScrollX, bounces);
+            float scrollY = Absorb(ref _overscrollY, offsetY, target.ScrollY, target.MaxScrollY, bounces);
+
+            target.ScrollBy(scrollX, scrollY);
+
+            ApplyOverscroll(target);
+        }
+
+        private static float Absorb(ref float raw, float offset, float scroll, float max, bool bounces)
+        {
+            offset += raw;
+            raw = 0f;
+
+            float take;
+
+            if (offset > 0f)
+            {
+                float room = max - scroll;
+                take = offset < room ? offset : room;
+            }
+            else
+            {
+                float room = -scroll;
+                take = offset > room ? offset : room;
+            }
+
+            if (bounces)
+            {
+                raw = offset - take;
+            }
+
+            return take;
+        }
+
+        private void ApplyOverscroll(VisualElement target)
+            => target.SetOverscroll(Rubber(_overscrollX, target.ContentWidth),
+                Rubber(_overscrollY, target.ContentHeight));
+
+        private static float Rubber(float distance, float dimension)
+        {
+            if (distance == 0f || dimension <= 0f)
+            {
+                return 0f;
+            }
+
+            float limit = dimension * OVERSCROLL_LIMIT;
+            float magnitude = distance < 0f ? -distance : distance;
+            float mapped = magnitude / (magnitude + limit) * limit;
+
+            return distance < 0f ? -mapped : mapped;
+        }
+
+        private static float Recoil(float raw)
+        {
+            float next = raw * OVERSCROLL_RETURN;
+
+            return next < OVERSCROLL_MIN && next > -OVERSCROLL_MIN ? 0f : next;
+        }
+
         private void StartFling(VisualElement target)
         {
-            StopFling();
-
-            if (Scheduler == null || target == null
-                || (Math.Abs(_velocityX) < FLING_MIN_VELOCITY
-                    && Math.Abs(_velocityY) < FLING_MIN_VELOCITY))
+            if (target == null)
             {
                 return;
+            }
+
+            bool flinging = Math.Abs(_velocityX) >= FLING_MIN_VELOCITY
+                || Math.Abs(_velocityY) >= FLING_MIN_VELOCITY;
+
+            if (Scheduler == null || (!flinging && !Overscrolled))
+            {
+                _overscrollX = 0f;
+                _overscrollY = 0f;
+                target.SetOverscroll(0f, 0f);
+
+                return;
+            }
+
+            if (!flinging)
+            {
+                _velocityX = 0f;
+                _velocityY = 0f;
             }
 
             _flinging = target;
@@ -477,26 +565,52 @@ namespace Ixen.Core.Input
             float offsetX = _velocityX * FLING_TICK;
             float offsetY = _velocityY * FLING_TICK;
 
-            if (!ScrollNavigator.CanScroll(target, offsetX, offsetY))
+            if (Math.Abs(_velocityX) >= FLING_STOP_VELOCITY
+                || Math.Abs(_velocityY) >= FLING_STOP_VELOCITY)
+            {
+                if (!ScrollNavigator.Bounces(target)
+                    && !ScrollNavigator.CanScroll(target, offsetX, offsetY))
+                {
+                    StopFling();
+                    return;
+                }
+
+                Push(target, offsetX, offsetY);
+
+                float friction = Overscrolled ? OVERSCROLL_FRICTION : FLING_FRICTION;
+
+                _velocityX *= friction;
+                _velocityY *= friction;
+
+                return;
+            }
+
+            _velocityX = 0f;
+            _velocityY = 0f;
+
+            if (!Overscrolled)
             {
                 StopFling();
                 return;
             }
 
-            target.ScrollBy(offsetX, offsetY);
+            _overscrollX = Recoil(_overscrollX);
+            _overscrollY = Recoil(_overscrollY);
 
-            _velocityX *= FLING_FRICTION;
-            _velocityY *= FLING_FRICTION;
-
-            if (Math.Abs(_velocityX) < FLING_STOP_VELOCITY
-                && Math.Abs(_velocityY) < FLING_STOP_VELOCITY)
-            {
-                StopFling();
-            }
+            ApplyOverscroll(target);
         }
 
         internal void StopFling()
         {
+            VisualElement target = _flinging;
+
+            if (target != null)
+            {
+                _overscrollX = 0f;
+                _overscrollY = 0f;
+                target.SetOverscroll(0f, 0f);
+            }
+
             _flinging = null;
 
             if (_fling == null)

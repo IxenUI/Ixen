@@ -19,7 +19,7 @@ namespace Ixen.Core.UT.Rendering
             {
                 SKFont font = FontCache.Get(Spec, char.ConvertFromUtf32(codepoint));
 
-                Assert.IsTrue(font.Typeface.ContainsGlyph(codepoint),
+                Assert.IsTrue(font.ContainsGlyph(codepoint),
                     $"U+{codepoint:X4} came back on a face that does not have it. This machine's "
                     + "default face has the up and down triangles but NOT the left and right ones, "
                     + "so the horizontal scrollbar arrows were invisible on Windows too - not just "
@@ -40,11 +40,11 @@ namespace Ixen.Core.UT.Rendering
         {
             SKFont plain = FontCache.Get(Spec);
 
-            Assert.IsTrue(plain.Typeface.ContainsGlyph(0x25BC),
+            Assert.IsTrue(plain.ContainsGlyph(0x25BC),
                 "this machine's default face has the geometric shapes, which is exactly why the "
                 + "scrollbar arrows looked fine here and were tofu on Android");
 
-            Assert.AreSame(plain, FontCache.Get(Spec, "▼"),
+            Assert.AreSame(plain, FontCache.Get(Spec, "\u25BC"),
                 "a covered character must not send anything through the fallback");
         }
 
@@ -53,14 +53,14 @@ namespace Ixen.Core.UT.Rendering
         {
             SKFont plain = FontCache.Get(Spec);
 
-            Assert.IsFalse(plain.Typeface.ContainsGlyph(IDEOGRAPH),
+            Assert.IsFalse(plain.ContainsGlyph(IDEOGRAPH),
                 "this test needs a default face without the CJK ideographs to have anything to "
                 + "fall back from; if it has them, pick a character it lacks instead");
 
-            SKFont resolved = FontCache.Get(Spec, "日");
+            SKFont resolved = FontCache.Get(Spec, "\u65E5");
 
             Assert.AreNotSame(plain, resolved, "the point of the fallback");
-            Assert.IsTrue(resolved.Typeface.ContainsGlyph(IDEOGRAPH),
+            Assert.IsTrue(resolved.ContainsGlyph(IDEOGRAPH),
                 "and the face it picked has to actually cover the character");
         }
 
@@ -69,16 +69,16 @@ namespace Ixen.Core.UT.Rendering
         {
             var big = new FontSpec(null, 31, false, false);
 
-            Assert.AreEqual(31f, FontCache.Get(big, "日").Size,
+            Assert.AreEqual(31f, FontCache.Get(big, "\u65E5").Size,
                 "the fallback is a different face at the same size, not a different size");
         }
 
         [TestMethod]
         public void OneUncoveredCharacterCarriesTheWholeRun()
         {
-            SKFont resolved = FontCache.Get(Spec, "a日b");
+            SKFont resolved = FontCache.Get(Spec, "a\u65E5b");
 
-            Assert.IsTrue(resolved.Typeface.ContainsGlyph(IDEOGRAPH),
+            Assert.IsTrue(resolved.ContainsGlyph(IDEOGRAPH),
                 "there is no per-run shaping: a string with one uncovered character is drawn "
                 + "entirely with the face that covers it, which is right for the one-glyph case "
                 + "the controls use and acceptable for mixed text since a CJK face carries latin");
@@ -87,7 +87,7 @@ namespace Ixen.Core.UT.Rendering
         [TestMethod]
         public void TheSameRequestComesBackTheSameInstance()
         {
-            Assert.AreSame(FontCache.Get(Spec, "日"), FontCache.Get(Spec, "日"),
+            Assert.AreSame(FontCache.Get(Spec, "\u65E5"), FontCache.Get(Spec, "\u65E5"),
                 "the coverage answer and the fallback face are both cached, or every measure and "
                 + "every draw would ask the font manager again");
         }
@@ -97,9 +97,9 @@ namespace Ixen.Core.UT.Rendering
         {
             var measurer = new SkiaTextMeasurer();
 
-            measurer.MeasureText("日", Spec, out float width, out _);
+            measurer.MeasureText("\u65E5", Spec, out float width, out _);
 
-            Assert.AreEqual(FontCache.Get(Spec, "日").MeasureText("日"), width, 0.01f,
+            Assert.AreEqual(FontCache.Get(Spec, "\u65E5").MeasureText("\u65E5"), width, 0.01f,
                 "the measurer and the renderer both go through FontCache.Get(spec, text); if only "
                 + "one of them did, the caret and the ink would drift apart");
         }

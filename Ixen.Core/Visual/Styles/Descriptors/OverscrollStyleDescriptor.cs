@@ -4,7 +4,8 @@ namespace Ixen.Core.Visual.Styles.Descriptors
     {
         Unset,
         Auto,
-        Contain
+        Contain,
+        None
     }
 
     public class OverscrollStyleDescriptor : StyleDescriptor
@@ -13,7 +14,10 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 
         public OverscrollKind Value { get; set; } = OverscrollKind.Unset;
 
-        internal bool Contains => Value == OverscrollKind.Contain;
+        internal bool Contains
+            => Value == OverscrollKind.Contain || Value == OverscrollKind.None;
+
+        internal bool Bounces => Value != OverscrollKind.None;
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()

@@ -23,8 +23,11 @@ namespace Ixen.Core.Visual.Styles.Parsers
                     return true;
 
                 case CONTAIN:
-                case NONE:
                     Descriptor.Value = OverscrollKind.Contain;
+                    return true;
+
+                case NONE:
+                    Descriptor.Value = OverscrollKind.None;
                     return true;
 
                 default:
