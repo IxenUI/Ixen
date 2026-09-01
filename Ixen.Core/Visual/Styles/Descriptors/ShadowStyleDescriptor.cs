@@ -11,6 +11,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         public float Blur { get; set; }
         public float Spread { get; set; }
         public string Color { get; set; }
+        public bool Inset { get; set; }
 
         private static string Of(float value)
             => value.ToString("R", CultureInfo.InvariantCulture) + "f";
@@ -21,6 +22,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
                 + $"{nameof(OffsetY)} = {Of(OffsetY)}, "
                 + $"{nameof(Blur)} = {Of(Blur)}, "
                 + $"{nameof(Spread)} = {Of(Spread)}, "
+                + $"{nameof(Inset)} = {(Inset ? "true" : "false")}, "
                 + $"{nameof(Color)} = {(Color == null ? "null" : "\"" + Color + "\"")} }}";
     }
 

@@ -21,6 +21,12 @@ namespace Ixen.Core.Rendering
             for (int index = shadows.Count - 1; index >= 0; index--)
             {
                 Shadow shadow = shadows[index];
+
+                if (shadow.Inset)
+                {
+                    continue;
+                }
+
                 float spread = shadow.Spread;
 
                 context.DrawShadow(
@@ -30,6 +36,41 @@ namespace Ixen.Core.Rendering
                     element.ActualHeight + spread * 2,
                     radius,
                     shadow.Blur,
+                    new Color(shadow.Color));
+            }
+        }
+
+        internal static void RenderInset(VisualElement element, RendererContext context)
+        {
+            ShadowStyleDescriptor descriptor = element.StylesHandlers.BoxShadow.Descriptor;
+
+            if (!descriptor.IsDeclared)
+            {
+                return;
+            }
+
+            List<Shadow> shadows = descriptor.Shadows;
+            CornerRadiusStyleDescriptor radius = element.StylesHandlers.CornerRadius.Descriptor;
+
+            for (int index = shadows.Count - 1; index >= 0; index--)
+            {
+                Shadow shadow = shadows[index];
+
+                if (!shadow.Inset)
+                {
+                    continue;
+                }
+
+                context.DrawInsetShadow(
+                    element.X,
+                    element.Y,
+                    element.ActualWidth,
+                    element.ActualHeight,
+                    radius,
+                    shadow.OffsetX,
+                    shadow.OffsetY,
+                    shadow.Blur,
+                    shadow.Spread,
                     new Color(shadow.Color));
             }
         }

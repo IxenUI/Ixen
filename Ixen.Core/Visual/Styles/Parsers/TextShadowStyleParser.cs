@@ -6,6 +6,8 @@ namespace Ixen.Core.Visual.Styles.Parsers
     {
         protected override int MaxLengths => 3;
 
+        protected override bool AllowsInset => false;
+
         public new TextShadowStyleDescriptor Descriptor { get; } = new();
 
         public TextShadowStyleParser(string content)

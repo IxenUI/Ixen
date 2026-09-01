@@ -118,9 +118,61 @@ namespace Ixen.Core.UT.StyleParser
         }
 
         [TestMethod]
-        public void AKeywordIsRejected()
+        public void InsetIsAcceptedAndIsNotALength()
         {
-            AssertRejected("box-shadow", "0px 4px 8px #40000000 inset");
+            ShadowStyleDescriptor shadow =
+                Parse<ShadowStyleDescriptor>("box-shadow", "0px 4px 8px #40000000 inset");
+
+            Assert.IsTrue(shadow.First.Inset);
+            Assert.AreEqual(8f, shadow.First.Blur, "the keyword does not consume a length slot");
+            Assert.AreEqual(0f, shadow.First.Spread);
+        }
+
+        [TestMethod]
+        public void InsetMayComeFirst()
+        {
+            ShadowStyleDescriptor shadow =
+                Parse<ShadowStyleDescriptor>("box-shadow", "inset 0px 4px 8px #40000000");
+
+            Assert.IsTrue(shadow.First.Inset, "CSS lets it sit at either end");
+        }
+
+        [TestMethod]
+        public void WithoutItAShadowStaysOutside()
+        {
+            ShadowStyleDescriptor shadow =
+                Parse<ShadowStyleDescriptor>("box-shadow", "0px 4px 8px #40000000");
+
+            Assert.IsFalse(shadow.First.Inset);
+        }
+
+        [TestMethod]
+        public void OnlyOneShadowOfAListNeedsToBeInset()
+        {
+            ShadowStyleDescriptor shadow = Parse<ShadowStyleDescriptor>("box-shadow",
+                "inset 0px 2px 4px #40000000, 0px 8px 16px #20000000");
+
+            Assert.IsTrue(shadow.Shadows[0].Inset);
+            Assert.IsFalse(shadow.Shadows[1].Inset,
+                "the keyword belongs to its own entry, not to the declaration");
+        }
+
+        [TestMethod]
+        public void RepeatingItIsRejected()
+        {
+            AssertRejected("box-shadow", "inset 0px 4px 8px #40000000 inset");
+        }
+
+        [TestMethod]
+        public void ATextShadowRefusesInset()
+        {
+            AssertRejected("text-shadow", "0px 1px 3px #80000000 inset");
+        }
+
+        [TestMethod]
+        public void AnyOtherKeywordIsStillRejected()
+        {
+            AssertRejected("box-shadow", "0px 4px 8px #40000000 outset");
         }
 
         [TestMethod]

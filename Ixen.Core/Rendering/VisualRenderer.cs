@@ -163,6 +163,7 @@ namespace Ixen.Core.Rendering
             ShadowRenderer.Render(element, context);
             styles.Background?.Render(element, context);
             _imageRenderer.Render(element, context);
+            ShadowRenderer.RenderInset(element, context);
             styles.Border?.Render(element, context);
             _textRenderer.Render(element, context);
         }

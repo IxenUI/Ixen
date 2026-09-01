@@ -1,12 +1,14 @@
 ﻿using Ixen.Core.Visual;
 using Ixen.Core.Visual.Styles.Descriptors;
 using SkiaSharp;
+using System;
 
 namespace Ixen.Core.Rendering
 {
     public sealed class RendererContext
     {
         private readonly SKRoundRect _roundRect = new();
+        private readonly SKPathBuilder _insetBuilder = new();
         private readonly SKPoint[] _radii = new SKPoint[4];
 
         private int _clipDepth;
@@ -388,14 +390,7 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            if (blur != _shadowBlur)
-            {
-                _shadowPaint.MaskFilter = blur > 0
-                    ? SKMaskFilter.CreateBlur(SKBlurStyle.Normal, blur / 2)
-                    : null;
-
-                _shadowBlur = blur;
-            }
+            SetShadowBlur(blur);
 
             _shadowPaint.Color = color.SKColor;
 
@@ -406,6 +401,69 @@ namespace Ixen.Core.Rendering
             }
 
             SKCanvas.DrawRect(x, y, width, height, _shadowPaint);
+        }
+
+        private void SetShadowBlur(float blur)
+        {
+            if (blur == _shadowBlur)
+            {
+                return;
+            }
+
+            _shadowPaint.MaskFilter = blur > 0
+                ? SKMaskFilter.CreateBlur(SKBlurStyle.Normal, blur / 2)
+                : null;
+
+            _shadowBlur = blur;
+        }
+
+        internal void DrawInsetShadow(float x, float y, float width, float height,
+            CornerRadiusStyleDescriptor radius, float offsetX, float offsetY, float blur,
+            float spread, Color color)
+        {
+            if (width <= 0 || height <= 0)
+            {
+                return;
+            }
+
+            SetShadowBlur(blur);
+
+            _shadowPaint.Color = color.SKColor;
+
+            PushClip(x, y, width, height, radius);
+
+            float reach = blur * 2 + spread + Math.Abs(offsetX) + Math.Abs(offsetY) + 1;
+
+            _insetBuilder.Reset();
+            _insetBuilder.FillType = SKPathFillType.EvenOdd;
+            _insetBuilder.AddRect(new SKRect(x - reach, y - reach,
+                x + width + reach, y + height + reach));
+
+            float innerX = x + offsetX + spread;
+            float innerY = y + offsetY + spread;
+            float innerWidth = width - spread * 2;
+            float innerHeight = height - spread * 2;
+
+            if (innerWidth > 0 && innerHeight > 0)
+            {
+                if (radius != null && radius.HasRadius)
+                {
+                    _insetBuilder.AddRoundRect(
+                        BuildRoundRect(innerX, innerY, innerWidth, innerHeight, radius));
+                }
+                else
+                {
+                    _insetBuilder.AddRect(new SKRect(innerX, innerY,
+                        innerX + innerWidth, innerY + innerHeight));
+                }
+            }
+
+            using (SKPath path = _insetBuilder.Detach())
+            {
+                SKCanvas.DrawPath(path, _shadowPaint);
+            }
+
+            PopClip();
         }
 
         private SKRoundRect BuildRoundRect(float x, float y, float width, float height,

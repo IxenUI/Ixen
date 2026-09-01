@@ -11,7 +11,11 @@ namespace Ixen.Core.Visual.Styles.Parsers
         private static Regex _length = new Regex(@"^(-?[0-9]+(?:\.[0-9]+)?)(px)?$");
         private static Regex _color = new Regex(@"^#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6})$");
 
+        internal const string INSET = "inset";
+
         protected virtual int MaxLengths => 4;
+
+        protected virtual bool AllowsInset => true;
 
         public ShadowStyleDescriptor Descriptor { get; } = new();
 
@@ -44,9 +48,21 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
             var lengths = new List<float>();
             string color = null;
+            bool inset = false;
 
             foreach (Match part in parts)
             {
+                if (part.Value == INSET)
+                {
+                    if (inset || !AllowsInset)
+                    {
+                        return null;
+                    }
+
+                    inset = true;
+                    continue;
+                }
+
                 if (_color.IsMatch(part.Value))
                 {
                     if (color != null)
@@ -85,6 +101,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 OffsetY = lengths[1],
                 Blur = lengths.Count > 2 ? lengths[2] : 0,
                 Spread = lengths.Count > 3 ? lengths[3] : 0,
+                Inset = inset,
                 Color = color
             };
 
