@@ -12,7 +12,9 @@ namespace Ixen.Core.Visual.Styles
 
         internal static readonly string[] All =
         {
-            HOVER, PRESSED, FOCUS, DISABLED, CHECKED, SELECTED, EXPANDED
+            HOVER, PRESSED, FOCUS, DISABLED, CHECKED, SELECTED, EXPANDED,
+            StyleStructural.FIRST_CHILD, StyleStructural.LAST_CHILD,
+            StyleStructural.ONLY_CHILD, StyleStructural.NTH_CHILD
         };
     }
 }

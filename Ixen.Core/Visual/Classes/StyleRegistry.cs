@@ -1,3 +1,4 @@
+using Ixen.Core.Visual.Styles;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,6 +38,7 @@ namespace Ixen.Core.Visual.Classes
         private int _count;
         private bool _hasStateClasses;
         private bool _hasFocusClasses;
+        private StructuralKinds _structural;
 
         public static StyleRegistry Default => _default.Value;
 
@@ -45,6 +47,10 @@ namespace Ixen.Core.Visual.Classes
         internal bool HasScopedClasses => _scoped.Count > 0;
 
         internal bool HasStateClasses => _hasStateClasses;
+
+        internal StructuralKinds Structural => _structural;
+
+        internal bool HasStructuralClasses => _structural != StructuralKinds.None;
 
         internal bool HasFocusClasses => _hasFocusClasses;
 
@@ -81,6 +87,9 @@ namespace Ixen.Core.Visual.Classes
             {
                 _hasFocusClasses = true;
             }
+
+            _structural |= StyleStructural.KindsOf(styleClass.Name)
+                | StyleStructural.KindsOf(styleClass.Scope);
 
             var key = (styleClass.Target, styleClass.SheetScope, styleClass.Name);
 

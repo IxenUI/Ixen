@@ -226,6 +226,8 @@ namespace Ixen.Core.Visual
         }
 
         internal int ChildIndex { get; set; }
+
+        internal bool ChildrenChanged { get; set; }
         internal List<VisualElement> Children { get; private set; } = new();
 
         public System.Collections.Generic.IReadOnlyList<VisualElement> ChildElements => Children;
@@ -686,6 +688,8 @@ namespace Ixen.Core.Visual
 
         private void ComputeChildrenIndexes()
         {
+            ChildrenChanged = true;
+
             for (int i = 0; i < Children.Count; i++)
             {
                 Children[i].ChildIndex = i;

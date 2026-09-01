@@ -1,3 +1,4 @@
+using Ixen.Core.Visual.Styles;
 using System;
 using System.Collections.Generic;
 
@@ -25,7 +26,8 @@ namespace Ixen.Core.Visual.Classes
 
         internal bool Matches(VisualElement element)
         {
-            if (State != null && !element.HasState(State))
+            if (State != null && !element.HasState(State)
+                && !StyleStructural.Holds(element, State))
             {
                 return false;
             }

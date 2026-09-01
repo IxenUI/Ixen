@@ -534,7 +534,8 @@ namespace Ixen.Core.Language.Xns
                 while (true)
                 {
                     c = PeekChar();
-                    if (char.IsLetterOrDigit(c) || c == '_' ||  c == '-' || c == ':' || c == '%')
+                    if (char.IsLetterOrDigit(c) || c == '_' ||  c == '-' || c == ':' || c == '%'
+                        || c == '(' || c == ')')
                     {
                         sb.Append(c);
                         MoveCursor();

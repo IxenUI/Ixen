@@ -4,7 +4,7 @@ using Ixen.Core.Visual.Styles.Descriptors;
 using Ixen.Core.Visual.Styles.Handlers;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+using System.Globalization;
 
 namespace Ixen.Core.Visual.Computers
 {
@@ -35,6 +35,19 @@ namespace Ixen.Core.Visual.Computers
                 SyncTransitions(element, registry);
 
                 element.MustRefreshStyles = false;
+            }
+
+            if (element.ChildrenChanged)
+            {
+                element.ChildrenChanged = false;
+
+                if (registry.HasStructuralClasses)
+                {
+                    foreach (VisualElement child in element.Children)
+                    {
+                        child.MustRefreshStyles = true;
+                    }
+                }
             }
 
             foreach (VisualElement child in element.Children)
@@ -93,6 +106,11 @@ namespace Ixen.Core.Visual.Computers
             ApplyClass(handlers, registry.GetGlobal(target, name));
             ApplyScopedClasses(handlers, registry, target, name, element, scoped);
 
+            if (registry.HasStructuralClasses)
+            {
+                ApplyStructural(handlers, registry, target, name, element, scoped, defaults);
+            }
+
             for (int i = 0; i < element.States.Count; i++)
             {
                 string stated = name + StyleScope.STATE_SEPARATOR + element.States[i];
@@ -148,6 +166,76 @@ namespace Ixen.Core.Visual.Computers
             {
                 ApplyClass(handlers, styleClass);
             }
+        }
+
+        private void ApplyStructural(VisualElementStylesHandlers handlers, StyleRegistry registry,
+            StyleClassTarget target, string name, VisualElement element, bool scoped, bool defaults)
+        {
+            if (!StyleStructural.Position(element, out int index, out int count))
+            {
+                return;
+            }
+
+            StructuralKinds kinds = registry.Structural;
+
+            if (Wanted(kinds, StructuralKinds.First, index, count))
+            {
+                ApplyVariant(handlers, registry, target, name, StyleStructural.FIRST_CHILD,
+                    element, scoped, defaults);
+            }
+
+            if (Wanted(kinds, StructuralKinds.Last, index, count))
+            {
+                ApplyVariant(handlers, registry, target, name, StyleStructural.LAST_CHILD,
+                    element, scoped, defaults);
+            }
+
+            if (Wanted(kinds, StructuralKinds.Only, index, count))
+            {
+                ApplyVariant(handlers, registry, target, name, StyleStructural.ONLY_CHILD,
+                    element, scoped, defaults);
+            }
+
+            if (Wanted(kinds, StructuralKinds.Odd, index, count))
+            {
+                ApplyVariant(handlers, registry, target, name, Nth(StyleStructural.ODD),
+                    element, scoped, defaults);
+            }
+
+            if (Wanted(kinds, StructuralKinds.Even, index, count))
+            {
+                ApplyVariant(handlers, registry, target, name, Nth(StyleStructural.EVEN),
+                    element, scoped, defaults);
+            }
+
+            if ((kinds & StructuralKinds.Nth) != 0)
+            {
+                ApplyVariant(handlers, registry, target, name,
+                    Nth((index + 1).ToString(CultureInfo.InvariantCulture)),
+                    element, scoped, defaults);
+            }
+        }
+
+        private static bool Wanted(StructuralKinds declared, StructuralKinds kind,
+            int index, int count)
+            => (declared & kind) != 0 && StyleStructural.Holds(kind, index, count);
+
+        private static string Nth(string argument)
+            => StyleStructural.NTH_CHILD + "(" + argument + ")";
+
+        private void ApplyVariant(VisualElementStylesHandlers handlers, StyleRegistry registry,
+            StyleClassTarget target, string name, string pseudo, VisualElement element,
+            bool scoped, bool defaults)
+        {
+            string candidate = name + StyleScope.STATE_SEPARATOR + pseudo;
+
+            if (defaults)
+            {
+                ApplyClass(handlers, registry.GetDefault(target, candidate));
+            }
+
+            ApplyClass(handlers, registry.GetGlobal(target, candidate));
+            ApplyScopedClasses(handlers, registry, target, candidate, element, scoped);
         }
 
         private void ApplyClass(VisualElementStylesHandlers handlers, StyleClass styleClass)
