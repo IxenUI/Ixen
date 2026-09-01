@@ -54,7 +54,8 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void TheOverscrollSurvivesGeneration()
         {
-            Assert.AreEqual(OverscrollKind.Contain, Style<OverscrollStyleDescriptor>().Value);
+            Assert.AreEqual(OverscrollKind.None, Style<OverscrollStyleDescriptor>().X);
+            Assert.AreEqual(OverscrollKind.Contain, Style<OverscrollStyleDescriptor>().Y);
         }
 
         [TestMethod]

@@ -1,4 +1,5 @@
 using Ixen.Core.Visual;
+using System;
 
 namespace Ixen.Core.Input
 {
@@ -26,7 +27,7 @@ namespace Ixen.Core.Input
                     return element;
                 }
 
-                if (Contains(element))
+                if (Contains(element, Horizontal(offsetX, offsetY)))
                 {
                     contained = true;
 
@@ -37,8 +38,13 @@ namespace Ixen.Core.Input
             return null;
         }
 
+        internal static bool Horizontal(float offsetX, float offsetY)
+            => Math.Abs(offsetX) > Math.Abs(offsetY);
+
         internal static VisualElement Bouncer(VisualElement from, float offsetX, float offsetY)
         {
+            bool horizontal = Horizontal(offsetX, offsetY);
+
             for (VisualElement element = from; element != null; element = element.Parent)
             {
                 if (!element.Scrollable)
@@ -46,12 +52,12 @@ namespace Ixen.Core.Input
                     continue;
                 }
 
-                if (Bounces(element) && Overflows(element, offsetX, offsetY))
+                if (CanBounce(element, horizontal))
                 {
                     return element;
                 }
 
-                if (Contains(element))
+                if (Contains(element, horizontal))
                 {
                     return null;
                 }
@@ -60,17 +66,19 @@ namespace Ixen.Core.Input
             return null;
         }
 
-        private static bool Overflows(VisualElement element, float offsetX, float offsetY)
-            => (offsetY != 0f && element.MaxScrollY > 0f)
-                || (offsetX != 0f && element.MaxScrollX > 0f);
+        internal static bool CanBounce(VisualElement element, bool horizontal)
+            => Bounces(element, horizontal) && Overflows(element, horizontal);
 
-        internal static bool Bounces(VisualElement element)
+        private static bool Overflows(VisualElement element, bool horizontal)
+            => horizontal ? element.MaxScrollX > 0f : element.MaxScrollY > 0f;
+
+        private static bool Bounces(VisualElement element, bool horizontal)
             => element.StylesHandlers == null
-                || element.StylesHandlers.Overscroll.Descriptor.Bounces;
+                || element.StylesHandlers.Overscroll.Descriptor.Bounces(horizontal);
 
-        private static bool Contains(VisualElement element)
+        private static bool Contains(VisualElement element, bool horizontal)
             => element.StylesHandlers != null
-                && element.StylesHandlers.Overscroll.Descriptor.Contains;
+                && element.StylesHandlers.Overscroll.Descriptor.Contains(horizontal);
 
         internal static VisualElement FindDefault(VisualElement root, float offsetX, float offsetY)
         {

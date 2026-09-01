@@ -37,7 +37,7 @@ generated_root {
     opacity: 0.75
     filter: blur(2.5px)
     overflow: scroll
-    overscroll-behavior: contain
+    overscroll-behavior: none contain
     pointer-events: auto
     backdrop-filter: blur(3px)
     object-position: right 25%

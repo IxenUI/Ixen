@@ -12,18 +12,29 @@ namespace Ixen.Core.Visual.Styles.Descriptors
     {
         internal override string Identifier => StyleIdentifier.OVERSCROLL_BEHAVIOR;
 
-        public OverscrollKind Value { get; set; } = OverscrollKind.Unset;
+        public OverscrollKind X { get; set; } = OverscrollKind.Unset;
 
-        internal bool Contains
-            => Value == OverscrollKind.Contain || Value == OverscrollKind.None;
+        public OverscrollKind Y { get; set; } = OverscrollKind.Unset;
 
-        internal bool Bounces => Value != OverscrollKind.None;
+        internal bool IsDeclared
+            => X != OverscrollKind.Unset || Y != OverscrollKind.Unset;
+
+        internal bool Contains(bool horizontal)
+        {
+            OverscrollKind kind = horizontal ? X : Y;
+
+            return kind == OverscrollKind.Contain || kind == OverscrollKind.None;
+        }
+
+        internal bool Bounces(bool horizontal)
+            => (horizontal ? X : Y) != OverscrollKind.None;
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()
             => $"new {nameof(OverscrollStyleDescriptor)} " +
                 "{ " +
-                    $"{nameof(Value)} = {nameof(OverscrollKind)}.{Value} " +
+                    $"{nameof(X)} = {nameof(OverscrollKind)}.{X}, " +
+                    $"{nameof(Y)} = {nameof(OverscrollKind)}.{Y} " +
                 "}";
     }
 }

@@ -224,7 +224,8 @@ namespace Ixen.Core.UT.Input
         {
             _viewport.Styles.Overscroll = new OverscrollStyleDescriptor
             {
-                Value = OverscrollKind.None
+                X = OverscrollKind.None,
+                Y = OverscrollKind.None
             };
 
             _viewport.Invalidate();

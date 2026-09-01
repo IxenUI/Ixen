@@ -52,6 +52,7 @@ namespace Ixen.Core.Input
         private float _velocityY;
         private float _overscrollX;
         private float _overscrollY;
+        private bool _panHorizontal;
         private long _panTime;
 
         private VisualElement _scrollLatch;
@@ -406,6 +407,7 @@ namespace Ixen.Core.Input
             _velocityY = 0f;
             _overscrollX = 0f;
             _overscrollY = 0f;
+            _panHorizontal = ScrollNavigator.Horizontal(offsetX, offsetY);
             _panTime = TimeSource.Milliseconds;
 
             Pan(x, y);
@@ -462,10 +464,13 @@ namespace Ixen.Core.Input
 
         private void Push(VisualElement target, float offsetX, float offsetY)
         {
-            bool bounces = ScrollNavigator.Bounces(target);
+            bool bounces = ScrollNavigator.CanBounce(target, _panHorizontal);
 
-            float scrollX = Absorb(ref _overscrollX, offsetX, target.ScrollX, target.MaxScrollX, bounces);
-            float scrollY = Absorb(ref _overscrollY, offsetY, target.ScrollY, target.MaxScrollY, bounces);
+            float scrollX = Absorb(ref _overscrollX, offsetX, target.ScrollX, target.MaxScrollX,
+                bounces && _panHorizontal);
+
+            float scrollY = Absorb(ref _overscrollY, offsetY, target.ScrollY, target.MaxScrollY,
+                bounces && !_panHorizontal);
 
             target.ScrollBy(scrollX, scrollY);
 
@@ -568,7 +573,7 @@ namespace Ixen.Core.Input
             if (Math.Abs(_velocityX) >= FLING_STOP_VELOCITY
                 || Math.Abs(_velocityY) >= FLING_STOP_VELOCITY)
             {
-                if (!ScrollNavigator.Bounces(target)
+                if (!ScrollNavigator.CanBounce(target, _panHorizontal)
                     && !ScrollNavigator.CanScroll(target, offsetX, offsetY))
                 {
                     StopFling();

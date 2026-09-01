@@ -66,8 +66,10 @@ namespace Ixen.Core.UT.Input
             _surface.PointerMove(50, y, PointerKind.Touch);
         }
 
-        private void Release(float y)
-            => _surface.PointerUp(50, y, PointerButton.Left, PointerKind.Touch);
+        private void Release(float y) => Release(50, y);
+
+        private void Release(float x, float y)
+            => _surface.PointerUp(x, y, PointerButton.Left, PointerKind.Touch);
 
         private void Pull(float from, float to)
         {
@@ -87,7 +89,7 @@ namespace Ixen.Core.UT.Input
 
         private void Behaviour(OverscrollKind kind)
         {
-            _viewport.Styles.Overscroll = new OverscrollStyleDescriptor { Value = kind };
+            _viewport.Styles.Overscroll = new OverscrollStyleDescriptor { X = kind, Y = kind };
             _viewport.Invalidate();
             _surface.ComputeLayout(VIEWPORT, VIEWPORT);
         }
@@ -355,6 +357,145 @@ namespace Ixen.Core.UT.Input
                 "and the same gesture on a list that does bounce carries the rest into the band");
         }
 
+        private void PressAt(float x, float y)
+            => _surface.PointerDown(x, y, PointerButton.Left, PointerKind.Touch);
+
+        private void TouchAt(float x, float y)
+        {
+            _time.Now += STEP;
+            _surface.PointerMove(x, y, PointerKind.Touch);
+        }
+
+        private VisualElement Surface(string name, float childWidth, float childHeight)
+        {
+            var box = new VisualElement { Name = name };
+            box.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
+            box.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
+            box.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
+            box.Scrollable = true;
+
+            var content = new VisualElement { Name = name + "_content" };
+            content.Styles.Width = new WidthStyleDescriptor
+            {
+                Unit = SizeUnit.Pixels,
+                Value = childWidth
+            };
+
+            content.Styles.Height = new HeightStyleDescriptor
+            {
+                Unit = SizeUnit.Pixels,
+                Value = childHeight
+            };
+
+            box.AddChild(content);
+
+            _root.RemoveChild(_viewport);
+            _root.AddChild(box);
+
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            return box;
+        }
+
+        [TestMethod]
+        public void AVerticalListDoesNotPullSideways()
+        {
+            PressAt(50, 50);
+            TouchAt(58, 110);
+
+            Assert.IsTrue(_viewport.OverscrollY < 0f, "the axis it scrolls on pulls");
+
+            Assert.AreEqual(0f, _viewport.OverscrollX,
+                "Kevin found this on a phone: every wobble of the finger used to accumulate "
+                + "sideways on a list that cannot scroll sideways at all");
+        }
+
+        [TestMethod]
+        public void AnAxisWithNothingToScrollNeverPulls()
+        {
+            PressAt(50, 100);
+            TouchAt(120, 100);
+
+            Assert.AreEqual(0f, _viewport.OverscrollX,
+                "and a deliberate sideways drag does not pull either, because the band is "
+                + "refused on an axis with no overflow rather than merely being unlikely");
+        }
+
+        [TestMethod]
+        public void TheBandFollowsTheAxisTheGestureStartedOn()
+        {
+            VisualElement box = Surface("both", 300, 300);
+
+            Assert.IsTrue(box.MaxScrollX > 0f && box.MaxScrollY > 0f,
+                "this one really does scroll both ways");
+
+            PressAt(40, 40);
+            TouchAt(60, 100);
+
+            Assert.IsTrue(box.OverscrollY < 0f, "the dominant axis pulls");
+
+            Assert.AreEqual(0f, box.OverscrollX,
+                "and the other one does not, although it could have: a diagonal drag reads as "
+                + "one gesture, not two");
+        }
+
+        [TestMethod]
+        public void TheAxisIsKeptForTheWholeGesture()
+        {
+            VisualElement box = Surface("both", 300, 300);
+
+            PressAt(40, 40);
+            TouchAt(40, 100);
+            TouchAt(160, 104);
+
+            Assert.AreEqual(0f, box.OverscrollX,
+                "the axis is decided once, when the drag crosses its threshold, so turning "
+                + "the finger mid-gesture cannot start a second band");
+        }
+
+        [TestMethod]
+        public void AHorizontalSurfacePullsSideways()
+        {
+            VisualElement box = Surface("wide", 300, 40);
+
+            Assert.IsTrue(box.MaxScrollX > 0f && box.MaxScrollY == 0f,
+                "it overflows sideways only");
+
+            PressAt(40, 40);
+            TouchAt(110, 44);
+
+            Assert.IsTrue(box.OverscrollX < 0f, "the rule is symmetric");
+            Assert.AreEqual(0f, box.OverscrollY);
+        }
+
+        [TestMethod]
+        public void TheBehaviourIsPerAxis()
+        {
+            VisualElement box = Surface("both", 300, 300);
+
+            box.Styles.Overscroll = new OverscrollStyleDescriptor
+            {
+                X = OverscrollKind.None,
+                Y = OverscrollKind.Auto
+            };
+
+            box.Invalidate();
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            PressAt(40, 40);
+            TouchAt(110, 44);
+
+            Assert.AreEqual(0f, box.OverscrollX, "none on the horizontal axis");
+
+            Release(110, 44);
+
+            PressAt(40, 40);
+            TouchAt(44, 110);
+
+            Assert.IsTrue(box.OverscrollY < 0f,
+                "and auto on the vertical one, which is the whole point of the two-value form");
+        }
+
         private VisualElement Rows(string name, int count, float height)
         {
             var list = new VisualElement { Name = name };
@@ -401,7 +542,8 @@ namespace Ixen.Core.UT.Input
 
             inner.Styles.Overscroll = new OverscrollStyleDescriptor
             {
-                Value = OverscrollKind.Contain
+                X = OverscrollKind.Contain,
+                Y = OverscrollKind.Contain
             };
 
             outer.InsertChild(0, inner);

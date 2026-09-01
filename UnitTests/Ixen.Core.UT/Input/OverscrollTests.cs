@@ -3,6 +3,7 @@ using Ixen.Core.Language.Xns;
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles.Descriptors;
+using Ixen.Core.Visual.Styles.Parsers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Ixen.Core.UT.Input
@@ -66,7 +67,7 @@ namespace Ixen.Core.UT.Input
 
         private void Contain(VisualElement element, OverscrollKind kind)
         {
-            element.Styles.Overscroll = new OverscrollStyleDescriptor { Value = kind };
+            element.Styles.Overscroll = new OverscrollStyleDescriptor { X = kind, Y = kind };
             element.Invalidate();
 
             _surface.ComputeLayout(VIEWPORT, VIEWPORT);
@@ -161,7 +162,8 @@ namespace Ixen.Core.UT.Input
 
             middle.Styles.Overscroll = new OverscrollStyleDescriptor
             {
-                Value = OverscrollKind.Contain
+                X = OverscrollKind.Contain,
+                Y = OverscrollKind.Contain
             };
 
             middle.AddChild(Box("leaf", 100, 40));
@@ -229,20 +231,72 @@ namespace Ixen.Core.UT.Input
                 + "the one path an inline descriptor never exercises");
         }
 
-        [TestMethod]
-        public void NoneIsAcceptedAndMeansTheSameThing()
+        private static OverscrollStyleDescriptor Parsed(string value)
         {
-            var source = new XnsSource("inner { overscroll-behavior: none }");
+            var parser = new OverscrollStyleParser(value);
 
-            Assert.IsFalse(source.Compile() == null || source.HasErrors);
+            return parser.IsValid ? parser.Descriptor : null;
+        }
 
-            var refused = new XnsSource("inner { overscroll-behavior: rubber }");
+        [TestMethod]
+        public void OneValueSetsBothAxes()
+        {
+            OverscrollStyleDescriptor parsed = Parsed("contain");
 
-            refused.Compile();
+            Assert.AreEqual(OverscrollKind.Contain, parsed.X);
+            Assert.AreEqual(OverscrollKind.Contain, parsed.Y);
+        }
 
-            Assert.IsTrue(refused.HasErrors,
-                "Ixen has no overscroll affordance, so contain and none coincide - the same "
-                + "reason overflow: auto is a synonym for scroll. Anything else is XN003.");
+        [TestMethod]
+        public void TwoValuesAreHorizontalThenVertical()
+        {
+            OverscrollStyleDescriptor parsed = Parsed("none auto");
+
+            Assert.AreEqual(OverscrollKind.None, parsed.X,
+                "the order is the one CSS uses for overflow: the horizontal axis first");
+
+            Assert.AreEqual(OverscrollKind.Auto, parsed.Y);
+        }
+
+        [TestMethod]
+        public void NoneIsItsOwnValueRatherThanASynonym()
+        {
+            Assert.AreEqual(OverscrollKind.None, Parsed("none").X,
+                "this used to fold into Contain, because there was no band for none to "
+                + "suppress that contain did not");
+        }
+
+        [TestMethod]
+        public void AnythingElseIsRefused()
+        {
+            Assert.IsNull(Parsed("rubber"));
+            Assert.IsNull(Parsed("contain rubber"), "on either axis");
+            Assert.IsNull(Parsed("auto auto auto"), "and there is no third axis");
+            Assert.IsNull(Parsed(""));
+        }
+
+        [TestMethod]
+        public void TheTwoValueFormComesFromXnsEndToEnd()
+        {
+            var source = new XnsSource("inner { overscroll-behavior: none contain }");
+
+            ClassesSet set = source.Compile();
+
+            Assert.IsFalse(source.HasErrors);
+
+            var registry = new StyleRegistry();
+
+            registry.Add(set);
+
+            _surface.Styles = registry;
+            _root.Invalidate();
+
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            OverscrollStyleDescriptor resolved = _inner.StylesHandlers.Overscroll.Descriptor;
+
+            Assert.AreEqual(OverscrollKind.None, resolved.X);
+            Assert.AreEqual(OverscrollKind.Contain, resolved.Y);
         }
     }
 }

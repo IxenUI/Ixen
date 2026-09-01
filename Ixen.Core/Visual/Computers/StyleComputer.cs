@@ -625,7 +625,7 @@ namespace Ixen.Core.Visual.Computers
 
             if (handlers.Overscroll.Descriptor != styles.Overscroll)
             {
-                handlers.Overscroll = styles.Overscroll != null && styles.Overscroll.Value != OverscrollKind.Unset
+                handlers.Overscroll = styles.Overscroll != null && styles.Overscroll.IsDeclared
                     ? Cached<OverscrollStyleDescriptor, OverscrollStyleHandler>(styles.Overscroll, static d => new OverscrollStyleHandler(d))
                     : VisualElementStylesHandlers.DefaultOverscroll;
             }
