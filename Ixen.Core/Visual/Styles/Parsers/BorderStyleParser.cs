@@ -21,13 +21,13 @@ namespace Ixen.Core.Visual.Styles.Parsers
         {
             MatchCollection parts = _splitter.Matches(_content ?? string.Empty);
 
-            if (parts.Count < 1 || parts.Count > 6)
+            if (parts.Count < 1 || parts.Count > 9)
             {
                 return false;
             }
 
-            bool hasColor = false;
             bool hasType = false;
+            var colors = new List<string>();
             var thicknesses = new List<float>();
 
             foreach (Match part in parts)
@@ -38,13 +38,12 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 {
                     var colorParser = new ColorStyleParser(value);
 
-                    if (hasColor || !colorParser.IsValid)
+                    if (colors.Count == 4 || !colorParser.IsValid)
                     {
                         return false;
                     }
 
-                    Descriptor.Color = colorParser.Descriptor.Value;
-                    hasColor = true;
+                    colors.Add(colorParser.Descriptor.Value);
                     continue;
                 }
 
@@ -72,14 +71,38 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 hasType = true;
             }
 
-            if (!hasColor || thicknesses.Count == 0)
+            if (colors.Count == 0 || thicknesses.Count == 0)
             {
                 return false;
             }
 
+            ApplyColors(colors);
             ApplyThicknesses(thicknesses);
 
             return true;
+        }
+
+        private void ApplyColors(List<string> values)
+        {
+            Descriptor.Color = values[0];
+
+            switch (values.Count)
+            {
+                case 1:
+                    return;
+
+                case 2:
+                    Descriptor.SetColors(values[0], values[1], values[0], values[1]);
+                    return;
+
+                case 3:
+                    Descriptor.SetColors(values[0], values[1], values[2], values[1]);
+                    return;
+
+                default:
+                    Descriptor.SetColors(values[0], values[1], values[2], values[3]);
+                    return;
+            }
         }
 
         private void ApplyThicknesses(List<float> values)

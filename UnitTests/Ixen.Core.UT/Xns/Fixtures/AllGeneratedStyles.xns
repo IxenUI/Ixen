@@ -62,7 +62,7 @@ generated_root {
     }
 
     generated_sides {
-        border: #445566 0px 1px 2.5px 3px inner
+        border: #445566 #667788 #8899AA #AABBCC 0px 1px 2.5px 3px inner
     }
 
     generated_fill {

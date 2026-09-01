@@ -9,6 +9,8 @@ namespace Ixen.Core.Rendering
     {
         private readonly SKRoundRect _roundRect = new();
         private readonly SKPathBuilder _insetBuilder = new();
+        private readonly SKPoint[] _quad = new SKPoint[4];
+        private readonly SKPaint _quadPaint = new SKPaint { IsStroke = false, IsAntialias = true };
         private readonly SKPoint[] _radii = new SKPoint[4];
 
         private int _clipDepth;
@@ -401,6 +403,26 @@ namespace Ixen.Core.Rendering
             }
 
             SKCanvas.DrawRect(x, y, width, height, _shadowPaint);
+        }
+
+        internal void FillQuad(float x1, float y1, float x2, float y2, float x3, float y3,
+            float x4, float y4, Color color)
+        {
+            _quadPaint.Color = color.SKColor;
+
+            _quad[0] = new SKPoint(x1, y1);
+            _quad[1] = new SKPoint(x2, y2);
+            _quad[2] = new SKPoint(x3, y3);
+            _quad[3] = new SKPoint(x4, y4);
+
+            _insetBuilder.Reset();
+            _insetBuilder.FillType = SKPathFillType.Winding;
+            _insetBuilder.AddPoly(_quad, true);
+
+            using (SKPath path = _insetBuilder.Detach())
+            {
+                SKCanvas.DrawPath(path, _quadPaint);
+            }
         }
 
         private void SetShadowBlur(float blur)

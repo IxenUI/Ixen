@@ -10,7 +10,16 @@ namespace Ixen.Core.Visual.Styles.Handlers
         private Pen _pen;
         private Color _color = Color.Black;
 
+        private readonly Color _top;
+        private readonly Color _right;
+        private readonly Color _bottom;
+        private readonly Color _left;
+
         private readonly string _colorSource;
+        private readonly string _topSource;
+        private readonly string _rightSource;
+        private readonly string _bottomSource;
+        private readonly string _leftSource;
         private readonly float _thickness;
 
         public BorderStyleHandler()
@@ -24,7 +33,16 @@ namespace Ixen.Core.Visual.Styles.Handlers
             _color = new Color(descriptor.Color);
             _pen = new Pen(_color, descriptor.Top);
 
+            _top = new Color(descriptor.ColorTop);
+            _right = new Color(descriptor.ColorRight);
+            _bottom = new Color(descriptor.ColorBottom);
+            _left = new Color(descriptor.ColorLeft);
+
             _colorSource = descriptor.Color;
+            _topSource = descriptor.TopColor;
+            _rightSource = descriptor.RightColor;
+            _bottomSource = descriptor.BottomColor;
+            _leftSource = descriptor.LeftColor;
             _thickness = descriptor.Top;
         }
 
@@ -42,7 +60,12 @@ namespace Ixen.Core.Visual.Styles.Handlers
             return handler;
         }
 
-        private bool IsCurrent => _colorSource == Descriptor.Color && _thickness == Descriptor.Top;
+        private bool IsCurrent => _colorSource == Descriptor.Color
+            && _thickness == Descriptor.Top
+            && _topSource == Descriptor.TopColor
+            && _rightSource == Descriptor.RightColor
+            && _bottomSource == Descriptor.BottomColor
+            && _leftSource == Descriptor.LeftColor;
 
         internal Color Color => _color;
 
@@ -56,7 +79,7 @@ namespace Ixen.Core.Visual.Styles.Handlers
             Pen pen = element.AnimatedPen(StyleIdentifier.BORDER, _pen) ?? _pen;
             CornerRadiusStyleDescriptor radius = element.StylesHandlers.CornerRadius.Descriptor;
 
-            if (!Descriptor.IsUniform)
+            if (!Descriptor.IsUniform || !Descriptor.IsOneColor)
             {
                 RenderSides(element, context, pen.Color, radius);
                 return;
@@ -103,26 +126,54 @@ namespace Ixen.Core.Visual.Styles.Handlers
                 context.PushClip(element.X, element.Y, element.ActualWidth, element.ActualHeight, radius);
             }
 
-            if (Descriptor.Top > 0)
-            {
-                context.FillRectangle(left, top, right - left, element.Y + insideTop - top, color);
-            }
+            float innerLeft = element.X + insideLeft;
+            float innerTop = element.Y + insideTop;
+            float innerRight = element.X + element.ActualWidth - insideRight;
+            float innerBottom = element.Y + element.ActualHeight - insideBottom;
 
-            if (Descriptor.Bottom > 0)
+            if (Descriptor.IsOneColor)
             {
-                float edge = element.Y + element.ActualHeight - insideBottom;
-                context.FillRectangle(left, edge, right - left, bottom - edge, color);
-            }
+                if (Descriptor.Top > 0)
+                {
+                    context.FillRectangle(left, top, right - left, innerTop - top, color);
+                }
 
-            if (Descriptor.Left > 0)
-            {
-                context.FillRectangle(left, top, element.X + insideLeft - left, bottom - top, color);
-            }
+                if (Descriptor.Bottom > 0)
+                {
+                    context.FillRectangle(left, innerBottom, right - left, bottom - innerBottom, color);
+                }
 
-            if (Descriptor.Right > 0)
+                if (Descriptor.Left > 0)
+                {
+                    context.FillRectangle(left, top, innerLeft - left, bottom - top, color);
+                }
+
+                if (Descriptor.Right > 0)
+                {
+                    context.FillRectangle(innerRight, top, right - innerRight, bottom - top, color);
+                }
+            }
+            else
             {
-                float edge = element.X + element.ActualWidth - insideRight;
-                context.FillRectangle(edge, top, right - edge, bottom - top, color);
+                if (Descriptor.Top > 0)
+                {
+                    context.FillQuad(left, top, right, top, innerRight, innerTop, innerLeft, innerTop, _top);
+                }
+
+                if (Descriptor.Right > 0)
+                {
+                    context.FillQuad(right, top, right, bottom, innerRight, innerBottom, innerRight, innerTop, _right);
+                }
+
+                if (Descriptor.Bottom > 0)
+                {
+                    context.FillQuad(right, bottom, left, bottom, innerLeft, innerBottom, innerRight, innerBottom, _bottom);
+                }
+
+                if (Descriptor.Left > 0)
+                {
+                    context.FillQuad(left, bottom, left, top, innerLeft, innerTop, innerLeft, innerBottom, _left);
+                }
             }
 
             if (clipped)

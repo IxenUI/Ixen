@@ -91,9 +91,77 @@ namespace Ixen.Core.UT.StyleParser
         }
 
         [TestMethod]
-        public void ADuplicatedPartIsRejected()
+        public void ADuplicatedTypeIsRejected()
         {
-            AssertRejected("#000000 #FFFFFF 1px");
+            AssertRejected("#000000 1px inner outer");
+        }
+
+        [TestMethod]
+        public void OneColourLeavesTheSidesAlone()
+        {
+            BorderStyleDescriptor border = Parse("#CCCCCC 1px");
+
+            Assert.IsNull(border.TopColor);
+            Assert.IsTrue(border.IsOneColor);
+            Assert.AreEqual("#CCCCCC", border.ColorLeft, "every side falls back to it");
+        }
+
+        [TestMethod]
+        public void TwoColoursAreVerticalThenHorizontal()
+        {
+            BorderStyleDescriptor border = Parse("#000000 #FFFFFF 1px");
+
+            AssertColors(border, "#000000", "#FFFFFF", "#000000", "#FFFFFF");
+
+            Assert.IsFalse(border.IsOneColor,
+                "this used to be a duplicated part and therefore a diagnostic");
+        }
+
+        [TestMethod]
+        public void ThreeColoursGiveTheMiddleToBothSides()
+        {
+            BorderStyleDescriptor border = Parse("#111111 #222222 #333333 1px");
+
+            AssertColors(border, "#111111", "#222222", "#333333", "#222222");
+        }
+
+        [TestMethod]
+        public void FourColoursGoClockwise()
+        {
+            BorderStyleDescriptor border = Parse("#111111 #222222 #333333 #444444 1px");
+
+            AssertColors(border, "#111111", "#222222", "#333333", "#444444");
+
+            Assert.AreEqual("#111111", border.Color,
+                "the shared colour stays the first one, so anything reading it still works");
+        }
+
+        [TestMethod]
+        public void AFifthColourIsRejected()
+        {
+            AssertRejected("#111111 #222222 #333333 #444444 #555555 1px");
+        }
+
+        [TestMethod]
+        public void ColoursAndThicknessesAreCountedApart()
+        {
+            BorderStyleDescriptor border = Parse("#111111 #222222 2px 4px inner");
+
+            AssertColors(border, "#111111", "#222222", "#111111", "#222222");
+            AssertSides(border, 2, 4, 2, 4);
+
+            Assert.AreEqual(BorderType.Inner, border.Type,
+                "a colour is a #, a thickness is a length and the type is a word, so each "
+                + "group runs its own one-to-four rule");
+        }
+
+        private static void AssertColors(BorderStyleDescriptor border,
+            string top, string right, string bottom, string left)
+        {
+            Assert.AreEqual(top, border.ColorTop, "top");
+            Assert.AreEqual(right, border.ColorRight, "right");
+            Assert.AreEqual(bottom, border.ColorBottom, "bottom");
+            Assert.AreEqual(left, border.ColorLeft, "left");
         }
 
         private static void AssertSides(BorderStyleDescriptor border,
