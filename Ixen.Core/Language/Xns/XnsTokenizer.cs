@@ -1,3 +1,4 @@
+using Ixen.Core.Visual.Classes;
 using Ixen.Core.Language.Base;
 using System;
 using System.Collections.Generic;
@@ -523,11 +524,26 @@ namespace Ixen.Core.Language.Xns
         {
             int index = _index;
             char c = PeekNonSpaceChar();
+            int markerIndex = _peekIndex;
+            bool immediate = false;
+
+            if (c == '>' && _contentLevel > 0)
+            {
+                immediate = true;
+                MoveCursor();
+                c = PeekNonSpaceChar();
+            }
 
             if (char.IsLetterOrDigit(c) || c == '.' || c == '#' || c == '_')
             {
-                int tokenIndex = _peekIndex;
+                int tokenIndex = immediate ? markerIndex : _peekIndex;
                 var sb = new StringBuilder();
+
+                if (immediate)
+                {
+                    sb.Append(StyleScope.IMMEDIATE);
+                }
+
                 sb.Append(c);
                 MoveCursor();
 

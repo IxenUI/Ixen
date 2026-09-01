@@ -62,7 +62,7 @@ namespace Ixen.Core.Language.Xns
         private StyleClass GetClass(XnsNode node, XnsNode selector, MediaQuery media,
             List<LanguageError> errors)
         {
-            string name = selector.Name;
+            string name = StyleScope.Bare(selector.Name);
             var target = StyleClassTarget.ElementName;
 
             if (name.StartsWith("."))

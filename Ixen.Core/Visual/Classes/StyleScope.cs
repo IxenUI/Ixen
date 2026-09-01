@@ -16,12 +16,15 @@ namespace Ixen.Core.Visual.Classes
         internal StyleScopeSegmentKind Kind { get; }
         internal string Value { get; }
         internal string State { get; }
+        internal bool Immediate { get; }
 
-        internal StyleScopeSegment(StyleScopeSegmentKind kind, string value, string state)
+        internal StyleScopeSegment(StyleScopeSegmentKind kind, string value, string state,
+            bool immediate)
         {
             Kind = kind;
             Value = value;
             State = state;
+            Immediate = immediate;
         }
 
         internal bool Matches(VisualElement element)
@@ -49,6 +52,13 @@ namespace Ixen.Core.Visual.Classes
     internal static class StyleScope
     {
         internal const string SEPARATOR = "/";
+        internal const char IMMEDIATE = '>';
+
+        internal static bool IsImmediate(string selector)
+            => !string.IsNullOrEmpty(selector) && selector[0] == IMMEDIATE;
+
+        internal static string Bare(string selector)
+            => IsImmediate(selector) ? selector.Substring(1) : selector;
 
         private static readonly char[] _separators = { '/' };
 
@@ -56,6 +66,7 @@ namespace Ixen.Core.Visual.Classes
             where TNode : class
         {
             var names = new List<string>();
+            TNode below = node;
 
             for (TNode current = parentOf(node); current != null; current = parentOf(current))
             {
@@ -63,7 +74,8 @@ namespace Ixen.Core.Visual.Classes
 
                 if (!string.IsNullOrEmpty(name))
                 {
-                    names.Add(name);
+                    names.Add(IsImmediate(nameOf(below)) ? IMMEDIATE + Bare(name) : Bare(name));
+                    below = current;
                 }
             }
 
@@ -89,19 +101,20 @@ namespace Ixen.Core.Visual.Classes
 
             for (int i = 0; i < parts.Length; i++)
             {
-                string part = SplitState(parts[i], out string state);
+                bool immediate = IsImmediate(parts[i]);
+                string part = SplitState(Bare(parts[i]), out string state);
 
                 if (part[0] == '.')
                 {
-                    segments[i] = new StyleScopeSegment(StyleScopeSegmentKind.Class, part.Substring(1), state);
+                    segments[i] = new StyleScopeSegment(StyleScopeSegmentKind.Class, part.Substring(1), state, immediate);
                 }
                 else if (part[0] == '#')
                 {
-                    segments[i] = new StyleScopeSegment(StyleScopeSegmentKind.Type, part.Substring(1), state);
+                    segments[i] = new StyleScopeSegment(StyleScopeSegmentKind.Type, part.Substring(1), state, immediate);
                 }
                 else
                 {
-                    segments[i] = new StyleScopeSegment(StyleScopeSegmentKind.Name, part, state);
+                    segments[i] = new StyleScopeSegment(StyleScopeSegmentKind.Name, part, state, immediate);
                 }
             }
 
@@ -139,6 +152,12 @@ namespace Ixen.Core.Visual.Classes
                 if (segments[index].Matches(ancestor))
                 {
                     index--;
+                    continue;
+                }
+
+                if (segments[index].Immediate)
+                {
+                    return false;
                 }
             }
 
