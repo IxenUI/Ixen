@@ -3,6 +3,7 @@ using Android.Runtime;
 using Android.Text;
 using Android.Util;
 using Android.Views;
+using Android.Views.Accessibility;
 using Android.Views.InputMethods;
 using Android.Widget;
 using Ixen.Core;
@@ -45,6 +46,7 @@ namespace Ixen.View.Android
 
         private bool _softKeyboardShown;
         private TextField _editing;
+        private IxenAccessibilityProvider _accessibility;
 
         private void Init()
         {
@@ -152,6 +154,9 @@ namespace Ixen.View.Android
 
             return true;
         }
+
+        public override AccessibilityNodeProvider AccessibilityNodeProvider
+            => _accessibility ??= new IxenAccessibilityProvider(this, _host.Surface);
 
         public override bool OnCheckIsTextEditor() => true;
 
