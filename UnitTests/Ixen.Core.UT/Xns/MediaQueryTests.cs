@@ -106,10 +106,153 @@ namespace Ixen.Core.UT.Xns
         }
 
         [TestMethod]
-        public void ContradictoryOrientationsAreRejected()
+        public void ContradictoryOrientationsNowCompileAndNeverMatch()
         {
-            Assert.IsNull(MediaQuery.Parse("(orientation: portrait) and (orientation: landscape)"),
-                "it could never match, so it is a mistake rather than a rule");
+            MediaQuery query = Parse("(orientation: portrait) and (orientation: landscape)");
+
+            Assert.IsTrue(query.Matches(500, 500), "a square satisfies both");
+            Assert.IsFalse(query.Matches(800, 400));
+            Assert.IsFalse(query.Matches(400, 800));
+
+            Assert.IsTrue(true,
+                "this used to be refused, and the refusal was only cheap while a query was "
+                + "one conjunction of bounds. With or and not in the language, spotting a "
+                + "contradiction is satisfiability checking, so CSS behaviour wins");
+        }
+
+        [TestMethod]
+        public void ACommaIsAnOr()
+        {
+            MediaQuery query = Parse("(max-width: 400px), (min-width: 800px)");
+
+            Assert.IsTrue(query.Matches(300, 100));
+            Assert.IsFalse(query.Matches(600, 100), "neither side holds in the middle");
+            Assert.IsTrue(query.Matches(900, 100));
+        }
+
+        [TestMethod]
+        public void OrIsTheKeywordFormOfTheSameThing()
+        {
+            MediaQuery query = Parse("(max-width: 400px) or (min-width: 800px)");
+
+            Assert.IsTrue(query.Matches(300, 100));
+            Assert.IsFalse(query.Matches(600, 100));
+            Assert.IsTrue(query.Matches(900, 100));
+        }
+
+        [TestMethod]
+        public void AndBindsTighterThanOr()
+        {
+            MediaQuery query =
+                Parse("(max-width: 400px) and (max-height: 400px) or (min-width: 800px)");
+
+            Assert.IsTrue(query.Matches(300, 300), "the left conjunction");
+            Assert.IsFalse(query.Matches(300, 500), "which needs both of its halves");
+            Assert.IsTrue(query.Matches(900, 500), "or the right one on its own");
+        }
+
+        [TestMethod]
+        public void TheConjunctionMayAlsoComeSecond()
+        {
+            MediaQuery query =
+                Parse("(min-width: 800px) or (max-width: 400px) and (max-height: 400px)");
+
+            Assert.IsTrue(query.Matches(900, 900), "the lone left side");
+            Assert.IsTrue(query.Matches(300, 300), "the right conjunction");
+
+            Assert.IsFalse(query.Matches(300, 500),
+                "which still needs both of its halves - and this is the shape that tells the "
+                + "two precedences apart, since a and b or c parses the same either way");
+        }
+
+        [TestMethod]
+        public void ParenthesesGroupRatherThanNameAFeature()
+        {
+            MediaQuery query =
+                Parse("((max-width: 400px) or (min-width: 800px)) and (orientation: landscape)");
+
+            Assert.IsTrue(query.Matches(300, 100));
+            Assert.IsFalse(query.Matches(300, 500), "portrait, so the landscape half fails");
+            Assert.IsFalse(query.Matches(600, 100), "landscape, but neither width holds");
+
+            Assert.IsTrue(query.Matches(900, 100),
+                "a parenthesis holds a feature when it contains a top-level colon and a group "
+                + "when it does not, which is how CSS tells the two apart");
+        }
+
+        [TestMethod]
+        public void NotNegatesWhatFollowsIt()
+        {
+            MediaQuery query = Parse("not (max-width: 600px)");
+
+            Assert.IsFalse(query.Matches(500, 100));
+            Assert.IsTrue(query.Matches(700, 100));
+        }
+
+        [TestMethod]
+        public void NotTakesAWholeGroup()
+        {
+            MediaQuery query = Parse("not ((min-width: 400px) and (max-width: 800px))");
+
+            Assert.IsTrue(query.Matches(300, 100));
+            Assert.IsFalse(query.Matches(600, 100));
+            Assert.IsTrue(query.Matches(900, 100));
+        }
+
+        [TestMethod]
+        public void NotBindsTighterThanAnd()
+        {
+            MediaQuery query = Parse("not (orientation: portrait) and (min-width: 400px)");
+
+            Assert.IsTrue(query.Matches(800, 400), "landscape and wide enough");
+            Assert.IsFalse(query.Matches(400, 800), "portrait");
+            Assert.IsFalse(query.Matches(300, 100), "landscape but too narrow");
+        }
+
+        [TestMethod]
+        public void ADoubleNegationIsAllowed()
+        {
+            Assert.IsTrue(Parse("not not (max-width: 600px)").Matches(500, 100));
+        }
+
+        [TestMethod]
+        public void KeywordsAreCaseInsensitive()
+        {
+            MediaQuery query = Parse("NOT (max-width: 400px) OR (min-height: 900px)");
+
+            Assert.IsTrue(query.Matches(600, 100));
+            Assert.IsTrue(query.Matches(300, 900));
+            Assert.IsFalse(query.Matches(300, 100));
+        }
+
+        [TestMethod]
+        public void OrientationIsNotMistakenForTheOrKeyword()
+        {
+            Assert.IsTrue(Parse("orientation: landscape").Matches(800, 400),
+                "a separator is matched as a whole word, so the or inside orientation and the "
+                + "and inside landscape are both left alone");
+        }
+
+        [TestMethod]
+        public void AnIncompleteOperatorIsRejected()
+        {
+            Assert.IsNull(MediaQuery.Parse("(max-width: 400px) or"), "nothing after or");
+            Assert.IsNull(MediaQuery.Parse("or (max-width: 400px)"), "nothing before it");
+            Assert.IsNull(MediaQuery.Parse("not"), "nothing to negate");
+            Assert.IsNull(MediaQuery.Parse("(max-width: 400px"), "an unclosed group");
+            Assert.IsNull(MediaQuery.Parse("(max-width: 400px) (min-width: 100px)"),
+                "two queries with no operator between them");
+        }
+
+        [TestMethod]
+        public void NestingStillOnlyNarrows()
+        {
+            MediaQuery outer = Parse("(max-width: 400px), (min-width: 800px)");
+            MediaQuery combined = outer.And(Parse("(orientation: landscape)"));
+
+            Assert.IsTrue(combined.Matches(300, 100));
+            Assert.IsFalse(combined.Matches(300, 500),
+                "an inner block narrows the whole disjunction rather than joining it");
         }
 
         [TestMethod]

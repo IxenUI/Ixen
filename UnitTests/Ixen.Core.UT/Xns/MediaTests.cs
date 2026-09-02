@@ -272,5 +272,93 @@ namespace Ixen.Core.UT.Xns
             Surface(xns, middle, 700, 400);
             Assert.AreEqual("#111111", BackgroundOf(middle));
         }
+        [TestMethod]
+        public void AListOfConditionsComesFromXnsEndToEnd()
+        {
+            VisualElement box = Element("box");
+
+            IxenSurface surface = Surface(
+                "box { background: #111111 }\r\n"
+                + "@media (max-width: 400px), (min-width: 800px) {\r\n"
+                + "    box { background: #222222 }\r\n"
+                + "}", box, 300, 100);
+
+            Assert.AreEqual("#222222", BackgroundOf(box), "the narrow side");
+
+            surface.ComputeLayout(600, 100);
+
+            Assert.AreEqual("#111111", BackgroundOf(box), "neither side in the middle");
+
+            surface.ComputeLayout(900, 100);
+
+            Assert.AreEqual("#222222", BackgroundOf(box), "the wide side");
+        }
+
+        [TestMethod]
+        public void NotComesFromXnsEndToEnd()
+        {
+            VisualElement box = Element("box");
+
+            IxenSurface surface = Surface(
+                "box { background: #111111 }\r\n"
+                + "@media not (max-width: 600px) {\r\n"
+                + "    box { background: #222222 }\r\n"
+                + "}", box, 500, 100);
+
+            Assert.AreEqual("#111111", BackgroundOf(box));
+
+            surface.ComputeLayout(700, 100);
+
+            Assert.AreEqual("#222222", BackgroundOf(box));
+        }
+
+        [TestMethod]
+        public void TwoNamedBreakpointsCompose()
+        {
+            VisualElement box = Element("box");
+
+            IxenSurface surface = Surface(
+                "\u0024phone:  (max-width: 400px)\r\n"
+                + "\u0024tablet: (min-width: 800px)\r\n"
+                + "box { background: #111111 }\r\n"
+                + "@media \u0024phone or \u0024tablet {\r\n"
+                + "    box { background: #222222 }\r\n"
+                + "}", box, 300, 100);
+
+            Assert.AreEqual("#222222", BackgroundOf(box),
+                "a variable already worked as a whole condition; or is what finally lets two of "
+                + "them compose, which is the other half of what this item asked for");
+
+            surface.ComputeLayout(600, 100);
+
+            Assert.AreEqual("#111111", BackgroundOf(box));
+
+            surface.ComputeLayout(900, 100);
+
+            Assert.AreEqual("#222222", BackgroundOf(box));
+        }
+
+        [TestMethod]
+        public void ANestedBlockNarrowsADisjunction()
+        {
+            VisualElement box = Element("box");
+
+            IxenSurface surface = Surface(
+                "box { background: #111111 }\r\n"
+                + "@media (max-width: 400px), (min-width: 800px) {\r\n"
+                + "    @media (orientation: landscape) {\r\n"
+                + "        box { background: #222222 }\r\n"
+                + "    }\r\n"
+                + "}", box, 300, 100);
+
+            Assert.AreEqual("#222222", BackgroundOf(box), "narrow and landscape");
+
+            surface.ComputeLayout(300, 500);
+
+            Assert.AreEqual("#111111", BackgroundOf(box),
+                "still narrow, but portrait now, so the inner block narrows the whole list "
+                + "rather than being added to it");
+        }
+
     }
 }
