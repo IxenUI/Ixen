@@ -399,6 +399,23 @@ LRESULT NativeWindow::HandleSetCursor(LPARAM lParam)
     return TRUE;
 }
 
+LRESULT NativeWindow::HandleGetObject(WPARAM wParam, LPARAM lParam)
+{
+    if (_accessibilityCallBack == nullptr)
+    {
+        return DefWindowProc(_handle, WM_GETOBJECT, wParam, lParam);
+    }
+
+    LRESULT answered = (LRESULT)_accessibilityCallBack((__int64)wParam, (__int64)lParam);
+
+    if (answered == 0)
+    {
+        return DefWindowProc(_handle, WM_GETOBJECT, wParam, lParam);
+    }
+
+    return answered;
+}
+
 int NativeWindow::GetModifiers()
 {
     int modifiers = 0;
@@ -521,6 +538,8 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
     {
     case WM_ERASEBKGND:
         return 1;
+    case WM_GETOBJECT:
+        return HandleGetObject(wParam, lParam);
     case WM_DESTROY:
         return HandleDestroy();
     case WM_PAINT:

@@ -13,6 +13,7 @@ namespace Ixen.Platform.Windows.NativeApi
         public delegate void OnImeCallBack(int kind,
             [MarshalAs(UnmanagedType.LPWStr)] string text, int caret);
         public delegate void OnWheelCallBack(int x, int y, int deltaX, int deltaY, int modifiers);
+        public delegate IntPtr OnAccessibilityCallBack(IntPtr wParam, IntPtr lParam);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr CreateWindow([MarshalAs(UnmanagedType.LPWStr)] string title, int width, int height);
@@ -50,6 +51,12 @@ namespace Ixen.Platform.Windows.NativeApi
 
         [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowCursor", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetWindowCursor(IntPtr windowPtr, int kind);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterAccessibilityCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterAccessibilityCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnAccessibilityCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_GetWindowHandle", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr GetWindowHandle(IntPtr windowPtr);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_GetWindowDpi", CallingConvention = CallingConvention.Cdecl)]
         public static extern uint GetWindowDpi(IntPtr windowPtr);

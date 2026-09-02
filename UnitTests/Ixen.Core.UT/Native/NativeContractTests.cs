@@ -56,7 +56,15 @@ namespace Ixen.Core.UT.Native
             { "_pointerCallBack", "OnPointerCallBack" },
             { "_keyCallBack", "OnKeyCallBack" },
             { "_imeCallBack", "OnImeCallBack" },
-            { "_wheelCallBack", "OnWheelCallBack" }
+            { "_wheelCallBack", "OnWheelCallBack" },
+            { "_accessibilityCallBack", "OnAccessibilityCallBack" }
+        };
+
+        private static readonly Dictionary<string, string> _returns
+            = new Dictionary<string, string>
+        {
+            { "void", "void" },
+            { "__int64", "IntPtr" }
         };
 
         [TestMethod]
@@ -68,10 +76,13 @@ namespace Ixen.Core.UT.Native
             foreach (KeyValuePair<string, string> pair in _callbacks)
             {
                 int nativeAt = header.IndexOf(pair.Key + ")(", StringComparison.Ordinal);
-                int managedAt = api.IndexOf("delegate void " + pair.Value + "(", StringComparison.Ordinal);
+                Match managed = Regex.Match(api,
+                    @"delegate\s+(\w+)\s+" + pair.Value + @"\s*\(");
 
                 Assert.IsTrue(nativeAt >= 0, pair.Key + " is gone from native_window.h");
-                Assert.IsTrue(managedAt >= 0, pair.Value + " is gone from WindowApi");
+                Assert.IsTrue(managed.Success, pair.Value + " is gone from WindowApi");
+
+                int managedAt = managed.Index;
 
                 int expected = Arity(header, nativeAt + pair.Key.Length + 1);
                 int actual = Arity(api, managedAt);
@@ -81,7 +92,50 @@ namespace Ixen.Core.UT.Native
                     + $"takes {actual} in WindowApi. Widening one without the other is not a "
                     + "compile error on either side: the managed delegate simply reads whatever "
                     + "is on the stack past what the C++ pushed.");
+
+                string nativeReturn = ReturnTypeOf(header, pair.Key);
+
+                Assert.IsTrue(_returns.ContainsKey(nativeReturn),
+                    $"{pair.Key} returns {nativeReturn} in native_window.h and this test does not "
+                    + "say what that maps to on the managed side. Say so rather than widening the "
+                    + "regex to swallow it.");
+
+                Assert.AreEqual(_returns[nativeReturn], managed.Groups[1].Value,
+                    $"{pair.Key} returns {nativeReturn} in native_window.h while {pair.Value} "
+                    + $"returns {managed.Groups[1].Value} in WindowApi. A return type is no more a "
+                    + "compile error across the boundary than an argument is.");
             }
+        }
+
+        [TestMethod]
+        public void NoCallbackIsLeftOutOfThisTest()
+        {
+            string header = Read(HEADER);
+
+            MatchCollection found = Regex.Matches(header, @"\(\*(_\w+CallBack)\)\(");
+
+            Assert.AreNotEqual(0, found.Count, "the parser found nothing, so it has stopped "
+                + "matching the shape of native_window.h rather than proving anything");
+
+            foreach (Match match in found)
+            {
+                string name = match.Groups[1].Value;
+
+                Assert.IsTrue(_callbacks.ContainsKey(name),
+                    $"{name} is a callback in native_window.h that this test says nothing about. "
+                    + "Adding one to the wire format must fail here until it is mapped, the same "
+                    + "way an unmapped IXEN_* define does.");
+            }
+
+            Assert.AreEqual(_callbacks.Count, found.Count,
+                "the table names a callback native_window.h does not declare");
+        }
+
+        private static string ReturnTypeOf(string header, string name)
+        {
+            Match match = Regex.Match(header, @"(\w+)\s*\(\*" + name + @"\)\(");
+
+            return match.Success ? match.Groups[1].Value : string.Empty;
         }
 
         private static int Arity(string source, int from)

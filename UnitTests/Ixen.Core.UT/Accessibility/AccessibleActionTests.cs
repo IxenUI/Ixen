@@ -128,6 +128,41 @@ namespace Ixen.Core.UT.Accessibility
         }
 
         [TestMethod]
+        public void SettingAValueIsAnEditSoATwoWayBindingSeesIt()
+        {
+            var field = (TextField)Sized(new TextField { Name = "field", Text = "before" });
+            int changes = 0;
+
+            field.TextChanged += (sender, args) => changes++;
+
+            _root.AddChild(field);
+
+            AccessibleNode node = Tree().Children[0];
+
+            Assert.IsTrue(_surface.Perform(node, AccessibleActions.SetValue, "after"));
+
+            Assert.AreEqual(1, changes,
+                "assigning Text raises nothing by contract, so a two-way binding would replay the "
+                + "old value over it on the next pass - a screen reader has to edit the way a "
+                + "person does");
+        }
+
+        [TestMethod]
+        public void SettingAValueIsOneUndoStep()
+        {
+            var field = (TextField)Sized(new TextField { Name = "field", Text = "before" });
+
+            _root.AddChild(field);
+
+            AccessibleNode node = Tree().Children[0];
+
+            _surface.Perform(node, AccessibleActions.SetValue, "after");
+            field.Undo();
+
+            Assert.AreEqual("before", field.Text);
+        }
+
+        [TestMethod]
         public void AMaskedFieldCanStillBeWrittenEvenThoughItCannotBeRead()
         {
             var field = Sized(new TextField { Name = "field", Password = true });

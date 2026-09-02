@@ -131,6 +131,19 @@ unsigned int WA_GetWindowDpi(NativeWindow* window)
     return window->GetDpi();
 }
 
+void WA_RegisterAccessibilityCallBack(NativeWindow* window, __int64 __stdcall callBack(__int64, __int64))
+{
+    if (window)
+    {
+        window->SetOnAccessibilityCallBack(callBack);
+    }
+}
+
+void* WA_GetWindowHandle(NativeWindow* window)
+{
+    return window ? (void*)window->GetHandle() : nullptr;
+}
+
 int WA_CreateGlContext(NativeWindow* window)
 {
     if (!window)

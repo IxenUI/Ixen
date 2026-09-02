@@ -221,7 +221,8 @@ namespace Ixen.Core
                         return false;
                     }
 
-                    field.Text = value ?? string.Empty;
+                    field.SelectAll();
+                    field.Insert(value ?? string.Empty);
                     return true;
 
                 case Accessibility.AccessibleActions.ScrollIntoView:

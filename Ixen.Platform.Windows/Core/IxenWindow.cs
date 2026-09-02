@@ -1,5 +1,6 @@
 using Ixen.Core;
 using Ixen.Core.Input;
+using Ixen.Platform.Windows.Accessibility;
 using Ixen.Platform.Windows.NativeApi;
 using SkiaSharp;
 using System;
@@ -17,6 +18,9 @@ namespace Ixen.Platform.Windows
         private readonly WindowApi.OnKeyCallBack _onKey;
         private readonly WindowApi.OnImeCallBack _onIme;
         private readonly WindowApi.OnWheelCallBack _onWheel;
+        private readonly WindowApi.OnAccessibilityCallBack _onAccessibility;
+
+        private readonly UiaBridge _accessibility;
 
         private IxenSurface _ixenSurface;
         private readonly IxenHost _host;
@@ -32,6 +36,7 @@ namespace Ixen.Platform.Windows
             _onKey = OnKey;
             _onIme = OnIme;
             _onWheel = OnWheel;
+            _onAccessibility = OnAccessibility;
             _windowPtr = WindowApi.CreateWindow(_ixenSurface.InitOptions.Title, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
@@ -44,6 +49,10 @@ namespace Ixen.Platform.Windows
                 : new RasterWindowRenderer(_windowPtr);
 
             _ixenSurface.PreservesFrame = _renderer.PreservesFrame;
+
+            _accessibility = new UiaBridge(_ixenSurface,
+                () => WindowApi.GetWindowHandle(_windowPtr),
+                RequestRepaint);
         }
 
         public int Show()
@@ -53,6 +62,7 @@ namespace Ixen.Platform.Windows
             WindowApi.RegisterKeyCallBack(_windowPtr, _onKey);
             WindowApi.RegisterImeCallBack(_windowPtr, _onIme);
             WindowApi.RegisterWheelCallBack(_windowPtr, _onWheel);
+            WindowApi.RegisterAccessibilityCallBack(_windowPtr, _onAccessibility);
 
             return WindowApi.ShowWindow(_windowPtr);
         }
@@ -161,7 +171,12 @@ namespace Ixen.Platform.Windows
             _ixenSurface.Scale = WindowApi.GetWindowDpi(_windowPtr) / DEFAULT_DPI;
 
             _renderer.Paint(width, height, canvas => _host.Paint(canvas, width, height));
+
+            _accessibility.Sync();
         }
+
+        private IntPtr OnAccessibility(IntPtr wParam, IntPtr lParam)
+            => _accessibility.Answer(wParam, lParam);
 
         internal string Backend => _renderer.Backend;
 
