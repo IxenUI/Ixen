@@ -190,5 +190,54 @@ namespace Ixen.Core.UT.Input
                 "the run goes through DisplayText, so measure, caret offsets and drawing all see "
                 + "it with no separate path");
         }
+
+        [TestMethod]
+        public void FinishingCommitsTheRunTheFieldIsHolding()
+        {
+            _field.Text = "ab";
+            _field.CaretIndex = 1;
+
+            _field.SetComposition("XY", 2);
+
+            _changes = 0;
+
+            _field.CommitComposition();
+
+            Assert.AreEqual("aXYb", _field.Text,
+                "Android says finish composing without saying what the run was, so the field has "
+                + "to commit what it is already holding");
+
+            Assert.IsFalse(_field.IsComposing);
+            Assert.AreEqual(1, _changes, "one edit, one undo step, whatever the IME took");
+        }
+
+        [TestMethod]
+        public void FinishingWithNoRunChangesNothing()
+        {
+            _field.Text = "ab";
+            _field.CaretIndex = 1;
+
+            _changes = 0;
+
+            _field.CommitComposition();
+
+            Assert.AreEqual("ab", _field.Text);
+            Assert.AreEqual(1, _field.CaretIndex);
+            Assert.AreEqual(0, _changes);
+        }
+
+        [TestMethod]
+        public void FinishingIsOneUndoStepAndUndoTakesTheWholeRun()
+        {
+            _field.Text = "ab";
+            _field.CaretIndex = 1;
+
+            _field.SetComposition("XY", 2);
+            _field.CommitComposition();
+
+            _field.Undo();
+
+            Assert.AreEqual("ab", _field.Text);
+        }
     }
 }

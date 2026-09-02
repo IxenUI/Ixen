@@ -44,6 +44,7 @@ namespace Ixen.View.Android
         }
 
         private bool _softKeyboardShown;
+        private TextField _editing;
 
         private void Init()
         {
@@ -158,11 +159,36 @@ namespace Ixen.View.Android
         {
             if (outAttrs != null)
             {
-                outAttrs.InputType = InputTypes.ClassText | InputTypes.TextFlagNoSuggestions;
+                outAttrs.InputType = InputTypeFor(_host.FocusedElement as TextField);
                 outAttrs.ImeOptions = ImeFlags.NoExtractUi;
+
+                if (_host.FocusedElement is TextField field)
+                {
+                    outAttrs.InitialSelStart = field.SelectionStart;
+                    outAttrs.InitialSelEnd = field.SelectionStart + field.SelectionLength;
+                }
             }
 
-            return new BaseInputConnection(this, false);
+            return new IxenInputConnection(this, _host);
+        }
+
+        private static InputTypes InputTypeFor(TextField field)
+        {
+            if (field == null)
+            {
+                return InputTypes.ClassText;
+            }
+
+            if (field.Password)
+            {
+                return InputTypes.ClassText
+                    | InputTypes.TextVariationPassword
+                    | InputTypes.TextFlagNoSuggestions;
+            }
+
+            return field.Multiline
+                ? InputTypes.ClassText | InputTypes.TextFlagMultiLine
+                : InputTypes.ClassText;
         }
 
         public override bool DispatchKeyEvent(KeyEvent e)
@@ -198,18 +224,26 @@ namespace Ixen.View.Android
 
         private void SyncSoftKeyboard()
         {
-            bool wanted = _host.FocusedElement is TextField;
+            var field = _host.FocusedElement as TextField;
+            bool wanted = field != null;
+            bool moved = field != _editing;
 
-            if (wanted == _softKeyboardShown)
+            if (wanted == _softKeyboardShown && !moved)
             {
                 return;
             }
 
             _softKeyboardShown = wanted;
+            _editing = field;
 
             if (!(Context?.GetSystemService(Context.InputMethodService) is InputMethodManager manager))
             {
                 return;
+            }
+
+            if (moved && wanted)
+            {
+                manager.RestartInput(this);
             }
 
             if (wanted)

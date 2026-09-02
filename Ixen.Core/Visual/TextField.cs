@@ -256,6 +256,8 @@ namespace Ixen.Core.Visual
             AfterComposing();
         }
 
+        public void CommitComposition() => CommitComposition(_composition);
+
         public void CommitComposition(string text)
         {
             _composition = string.Empty;

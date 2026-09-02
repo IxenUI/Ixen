@@ -177,5 +177,59 @@ namespace Ixen.Core.UT.Input
 
             Assert.AreNotEqual("clicked", _box.Text, "the press died with the capture");
         }
+
+        private TextField Field()
+        {
+            var field = new TextField { Name = "field", Focusable = true };
+            field.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
+            field.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 24 };
+
+            _host.Root.AddChild(field);
+            Paint();
+
+            _host.Focus(field);
+
+            return field;
+        }
+
+        [TestMethod]
+        public void ACompositionRunReachesTheFocusedField()
+        {
+            TextField field = Field();
+
+            _host.Composition("nihon", 5);
+
+            Assert.IsTrue(string.IsNullOrEmpty(field.Text), "a run is not an edit");
+            Assert.IsTrue(field.IsComposing);
+        }
+
+        [TestMethod]
+        public void FinishingTheCompositionCommitsWhatTheFieldHolds()
+        {
+            TextField field = Field();
+
+            _host.Composition("nihon", 5);
+
+            _repaints = 0;
+
+            _host.FinishComposition();
+
+            Assert.AreEqual("nihon", field.Text,
+                "Android says finish composing without saying what the run was, so this is the "
+                + "route that has to ask the field");
+
+            Assert.IsFalse(field.IsComposing);
+            Assert.AreEqual(1, _repaints);
+        }
+
+        [TestMethod]
+        public void FinishingWithNothingFocusedIsANoOp()
+        {
+            _host.Focus(null);
+
+            _host.FinishComposition();
+
+            Assert.AreEqual(string.Empty, _box.Text ?? string.Empty);
+        }
     }
 }

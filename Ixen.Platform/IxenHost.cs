@@ -303,6 +303,22 @@ namespace Ixen.Platform
             }
         }
 
+        public void FinishComposition()
+        {
+            try
+            {
+                _surface.FinishComposition();
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Keyboard, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
+        }
+
         public void CancelComposition()
         {
             try

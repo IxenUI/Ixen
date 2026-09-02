@@ -604,6 +604,9 @@ namespace Ixen.Core
         internal void CommitComposition(string text)
             => Composing?.CommitComposition(text);
 
+        internal void FinishComposition()
+            => Composing?.CommitComposition();
+
         internal void CancelComposition()
             => Composing?.CancelComposition();
 
