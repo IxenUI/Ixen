@@ -110,14 +110,13 @@ namespace Ixen.Core.UT.Xns
         {
             MediaQuery query = Parse("(orientation: portrait) and (orientation: landscape)");
 
-            Assert.IsTrue(query.Matches(500, 500), "a square satisfies both");
+            Assert.IsTrue(query.Matches(500, 500),
+                "a square satisfies both, and this used to be refused outright. The refusal "
+                + "was only cheap while a query was one conjunction of bounds; with or and "
+                + "not in the language, spotting a contradiction is satisfiability checking");
+
             Assert.IsFalse(query.Matches(800, 400));
             Assert.IsFalse(query.Matches(400, 800));
-
-            Assert.IsTrue(true,
-                "this used to be refused, and the refusal was only cheap while a query was "
-                + "one conjunction of bounds. With or and not in the language, spotting a "
-                + "contradiction is satisfiability checking, so CSS behaviour wins");
         }
 
         [TestMethod]

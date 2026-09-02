@@ -9,7 +9,8 @@ namespace Ixen.Core.Visual.Styles.Descriptors
             => $"new {nameof(BottomStyleDescriptor)} " +
                 "{ " +
                     $"{nameof(Unit)} = {nameof(SizeUnit)}.{Unit}, " +
-                    $"{nameof(Value)} = {SourceOf(Value)} " +
+                    $"{nameof(Value)} = {SourceOf(Value)}, " +
+                    $"{nameof(Offset)} = {SourceOf(Offset)} " +
                 "}";
     }
 }

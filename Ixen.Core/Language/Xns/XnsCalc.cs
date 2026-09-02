@@ -14,8 +14,35 @@ namespace Ixen.Core.Language.Xns
 
         private struct Term
         {
-            internal float Number;
-            internal string Unit;
+            internal float Pixels;
+            internal float Percents;
+            internal bool Unitless;
+
+            internal static Term Plain(float number)
+                => new Term { Pixels = number, Unitless = true };
+
+            internal static Term Of(float number, string unit)
+            {
+                if (unit == PERCENTS)
+                {
+                    return new Term { Percents = number };
+                }
+
+                return unit == PIXELS ? new Term { Pixels = number } : Plain(number);
+            }
+
+            internal Term Scaled(float factor)
+                => new Term
+                {
+                    Pixels = Pixels * factor,
+                    Percents = Percents * factor,
+                    Unitless = Unitless
+                };
+
+            internal bool IsZero => Pixels == 0 && Percents == 0;
+
+            internal string Describe()
+                => Unitless ? "a plain number" : Percents == 0 ? PIXELS : PERCENTS;
         }
 
         private class Reader
@@ -165,7 +192,9 @@ namespace Ixen.Core.Language.Xns
 
             Term value = term.Value;
 
-            if (value.Number < 0)
+            bool mixed = value.Percents != 0 && value.Pixels != 0;
+
+            if (!mixed && (value.Pixels < 0 || value.Percents < 0))
             {
                 failure = $"'{text.Trim()}' is negative, and no XNS value may be.";
                 return null;
@@ -173,8 +202,23 @@ namespace Ixen.Core.Language.Xns
 
             failure = null;
 
-            return value.Number.ToString("0.####", CultureInfo.InvariantCulture) + value.Unit;
+            if (!mixed)
+            {
+                float single = value.Percents != 0 ? value.Percents : value.Pixels;
+
+                return Number(single)
+                    + (value.Unitless ? string.Empty
+                        : value.Percents != 0 ? PERCENTS : PIXELS);
+            }
+
+            return Number(value.Percents) + PERCENTS
+                + (value.Pixels < 0 ? "-" : "+") + Number(Abs(value.Pixels)) + PIXELS;
         }
+
+        private static float Abs(float value) => value < 0 ? -value : value;
+
+        private static string Number(float value)
+            => value.ToString("0.####", CultureInfo.InvariantCulture);
 
         private static Term? ReadSum(Reader reader)
         {
@@ -203,18 +247,21 @@ namespace Ixen.Core.Language.Xns
                 Term a = left.Value;
                 Term b = right.Value;
 
-                if (a.Unit != b.Unit)
+                if (a.Unitless != b.Unitless && !a.IsZero && !b.IsZero)
                 {
-                    reader.Fail($"'{a.Unit}' and '{b.Unit}' cannot be added: a percentage is only"
-                        + " known at layout time, so mixed units cannot be folded at build time.");
+                    reader.Fail($"{a.Describe()} and {b.Describe()} cannot be added: one of them"
+                        + " carries no unit.");
 
                     return null;
                 }
 
+                float sign = op == '+' ? 1f : -1f;
+
                 left = new Term
                 {
-                    Number = op == '+' ? a.Number + b.Number : a.Number - b.Number,
-                    Unit = a.Unit
+                    Pixels = a.Pixels + b.Pixels * sign,
+                    Percents = a.Percents + b.Percents * sign,
+                    Unitless = a.Unitless && b.Unitless
                 };
             }
 
@@ -250,34 +297,34 @@ namespace Ixen.Core.Language.Xns
 
                 if (op == '*')
                 {
-                    if (a.Unit.Length > 0 && b.Unit.Length > 0)
+                    if (!a.Unitless && !b.Unitless)
                     {
-                        reader.Fail($"'{a.Unit}' cannot multiply '{b.Unit}': one side must be a plain number.");
+                        reader.Fail($"{a.Describe()} cannot multiply {b.Describe()}: one side"
+                            + " must be a plain number.");
+
                         return null;
                     }
 
-                    left = new Term
-                    {
-                        Number = a.Number * b.Number,
-                        Unit = a.Unit.Length > 0 ? a.Unit : b.Unit
-                    };
+                    left = a.Unitless ? b.Scaled(a.Pixels) : a.Scaled(b.Pixels);
 
                     continue;
                 }
 
-                if (b.Unit.Length > 0)
+                if (!b.Unitless)
                 {
-                    reader.Fail($"a division by '{b.Unit}' is not a size: the divisor must be a plain number.");
+                    reader.Fail($"a division by {b.Describe()} is not a size: the divisor must"
+                        + " be a plain number.");
+
                     return null;
                 }
 
-                if (b.Number == 0)
+                if (b.Pixels == 0)
                 {
                     reader.Fail("a division by zero.");
                     return null;
                 }
 
-                left = new Term { Number = a.Number / b.Number, Unit = a.Unit };
+                left = a.Scaled(1f / b.Pixels);
             }
 
             return left;
@@ -298,7 +345,7 @@ namespace Ixen.Core.Language.Xns
                     return null;
                 }
 
-                return new Term { Number = -inner.Value.Number, Unit = inner.Value.Unit };
+                return inner.Value.Scaled(-1f);
             }
 
             if (reader.Current == '(')
@@ -398,7 +445,7 @@ namespace Ixen.Core.Language.Xns
                 reader.Position += PIXELS.Length;
             }
 
-            return new Term { Number = number, Unit = unit };
+            return Term.Of(number, unit);
         }
 
         private static void Report(List<LanguageError> errors, int index, int length, string message)

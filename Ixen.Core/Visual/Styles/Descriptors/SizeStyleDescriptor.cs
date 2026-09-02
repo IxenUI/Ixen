@@ -21,5 +21,16 @@
 
         public SizeUnit Unit { get; set; } = SizeUnit.Unset; // by default, is equivalent to Weight, but does not override inherited value
         public float Value { get; set; } = 1;
+        public float Offset { get; set; } = 0;
+
+        public void Set(SizeStyleDescriptor other)
+        {
+            Unit = other.Unit;
+            Value = other.Value;
+            Offset = other.Offset;
+        }
+
+        internal float Of(float available)
+            => (available / 100f) * Value + Offset;
     }
 }

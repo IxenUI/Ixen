@@ -44,7 +44,7 @@ generated_root {
     animation: generated_pulse 480ms ease-out 60ms infinite alternate
 
     generated_child {
-        width: 30.5%
+        width: calc(30.5% - 4.25px)
         height: 20px
         left: 1.5px
         top: 25%

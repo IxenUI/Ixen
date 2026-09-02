@@ -4,19 +4,14 @@
     {
         internal override string Identifier => StyleIdentifier.HEIGHT;
 
-        public void Set(SizeStyleDescriptor sizeDescriptor)
-        {
-            Unit = sizeDescriptor.Unit;
-            Value = sizeDescriptor.Value;
-        }
-
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()
             => $"new {nameof(HeightStyleDescriptor)} " +
                 "{ " +
                     $"{nameof(Unit)} = {nameof(SizeUnit)}.{Unit}, " +
-                    $"{nameof(Value)} = {SourceOf(Value)} " +
+                    $"{nameof(Value)} = {SourceOf(Value)}, " +
+                    $"{nameof(Offset)} = {SourceOf(Offset)} " +
                 "}";
     }
 }

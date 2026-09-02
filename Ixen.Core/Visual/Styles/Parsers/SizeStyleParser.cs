@@ -6,7 +6,8 @@ namespace Ixen.Core.Visual.Styles.Parsers
 {
     internal class SizeStyleParser : StyleParser
     {
-        private static Regex _regex = new Regex(@"^\s*(([0-9]+(?:\.[0-9]+)?)(px|%|\*|)|\?)\s*$");
+        private static Regex _regex = new Regex(
+            @"^\s*(?:(\?)|([0-9]+(?:\.[0-9]+)?)(px|%|\*|)(?:([+-][0-9]+(?:\.[0-9]+)?)px)?)\s*$");
         public SizeStyleDescriptor Descriptor { get; } = new SizeStyleDescriptor();
 
         public SizeStyleParser(string content)
@@ -17,12 +18,12 @@ namespace Ixen.Core.Visual.Styles.Parsers
         {
             Match m = _regex.Match(_content);
 
-            if (!m.Success || m.Groups.Count < 4)
+            if (!m.Success)
             {
                 return false;
             }
 
-            if (m.Groups[1].Value == "?")
+            if (m.Groups[1].Success)
             {
                 Descriptor.Unit = SizeUnit.Content;
                 Descriptor.Value = 0;
@@ -32,6 +33,18 @@ namespace Ixen.Core.Visual.Styles.Parsers
             if (!float.TryParse(m.Groups[2].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out float floatValue))
             {
                 return false;
+            }
+
+            if (m.Groups[4].Success)
+            {
+                if (m.Groups[3].Value != "%"
+                    || !float.TryParse(m.Groups[4].Value, NumberStyles.Float,
+                        CultureInfo.InvariantCulture, out float offset))
+                {
+                    return false;
+                }
+
+                Descriptor.Offset = offset;
             }
 
             Descriptor.Value = floatValue;

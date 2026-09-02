@@ -433,20 +433,22 @@ namespace Ixen.Core.Visual.Computers
 
             if (!transition.HasValue)
             {
-                transition.Jump(target.Unit, target.Value);
+                transition.Jump(target.Unit, target.Value, target.Offset);
                 return;
             }
 
-            if (transition.Unit == target.Unit && transition.To == target.Value)
+            if (transition.Unit == target.Unit && transition.To == target.Value
+                && transition.Offset == target.Offset)
             {
                 return;
             }
 
             TransitionSpec spec = transitions == null ? default : transitions.SpecOf(identifier);
 
-            if (spec.Duration <= 0 || transition.Unit != target.Unit || !Interpolatable(target.Unit))
+            if (spec.Duration <= 0 || transition.Unit != target.Unit
+                || transition.Offset != target.Offset || !Interpolatable(target.Unit))
             {
-                transition.Jump(target.Unit, target.Value);
+                transition.Jump(target.Unit, target.Value, target.Offset);
                 return;
             }
 

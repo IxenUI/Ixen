@@ -164,9 +164,101 @@ namespace Ixen.Core.UT.Xns
         }
 
         [TestMethod]
-        public void MixedUnitsAreReportedWithTheReason()
+        public void MixedUnitsReduceToALinearForm()
         {
-            AssertRejected("calc(100% - 20px)", "layout time");
+            SizeStyleDescriptor width = Width("calc(100% - 20px)");
+
+            Assert.AreEqual(SizeUnit.Percents, width.Unit);
+            Assert.AreEqual(100f, width.Value);
+
+            Assert.AreEqual(-20f, width.Offset,
+                "this used to be reported as unfoldable. Any calc over % and px with + - * / "
+                + "by a scalar reduces to a * container + b, so two floats carry it to measure");
+        }
+
+        [TestMethod]
+        public void ThePixelPartMayBePositive()
+        {
+            SizeStyleDescriptor width = Width("calc(50% + 10px)");
+
+            Assert.AreEqual(50f, width.Value);
+            Assert.AreEqual(10f, width.Offset);
+        }
+
+        [TestMethod]
+        public void TheTermsMayComeInAnyOrder()
+        {
+            SizeStyleDescriptor width = Width("calc(20px + 100%)");
+
+            Assert.AreEqual(100f, width.Value);
+            Assert.AreEqual(20f, width.Offset);
+        }
+
+        [TestMethod]
+        public void SeveralTermsCollapseIntoTheSameTwoNumbers()
+        {
+            SizeStyleDescriptor width = Width("calc(100% - 10px - 2 * 5px + 25%)");
+
+            Assert.AreEqual(125f, width.Value);
+            Assert.AreEqual(-20f, width.Offset);
+        }
+
+        [TestMethod]
+        public void AScalarScalesBothParts()
+        {
+            SizeStyleDescriptor width = Width("calc((50% + 10px) * 2)");
+
+            Assert.AreEqual(100f, width.Value);
+            Assert.AreEqual(20f, width.Offset);
+        }
+
+        [TestMethod]
+        public void ADivisorScalesBothParts()
+        {
+            SizeStyleDescriptor width = Width("calc((100% + 40px) / 2)");
+
+            Assert.AreEqual(50f, width.Value);
+            Assert.AreEqual(20f, width.Offset);
+        }
+
+        [TestMethod]
+        public void APureResultKeepsItsOldShape()
+        {
+            SizeStyleDescriptor pixels = Width("calc(10px + 6px)");
+
+            Assert.AreEqual(SizeUnit.Pixels, pixels.Unit);
+            Assert.AreEqual(16f, pixels.Value);
+            Assert.AreEqual(0f, pixels.Offset, "no offset when the units never mixed");
+
+            SizeStyleDescriptor percents = Width("calc(20% * 3)");
+
+            Assert.AreEqual(SizeUnit.Percents, percents.Unit);
+            Assert.AreEqual(60f, percents.Value);
+            Assert.AreEqual(0f, percents.Offset);
+        }
+
+        [TestMethod]
+        public void APartThatCancelsOutLeavesAPureValue()
+        {
+            SizeStyleDescriptor width = Width("calc(100% + 20px - 20px)");
+
+            Assert.AreEqual(SizeUnit.Percents, width.Unit);
+            Assert.AreEqual(100f, width.Value);
+            Assert.AreEqual(0f, width.Offset);
+        }
+
+        [TestMethod]
+        public void APlainNumberStillCannotBeAddedToALength()
+        {
+            AssertRejected("calc(100% + 3)", "no unit");
+            AssertRejected("calc(3 + 20px)", "no unit");
+        }
+
+        [TestMethod]
+        public void ANegativePureValueIsStillRefused()
+        {
+            AssertRejected("calc(4px - 10px)", "negative");
+            AssertRejected("calc(20% - 50%)", "negative");
         }
 
         [TestMethod]

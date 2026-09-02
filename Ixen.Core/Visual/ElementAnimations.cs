@@ -103,6 +103,7 @@ namespace Ixen.Core.Visual
     internal class SizeTransition
     {
         internal Styles.Descriptors.SizeUnit Unit;
+        internal float Offset;
         internal float From;
         internal float To;
         internal float Current;
@@ -132,14 +133,16 @@ namespace Ixen.Core.Visual
 
                 _descriptor.Unit = Unit;
                 _descriptor.Value = Current;
+                _descriptor.Offset = Offset;
 
                 return _descriptor;
             }
         }
 
-        internal void Jump(Styles.Descriptors.SizeUnit unit, float value)
+        internal void Jump(Styles.Descriptors.SizeUnit unit, float value, float offset = 0)
         {
             Unit = unit;
+            Offset = offset;
             From = value;
             To = value;
             Current = value;

@@ -887,7 +887,7 @@ namespace Ixen.Core.Visual.Computers
                     return;
 
                 case SizeUnit.Percents:
-                    available = (contentAvailable / 100) * style.Value;
+                    available = style.Of(contentAvailable);
                     isDefinite = true;
                     return;
 
@@ -1101,7 +1101,7 @@ namespace Ixen.Core.Visual.Computers
                         break;
 
                     case SizeUnit.Percents:
-                        columns[i] = (available / 100) * style.Value;
+                        columns[i] = style.Of(available);
                         break;
 
                     case SizeUnit.Content:
@@ -1138,7 +1138,7 @@ namespace Ixen.Core.Visual.Computers
                         break;
 
                     case SizeUnit.Percents:
-                        rows[i] = (available / 100) * style.Value;
+                        rows[i] = style.Of(available);
                         break;
 
                     case SizeUnit.Content:
@@ -1489,7 +1489,7 @@ namespace Ixen.Core.Visual.Computers
             }
 
             value = style.Unit == SizeUnit.Percents
-                ? (contentAvailable / 100) * style.Value
+                ? style.Of(contentAvailable)
                 : style.Value;
 
             isSet = true;
@@ -1506,7 +1506,7 @@ namespace Ixen.Core.Visual.Computers
                     return;
 
                 case SizeUnit.Percents:
-                    available = (contentAvailable / 100) * style.Value;
+                    available = style.Of(contentAvailable);
                     isDefinite = true;
                     return;
 
@@ -1618,7 +1618,7 @@ namespace Ixen.Core.Visual.Computers
                     return;
 
                 case SizeUnit.Percents:
-                    available = (contentAvailable / 100) * style.Value;
+                    available = style.Of(contentAvailable);
                     isDefinite = true;
                     return;
 
@@ -1832,7 +1832,7 @@ namespace Ixen.Core.Visual.Computers
                     return style.Value;
 
                 case SizeUnit.Percents:
-                    return (contentAvailable / 100) * style.Value;
+                    return style.Of(contentAvailable);
 
                 default:
                     return 0;

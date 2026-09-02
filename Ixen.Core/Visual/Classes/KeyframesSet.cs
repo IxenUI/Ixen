@@ -147,7 +147,8 @@ namespace Ixen.Core.Visual.Classes
                         continue;
                     }
 
-                    if (IsSizeProperty(identifier) && descriptor is SizeStyleDescriptor size)
+                    if (IsSizeProperty(identifier) && descriptor is SizeStyleDescriptor size
+                        && size.Offset == 0)
                     {
                         Track(sizes, identifier).Add(new SizeStop
                         {

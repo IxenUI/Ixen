@@ -238,6 +238,9 @@ namespace Ixen.Core.UT.Xns
 
             Assert.AreEqual(SizeUnit.Percents, width.Unit);
             Assert.AreEqual(30.5f, width.Value);
+
+            Assert.AreEqual(-4.25f, width.Offset,
+                "a mixed calc is two numbers, so both have to reach the generated sheet");
         }
 
         [TestMethod]
