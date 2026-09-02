@@ -167,6 +167,21 @@ namespace Ixen.Platform.Windows.Accessibility
         internal const int CUSTOM = 50025;
     }
 
+    internal enum StructureChangeType
+    {
+        ChildAdded = 0,
+        ChildRemoved = 1,
+        ChildrenInvalidated = 2,
+        ChildrenBulkAdded = 3,
+        ChildrenBulkRemoved = 4,
+        ChildrenReordered = 5
+    }
+
+    internal static class UiaEvent
+    {
+        internal const int FOCUS_CHANGED = 20005;
+    }
+
     internal static class UiaNative
     {
         private const string LIB_NAME = "uiautomationcore.dll";
@@ -183,6 +198,21 @@ namespace Ixen.Platform.Windows.Accessibility
 
         [DllImport(LIB_NAME, ExactSpelling = true)]
         internal static extern bool UiaClientsAreListening();
+
+        [DllImport(LIB_NAME, ExactSpelling = true)]
+        internal static extern int UiaRaiseAutomationEvent(
+            [MarshalAs(UnmanagedType.Interface)] IRawElementProviderSimple provider, int id);
+
+        [DllImport(LIB_NAME, ExactSpelling = true)]
+        internal static extern int UiaRaiseAutomationPropertyChangedEvent(
+            [MarshalAs(UnmanagedType.Interface)] IRawElementProviderSimple provider, int id,
+            [MarshalAs(UnmanagedType.Struct)] object oldValue,
+            [MarshalAs(UnmanagedType.Struct)] object newValue);
+
+        [DllImport(LIB_NAME, ExactSpelling = true)]
+        internal static extern int UiaRaiseStructureChangedEvent(
+            [MarshalAs(UnmanagedType.Interface)] IRawElementProviderSimple provider,
+            StructureChangeType change, int[] runtimeId, int runtimeIdLength);
 
         [DllImport("user32.dll")]
         internal static extern bool ClientToScreen(IntPtr hwnd, ref Point point);

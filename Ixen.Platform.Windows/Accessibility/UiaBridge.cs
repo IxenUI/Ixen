@@ -118,7 +118,108 @@ namespace Ixen.Platform.Windows.Accessibility
                 _providers.TryRemove(entry.Value, out _);
             }
 
+            Snapshot previous = _snapshot;
+
             _snapshot = snapshot;
+
+            if (previous.RootId >= 0)
+            {
+                Announce(previous, snapshot);
+            }
+        }
+
+        private void Announce(Snapshot previous, Snapshot current)
+        {
+            foreach (KeyValuePair<int, AccessibleNode> entry in current.Nodes)
+            {
+                if (!previous.Nodes.TryGetValue(entry.Key, out AccessibleNode was))
+                {
+                    continue;
+                }
+
+                AccessibleNode now = entry.Value;
+
+                if (was.Name != now.Name)
+                {
+                    Raise(entry.Key, UiaProperty.NAME, was.Name, now.Name);
+                }
+
+                if (was.Value != now.Value)
+                {
+                    Raise(entry.Key, UiaProperty.VALUE_VALUE, was.Value, now.Value);
+                }
+
+                bool had = was.HasState(AccessibleStates.Focused);
+                bool has = now.HasState(AccessibleStates.Focused);
+
+                if (had == has)
+                {
+                    continue;
+                }
+
+                Raise(entry.Key, UiaProperty.HAS_KEYBOARD_FOCUS, had, has);
+
+                if (has)
+                {
+                    Event(entry.Key, UiaEvent.FOCUS_CHANGED);
+                }
+            }
+
+            foreach (KeyValuePair<int, List<int>> entry in current.ChildIds)
+            {
+                if (!previous.ChildIds.TryGetValue(entry.Key, out List<int> was)
+                    || Same(was, entry.Value))
+                {
+                    continue;
+                }
+
+                Structure(entry.Key);
+            }
+        }
+
+        private static bool Same(List<int> left, List<int> right)
+        {
+            if (left.Count != right.Count)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < left.Count; index++)
+            {
+                if (left[index] != right[index])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void Raise(int id, int property, object was, object now)
+        {
+            if (ProviderFor(id) is IRawElementProviderSimple provider)
+            {
+                UiaNative.UiaRaiseAutomationPropertyChangedEvent(provider, property, was, now);
+            }
+        }
+
+        private void Event(int id, int eventId)
+        {
+            if (ProviderFor(id) is IRawElementProviderSimple provider)
+            {
+                UiaNative.UiaRaiseAutomationEvent(provider, eventId);
+            }
+        }
+
+        private void Structure(int id)
+        {
+            if (ProviderFor(id) is IRawElementProviderSimple provider)
+            {
+                UiaNative.UiaRaiseStructureChangedEvent(provider,
+                    StructureChangeType.ChildrenInvalidated,
+                    new[] { UiaNative.UIA_APPEND_RUNTIME_ID, id },
+                    2);
+            }
         }
 
         private int Walk(AccessibleNode node, int parentId, Snapshot snapshot,
