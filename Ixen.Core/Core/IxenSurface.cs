@@ -55,7 +55,17 @@ namespace Ixen.Core
         public StyleRegistry Styles
         {
             get => _styles ?? StyleRegistry.Default;
-            set => _styles = value;
+            set
+            {
+                if (Styles == value)
+                {
+                    return;
+                }
+
+                _styles = value;
+                _mediaKnown = false;
+                Root?.Invalidate();
+            }
         }
 
         public VisualElement Root

@@ -374,6 +374,16 @@ namespace Ixen.Core.Visual.Classes
         public static StyleRegistry CreateFromLoadedAssemblies()
         {
             var registry = new StyleRegistry();
+
+            registry.AddLoadedSheets(false);
+
+            return registry;
+        }
+
+        public void AddLoadedDefaults() => AddLoadedSheets(true);
+
+        private void AddLoadedSheets(bool defaultsOnly)
+        {
             Type baseType = typeof(StyleSheet);
 
             IEnumerable<Type> sheetTypes = AppDomain.CurrentDomain
@@ -387,17 +397,25 @@ namespace Ixen.Core.Visual.Classes
 
             foreach (Type sheetType in sheetTypes)
             {
+                bool isDefault = sheetType.Assembly
+                    .IsDefined(typeof(IxenDefaultStylesAttribute), false);
+
+                if (defaultsOnly && !isDefault)
+                {
+                    continue;
+                }
+
                 try
                 {
                     if (Activator.CreateInstance(sheetType) is StyleSheet sheet)
                     {
-                        if (sheetType.Assembly.IsDefined(typeof(IxenDefaultStylesAttribute), false))
+                        if (isDefault)
                         {
-                            registry.AddDefaults(sheet);
+                            AddDefaults(sheet);
                         }
                         else
                         {
-                            registry.Add(sheet);
+                            Add(sheet);
                         }
                     }
                 }
@@ -405,8 +423,6 @@ namespace Ixen.Core.Visual.Classes
                 {
                 }
             }
-
-            return registry;
         }
 
         private static IEnumerable<Type> GetTypesSafely(Assembly assembly)
