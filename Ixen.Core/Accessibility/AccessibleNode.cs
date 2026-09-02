@@ -12,6 +12,7 @@ namespace Ixen.Core.Accessibility
         public string Description { get; internal set; }
         public string Value { get; internal set; }
         public AccessibleStates States { get; internal set; }
+        public LiveRegionKind Live { get; internal set; }
         public AccessibleActions Actions { get; internal set; }
 
         public float X { get; internal set; }

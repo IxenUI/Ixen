@@ -325,5 +325,125 @@ namespace Ixen.Core.UT.Accessibility
                 "a surface is born with a root, but the setter is public - so the guard is "
                 + "reachable and a client asking too early gets null rather than a throw");
         }
+
+        [TestMethod]
+        public void NothingIsALiveRegionByDefault()
+        {
+            var label = Sized(new VisualElement { Name = "label", Text = "hello" });
+
+            _root.AddChild(label);
+
+            Assert.AreEqual(LiveRegionKind.None, Tree().Children[0].Live);
+        }
+
+        [TestMethod]
+        public void ADeclaredLiveRegionIsReported()
+        {
+            var label = Sized(new VisualElement
+            {
+                Name = "label",
+                Text = "hello",
+                LiveRegion = LiveRegionKind.Polite
+            });
+
+            _root.AddChild(label);
+
+            Assert.AreEqual(LiveRegionKind.Polite, Tree().Children[0].Live);
+        }
+
+        [TestMethod]
+        public void ItIsInheritedByWhatIsInsideIt()
+        {
+            var region = new VisualElement
+            {
+                Name = "region",
+                Role = AccessibleRole.Group,
+                LiveRegion = LiveRegionKind.Polite
+            };
+
+            region.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
+
+            var label = Sized(new VisualElement { Name = "label", Text = "hello" });
+
+            region.AddChild(label);
+            _root.AddChild(region);
+
+            AccessibleNode node = Tree().Children[0];
+
+            Assert.AreEqual(LiveRegionKind.Polite, node.Live);
+            Assert.AreEqual(LiveRegionKind.Polite, node.Children[0].Live,
+                "a change inside a live region is what gets announced, so the setting has to "
+                + "reach the element that actually carries the changing text");
+        }
+
+        [TestMethod]
+        public void ADescendantCanRaiseTheUrgency()
+        {
+            var region = new VisualElement
+            {
+                Name = "region",
+                Role = AccessibleRole.Group,
+                LiveRegion = LiveRegionKind.Polite
+            };
+
+            region.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
+
+            var alarm = Sized(new VisualElement
+            {
+                Name = "alarm",
+                Text = "hello",
+                LiveRegion = LiveRegionKind.Assertive
+            });
+
+            region.AddChild(alarm);
+            _root.AddChild(region);
+
+            Assert.AreEqual(LiveRegionKind.Assertive, Tree().Children[0].Children[0].Live);
+        }
+
+        [TestMethod]
+        public void DeclaringOneKeepsAnOtherwiseEmptyElementInTheTree()
+        {
+            var slot = Sized(new VisualElement
+            {
+                Name = "slot",
+                LiveRegion = LiveRegionKind.Polite
+            });
+
+            _root.AddChild(slot);
+
+            AccessibleNode tree = Tree();
+
+            Assert.AreEqual(1, tree.Children.Count,
+                "an element with no role, no name and no behaviour is decoration and would be "
+                + "pruned - but a live region has to exist BEFORE the change it announces, or "
+                + "the client never learns it filled");
+
+            Assert.AreEqual(LiveRegionKind.Polite, tree.Children[0].Live);
+        }
+
+        [TestMethod]
+        public void APlainContainerIsStillPrunedAndPassesTheSettingDown()
+        {
+            var wrapper = new VisualElement { Name = "wrapper" };
+
+            wrapper.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
+
+            var label = Sized(new VisualElement
+            {
+                Name = "label",
+                Text = "hello",
+                LiveRegion = LiveRegionKind.Polite
+            });
+
+            wrapper.AddChild(label);
+            _root.AddChild(wrapper);
+
+            AccessibleNode tree = Tree();
+
+            Assert.AreEqual(1, tree.Children.Count);
+            Assert.AreEqual("hello", tree.Children[0].Name);
+            Assert.AreEqual(LiveRegionKind.Polite, tree.Children[0].Live);
+        }
     }
 }

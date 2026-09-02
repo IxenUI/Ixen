@@ -139,14 +139,23 @@ namespace Ixen.Platform.Windows.Accessibility
 
                 AccessibleNode now = entry.Value;
 
+                bool spoke = false;
+
                 if (was.Name != now.Name)
                 {
                     Raise(entry.Key, UiaProperty.NAME, was.Name, now.Name);
+                    spoke = true;
                 }
 
                 if (was.Value != now.Value)
                 {
                     Raise(entry.Key, UiaProperty.VALUE_VALUE, was.Value, now.Value);
+                    spoke = true;
+                }
+
+                if (spoke && now.Live != LiveRegionKind.None)
+                {
+                    Event(entry.Key, UiaEvent.LIVE_REGION_CHANGED);
                 }
 
                 bool had = was.HasState(AccessibleStates.Focused);

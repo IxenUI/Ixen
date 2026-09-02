@@ -8,12 +8,16 @@ namespace Ixen.Core.Accessibility
     {
         internal static AccessibleNode Build(VisualElement root, VisualElement focused)
         {
-            return root == null ? null : NodeFor(root, focused);
+            return root == null ? null : NodeFor(root, focused, LiveRegionKind.None);
         }
 
-        private static AccessibleNode NodeFor(VisualElement element, VisualElement focused)
+        private static AccessibleNode NodeFor(VisualElement element, VisualElement focused,
+            LiveRegionKind inherited)
         {
             AccessibleRole role = RoleOf(element);
+            LiveRegionKind live = element.LiveRegion == LiveRegionKind.None
+                ? inherited
+                : element.LiveRegion;
 
             var node = new AccessibleNode
             {
@@ -23,6 +27,7 @@ namespace Ixen.Core.Accessibility
                 Description = string.IsNullOrEmpty(element.Description) ? null : element.Description,
                 Value = ValueOf(element),
                 States = StatesOf(element, focused),
+                Live = live,
                 Actions = ActionsOf(element, role),
                 X = element.X,
                 Y = element.Y,
@@ -32,14 +37,14 @@ namespace Ixen.Core.Accessibility
 
             if (!TakesNameFromContent(node.Role))
             {
-                Collect(element, focused, node.ChildList);
+                Collect(element, focused, node.ChildList, live);
             }
 
             return node;
         }
 
         private static void Collect(VisualElement element, VisualElement focused,
-            List<AccessibleNode> into)
+            List<AccessibleNode> into, LiveRegionKind inherited)
         {
             foreach (VisualElement child in element.Children)
             {
@@ -48,13 +53,17 @@ namespace Ixen.Core.Accessibility
                     continue;
                 }
 
+                LiveRegionKind live = child.LiveRegion == LiveRegionKind.None
+                    ? inherited
+                    : child.LiveRegion;
+
                 if (IsExposed(child))
                 {
-                    into.Add(NodeFor(child, focused));
+                    into.Add(NodeFor(child, focused, inherited));
                 }
                 else
                 {
-                    Collect(child, focused, into);
+                    Collect(child, focused, into, live);
                 }
             }
         }
@@ -62,6 +71,7 @@ namespace Ixen.Core.Accessibility
         private static bool IsExposed(VisualElement element)
         {
             return element.Role != AccessibleRole.None
+                || element.LiveRegion != LiveRegionKind.None
                 || element.Focusable
                 || element.Scrollable
                 || element is TextField

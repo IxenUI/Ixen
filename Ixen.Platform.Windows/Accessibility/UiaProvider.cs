@@ -103,6 +103,9 @@ namespace Ixen.Platform.Windows.Accessibility
                 case UiaProperty.VALUE_IS_READ_ONLY:
                     return !node.Supports(AccessibleActions.SetValue);
 
+                case UiaProperty.LIVE_SETTING:
+                    return (int)node.Live;
+
                 default:
                     return null;
             }

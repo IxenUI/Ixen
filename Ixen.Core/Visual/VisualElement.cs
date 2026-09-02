@@ -92,6 +92,7 @@ namespace Ixen.Core.Visual
         public Accessibility.AccessibleRole Role { get; set; }
         public string Label { get; set; }
         public string Description { get; set; }
+        public Accessibility.LiveRegionKind LiveRegion { get; set; }
 
         private bool _scrollable;
 

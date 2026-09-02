@@ -135,6 +135,7 @@ namespace Ixen.Platform.Windows.Accessibility
         internal const int IS_CONTENT_ELEMENT = 30017;
         internal const int VALUE_VALUE = 30045;
         internal const int VALUE_IS_READ_ONLY = 30046;
+        internal const int LIVE_SETTING = 30135;
     }
 
     internal static class UiaControlType
@@ -180,6 +181,7 @@ namespace Ixen.Platform.Windows.Accessibility
     internal static class UiaEvent
     {
         internal const int FOCUS_CHANGED = 20005;
+        internal const int LIVE_REGION_CHANGED = 20024;
     }
 
     internal static class UiaNative
