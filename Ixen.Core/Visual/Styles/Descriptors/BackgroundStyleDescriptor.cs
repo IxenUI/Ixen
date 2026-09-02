@@ -1,4 +1,5 @@
-using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Ixen.Core.Visual.Styles.Descriptors
 {
@@ -6,38 +7,94 @@ namespace Ixen.Core.Visual.Styles.Descriptors
     {
         internal override string Identifier => StyleIdentifier.BACKGROUND;
 
-        public const float UNSET_POSITION = -1f;
+        public const float UNSET_POSITION = BackgroundLayer.UNSET_POSITION;
 
         public string Color { get; set; } = null;
-        public string ImageUrl { get; set; }
-        public Gradient Gradient { get; set; }
-        public bool RepeatX { get; set; } = false;
-        public bool RepeatY { get; set; } = false;
-        public ObjectFit Fit { get; set; } = ObjectFit.None;
-        public float PositionX { get; set; } = UNSET_POSITION;
-        public float PositionY { get; set; } = UNSET_POSITION;
 
-        public bool IsScaled => Fit != ObjectFit.None;
+        public List<BackgroundLayer> Layers { get; set; } = new List<BackgroundLayer>();
 
-        public bool HasPosition => PositionX >= 0f || PositionY >= 0f;
+        internal BackgroundLayer First => Layers.Count > 0 ? Layers[0] : null;
 
-        public float AnchorX => PositionX >= 0f ? PositionX : DefaultAnchor;
-        public float AnchorY => PositionY >= 0f ? PositionY : DefaultAnchor;
+        internal bool HasLayers => Layers.Count > 0;
 
-        private float DefaultAnchor => IsScaled ? 0.5f : 0f;
+        private BackgroundLayer Ensure()
+        {
+            if (Layers.Count == 0)
+            {
+                Layers.Add(new BackgroundLayer());
+            }
+
+            return Layers[0];
+        }
+
+        public string ImageUrl
+        {
+            get => First?.ImageUrl;
+            set => Ensure().ImageUrl = value;
+        }
+
+        public Gradient Gradient
+        {
+            get => First?.Gradient;
+            set => Ensure().Gradient = value;
+        }
+
+        public bool RepeatX
+        {
+            get => First != null && First.RepeatX;
+            set => Ensure().RepeatX = value;
+        }
+
+        public bool RepeatY
+        {
+            get => First != null && First.RepeatY;
+            set => Ensure().RepeatY = value;
+        }
+
+        public ObjectFit Fit
+        {
+            get => First == null ? ObjectFit.None : First.Fit;
+            set => Ensure().Fit = value;
+        }
+
+        public float PositionX
+        {
+            get => First == null ? UNSET_POSITION : First.PositionX;
+            set => Ensure().PositionX = value;
+        }
+
+        public float PositionY
+        {
+            get => First == null ? UNSET_POSITION : First.PositionY;
+            set => Ensure().PositionY = value;
+        }
+
+        public bool IsScaled => First != null && First.IsScaled;
+
+        public bool HasPosition => First != null && First.HasPosition;
+
+        public float AnchorX => First == null ? 0f : First.AnchorX;
+
+        public float AnchorY => First == null ? 0f : First.AnchorY;
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()
-            => $"new {nameof(BackgroundStyleDescriptor)} " +
+        {
+            string color = string.IsNullOrWhiteSpace(Color)
+                ? ""
+                : $"{nameof(Color)} = {SourceOf(Color)}, ";
+
+            string layers = Layers.Count == 0
+                ? ""
+                : $"{nameof(Layers)} = new() {{ "
+                    + string.Join(", ", Layers.Select(l => l.ToSource()))
+                    + "} ";
+
+            return $"new {nameof(BackgroundStyleDescriptor)} " +
                 "{ " +
-                    (string.IsNullOrWhiteSpace(Color) ? "" : $"{nameof(Color)} = {SourceOf(Color)}, ") +
-                    (string.IsNullOrWhiteSpace(ImageUrl) ? "" : $"{nameof(ImageUrl)} = {SourceOf(ImageUrl)}, ") +
-                    (Gradient == null ? "" : $"{nameof(Gradient)} = {Gradient.ToSource()}, ") +
-                    $"{nameof(RepeatX)} = {SourceOf(RepeatX)}, " +
-                    $"{nameof(RepeatY)} = {SourceOf(RepeatY)}, " +
-                    $"{nameof(Fit)} = {nameof(ObjectFit)}.{Fit}, " +
-                    $"{nameof(PositionX)} = {SourceOf(PositionX)}, " +
-                    $"{nameof(PositionY)} = {SourceOf(PositionY)} " +
+                    color +
+                    layers +
                 "}";
+        }
     }
 }

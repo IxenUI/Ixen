@@ -37,7 +37,36 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
         protected override bool Parse()
         {
-            string[] parts = Split(_content?.Trim());
+            string[] entries = SplitLayers(_content?.Trim());
+
+            if (entries == null || entries.Length == 0)
+            {
+                return false;
+            }
+
+            bool colorSeen = false;
+
+            foreach (string entry in entries)
+            {
+                var layer = new BackgroundLayer();
+
+                if (!ParseLayer(entry, layer, ref colorSeen))
+                {
+                    return false;
+                }
+
+                if (!layer.IsEmpty)
+                {
+                    Descriptor.Layers.Add(layer);
+                }
+            }
+
+            return true;
+        }
+
+        private bool ParseLayer(string entry, BackgroundLayer layer, ref bool colorSeen)
+        {
+            string[] parts = Split(entry);
 
             if (parts == null || parts.Length == 0)
             {
@@ -50,14 +79,14 @@ namespace Ixen.Core.Visual.Styles.Parsers
             {
                 if (GradientParser.IsCall(part))
                 {
-                    if (Descriptor.Gradient != null)
+                    if (layer.Gradient != null)
                     {
                         return false;
                     }
 
-                    Descriptor.Gradient = GradientParser.Parse(part);
+                    layer.Gradient = GradientParser.Parse(part);
 
-                    if (Descriptor.Gradient == null)
+                    if (layer.Gradient == null)
                     {
                         return false;
                     }
@@ -69,46 +98,52 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 {
                     var color = new ColorStyleParser(part);
 
-                    if (!color.IsValid)
+                    if (!color.IsValid || colorSeen)
                     {
                         return false;
                     }
 
                     Descriptor.Color = color.Descriptor.Value;
+                    colorSeen = true;
                     continue;
                 }
 
-                if (TryRepeat(part.ToLower()))
+                if (TryRepeat(layer, part.ToLower()))
                 {
                     repeatSeen = true;
                     continue;
                 }
 
-                if (TryFit(part.ToLower()))
+                if (TryFit(layer, part.ToLower()))
                 {
                     continue;
                 }
 
-                if (TryPosition(part.ToLower()))
+                if (TryPosition(layer, part.ToLower()))
                 {
                     continue;
                 }
 
                 if (IsImageName(part))
                 {
-                    Descriptor.ImageUrl = part;
+                    if (layer.ImageUrl != null)
+                    {
+                        return false;
+                    }
+
+                    layer.ImageUrl = part;
                     continue;
                 }
 
                 return false;
             }
 
-            if (Descriptor.ImageUrl == null)
+            if (layer.ImageUrl == null)
             {
-                return !repeatSeen && !Descriptor.IsScaled && !Descriptor.HasPosition;
+                return !repeatSeen && !layer.IsScaled && !layer.HasPosition;
             }
 
-            return !((Descriptor.RepeatX || Descriptor.RepeatY) && Descriptor.IsScaled);
+            return !((layer.RepeatX || layer.RepeatY) && layer.IsScaled);
         }
 
         private static bool IsImageName(string value)
@@ -131,58 +166,58 @@ namespace Ixen.Core.Visual.Styles.Parsers
             return true;
         }
 
-        private bool TryPosition(string value)
+        private bool TryPosition(BackgroundLayer layer, string value)
         {
             switch (value)
             {
                 case LEFT:
-                    return SetX(0f);
+                    return SetX(layer, 0f);
 
                 case CENTER:
-                    return SetX(0.5f);
+                    return SetX(layer, 0.5f);
 
                 case RIGHT:
-                    return SetX(1f);
+                    return SetX(layer, 1f);
 
                 case TOP:
-                    return SetY(0f);
+                    return SetY(layer, 0f);
 
                 case MIDDLE:
-                    return SetY(0.5f);
+                    return SetY(layer, 0.5f);
 
                 case BOTTOM:
-                    return SetY(1f);
+                    return SetY(layer, 1f);
 
                 default:
-                    return TryPercentPosition(value);
+                    return TryPercentPosition(layer, value);
             }
         }
 
-        private bool SetX(float value)
+        private static bool SetX(BackgroundLayer layer, float value)
         {
-            if (Descriptor.PositionX >= 0f)
+            if (layer.PositionX >= 0f)
             {
                 return false;
             }
 
-            Descriptor.PositionX = value;
+            layer.PositionX = value;
 
             return true;
         }
 
-        private bool SetY(float value)
+        private static bool SetY(BackgroundLayer layer, float value)
         {
-            if (Descriptor.PositionY >= 0f)
+            if (layer.PositionY >= 0f)
             {
                 return false;
             }
 
-            Descriptor.PositionY = value;
+            layer.PositionY = value;
 
             return true;
         }
 
-        private bool TryPercentPosition(string value)
+        private static bool TryPercentPosition(BackgroundLayer layer, string value)
         {
             Match match = _percent.Match(value);
 
@@ -194,28 +229,28 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
             float fraction = percent / 100f;
 
-            return SetX(fraction) || SetY(fraction);
+            return SetX(layer, fraction) || SetY(layer, fraction);
         }
 
-        private bool TryFit(string value)
+        private static bool TryFit(BackgroundLayer layer, string value)
         {
             switch (value)
             {
                 case AUTO:
-                    Descriptor.Fit = ObjectFit.None;
+                    layer.Fit = ObjectFit.None;
                     return true;
 
                 case COVER:
-                    Descriptor.Fit = ObjectFit.Cover;
+                    layer.Fit = ObjectFit.Cover;
                     return true;
 
                 case CONTAIN:
-                    Descriptor.Fit = ObjectFit.Contain;
+                    layer.Fit = ObjectFit.Contain;
                     return true;
 
                 case FILL:
                 case STRETCH:
-                    Descriptor.Fit = ObjectFit.Fill;
+                    layer.Fit = ObjectFit.Fill;
                     return true;
 
                 default:
@@ -223,33 +258,69 @@ namespace Ixen.Core.Visual.Styles.Parsers
             }
         }
 
-        private bool TryRepeat(string value)
+        private static bool TryRepeat(BackgroundLayer layer, string value)
         {
             switch (value)
             {
                 case REPEAT:
-                    Descriptor.RepeatX = true;
-                    Descriptor.RepeatY = true;
+                    layer.RepeatX = true;
+                    layer.RepeatY = true;
                     return true;
 
                 case REPEAT_X:
-                    Descriptor.RepeatX = true;
-                    Descriptor.RepeatY = false;
+                    layer.RepeatX = true;
+                    layer.RepeatY = false;
                     return true;
 
                 case REPEAT_Y:
-                    Descriptor.RepeatX = false;
-                    Descriptor.RepeatY = true;
+                    layer.RepeatX = false;
+                    layer.RepeatY = true;
                     return true;
 
                 case NO_REPEAT:
-                    Descriptor.RepeatX = false;
-                    Descriptor.RepeatY = false;
+                    layer.RepeatX = false;
+                    layer.RepeatY = false;
                     return true;
 
                 default:
                     return false;
             }
+        }
+
+        private static string[] SplitLayers(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+            {
+                return null;
+            }
+
+            var entries = new List<string>();
+            var current = new StringBuilder();
+            int depth = 0;
+
+            foreach (char c in content)
+            {
+                if (c == '(')
+                {
+                    depth++;
+                }
+                else if (c == ')')
+                {
+                    depth--;
+                }
+                else if (c == ',' && depth == 0)
+                {
+                    entries.Add(current.ToString());
+                    current.Clear();
+                    continue;
+                }
+
+                current.Append(c);
+            }
+
+            entries.Add(current.ToString());
+
+            return entries.ToArray();
         }
 
         private static string[] Split(string content)

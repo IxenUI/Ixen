@@ -1,5 +1,7 @@
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Styles.Descriptors;
+using Ixen.Core.Visual.Styles;
+using Ixen.Core.Visual.Styles.Handlers;
 using SkiaSharp;
 using System;
 
@@ -29,16 +31,10 @@ namespace Ixen.Core.Rendering
 
         private void RenderBackground(VisualElement element, RendererContext context)
         {
-            BackgroundStyleDescriptor background = element.StylesHandlers.Background.Descriptor;
+            BackgroundStyleHandler handler = element.StylesHandlers.Background;
+            BackgroundStyleDescriptor background = handler?.Descriptor;
 
-            if (background == null || string.IsNullOrEmpty(background.ImageUrl))
-            {
-                return;
-            }
-
-            SKBitmap bitmap = _images.Get(background.ImageUrl);
-
-            if (bitmap == null || bitmap.Width <= 0 || bitmap.Height <= 0)
+            if (background == null || !background.HasLayers)
             {
                 return;
             }
@@ -52,6 +48,42 @@ namespace Ixen.Core.Rendering
             }
 
             CornerRadiusStyleDescriptor radius = element.StylesHandlers.CornerRadius.Descriptor;
+            bool animated = element.AnimatedBrush(StyleIdentifier.BACKGROUND) != null;
+
+            for (int index = background.Layers.Count - 1; index >= 0; index--)
+            {
+                BackgroundLayer layer = background.Layers[index];
+
+                if (layer.Gradient != null)
+                {
+                    if (!animated)
+                    {
+                        context.FillGradient(element.X, element.Y, width, height, radius,
+                            handler.GradientFor(index));
+                    }
+
+                    continue;
+                }
+
+                RenderLayer(element, context, layer, radius, width, height);
+            }
+        }
+
+        private void RenderLayer(VisualElement element, RendererContext context,
+            BackgroundLayer layer, CornerRadiusStyleDescriptor radius, float width, float height)
+        {
+            if (string.IsNullOrEmpty(layer.ImageUrl))
+            {
+                return;
+            }
+
+            SKBitmap bitmap = _images.Get(layer.ImageUrl);
+
+            if (bitmap == null || bitmap.Width <= 0 || bitmap.Height <= 0)
+            {
+                return;
+            }
+
             bool rounded = radius.HasRadius;
 
             if (rounded)
@@ -59,45 +91,50 @@ namespace Ixen.Core.Rendering
                 context.PushClip(element.X, element.Y, width, height, radius);
             }
 
-            if (background.RepeatX || background.RepeatY)
+            if (layer.RepeatX || layer.RepeatY)
             {
-                float bandWidth = background.RepeatX ? width : Math.Min(width, bitmap.Width);
-                float bandHeight = background.RepeatY ? height : Math.Min(height, bitmap.Height);
+                float bandWidth = layer.RepeatX ? width : Math.Min(width, bitmap.Width);
+                float bandHeight = layer.RepeatY ? height : Math.Min(height, bitmap.Height);
 
-                context.TileImage(_images.GetTile(background.ImageUrl),
-                    element.X + (width - bandWidth) * background.AnchorX,
-                    element.Y + (height - bandHeight) * background.AnchorY,
+                context.TileImage(_images.GetTile(layer.ImageUrl),
+                    element.X + (width - bandWidth) * layer.AnchorX,
+                    element.Y + (height - bandHeight) * layer.AnchorY,
                     bandWidth,
                     bandHeight);
-            }
-            else
-            {
-                float drawWidth = bitmap.Width;
-                float drawHeight = bitmap.Height;
 
-                if (background.IsScaled)
-                {
-                    Resolve(background.Fit, bitmap.Width, bitmap.Height, width, height,
-                        out drawWidth, out drawHeight);
-                }
-
-                bool overflows = drawWidth > width + EPSILON || drawHeight > height + EPSILON;
-
-                if (overflows)
-                {
-                    context.PushClip(element.X, element.Y, width, height, null);
-                }
-
-                context.DrawImage(bitmap,
-                    element.X + (width - drawWidth) * background.AnchorX,
-                    element.Y + (height - drawHeight) * background.AnchorY,
-                    drawWidth,
-                    drawHeight);
-
-                if (overflows)
+                if (rounded)
                 {
                     context.PopClip();
                 }
+
+                return;
+            }
+
+            float drawWidth = bitmap.Width;
+            float drawHeight = bitmap.Height;
+
+            if (layer.IsScaled)
+            {
+                Resolve(layer.Fit, bitmap.Width, bitmap.Height, width, height,
+                    out drawWidth, out drawHeight);
+            }
+
+            bool overflows = drawWidth > width + EPSILON || drawHeight > height + EPSILON;
+
+            if (overflows)
+            {
+                context.PushClip(element.X, element.Y, width, height, null);
+            }
+
+            context.DrawImage(bitmap,
+                element.X + (width - drawWidth) * layer.AnchorX,
+                element.Y + (height - drawHeight) * layer.AnchorY,
+                drawWidth,
+                drawHeight);
+
+            if (overflows)
+            {
+                context.PopClip();
             }
 
             if (rounded)

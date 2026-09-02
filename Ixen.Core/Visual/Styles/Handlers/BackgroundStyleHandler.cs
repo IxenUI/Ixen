@@ -9,10 +9,10 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
         private Brush _brush;
         private Color _color = Color.Transparent;
-        private readonly GradientShader _gradient;
+        private readonly GradientShader[] _gradients;
 
         private readonly string _colorSource;
-        private readonly Gradient _gradientSnapshot;
+        private readonly Gradient[] _gradientSnapshots;
 
         public BackgroundStyleHandler()
             : this(new())
@@ -25,13 +25,28 @@ namespace Ixen.Core.Visual.Styles.Handlers
             _brush = new Brush(_color);
 
             _colorSource = descriptor.Color;
-            _gradientSnapshot = descriptor.Gradient?.Snapshot();
 
-            if (descriptor.Gradient != null)
+            int count = descriptor.Layers.Count;
+
+            _gradients = new GradientShader[count];
+            _gradientSnapshots = new Gradient[count];
+
+            for (int index = 0; index < count; index++)
             {
-                _gradient = new GradientShader(descriptor.Gradient);
+                Gradient gradient = descriptor.Layers[index].Gradient;
+
+                if (gradient == null)
+                {
+                    continue;
+                }
+
+                _gradientSnapshots[index] = gradient.Snapshot();
+                _gradients[index] = new GradientShader(gradient);
             }
         }
+
+        internal GradientShader GradientFor(int index)
+            => index >= 0 && index < _gradients.Length ? _gradients[index] : null;
 
         internal static BackgroundStyleHandler For(BackgroundStyleDescriptor descriptor)
         {
@@ -56,14 +71,33 @@ namespace Ixen.Core.Visual.Styles.Handlers
                     return false;
                 }
 
-                Gradient gradient = Descriptor.Gradient;
-
-                if (_gradientSnapshot == null || gradient == null)
+                if (_gradientSnapshots.Length != Descriptor.Layers.Count)
                 {
-                    return _gradientSnapshot == null && gradient == null;
+                    return false;
                 }
 
-                return _gradientSnapshot.SameAs(gradient);
+                for (int index = 0; index < _gradientSnapshots.Length; index++)
+                {
+                    Gradient gradient = Descriptor.Layers[index].Gradient;
+                    Gradient snapshot = _gradientSnapshots[index];
+
+                    if (snapshot == null || gradient == null)
+                    {
+                        if (snapshot != null || gradient != null)
+                        {
+                            return false;
+                        }
+
+                        continue;
+                    }
+
+                    if (!snapshot.SameAs(gradient))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
             }
         }
 
@@ -73,14 +107,6 @@ namespace Ixen.Core.Visual.Styles.Handlers
         {
             CornerRadiusStyleDescriptor radius = element.StylesHandlers.CornerRadius.Descriptor;
             Brush brush = element.AnimatedBrush(StyleIdentifier.BACKGROUND) ?? _brush;
-
-            if (_gradient != null && element.AnimatedBrush(StyleIdentifier.BACKGROUND) == null)
-            {
-                context.FillGradient(element.X, element.Y, element.ActualWidth, element.ActualHeight,
-                    radius, _gradient);
-
-                return;
-            }
 
             if (radius.HasRadius)
             {
