@@ -21,6 +21,7 @@ namespace Ixen.Core.Visual.Styles.Handlers
         private readonly string _bottomSource;
         private readonly string _leftSource;
         private readonly float _thickness;
+        private readonly BorderStyle _style;
 
         public BorderStyleHandler()
             : this(new())
@@ -31,7 +32,7 @@ namespace Ixen.Core.Visual.Styles.Handlers
             Descriptor = descriptor;
 
             _color = new Color(descriptor.Color);
-            _pen = new Pen(_color, descriptor.Top);
+            _pen = new Pen(_color, descriptor.Top, descriptor.Style);
 
             _top = new Color(descriptor.ColorTop);
             _right = new Color(descriptor.ColorRight);
@@ -44,6 +45,7 @@ namespace Ixen.Core.Visual.Styles.Handlers
             _bottomSource = descriptor.BottomColor;
             _leftSource = descriptor.LeftColor;
             _thickness = descriptor.Top;
+            _style = descriptor.Style;
         }
 
         internal static BorderStyleHandler For(BorderStyleDescriptor descriptor)
@@ -65,7 +67,8 @@ namespace Ixen.Core.Visual.Styles.Handlers
             && _topSource == Descriptor.TopColor
             && _rightSource == Descriptor.RightColor
             && _bottomSource == Descriptor.BottomColor
-            && _leftSource == Descriptor.LeftColor;
+            && _leftSource == Descriptor.LeftColor
+            && _style == Descriptor.Style;
 
         internal Color Color => _color;
 
@@ -126,6 +129,18 @@ namespace Ixen.Core.Visual.Styles.Handlers
                 context.PushClip(element.X, element.Y, element.ActualWidth, element.ActualHeight, radius);
             }
 
+            if (Descriptor.Style != BorderStyle.Solid)
+            {
+                RenderDashedSides(element, context, left, top, right, bottom);
+
+                if (clipped)
+                {
+                    context.PopClip();
+                }
+
+                return;
+            }
+
             float innerLeft = element.X + insideLeft;
             float innerTop = element.Y + insideTop;
             float innerRight = element.X + element.ActualWidth - insideRight;
@@ -180,6 +195,28 @@ namespace Ixen.Core.Visual.Styles.Handlers
             {
                 context.PopClip();
             }
+        }
+
+        private void RenderDashedSides(VisualElement element, RendererContext context,
+            float left, float top, float right, float bottom)
+        {
+            BorderStyle style = Descriptor.Style;
+
+            float innerLeft = element.X + Inside(Descriptor.Left);
+            float innerTop = element.Y + Inside(Descriptor.Top);
+            float innerRight = element.X + element.ActualWidth - Inside(Descriptor.Right);
+            float innerBottom = element.Y + element.ActualHeight - Inside(Descriptor.Bottom);
+
+            float midTop = (top + innerTop) / 2;
+            float midBottom = (bottom + innerBottom) / 2;
+            float midLeft = (left + innerLeft) / 2;
+            float midRight = (right + innerRight) / 2;
+
+            context.DrawSide(left, midTop, right, midTop, Descriptor.Top, _top, style);
+            context.DrawSide(left, midBottom, right, midBottom, Descriptor.Bottom, _bottom, style);
+            context.DrawSide(midLeft, innerTop, midLeft, innerBottom, Descriptor.Left, _left, style);
+            context.DrawSide(midRight, innerTop, midRight, innerBottom, Descriptor.Right, _right,
+                style);
         }
 
         private float Inside(float thickness)

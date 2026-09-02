@@ -27,6 +27,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
             }
 
             bool hasType = false;
+            bool hasStyle = false;
             var colors = new List<string>();
             var thicknesses = new List<float>();
 
@@ -62,13 +63,22 @@ namespace Ixen.Core.Visual.Styles.Parsers
                     continue;
                 }
 
-                if (hasType || !Enum.TryParse(value, true, out BorderType type))
+                if (!hasType && Enum.TryParse(value, true, out BorderType type)
+                    && Enum.IsDefined(typeof(BorderType), type))
+                {
+                    Descriptor.Type = type;
+                    hasType = true;
+                    continue;
+                }
+
+                if (hasStyle || !Enum.TryParse(value, true, out BorderStyle style)
+                    || !Enum.IsDefined(typeof(BorderStyle), style))
                 {
                     return false;
                 }
 
-                Descriptor.Type = type;
-                hasType = true;
+                Descriptor.Style = style;
+                hasStyle = true;
             }
 
             if (colors.Count == 0 || thicknesses.Count == 0)

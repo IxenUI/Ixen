@@ -11,6 +11,10 @@ namespace Ixen.Core.Rendering
         private readonly SKPathBuilder _insetBuilder = new();
         private readonly SKPoint[] _quad = new SKPoint[4];
         private readonly SKPaint _quadPaint = new SKPaint { IsStroke = false, IsAntialias = true };
+        private readonly SKPaint _sidePaint = new SKPaint { IsStroke = true, IsAntialias = true };
+
+        private BorderStyle _sideStyle = BorderStyle.Solid;
+        private float _sideWidth = -1f;
         private readonly SKPoint[] _radii = new SKPoint[4];
 
         private int _clipDepth;
@@ -423,6 +427,28 @@ namespace Ixen.Core.Rendering
             {
                 SKCanvas.DrawPath(path, _quadPaint);
             }
+        }
+
+        internal void DrawSide(float x1, float y1, float x2, float y2, float thickness,
+            Color color, BorderStyle style)
+        {
+            if (thickness <= 0)
+            {
+                return;
+            }
+
+            if (style != _sideStyle || thickness != _sideWidth)
+            {
+                _sidePaint.PathEffect = Dashes.Effect(style, thickness);
+                _sidePaint.StrokeCap = Dashes.Cap(style);
+                _sideStyle = style;
+                _sideWidth = thickness;
+            }
+
+            _sidePaint.StrokeWidth = thickness;
+            _sidePaint.Color = color.SKColor;
+
+            SKCanvas.DrawLine(x1, y1, x2, y2, _sidePaint);
         }
 
         private void SetShadowBlur(float blur)

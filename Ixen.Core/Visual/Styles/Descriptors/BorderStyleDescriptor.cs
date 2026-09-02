@@ -7,6 +7,13 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         Center
     }
 
+    public enum BorderStyle
+    {
+        Solid,
+        Dashed,
+        Dotted
+    }
+
     public class BorderStyleDescriptor : StyleDescriptor
     {
         public const float UNSET_THICKNESS = -1f;
@@ -15,6 +22,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         public string Color { get; set; } = "#000000";
         public float Thickness { get; set; } = 0;
         public BorderType Type { get; set; } = BorderType.Outer;
+        public BorderStyle Style { get; set; } = BorderStyle.Solid;
 
         public float TopThickness { get; set; } = UNSET_THICKNESS;
         public float RightThickness { get; set; } = UNSET_THICKNESS;
@@ -73,7 +81,8 @@ namespace Ixen.Core.Visual.Styles.Descriptors
                     $"{nameof(RightColor)} = {SourceOf(RightColor)}, " +
                     $"{nameof(BottomColor)} = {SourceOf(BottomColor)}, " +
                     $"{nameof(LeftColor)} = {SourceOf(LeftColor)}, " +
-                    $"{nameof(Type)} = {nameof(BorderType)}.{Type} " +
+                    $"{nameof(Type)} = {nameof(BorderType)}.{Type}, " +
+                    $"{nameof(Style)} = {nameof(BorderStyle)}.{Style} " +
                 "}";
     }
 }

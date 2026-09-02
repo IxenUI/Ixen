@@ -87,7 +87,49 @@ namespace Ixen.Core.UT.StyleParser
         [TestMethod]
         public void AnUnknownWordIsRejected()
         {
-            AssertRejected("#000000 1px dotted");
+            AssertRejected("#000000 1px wobbly");
+        }
+
+        [TestMethod]
+        public void TheStyleDefaultsToSolid()
+        {
+            Assert.AreEqual(BorderStyle.Solid, Parse("#CCCCCC 1px").Style);
+        }
+
+        [TestMethod]
+        public void DashedAndDottedAreRead()
+        {
+            Assert.AreEqual(BorderStyle.Dashed, Parse("#CCCCCC 1px dashed").Style);
+            Assert.AreEqual(BorderStyle.Dotted, Parse("#CCCCCC 1px dotted").Style);
+            Assert.AreEqual(BorderStyle.Solid, Parse("#CCCCCC 1px solid").Style);
+        }
+
+        [TestMethod]
+        public void AStyleAndATypeAreTwoDifferentWords()
+        {
+            BorderStyleDescriptor border = Parse("#CCCCCC 1px dashed inner");
+
+            Assert.AreEqual(BorderStyle.Dashed, border.Style);
+
+            Assert.AreEqual(BorderType.Inner, border.Type,
+                "the type and the style are two disjoint closed sets of words, so a value may "
+                + "carry one of each and the order between them does not matter");
+        }
+
+        [TestMethod]
+        public void TheOrderOfTheTwoWordsDoesNotMatter()
+        {
+            BorderStyleDescriptor border = Parse("#CCCCCC 1px outer dotted");
+
+            Assert.AreEqual(BorderType.Outer, border.Type);
+            Assert.AreEqual(BorderStyle.Dotted, border.Style);
+        }
+
+        [TestMethod]
+        public void NeitherWordMayBeRepeated()
+        {
+            AssertRejected("#CCCCCC 1px dashed dotted");
+            AssertRejected("#CCCCCC 1px inner outer");
         }
 
         [TestMethod]

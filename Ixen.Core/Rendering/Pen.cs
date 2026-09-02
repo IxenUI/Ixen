@@ -5,6 +5,11 @@ namespace Ixen.Core.Rendering
     public sealed class Pen : Painter
     {
         public Pen(Color color, float width, bool antialias = false)
+            : this(color, width, Visual.Styles.Descriptors.BorderStyle.Solid, antialias)
+        { }
+
+        public Pen(Color color, float width, Visual.Styles.Descriptors.BorderStyle style,
+            bool antialias = false)
         {
             _color = color;
 
@@ -15,6 +20,14 @@ namespace Ixen.Core.Rendering
                 StrokeWidth = width,
                 Color = color.SKColor
             };
+
+            if (style == Visual.Styles.Descriptors.BorderStyle.Solid)
+            {
+                return;
+            }
+
+            SKPaint.PathEffect = Dashes.Effect(style, width);
+            SKPaint.StrokeCap = Dashes.Cap(style);
         }
 
         private Color _color;
