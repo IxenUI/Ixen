@@ -84,6 +84,12 @@ generated_root {
         background: linear-gradient(45deg #112233 20% #445566 #778899)
     }
 
+    generated_functions {
+        width: min(50% - 4px, 300px, 40%)
+        height: clamp(20px, 25%, 90px)
+        left: max(10%, 24px)
+    }
+
     generated_layers {
         background: Assets/Images/top.png no-repeat right top, linear-gradient(to bottom #112233 #445566) #778899
     }

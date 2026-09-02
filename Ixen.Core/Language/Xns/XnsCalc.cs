@@ -170,6 +170,44 @@ namespace Ixen.Core.Language.Xns
             return -1;
         }
 
+        internal static bool TryLinear(string text, out float percents, out float pixels,
+            out string failure)
+        {
+            percents = 0;
+            pixels = 0;
+
+            var reader = new Reader { Text = text };
+            Term? term = ReadSum(reader);
+
+            reader.SkipSpaces();
+
+            if (term == null || reader.Failure != null)
+            {
+                failure = reader.Failure ?? $"\x27{text.Trim()}\x27 is not an expression.";
+                return false;
+            }
+
+            if (reader.Position < text.Length)
+            {
+                failure = $"\x27{text.Trim()}\x27 has trailing characters.";
+                return false;
+            }
+
+            Term value = term.Value;
+
+            if (value.Unitless && value.Pixels != 0)
+            {
+                failure = $"\x27{text.Trim()}\x27 has no unit.";
+                return false;
+            }
+
+            percents = value.Percents;
+            pixels = value.Pixels;
+            failure = null;
+
+            return true;
+        }
+
         private static string EvaluateExpression(string text, out string failure)
         {
             var reader = new Reader { Text = text };

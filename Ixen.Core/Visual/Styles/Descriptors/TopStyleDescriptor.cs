@@ -8,9 +8,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         internal override string ToSource()
             => $"new {nameof(TopStyleDescriptor)} " +
                 "{ " +
-                    $"{nameof(Unit)} = {nameof(SizeUnit)}.{Unit}, " +
-                    $"{nameof(Value)} = {SourceOf(Value)}, " +
-                    $"{nameof(Offset)} = {SourceOf(Offset)} " +
+                    Fields() +
                 "}";
     }
 }
