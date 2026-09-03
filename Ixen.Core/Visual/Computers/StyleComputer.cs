@@ -385,7 +385,7 @@ namespace Ixen.Core.Visual.Computers
                 return;
             }
 
-            animation.Start(registry.GetKeyframes(spec.Name), spec);
+            animation.Start(spec, registry);
         }
 
         private void Retarget(VisualElement element, TransitionStyleDescriptor transitions,

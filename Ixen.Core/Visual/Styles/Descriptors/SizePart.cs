@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace Ixen.Core.Visual.Styles.Descriptors
 {
     public enum SizeFunction
@@ -19,10 +17,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
             => (available / 100f) * Value + Offset;
 
         internal string ToSource()
-            => $"new {nameof(SizePart)} {{ {nameof(Value)} = {Source(Value)}, "
-                + $"{nameof(Offset)} = {Source(Offset)} }}";
-
-        private static string Source(float value)
-            => value.ToString("R", CultureInfo.InvariantCulture) + "f";
+            => $"new {nameof(SizePart)} {{ {nameof(Value)} = {StyleDescriptor.SourceOf(Value)}, "
+                + $"{nameof(Offset)} = {StyleDescriptor.SourceOf(Offset)} }}";
     }
 }

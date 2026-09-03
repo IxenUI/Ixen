@@ -1,5 +1,6 @@
 using Ixen.Core.Visual.Styles.Descriptors;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using Easing = Ixen.Core.Visual.Easing;
 
@@ -23,7 +24,35 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
         protected override bool Parse()
         {
-            string[] parts = _content?.Trim().Split(new[] { ' ', '\t' },
+            string[] entries = _content?.Split(',');
+
+            if (entries == null || entries.Length == 0)
+            {
+                return false;
+            }
+
+            var animations = new List<AnimationSpec>();
+
+            foreach (string entry in entries)
+            {
+                var spec = new AnimationSpec();
+
+                if (!ParseOne(entry, spec))
+                {
+                    return false;
+                }
+
+                animations.Add(spec);
+            }
+
+            Descriptor.Animations = animations;
+
+            return true;
+        }
+
+        private static bool ParseOne(string content, AnimationSpec spec)
+        {
+            string[] parts = content?.Trim().Split(new[] { ' ', '\t' },
                 StringSplitOptions.RemoveEmptyEntries);
 
             if (parts == null || parts.Length < 2 || !IsName(parts[0]))
@@ -36,8 +65,8 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 return false;
             }
 
-            Descriptor.Name = parts[0];
-            Descriptor.Duration = duration;
+            spec.Name = parts[0];
+            spec.Duration = duration;
 
             for (int index = 2; index < parts.Length; index++)
             {
@@ -45,49 +74,49 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
                 if (Easing.TryParse(token, out EasingKind easing))
                 {
-                    Descriptor.Easing = easing;
+                    spec.Easing = easing;
                     continue;
                 }
 
                 if (token == INFINITE)
                 {
-                    Descriptor.Iterations = AnimationStyleDescriptor.INFINITE;
+                    spec.Iterations = AnimationStyleDescriptor.INFINITE;
                     continue;
                 }
 
                 if (token == ALTERNATE)
                 {
-                    Descriptor.Alternate = true;
+                    spec.Alternate = true;
                     continue;
                 }
 
                 if (token == NORMAL)
                 {
-                    Descriptor.Alternate = false;
+                    spec.Alternate = false;
                     continue;
                 }
 
                 if (token == FORWARDS)
                 {
-                    Descriptor.Fill = AnimationFill.Forwards;
+                    spec.Fill = AnimationFill.Forwards;
                     continue;
                 }
 
                 if (token == NO_FILL)
                 {
-                    Descriptor.Fill = AnimationFill.None;
+                    spec.Fill = AnimationFill.None;
                     continue;
                 }
 
                 if (TryParseIterations(token, out int iterations))
                 {
-                    Descriptor.Iterations = iterations;
+                    spec.Iterations = iterations;
                     continue;
                 }
 
                 if (StyleDuration.TryParse(token, out int delay))
                 {
-                    Descriptor.Delay = delay;
+                    spec.Delay = delay;
                     continue;
                 }
 

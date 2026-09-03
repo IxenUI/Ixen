@@ -12,13 +12,13 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         internal virtual bool CanGenerateSource { get; } = false;
         internal virtual string ToSource() => string.Empty;
 
-        protected static string SourceOf(float value)
+        protected internal static string SourceOf(float value)
             => value.ToString("R", CultureInfo.InvariantCulture) + "f";
 
-        protected static string SourceOf(bool value)
+        protected internal static string SourceOf(bool value)
             => value ? "true" : "false";
 
-        protected static string SourceOf(string value)
+        protected internal static string SourceOf(string value)
         {
             if (value == null)
             {

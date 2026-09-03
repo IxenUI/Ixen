@@ -8,75 +8,97 @@ namespace Ixen.Core.Visual
 {
     internal class KeyframeAnimation
     {
+        private class Instance
+        {
+            internal KeyframesSet Set;
+            internal AnimationSpec Spec;
+
+            internal int Step;
+            internal int Steps;
+            internal int Delay;
+            internal int Iteration;
+            internal bool Reversed;
+            internal bool Running;
+            internal bool Holding;
+            internal bool AnimatesSize;
+
+            internal readonly TransformBlend Blend = new TransformBlend();
+
+            internal bool Owns(string identifier)
+            {
+                if ((!Running && !Holding) || Set == null)
+                {
+                    return false;
+                }
+
+                IReadOnlyList<string> properties = Set.Properties;
+
+                for (int index = 0; index < properties.Count; index++)
+                {
+                    if (properties[index] == identifier)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
         private readonly VisualElement _element;
+        private readonly List<Instance> _instances = new List<Instance>();
 
-        private KeyframesSet _set;
-        private AnimationStyleDescriptor _spec;
         private AnimationStyleDescriptor _started;
-
-        private int _step;
-        private int _steps;
-        private int _delay;
-        private int _iteration;
-        private bool _reversed;
-        private bool _running;
-        private bool _holding;
 
         internal KeyframeAnimation(VisualElement element)
         {
             _element = element;
         }
 
-        internal bool Running => _running;
-        internal bool AnimatesSize { get; private set; }
-        internal AnimationStyleDescriptor Spec => _spec;
+        internal bool Running => _instances.Exists(i => i.Running);
+        internal bool AnimatesSize => _instances.Exists(i => i.Running && i.AnimatesSize);
 
-        internal bool Drives(string identifier)
-        {
-            if ((!_running && !_holding) || _set == null)
-            {
-                return false;
-            }
-
-            IReadOnlyList<string> properties = _set.Properties;
-
-            for (int index = 0; index < properties.Count; index++)
-            {
-                if (properties[index] == identifier)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
+        internal bool Drives(string identifier) => _instances.Exists(i => i.Owns(identifier));
 
         internal bool StartedWith(AnimationStyleDescriptor spec) => ReferenceEquals(_started, spec);
 
-        internal void Start(KeyframesSet set, AnimationStyleDescriptor spec)
+        internal void Start(AnimationStyleDescriptor declaration, StyleRegistry registry)
         {
-            _started = spec;
+            Release();
 
-            if (set == null || set.Properties.Count == 0)
+            _started = declaration;
+            _instances.Clear();
+
+            if (declaration == null || registry == null)
             {
-                _set = null;
-                _spec = null;
-                _running = false;
-                AnimatesSize = false;
                 return;
             }
 
-            _set = set;
-            _spec = spec;
-            _holding = false;
-            _steps = Math.Max(1, spec.Duration / ElementAnimations.TICK);
-            _delay = spec.Delay / ElementAnimations.TICK;
-            _step = 0;
-            _iteration = 0;
-            _reversed = false;
-            _running = true;
+            foreach (AnimationSpec spec in declaration.Animations)
+            {
+                KeyframesSet set = registry.GetKeyframes(spec.Name);
 
-            AnimatesSize = false;
+                if (set == null || set.Properties.Count == 0)
+                {
+                    continue;
+                }
+
+                _instances.Add(Fresh(set, spec));
+            }
+
+            Apply();
+        }
+
+        private static Instance Fresh(KeyframesSet set, AnimationSpec spec)
+        {
+            var instance = new Instance
+            {
+                Set = set,
+                Spec = spec,
+                Steps = Math.Max(1, spec.Duration / ElementAnimations.TICK),
+                Delay = spec.Delay / ElementAnimations.TICK,
+                Running = true
+            };
 
             IReadOnlyList<string> properties = set.Properties;
 
@@ -84,12 +106,12 @@ namespace Ixen.Core.Visual
             {
                 if (KeyframesSet.IsSizeProperty(properties[index]))
                 {
-                    AnimatesSize = true;
+                    instance.AnimatesSize = true;
                     break;
                 }
             }
 
-            Apply();
+            return instance;
         }
 
         internal void Stop()
@@ -100,44 +122,62 @@ namespace Ixen.Core.Visual
 
         internal void Complete()
         {
-            if (_set == null || _spec == null
-                || _spec.Fill != AnimationFill.Forwards
-                || _spec.Iterations == AnimationStyleDescriptor.INFINITE)
+            var held = new List<Instance>();
+
+            foreach (Instance instance in _instances)
             {
-                Suspend();
-                return;
+                if (instance.Spec.Fill != AnimationFill.Forwards
+                    || instance.Spec.Iterations == AnimationStyleDescriptor.INFINITE)
+                {
+                    continue;
+                }
+
+                instance.Delay = 0;
+                instance.Step = instance.Steps;
+                instance.Iteration = instance.Spec.Iterations;
+                instance.Reversed = instance.Spec.Alternate
+                    && instance.Spec.Iterations % 2 == 0;
+
+                held.Add(instance);
             }
 
-            _delay = 0;
-            _step = _steps;
-            _iteration = _spec.Iterations;
-            _reversed = _spec.Alternate && _spec.Iterations % 2 == 0;
+            Release();
+
+            _instances.Clear();
+            _instances.AddRange(held);
+
+            foreach (Instance instance in _instances)
+            {
+                instance.Running = false;
+                instance.Holding = true;
+            }
 
             Apply();
-
-            _running = false;
-            _holding = true;
         }
 
         internal void Suspend()
         {
             Release();
 
-            _running = false;
-            _holding = false;
-            _set = null;
-            _spec = null;
-            AnimatesSize = false;
+            _instances.Clear();
         }
 
         private void Release()
         {
-            if (_set == null)
+            foreach (Instance instance in _instances)
+            {
+                ReleaseOne(instance);
+            }
+        }
+
+        private void ReleaseOne(Instance instance)
+        {
+            if (instance.Set == null)
             {
                 return;
             }
 
-            IReadOnlyList<string> properties = _set.Properties;
+            IReadOnlyList<string> properties = instance.Set.Properties;
 
             for (int index = 0; index < properties.Count; index++)
             {
@@ -165,93 +205,116 @@ namespace Ixen.Core.Visual
 
         internal void Advance()
         {
-            if (!_running)
+            bool ended = false;
+
+            foreach (Instance instance in _instances)
             {
-                return;
-            }
-
-            if (_delay > 0)
-            {
-                _delay--;
-                return;
-            }
-
-            _step++;
-
-            if (_step >= _steps)
-            {
-                _iteration++;
-
-                if (_spec.Iterations != AnimationStyleDescriptor.INFINITE
-                    && _iteration >= _spec.Iterations)
+                if (!instance.Running)
                 {
-                    _step = _steps;
-                    Apply();
-                    _running = false;
-                    _holding = _spec.Fill == AnimationFill.Forwards;
-                    _element.Invalidate();
-                    return;
+                    continue;
                 }
 
-                _step = 0;
-
-                if (_spec.Alternate)
+                if (instance.Delay > 0)
                 {
-                    _reversed = !_reversed;
+                    instance.Delay--;
+                    continue;
+                }
+
+                instance.Step++;
+
+                if (instance.Step < instance.Steps)
+                {
+                    continue;
+                }
+
+                instance.Iteration++;
+
+                if (instance.Spec.Iterations != AnimationStyleDescriptor.INFINITE
+                    && instance.Iteration >= instance.Spec.Iterations)
+                {
+                    instance.Step = instance.Steps;
+                    ApplyOne(instance);
+                    instance.Running = false;
+                    instance.Holding = instance.Spec.Fill == AnimationFill.Forwards;
+                    ended = true;
+                    continue;
+                }
+
+                instance.Step = 0;
+
+                if (instance.Spec.Alternate)
+                {
+                    instance.Reversed = !instance.Reversed;
                 }
             }
 
             Apply();
+
+            if (ended)
+            {
+                _element.Invalidate();
+            }
         }
 
         private void Apply()
         {
-            float progress = (float)_step / _steps;
+            foreach (Instance instance in _instances)
+            {
+                ApplyOne(instance);
+            }
+        }
 
-            if (_reversed)
+        private void ApplyOne(Instance instance)
+        {
+            if (instance.Set == null || (!instance.Running && !instance.Holding))
+            {
+                return;
+            }
+
+            float progress = (float)instance.Step / instance.Steps;
+
+            if (instance.Reversed)
             {
                 progress = 1f - progress;
             }
 
-            IReadOnlyList<string> properties = _set.Properties;
+            IReadOnlyList<string> properties = instance.Set.Properties;
 
             for (int index = 0; index < properties.Count; index++)
             {
                 string identifier = properties[index];
 
-                ColorStop[] colors = _set.ColorTrack(identifier);
+                ColorStop[] colors = instance.Set.ColorTrack(identifier);
 
                 if (colors != null)
                 {
                     _element.Animations.For(identifier)
-                        .Hold(SampleColor(colors, progress, _spec.Easing));
+                        .Hold(SampleColor(colors, progress, instance.Spec.Easing));
 
                     continue;
                 }
 
-                SizeStop[] sizes = _set.SizeTrack(identifier);
+                SizeStop[] sizes = instance.Set.SizeTrack(identifier);
 
                 if (sizes != null)
                 {
-                    SizeStop sampled = SampleSize(sizes, progress, _spec.Easing);
+                    SizeStop sampled = SampleSize(sizes, progress, instance.Spec.Easing);
                     _element.Animations.SizeFor(identifier).Hold(sampled.Unit, sampled.Value);
                     continue;
                 }
 
-                TransformStop[] transforms = _set.TransformTrack(identifier);
+                TransformStop[] transforms = instance.Set.TransformTrack(identifier);
 
                 if (transforms != null)
                 {
                     _element.Animations.TransformFor()
-                        .Hold(SampleTransform(transforms, progress, _spec.Easing));
+                        .Hold(SampleTransform(instance, transforms, progress, instance.Spec.Easing));
                 }
             }
         }
 
-        private readonly TransformBlend _blend = new TransformBlend();
-
-        private TransformStyleDescriptor SampleTransform(TransformStop[] track, float progress,
-            EasingKind easing)
+        private static TransformStyleDescriptor SampleTransform(Instance instance,
+            TransformStop[] track, float progress, EasingKind easing)
         {
             int last = track.Length - 1;
 
@@ -287,7 +350,7 @@ namespace Ixen.Core.Visual
                     return to.Value;
                 }
 
-                return _blend.Of(from.Value, to.Value,
+                return instance.Blend.Of(from.Value, to.Value,
                     Easing.Apply(easing, (progress - from.Offset) / span));
             }
 

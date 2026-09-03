@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace Ixen.Core.Visual.Styles.Descriptors
 {
     public class AnimationStyleDescriptor : StyleDescriptor
@@ -6,35 +9,87 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 
         internal override string Identifier => StyleIdentifier.ANIMATION;
 
-        public string Name { get; set; } = null;
-        public int Duration { get; set; } = 0;
-        public int Delay { get; set; } = 0;
-        public EasingKind Easing { get; set; } = EasingKind.Linear;
-        public int Iterations { get; set; } = 1;
-        public bool Alternate { get; set; } = false;
-        public AnimationFill Fill { get; set; } = AnimationFill.None;
+        public List<AnimationSpec> Animations { get; set; } = new List<AnimationSpec>();
 
-        public bool IsDeclared => Name != null && Duration > 0;
+        internal AnimationSpec First => Animations.Count > 0 ? Animations[0] : null;
+
+        private AnimationSpec Ensure()
+        {
+            if (Animations.Count == 0)
+            {
+                Animations.Add(new AnimationSpec());
+            }
+
+            return Animations[0];
+        }
+
+        public string Name
+        {
+            get => First?.Name;
+            set => Ensure().Name = value;
+        }
+
+        public int Duration
+        {
+            get => First?.Duration ?? 0;
+            set => Ensure().Duration = value;
+        }
+
+        public int Delay
+        {
+            get => First?.Delay ?? 0;
+            set => Ensure().Delay = value;
+        }
+
+        public EasingKind Easing
+        {
+            get => First?.Easing ?? EasingKind.Linear;
+            set => Ensure().Easing = value;
+        }
+
+        public int Iterations
+        {
+            get => First?.Iterations ?? 1;
+            set => Ensure().Iterations = value;
+        }
+
+        public bool Alternate
+        {
+            get => First?.Alternate ?? false;
+            set => Ensure().Alternate = value;
+        }
+
+        public AnimationFill Fill
+        {
+            get => First?.Fill ?? AnimationFill.None;
+            set => Ensure().Fill = value;
+        }
+
+        public bool IsDeclared => Animations.Exists(a => a.IsDeclared);
 
         public bool Matches(AnimationStyleDescriptor other)
-            => other != null
-                && Name == other.Name
-                && Duration == other.Duration
-                && Delay == other.Delay
-                && Easing == other.Easing
-                && Iterations == other.Iterations
-                && Alternate == other.Alternate
-                && Fill == other.Fill;
+        {
+            if (other == null || other.Animations.Count != Animations.Count)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < Animations.Count; index++)
+            {
+                if (!Animations[index].Matches(other.Animations[index]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()
             => $"new {nameof(AnimationStyleDescriptor)} {{ "
-                + $"{nameof(Name)} = {SourceOf(Name)}, "
-                + $"{nameof(Duration)} = {Duration}, "
-                + $"{nameof(Delay)} = {Delay}, "
-                + $"{nameof(Easing)} = global::Ixen.Core.Visual.Styles.{nameof(EasingKind)}.{Easing}, "
-                + $"{nameof(Iterations)} = {Iterations}, "
-                + $"{nameof(Alternate)} = {SourceOf(Alternate)}, "
-                + $"{nameof(Fill)} = global::Ixen.Core.Visual.Styles.{nameof(AnimationFill)}.{Fill} }}";
+                + $"{nameof(Animations)} = new() {{ "
+                    + string.Join(", ", Animations.Select(a => a.ToSource()))
+                + "} }";
     }
 }
