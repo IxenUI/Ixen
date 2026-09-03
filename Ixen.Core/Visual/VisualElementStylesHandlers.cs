@@ -26,6 +26,7 @@ namespace Ixen.Core.Visual
         internal static readonly CursorStyleHandler DefaultCursor = new();
         internal static readonly DockStyleHandler DefaultDock = new();
         internal static readonly ContentAlignStyleHandler DefaultContentAlign = new();
+        internal static readonly AspectRatioStyleHandler DefaultAspectRatio = new();
         internal static readonly GapStyleHandler DefaultGap = new();
         internal static readonly VisibilityStyleHandler DefaultVisibility = new();
         internal static readonly FilterStyleHandler DefaultFilter = new();
@@ -82,6 +83,7 @@ namespace Ixen.Core.Visual
         public CursorStyleHandler Cursor { get; set; } = DefaultCursor;
         public DockStyleHandler Dock { get; set; } = DefaultDock;
         public ContentAlignStyleHandler ContentAlign { get; set; } = DefaultContentAlign;
+        public AspectRatioStyleHandler AspectRatio { get; set; } = DefaultAspectRatio;
         public GapStyleHandler Gap { get; set; } = DefaultGap;
         public VisibilityStyleHandler Visibility { get; set; } = DefaultVisibility;
         public FilterStyleHandler Filter { get; set; } = DefaultFilter;

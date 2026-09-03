@@ -112,6 +112,9 @@ namespace Ixen.Core.Visual.Styles
                     p => ((VisibilityStyleParser)p).Descriptor,
                     new[] { VisibilityStyleParser.VISIBLE, VisibilityStyleParser.HIDDEN }),
 
+                Define(StyleIdentifier.ASPECT_RATIO, v => new AspectRatioStyleParser(v),
+                    p => ((AspectRatioStyleParser)p).Descriptor),
+
                 Define(StyleIdentifier.GAP, v => new GapStyleParser(v),
                     p => ((GapStyleParser)p).Descriptor),
 

@@ -84,6 +84,11 @@ generated_root {
         background: linear-gradient(45deg #112233 20% #445566 #778899)
     }
 
+    generated_ratio {
+        height: ?
+        aspect-ratio: 16 / 9
+    }
+
     generated_functions {
         width: min(50% - 4px, 300px, 40%)
         height: clamp(20px, 25%, 90px)

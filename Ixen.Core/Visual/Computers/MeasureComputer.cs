@@ -37,6 +37,22 @@ namespace Ixen.Core.Visual.Computers
             availableWidth = Bounded(element, availableWidth, true);
             availableHeight = Bounded(element, availableHeight, false);
 
+            AspectRatioStyleDescriptor ratio = element.StylesHandlers.AspectRatio.Descriptor;
+
+            if (ratio.IsDeclared && widthIsDefinite != heightIsDefinite)
+            {
+                if (widthIsDefinite)
+                {
+                    availableHeight = Bounded(element, availableWidth / ratio.Ratio, false);
+                    heightIsDefinite = true;
+                }
+                else
+                {
+                    availableWidth = Bounded(element, availableHeight * ratio.Ratio, true);
+                    widthIsDefinite = true;
+                }
+            }
+
             bool scrollable = element.Scrollable;
 
             if (scrollable)

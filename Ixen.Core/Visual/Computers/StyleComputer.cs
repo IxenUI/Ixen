@@ -804,6 +804,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultVisibility;
             }
 
+            if (handlers.AspectRatio.Descriptor != styles.AspectRatio)
+            {
+                handlers.AspectRatio = styles.AspectRatio != null && styles.AspectRatio.IsDeclared
+                    ? Cached<AspectRatioStyleDescriptor, AspectRatioStyleHandler>(styles.AspectRatio, static d => new AspectRatioStyleHandler(d))
+                    : VisualElementStylesHandlers.DefaultAspectRatio;
+            }
+
             if (handlers.Gap.Descriptor != styles.Gap)
             {
                 handlers.Gap = styles.Gap != null && styles.Gap.IsDeclared
@@ -997,6 +1004,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.VISIBILITY:
                     handlers.Visibility = Cached<VisibilityStyleDescriptor, VisibilityStyleHandler>(style, static d => new VisibilityStyleHandler(d));
+                    break;
+
+                case StyleIdentifier.ASPECT_RATIO:
+                    handlers.AspectRatio = Cached<AspectRatioStyleDescriptor, AspectRatioStyleHandler>(style, static d => new AspectRatioStyleHandler(d));
                     break;
 
                 case StyleIdentifier.GAP:

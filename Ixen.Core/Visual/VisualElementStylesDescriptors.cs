@@ -28,6 +28,7 @@ namespace Ixen.Core.Visual
         public CursorStyleDescriptor Cursor { get; set; } = new();
         public DockStyleDescriptor Dock { get; set; } = new();
         public ContentAlignStyleDescriptor ContentAlign { get; set; } = new();
+        public AspectRatioStyleDescriptor AspectRatio { get; set; } = new();
         public GapStyleDescriptor Gap { get; set; } = new();
         public VisibilityStyleDescriptor Visibility { get; set; } = new();
         public FilterStyleDescriptor Filter { get; set; } = new();

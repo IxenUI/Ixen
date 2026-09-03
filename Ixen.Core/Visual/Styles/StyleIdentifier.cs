@@ -28,6 +28,7 @@ namespace Ixen.Core.Visual.Styles
         public const string CURSOR = "cursor";
         public const string DOCK = "dock";
         public const string CONTENT_ALIGN = "content-align";
+        public const string ASPECT_RATIO = "aspect-ratio";
         public const string GAP = "gap";
         public const string FILTER = "filter";
         public const string FONT_FAMILY = "font-family";
