@@ -8,17 +8,20 @@ namespace Ixen.Core.Rendering
     {
         private const char MAX_ASCII = (char)0x7F;
 
-        private static readonly Dictionary<(string family, float size, bool bold, bool italic), SKFont> _fonts = new();
+        private static readonly Dictionary<(string family, float size, bool bold, bool italic, bool smooth), SKFont> _fonts = new();
 
         private static readonly Dictionary<(string family, bool bold, bool italic, int codepoint), SKTypeface> _faces = new();
 
-        private static readonly Dictionary<(SKTypeface face, float size), SKFont> _fallbacks = new();
+        private static readonly Dictionary<(SKTypeface face, float size, bool smooth), SKFont> _fallbacks = new();
 
         private static readonly Dictionary<(SKFont font, int codepoint), bool> _covers = new();
 
-        internal static SKFont Get(FontSpec spec)
+        internal static SKFont Get(FontSpec spec) => Get(spec, false);
+
+        internal static SKFont Get(FontSpec spec, bool smooth)
         {
-            (string, float, bool, bool) key = (spec.Family ?? string.Empty, spec.Size, spec.Bold, spec.Italic);
+            (string, float, bool, bool, bool) key = (spec.Family ?? string.Empty, spec.Size,
+                spec.Bold, spec.Italic, smooth);
 
             if (_fonts.TryGetValue(key, out SKFont font))
             {
@@ -32,15 +35,28 @@ namespace Ixen.Core.Rendering
                 spec.Italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright)
                 ?? SKTypeface.Default;
 
-            font = new SKFont(typeface, spec.Size);
+            font = Shape(new SKFont(typeface, spec.Size), smooth);
             _fonts[key] = font;
 
             return font;
         }
 
-        internal static SKFont Get(FontSpec spec, string text)
+        private static SKFont Shape(SKFont font, bool smooth)
         {
-            SKFont font = Get(spec);
+            if (smooth)
+            {
+                font.Hinting = SKFontHinting.None;
+                font.Subpixel = true;
+            }
+
+            return font;
+        }
+
+        internal static SKFont Get(FontSpec spec, string text) => Get(spec, text, false);
+
+        internal static SKFont Get(FontSpec spec, string text, bool smooth)
+        {
+            SKFont font = Get(spec, smooth);
 
             if (!MayBeUncovered(text))
             {
@@ -54,7 +70,7 @@ namespace Ixen.Core.Rendering
                 return font;
             }
 
-            return Fallback(spec, missing) ?? font;
+            return Fallback(spec, missing, smooth) ?? font;
         }
 
         private static bool MayBeUncovered(string text)
@@ -124,7 +140,7 @@ namespace Ixen.Core.Rendering
             return covered;
         }
 
-        private static SKFont Fallback(FontSpec spec, int codepoint)
+        private static SKFont Fallback(FontSpec spec, int codepoint, bool smooth)
         {
             SKTypeface face = FallbackFace(spec, codepoint);
 
@@ -133,14 +149,14 @@ namespace Ixen.Core.Rendering
                 return null;
             }
 
-            (SKTypeface, float) key = (face, spec.Size);
+            (SKTypeface, float, bool) key = (face, spec.Size, smooth);
 
             if (_fallbacks.TryGetValue(key, out SKFont font))
             {
                 return font;
             }
 
-            font = new SKFont(face, spec.Size);
+            font = Shape(new SKFont(face, spec.Size), smooth);
             _fallbacks[key] = font;
 
             return font;

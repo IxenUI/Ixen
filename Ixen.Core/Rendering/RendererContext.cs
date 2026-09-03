@@ -2,6 +2,7 @@
 using Ixen.Core.Visual.Styles.Descriptors;
 using SkiaSharp;
 using System;
+using System.Collections.Generic;
 
 namespace Ixen.Core.Rendering
 {
@@ -18,6 +19,7 @@ namespace Ixen.Core.Rendering
         private readonly SKPoint[] _radii = new SKPoint[4];
 
         private int _clipDepth;
+        private readonly List<int> _transformDepths = new List<int>();
         private bool _filtered;
 
         internal SKCanvas SKCanvas { get; private set; }
@@ -39,6 +41,7 @@ namespace Ixen.Core.Rendering
         {
             SKCanvas = canvas;
             _clipDepth = 0;
+            _transformDepths.Clear();
             _filtered = false;
 
             if (scale <= 0 || scale == 1)
@@ -87,10 +90,13 @@ namespace Ixen.Core.Rendering
             SKCanvas.ClipRect(new SKRect(x, y, x + width, y + height), SKClipOperation.Intersect, false);
         }
 
+        internal bool Transformed => _transformDepths.Count > 0;
+
         internal void PushTransform(Matrix2D matrix)
         {
             SKCanvas.Save();
             _clipDepth++;
+            _transformDepths.Add(_clipDepth);
 
             var skia = new SKMatrix(matrix.ScaleX, matrix.SkewX, matrix.TransX,
                 matrix.SkewY, matrix.ScaleY, matrix.TransY, 0, 0, 1);
@@ -135,6 +141,13 @@ namespace Ixen.Core.Rendering
             if (_clipDepth == 0)
             {
                 return;
+            }
+
+            int last = _transformDepths.Count - 1;
+
+            if (last >= 0 && _transformDepths[last] == _clipDepth)
+            {
+                _transformDepths.RemoveAt(last);
             }
 
             SKCanvas.Restore();
@@ -227,7 +240,7 @@ namespace Ixen.Core.Rendering
 
         internal void DrawText(string text, float x, float top, FontSpec fontSpec, Brush brush)
         {
-            SKFont font = FontCache.Get(fontSpec, text);
+            SKFont font = FontCache.Get(fontSpec, text, Transformed);
 
             brush.Antialisasing = true;
 
@@ -250,7 +263,7 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            SKFont font = FontCache.Get(fontSpec, text);
+            SKFont font = FontCache.Get(fontSpec, text, Transformed);
             System.Collections.Generic.List<Shadow> shadows = shadow.Shadows;
 
             for (int index = shadows.Count - 1; index >= 0; index--)
@@ -294,7 +307,7 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            SKFont font = FontCache.Get(fontSpec, text);
+            SKFont font = FontCache.Get(fontSpec, text, Transformed);
             SKFontMetrics metrics = font.Metrics;
             float width = MeasureTextWidth(text, fontSpec) - LastGap(fontSpec);
 
