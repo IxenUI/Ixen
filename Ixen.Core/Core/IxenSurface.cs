@@ -130,6 +130,9 @@ namespace Ixen.Core
             _measureComputer = new MeasureComputer(SkiaTextMeasurer.Default, _images);
             _renderer = new VisualRenderer(_images);
 
+            _images.Poster = Post;
+            _images.Arrived = () => Root?.InvalidateLayout();
+
             InitOptions = initOptions ?? new();
             Root = root ?? new();
             Root.SetPosition(0, 0);
@@ -489,6 +492,8 @@ namespace Ixen.Core
             get => _clipboard;
             set => _clipboard = value;
         }
+
+        internal long ImageBytes => _images.Bytes;
 
         public long ImageCacheBudget
         {

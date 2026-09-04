@@ -1,7 +1,9 @@
 using Ixen.Core.Visual;
 using SkiaSharp;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Ixen.Core.Rendering
 {
@@ -22,6 +24,9 @@ namespace Ixen.Core.Rendering
         private IImageSource _source;
         private long _bytes;
         private long _clock;
+
+        internal Action<Action> Poster { get; set; }
+        internal Action Arrived { get; set; }
 
         internal long Budget { get; set; } = DEFAULT_BUDGET;
 
@@ -60,6 +65,20 @@ namespace Ixen.Core.Rendering
             {
                 cached.Stamp = ++_clock;
                 return cached;
+            }
+
+            if (_source is IAsyncImageSource asynchronous && Poster != null)
+            {
+                var waiting = new Entry
+                {
+                    Stamp = ++_clock
+                };
+
+                _entries[name] = waiting;
+
+                Start(asynchronous, name, waiting);
+
+                return waiting;
             }
 
             SKBitmap bitmap = Load(name);
@@ -158,6 +177,70 @@ namespace Ixen.Core.Rendering
             entry.Tile?.Shader?.Dispose();
             entry.Tile?.Dispose();
             entry.Bitmap?.Dispose();
+        }
+
+        private void Start(IAsyncImageSource source, string name, Entry waiting)
+        {
+            Task<Stream> opening;
+
+            try
+            {
+                opening = source.OpenAsync(name);
+            }
+            catch
+            {
+                Settle(name, waiting, null);
+                return;
+            }
+
+            if (opening == null)
+            {
+                Settle(name, waiting, null);
+                return;
+            }
+
+            opening.ContinueWith(finished =>
+            {
+                SKBitmap decoded = Decode(finished);
+
+                Poster(() => Settle(name, waiting, decoded));
+            });
+        }
+
+        private static SKBitmap Decode(Task<Stream> finished)
+        {
+            if (finished.Status != TaskStatus.RanToCompletion || finished.Result == null)
+            {
+                return null;
+            }
+
+            try
+            {
+                using (Stream stream = finished.Result)
+                {
+                    return SKBitmap.Decode(stream);
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void Settle(string name, Entry waiting, SKBitmap bitmap)
+        {
+            if (!_entries.TryGetValue(name, out Entry current) || current != waiting)
+            {
+                bitmap?.Dispose();
+                return;
+            }
+
+            waiting.Bitmap = bitmap;
+            waiting.Bytes = bitmap == null ? 0 : bitmap.ByteCount;
+
+            _bytes += waiting.Bytes;
+
+            Arrived?.Invoke();
         }
 
         internal void Clear()
