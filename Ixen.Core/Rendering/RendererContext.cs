@@ -226,7 +226,46 @@ namespace Ixen.Core.Rendering
 
         private static float LastGap(FontSpec fontSpec) => fontSpec.LetterSpacing;
 
+        private float[] _spacedAdvances = new float[64];
+        private SKPoint[] _spacedPositions = new SKPoint[64];
+
         private void DrawSpaced(string text, float x, float baseline, FontSpec fontSpec,
+            SKFont font, SKPaint paint)
+        {
+            if (font.CountGlyphs(text) != text.Length)
+            {
+                DrawSpacedOneByOne(text, x, baseline, fontSpec, font, paint);
+                return;
+            }
+
+            if (_spacedAdvances.Length < text.Length)
+            {
+                _spacedAdvances = new float[text.Length];
+                _spacedPositions = new SKPoint[text.Length];
+            }
+
+            font.GetGlyphWidths(text, new Span<float>(_spacedAdvances, 0, text.Length),
+                Span<SKRect>.Empty, null);
+
+            float offset = 0;
+
+            for (int index = 0; index < text.Length; index++)
+            {
+                _spacedPositions[index] = new SKPoint(offset, 0);
+                offset += _spacedAdvances[index] + fontSpec.LetterSpacing;
+            }
+
+            using (SKTextBlob blob = SKTextBlob.CreatePositioned(text, font,
+                new ReadOnlySpan<SKPoint>(_spacedPositions, 0, text.Length)))
+            {
+                if (blob != null)
+                {
+                    SKCanvas.DrawText(blob, x, baseline, paint);
+                }
+            }
+        }
+
+        private void DrawSpacedOneByOne(string text, float x, float baseline, FontSpec fontSpec,
             SKFont font, SKPaint paint)
         {
             for (int index = 0; index < text.Length; index++)
