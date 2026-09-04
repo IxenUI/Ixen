@@ -132,11 +132,12 @@ namespace Ixen.Core
 
             Root.ClearLayoutDirty();
 
-            RefreshHover();
+            RefreshInput();
         }
 
-        private void RefreshHover()
+        private void RefreshInput()
         {
+            _keyboardDispatcher.Refresh(TrackStates);
             _pointerDispatcher.Refresh(Root, TrackStates);
             SyncCursor();
         }

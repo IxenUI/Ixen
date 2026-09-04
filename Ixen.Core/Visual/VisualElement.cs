@@ -66,7 +66,7 @@ namespace Ixen.Core.Visual
         {
             get
             {
-                for (VisualElement element = this; element != null; element = element.Parent)
+                for (VisualElement element = this; element != null; element = null)
                 {
                     if (!element._enabled)
                     {
@@ -81,6 +81,22 @@ namespace Ixen.Core.Visual
         internal bool IsHidden
             => StylesHandlers != null
                 && StylesHandlers.Visibility.Descriptor.Value == Ixen.Core.Visual.Styles.Descriptors.Visibility.Hidden;
+
+        internal bool IsHiddenInTree
+        {
+            get
+            {
+                for (VisualElement element = this; element != null; element = element.Parent)
+                {
+                    if (element.IsHidden)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
 
         public void Focus() => Host?.Focus(this);
 

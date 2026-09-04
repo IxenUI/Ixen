@@ -12,6 +12,12 @@ namespace Ixen.Core.Input
         private bool _trackStates;
         private VisualElement _focused;
 
+        private readonly List<VisualElement> _chain = new List<VisualElement>();
+        private readonly List<int> _chainAt = new List<int>();
+
+        private VisualElement _resumeParent;
+        private int _resumeIndex;
+
         internal VisualElement Focused => _focused;
 
         internal void Focus(VisualElement element, bool trackStates)
@@ -42,6 +48,37 @@ namespace Ixen.Core.Input
                 SetState(element, true);
                 element.RaiseGotFocus();
             }
+
+            Remember(element);
+        }
+
+        private void Remember(VisualElement element)
+        {
+            _resumeParent = null;
+            _chain.Clear();
+            _chainAt.Clear();
+
+            for (VisualElement step = element; step != null; step = step.Parent)
+            {
+                _chain.Add(step);
+                _chainAt.Add(step.ChildIndex);
+            }
+        }
+
+        internal static bool CanHoldFocus(VisualElement element)
+            => element != null
+                && element.Focusable
+                && element.IsEnabled
+                && !element.IsHiddenInTree;
+
+        internal void Refresh(bool trackStates)
+        {
+            if (_focused == null || CanHoldFocus(_focused))
+            {
+                return;
+            }
+
+            Focus(null, trackStates);
         }
 
         internal void ElementDetached(VisualElement element)
@@ -53,6 +90,21 @@ namespace Ixen.Core.Input
 
             SetState(element, false);
             _focused = null;
+
+            for (int index = 1; index < _chain.Count; index++)
+            {
+                if (_chain[index].Host == null)
+                {
+                    continue;
+                }
+
+                _resumeParent = _chain[index];
+                _resumeIndex = _chainAt[index - 1];
+                break;
+            }
+
+            _chain.Clear();
+            _chainAt.Clear();
         }
 
         internal void FocusFromPointer(VisualElement hit, bool trackStates)
@@ -280,7 +332,20 @@ namespace Ixen.Core.Input
 
             if (index < 0)
             {
-                next = backwards ? _focusables.Count - 1 : 0;
+                int resume = ResumeAt(ModalScope(root) ?? root);
+
+                if (resume < 0)
+                {
+                    next = backwards ? _focusables.Count - 1 : 0;
+                }
+                else if (backwards)
+                {
+                    next = resume - 1 < 0 ? _focusables.Count - 1 : resume - 1;
+                }
+                else
+                {
+                    next = resume >= _focusables.Count ? 0 : resume;
+                }
             }
             else
             {
@@ -297,6 +362,53 @@ namespace Ixen.Core.Input
             }
 
             Focus(_focusables[next], trackStates);
+        }
+
+        private int ResumeAt(VisualElement scope)
+        {
+            if (_resumeParent == null)
+            {
+                return -1;
+            }
+
+            int before = 0;
+
+            return CountBefore(scope, _resumeParent, _resumeIndex, ref before)
+                ? before
+                : -1;
+        }
+
+        private static bool CountBefore(VisualElement element, VisualElement parent, int at,
+            ref int before)
+        {
+            if (element == null || element.IsHidden)
+            {
+                return false;
+            }
+
+            if (element.Focusable && element.IsEnabled)
+            {
+                before++;
+            }
+
+            int index = 0;
+
+            foreach (VisualElement child in element.Children)
+            {
+                if (element == parent && index >= at)
+                {
+                    return true;
+                }
+
+                if (CountBefore(child, parent, at, ref before))
+                {
+                    return true;
+                }
+
+                index++;
+            }
+
+            return element == parent;
         }
 
         private static VisualElement ModalScope(VisualElement root)
@@ -320,6 +432,11 @@ namespace Ixen.Core.Input
         private static void Collect(VisualElement element, List<VisualElement> result)
         {
             if (element == null)
+            {
+                return;
+            }
+
+            if (element.IsHidden)
             {
                 return;
             }
