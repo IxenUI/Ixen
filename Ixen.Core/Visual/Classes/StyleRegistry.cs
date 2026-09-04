@@ -214,7 +214,11 @@ namespace Ixen.Core.Visual.Classes
             _keyframes[keyframes.Name] = keyframes;
         }
 
-        public void AddDefaults(StyleSheet sheet) => AddDefaults((ClassesSet)sheet);
+        public void AddDefaults(StyleSheet sheet)
+        {
+            Verify(sheet);
+            AddDefaults((ClassesSet)sheet);
+        }
 
         public void AddDefaults(ClassesSet set)
         {
@@ -256,7 +260,27 @@ namespace Ixen.Core.Visual.Classes
         internal StyleClass GetDefault(StyleClassTarget target, string name)
             => name != null && _defaults.TryGetValue((target, name), out StyleClass found) ? found : null;
 
-        public void Add(StyleSheet sheet) => Add((ClassesSet)sheet);
+        public void Add(StyleSheet sheet)
+        {
+            Verify(sheet);
+            Add((ClassesSet)sheet);
+        }
+
+        private static void Verify(StyleSheet sheet)
+        {
+            if (sheet == null || sheet.FormatVersion == StyleFormat.VERSION)
+            {
+                return;
+            }
+
+            throw new System.InvalidOperationException(
+                $"{sheet.GetType().FullName} was generated for style format "
+                + $"{sheet.FormatVersion}, and this build of Ixen.Core reads format "
+                + $"{StyleFormat.VERSION}. The assembly that carries it has to be rebuilt "
+                + "against this version of Ixen.Generators - a stylesheet is compiled code, so "
+                + "an older one describes its descriptors in a shape this build may read "
+                + "differently.");
+        }
 
         public void Add(ClassesSet set)
         {

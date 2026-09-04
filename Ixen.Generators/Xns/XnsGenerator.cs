@@ -120,6 +120,10 @@ namespace Ixen.Generators.Xns
                 sb.AppendLine($"\tpublic class {name}_StyleSheet : StyleSheet");
                 sb.AppendLine("\t{");
 
+                sb.AppendLine("\t\tpublic override int FormatVersion "
+                    + "=> global::Ixen.Core.Visual.Classes.StyleFormat.VERSION;");
+                sb.AppendLine();
+
                 sb.AppendLine($"\t\tpublic {name}_StyleSheet() ");
                 sb.AppendLine("\t\t{");
                 foreach (var c in sheet.Classes)

@@ -9,6 +9,11 @@ namespace Ixen.Core.Visual.Classes
         public List<KeyframesSet> Keyframes { get; set; }
     }
 
+    public static class StyleFormat
+    {
+        public const int VERSION = 1;
+    }
+
     public class StyleSheet : ClassesSet
     {
         public StyleSheet()
@@ -16,6 +21,8 @@ namespace Ixen.Core.Visual.Classes
             Classes = new List<StyleClass>();
             Keyframes = new List<KeyframesSet>();
         }
+
+        public virtual int FormatVersion => StyleFormat.VERSION;
 
         protected void AddClass(StyleClass styleClass)
         {
