@@ -1,0 +1,5 @@
+granularity_root {} [
+	granularity_label { text: "{Caption}" }
+	first<CounterComponent> { caption: "A" }
+	second<CounterComponent> { caption: "B" }
+]

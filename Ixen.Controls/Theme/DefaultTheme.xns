@@ -38,7 +38,7 @@ $focus:        #4C6EF5
     background: $surface_off
     border: $line_off 1px inner
     color: $text_off
-    cursor: default
+    cursor: not-allowed
 }
 
 #CheckBox {
@@ -81,7 +81,7 @@ $focus:        #4C6EF5
     background: $surface_off
     border: $line_off 1px inner
     color: $text_off
-    cursor: default
+    cursor: not-allowed
 }
 
 #RadioButton {
@@ -123,7 +123,7 @@ $focus:        #4C6EF5
     background: $surface_off
     border: $line_off 1px inner
     color: $text_off
-    cursor: default
+    cursor: not-allowed
 }
 
 #Switch {
@@ -162,7 +162,7 @@ $focus:        #4C6EF5
 #Switch:disabled {
     background: $surface_off
     border: $line_off 1px inner
-    cursor: default
+    cursor: not-allowed
 }
 
 #Menu {
@@ -201,7 +201,7 @@ $focus:        #4C6EF5
 
 #MenuItem:disabled {
     color: $text_off
-    cursor: default
+    cursor: not-allowed
 }
 
 #ComboBox {
@@ -242,7 +242,7 @@ $focus:        #4C6EF5
     background: $surface_off
     border: $line_off 1px inner
     color: $text_off
-    cursor: default
+    cursor: not-allowed
 }
 
 #ComboBoxChevron {
@@ -286,7 +286,7 @@ $focus:        #4C6EF5
 }
 
 #Slider:disabled {
-    cursor: default
+    cursor: not-allowed
 }
 
 #SliderTrack {
@@ -388,7 +388,7 @@ $focus:        #4C6EF5
 
 #TabHeader:disabled {
     color: $line_off
-    cursor: default
+    cursor: not-allowed
 }
 
 #TabContent {
@@ -606,7 +606,7 @@ $focus:        #4C6EF5
     background: $surface_off
     border: $line_off 1px inner
     color: $text_off
-    cursor: default
+    cursor: not-allowed
 }
 
 #DatePickerLabel {
@@ -718,5 +718,5 @@ $focus:        #4C6EF5
 
 #DatePickerDay:disabled {
     color: $line_off
-    cursor: default
+    cursor: not-allowed
 }

@@ -44,7 +44,14 @@ namespace Ixen.Core.UT.Native
             { "IXEN_CURSOR_WAIT", "Wait" },
             { "IXEN_CURSOR_CROSSHAIR", "Crosshair" },
             { "IXEN_CURSOR_RESIZE_H", "ResizeHorizontal" },
-            { "IXEN_CURSOR_RESIZE_V", "ResizeVertical" }
+            { "IXEN_CURSOR_RESIZE_V", "ResizeVertical" },
+            { "IXEN_CURSOR_RESIZE_DIAGONAL_UP", "ResizeDiagonalUp" },
+            { "IXEN_CURSOR_RESIZE_DIAGONAL_DOWN", "ResizeDiagonalDown" },
+            { "IXEN_CURSOR_MOVE", "Move" },
+            { "IXEN_CURSOR_NOT_ALLOWED", "NotAllowed" },
+            { "IXEN_CURSOR_HELP", "Help" },
+            { "IXEN_CURSOR_PROGRESS", "Progress" },
+            { "IXEN_CURSOR_HIDDEN", "Hidden" }
         };
 
         private const string HEADER = @"Ixen.Platform.Windows.Native\window\native_window.h";

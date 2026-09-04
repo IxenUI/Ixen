@@ -33,6 +33,13 @@
 #define IXEN_CURSOR_CROSSHAIR 4
 #define IXEN_CURSOR_RESIZE_H 5
 #define IXEN_CURSOR_RESIZE_V 6
+#define IXEN_CURSOR_RESIZE_DIAGONAL_UP 7
+#define IXEN_CURSOR_RESIZE_DIAGONAL_DOWN 8
+#define IXEN_CURSOR_MOVE 9
+#define IXEN_CURSOR_NOT_ALLOWED 10
+#define IXEN_CURSOR_HELP 11
+#define IXEN_CURSOR_PROGRESS 12
+#define IXEN_CURSOR_HIDDEN 13
 
 #define IXEN_BUTTON_NONE 0
 #define IXEN_BUTTON_LEFT 1
@@ -375,9 +382,16 @@ void NativeWindow::SetCursorKind(int kind)
     case IXEN_CURSOR_CROSSHAIR: name = IDC_CROSS; break;
     case IXEN_CURSOR_RESIZE_H: name = IDC_SIZEWE; break;
     case IXEN_CURSOR_RESIZE_V: name = IDC_SIZENS; break;
+    case IXEN_CURSOR_RESIZE_DIAGONAL_UP: name = IDC_SIZENESW; break;
+    case IXEN_CURSOR_RESIZE_DIAGONAL_DOWN: name = IDC_SIZENWSE; break;
+    case IXEN_CURSOR_MOVE: name = IDC_SIZEALL; break;
+    case IXEN_CURSOR_NOT_ALLOWED: name = IDC_NO; break;
+    case IXEN_CURSOR_HELP: name = IDC_HELP; break;
+    case IXEN_CURSOR_PROGRESS: name = IDC_APPSTARTING; break;
+    case IXEN_CURSOR_HIDDEN: name = nullptr; break;
     }
 
-    _cursor = LoadCursor(nullptr, name);
+    _cursor = name == nullptr ? nullptr : LoadCursor(nullptr, name);
 
     POINT point = {};
 

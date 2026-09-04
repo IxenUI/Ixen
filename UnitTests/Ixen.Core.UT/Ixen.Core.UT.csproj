@@ -38,6 +38,7 @@
     <AdditionalFiles Include="Layout\Dock\DockLayoutTest1Styles.xns" />
     <AdditionalFiles Include="Layout\Dock\DockLayoutTest1View.xnl" />
     <AdditionalFiles Include="Components\Fixtures\BoundView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\GranularityView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\ListView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\CounterView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\HostView.xnl" />

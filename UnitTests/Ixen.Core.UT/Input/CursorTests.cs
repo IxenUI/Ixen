@@ -49,6 +49,69 @@ namespace Ixen.Core.UT.Input
             _set.Clear();
         }
 
+        private static CursorKind Parse(string value)
+        {
+            var xns = new Ixen.Core.Language.Xns.XnsSource("box { cursor: " + value + " }");
+            ClassesSet set = xns.Compile();
+
+            Assert.IsFalse(xns.HasErrors, value + " did not compile");
+
+            var registry = new StyleRegistry();
+
+            registry.Add(set);
+
+            var element = new VisualElement { Name = "box" };
+            var root = new VisualElement { Name = "parent" };
+
+            root.AddChild(element);
+
+            var surface = new IxenSurface(root) { Styles = registry };
+
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            return element.StylesHandlers.Cursor.Descriptor.Value;
+        }
+
+        [TestMethod]
+        public void TheWholeVocabularyReachesTheElement()
+        {
+            Assert.AreEqual(CursorKind.Move, Parse("move"));
+            Assert.AreEqual(CursorKind.NotAllowed, Parse("not-allowed"));
+            Assert.AreEqual(CursorKind.Help, Parse("help"));
+            Assert.AreEqual(CursorKind.Progress, Parse("progress"));
+            Assert.AreEqual(CursorKind.ResizeDiagonalUp, Parse("nesw-resize"));
+            Assert.AreEqual(CursorKind.ResizeDiagonalDown, Parse("nwse-resize"));
+            Assert.AreEqual(CursorKind.Hidden, Parse("none"),
+                "none hides the pointer, which is why the member is Hidden rather than None - "
+                + "None beside Unset would read as the absence of a declaration");
+        }
+
+        [TestMethod]
+        public void AHiddenCursorIsInheritedLikeAnyOther()
+        {
+            _button.Styles.Cursor = new CursorStyleDescriptor { Value = CursorKind.Hidden };
+            _button.Invalidate();
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            _surface.PointerMove(20, 15);
+
+            Assert.AreEqual(CursorKind.Hidden, _surface.Cursor,
+                "hiding the pointer over a region has to reach the children, or the label inside "
+                + "a hidden-cursor area would bring the arrow back");
+        }
+
+        [TestMethod]
+        public void NonsenseIsStillRefused()
+        {
+            var xns = new Ixen.Core.Language.Xns.XnsSource("box { cursor: grabbing }");
+
+            xns.Compile();
+
+            Assert.IsTrue(xns.HasErrors,
+                "Windows has no open or closed hand cursor, so grab and grabbing are deliberately "
+                + "absent rather than mapped onto something that is not one");
+        }
+
         [TestMethod]
         public void HoveringAnElementAppliesItsCursor()
         {

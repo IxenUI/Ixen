@@ -9,7 +9,14 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         Wait,
         Crosshair,
         ResizeHorizontal,
-        ResizeVertical
+        ResizeVertical,
+        ResizeDiagonalUp,
+        ResizeDiagonalDown,
+        Move,
+        NotAllowed,
+        Help,
+        Progress,
+        Hidden
     }
 
     public class CursorStyleDescriptor : StyleDescriptor

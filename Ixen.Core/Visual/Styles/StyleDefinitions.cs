@@ -70,7 +70,9 @@ namespace Ixen.Core.Visual.Styles
 
                 Define(StyleIdentifier.CURSOR, v => new CursorStyleParser(v),
                     p => ((CursorStyleParser)p).Descriptor,
-                    new[] { "default", "arrow", "hand", "pointer", "text", "caret", "wait", "crosshair", "ew-resize", "ns-resize" }),
+                    new[] { "default", "arrow", "hand", "pointer", "text", "caret", "wait",
+                        "crosshair", "ew-resize", "ns-resize", "nesw-resize", "nwse-resize",
+                        "move", "not-allowed", "help", "progress", "none" }),
 
                 Define(StyleIdentifier.DOCK, v => new DockStyleParser(v),
                     p => ((DockStyleParser)p).Descriptor, new[] { "left", "top", "right", "bottom", "fill" }),

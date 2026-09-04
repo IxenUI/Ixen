@@ -28,6 +28,13 @@ namespace Ixen.Platform.Windows.NativeApi
                 case Ixen.Core.Visual.Styles.Descriptors.CursorKind.Crosshair: return 4;
                 case Ixen.Core.Visual.Styles.Descriptors.CursorKind.ResizeHorizontal: return 5;
                 case Ixen.Core.Visual.Styles.Descriptors.CursorKind.ResizeVertical: return 6;
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.ResizeDiagonalUp: return 7;
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.ResizeDiagonalDown: return 8;
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.Move: return 9;
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.NotAllowed: return 10;
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.Help: return 11;
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.Progress: return 12;
+                case Ixen.Core.Visual.Styles.Descriptors.CursorKind.Hidden: return 13;
                 default: return 0;
             }
         }

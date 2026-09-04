@@ -45,6 +45,34 @@ namespace Ixen.Core.Visual.Styles.Parsers
                     Descriptor.Value = CursorKind.ResizeVertical;
                     return true;
 
+                case "nesw-resize":
+                    Descriptor.Value = CursorKind.ResizeDiagonalUp;
+                    return true;
+
+                case "nwse-resize":
+                    Descriptor.Value = CursorKind.ResizeDiagonalDown;
+                    return true;
+
+                case "move":
+                    Descriptor.Value = CursorKind.Move;
+                    return true;
+
+                case "not-allowed":
+                    Descriptor.Value = CursorKind.NotAllowed;
+                    return true;
+
+                case "help":
+                    Descriptor.Value = CursorKind.Help;
+                    return true;
+
+                case "progress":
+                    Descriptor.Value = CursorKind.Progress;
+                    return true;
+
+                case "none":
+                    Descriptor.Value = CursorKind.Hidden;
+                    return true;
+
                 default:
                     return false;
             }
