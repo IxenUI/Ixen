@@ -15,10 +15,14 @@ namespace Ixen.Platform
         private readonly Action _requestRepaint;
 
         public IxenHost(IxenSurface surface, Action requestRepaint, IScheduler scheduler = null,
-            IClipboard clipboard = null, Action<CursorKind> setCursor = null, IImageSource images = null)
+            IClipboard clipboard = null, Action<CursorKind> setCursor = null, IImageSource images = null,
+            Action wake = null)
         {
             _surface = surface ?? throw new ArgumentNullException(nameof(surface));
             _requestRepaint = requestRepaint;
+
+            _surface.Wake = wake ?? requestRepaint;
+            _surface.PostedError = error => Fail(IxenErrorPhase.Posted, error);
 
             if (setCursor != null)
             {

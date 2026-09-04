@@ -7,7 +7,8 @@ namespace Ixen.Platform
         Frame,
         Pointer,
         Keyboard,
-        Timer
+        Timer,
+        Posted
     }
 
     public class IxenErrorEventArgs : EventArgs

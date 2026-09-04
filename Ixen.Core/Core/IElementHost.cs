@@ -9,6 +9,8 @@ namespace Ixen.Core
 
         void Focus(Visual.VisualElement element);
 
+        void Post(System.Action action);
+
         void InvalidateVisual();
         void InvalidateVisual(Visual.VisualElement element);
 

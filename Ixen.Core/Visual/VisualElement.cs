@@ -66,7 +66,7 @@ namespace Ixen.Core.Visual
         {
             get
             {
-                for (VisualElement element = this; element != null; element = null)
+                for (VisualElement element = this; element != null; element = element.Parent)
                 {
                     if (!element._enabled)
                     {

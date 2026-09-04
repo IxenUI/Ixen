@@ -57,7 +57,9 @@ namespace Ixen.View.Android
 
             _host = new IxenHost(new IxenSurface(), _skCanvasView.Invalidate,
                 new AndroidScheduler(), new AndroidClipboard(Context), null,
-                new AssetImageSource(Context?.Assets));
+                new AssetImageSource(Context?.Assets), _skCanvasView.PostInvalidate);
+
+            IxenSynchronizationContext.Install(_host.Surface);
 
             _host.Surface.ReducedMotion = PrefersReducedMotion();
 

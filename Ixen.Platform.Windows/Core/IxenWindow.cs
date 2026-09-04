@@ -31,6 +31,9 @@ namespace Ixen.Platform.Windows
             _ixenSurface.ReducedMotion = SystemPreferences.PrefersReducedMotion();
             _host = new IxenHost(ixenSurface, RequestRepaint, new MessageScheduler(), new WindowsClipboard(),
                 SetCursor, new WindowsImageSource());
+
+            IxenSynchronizationContext.Install(ixenSurface);
+
             _onPaint = OnPaint;
             _onPointer = OnPointer;
             _onKey = OnKey;

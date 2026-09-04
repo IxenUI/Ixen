@@ -2,6 +2,7 @@ using Ixen.Core.Visual;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Runtime.ExceptionServices;
 
 namespace Ixen.Core.Components
@@ -172,6 +173,56 @@ namespace Ixen.Core.Components
 
             _isStateDirty = true;
             GetVisualElement()?.InvalidateLayout();
+        }
+
+        protected void Run(Func<Task> work)
+        {
+            if (work == null)
+            {
+                return;
+            }
+
+            Task task;
+
+            try
+            {
+                task = work();
+            }
+            catch (Exception error)
+            {
+                Report(error);
+                return;
+            }
+
+            if (task == null)
+            {
+                return;
+            }
+
+            task.ContinueWith(finished => Report(Unwrap(finished.Exception)),
+                TaskContinuationOptions.OnlyOnFaulted);
+        }
+
+        private static Exception Unwrap(AggregateException error)
+            => error == null || error.InnerExceptions.Count != 1
+                ? (Exception)error
+                : error.InnerException;
+
+        private void Report(Exception error)
+        {
+            if (error == null)
+            {
+                return;
+            }
+
+            IElementHost host = GetVisualElement()?.Host;
+
+            if (host == null)
+            {
+                ExceptionDispatchInfo.Capture(error).Throw();
+            }
+
+            host.Post(() => ExceptionDispatchInfo.Capture(error).Throw());
         }
 
         private void EnsureNotRendering()

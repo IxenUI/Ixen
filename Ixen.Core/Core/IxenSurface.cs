@@ -7,7 +7,9 @@ using Ixen.Core.Visual.Computers;
 using Ixen.Core.Visual.Styles.Descriptors;
 using SkiaSharp;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Ixen.Core
 {
@@ -30,6 +32,49 @@ namespace Ixen.Core
         private VisualElement _root;
         private float _scale = 1;
         private bool _visualDirty;
+
+        private readonly ConcurrentQueue<Action> _posted = new ConcurrentQueue<Action>();
+        private readonly int _thread = Thread.CurrentThread.ManagedThreadId;
+
+        internal Action Wake { get; set; }
+        internal Action<Exception> PostedError { get; set; }
+
+        public bool IsOwnThread => Thread.CurrentThread.ManagedThreadId == _thread;
+
+        public void Post(Action action)
+        {
+            if (action == null)
+            {
+                return;
+            }
+
+            _posted.Enqueue(action);
+            Wake?.Invoke();
+        }
+
+        private void DrainPosted()
+        {
+            int pending = _posted.Count;
+
+            while (pending > 0 && _posted.TryDequeue(out Action action))
+            {
+                pending--;
+
+                try
+                {
+                    action();
+                }
+                catch (Exception error)
+                {
+                    if (PostedError == null)
+                    {
+                        throw;
+                    }
+
+                    PostedError(error);
+                }
+            }
+        }
 
         public float Scale
         {
@@ -98,6 +143,7 @@ namespace Ixen.Core
         internal void ComputeLayout(int width, int height)
         {
             _images.Trim();
+            DrainPosted();
 
             int logicalWidth = (int)(width / _scale);
             int logicalHeight = (int)(height / _scale);
