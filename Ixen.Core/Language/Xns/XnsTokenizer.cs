@@ -2,7 +2,6 @@ using Ixen.Core.Visual.Classes;
 using Ixen.Core.Language.Base;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Ixen.Core.Language.Xns
 {
@@ -37,7 +36,7 @@ namespace Ixen.Core.Language.Xns
 
         public override List<XnsToken> Tokenize()
         {
-            _tokens = new();
+            _tokens = new(EstimatedTokenCount());
             _diagnostics.Clear();
 
             ResetPosition();
@@ -224,20 +223,18 @@ namespace Ixen.Core.Language.Xns
             tokenIndex = _peekIndex;
             MoveCursor();
 
-            var read = new StringBuilder();
+            int start = _index + 1;
 
             while (char.IsLetter(PeekChar()))
             {
-                read.Append(PeekChar());
                 MoveCursor();
             }
 
-            return read.ToString() == keyword;
+            return Matches(start, _index, keyword);
         }
 
         private bool ReadName(out string name)
         {
-            var builder = new StringBuilder();
             char c = PeekNonSpaceChar();
 
             if (!char.IsLetter(c) && c != '_')
@@ -246,7 +243,8 @@ namespace Ixen.Core.Language.Xns
                 return false;
             }
 
-            builder.Append(c);
+            int start = _peekIndex;
+
             MoveCursor();
 
             while (true)
@@ -258,11 +256,10 @@ namespace Ixen.Core.Language.Xns
                     break;
                 }
 
-                builder.Append(c);
                 MoveCursor();
             }
 
-            name = builder.ToString();
+            name = Slice(start, _index);
 
             return true;
         }
@@ -331,14 +328,15 @@ namespace Ixen.Core.Language.Xns
                 return false;
             }
 
-            var name = new StringBuilder();
+            int nameStart = _peekIndex;
 
             while (char.IsLetterOrDigit(c) || c == '_' || c == '-')
             {
-                name.Append(c);
                 MoveCursor();
                 c = PeekChar();
             }
+
+            int nameEnd = _index;
 
             if (PeekNonSpaceChar() != ':')
             {
@@ -349,7 +347,6 @@ namespace Ixen.Core.Language.Xns
             MoveCursor();
 
             int rawIndex = _index + 1;
-            var value = new StringBuilder();
 
             while (true)
             {
@@ -365,20 +362,17 @@ namespace Ixen.Core.Language.Xns
                     break;
                 }
 
-                value.Append(c);
                 MoveCursor();
             }
 
-            string raw = value.ToString();
-            string text = raw.Trim();
+            int valueIndex = TrimmedStart(rawIndex, _index);
+            int valueEnd = TrimmedEnd(rawIndex, _index);
 
-            if (text.Length == 0)
+            if (valueEnd < valueIndex)
             {
                 _index = index;
                 return false;
             }
-
-            int valueIndex = rawIndex + (raw.Length - raw.TrimStart().Length);
 
             if (_contentLevel != 0)
             {
@@ -387,8 +381,9 @@ namespace Ixen.Core.Language.Xns
                     nameIndex, 1);
             }
 
-            AddToken(nameIndex, XnsTokenType.VariableName, name.ToString(), name.Length + 1);
-            AddToken(valueIndex, XnsTokenType.VariableValue, text);
+            AddToken(nameIndex, XnsTokenType.VariableName, Slice(nameStart, nameEnd),
+                nameEnd - nameStart + 2);
+            AddToken(valueIndex, XnsTokenType.VariableValue, Slice(valueIndex, valueEnd));
 
             return true;
         }
@@ -406,21 +401,20 @@ namespace Ixen.Core.Language.Xns
             int tokenIndex = _peekIndex;
             MoveCursor();
 
-            var keyword = new StringBuilder();
+            int keywordStart = _index + 1;
 
             while (char.IsLetter(PeekChar()))
             {
-                keyword.Append(PeekChar());
                 MoveCursor();
             }
 
-            if (keyword.ToString() != MEDIA_KEYWORD)
+            if (!Matches(keywordStart, _index, MEDIA_KEYWORD))
             {
                 _index = index;
                 return false;
             }
 
-            var condition = new StringBuilder();
+            int rawIndex = _index + 1;
 
             while (true)
             {
@@ -431,19 +425,20 @@ namespace Ixen.Core.Language.Xns
                     break;
                 }
 
-                condition.Append(c);
                 MoveCursor();
             }
 
-            string text = condition.ToString().Trim();
+            int conditionIndex = TrimmedStart(rawIndex, _index);
+            int conditionEnd = TrimmedEnd(rawIndex, _index);
 
-            if (PeekChar() != '{' || text.Length == 0)
+            if (PeekChar() != '{' || conditionEnd < conditionIndex)
             {
                 _index = index;
                 return false;
             }
 
-            AddToken(tokenIndex, XnsTokenType.MediaQuery, text, _index - tokenIndex + 1);
+            AddToken(tokenIndex, XnsTokenType.MediaQuery, Slice(conditionIndex, conditionEnd),
+                _index - tokenIndex + 1);
 
             return true;
         }
@@ -461,15 +456,14 @@ namespace Ixen.Core.Language.Xns
             int tokenIndex = _peekIndex;
             MoveCursor();
 
-            var keyword = new StringBuilder();
+            int keywordStart = _index + 1;
 
             while (char.IsLetter(PeekChar()))
             {
-                keyword.Append(PeekChar());
                 MoveCursor();
             }
 
-            if (keyword.ToString() != KEYFRAMES_KEYWORD)
+            if (!Matches(keywordStart, _index, KEYFRAMES_KEYWORD))
             {
                 _index = index;
                 return false;
@@ -483,8 +477,8 @@ namespace Ixen.Core.Language.Xns
                 return false;
             }
 
-            var name = new StringBuilder();
-            name.Append(c);
+            int nameStart = _peekIndex;
+
             MoveCursor();
 
             while (true)
@@ -493,13 +487,14 @@ namespace Ixen.Core.Language.Xns
 
                 if (char.IsLetterOrDigit(c) || c == '_' || c == '-')
                 {
-                    name.Append(c);
                     MoveCursor();
                     continue;
                 }
 
                 break;
             }
+
+            int nameEnd = _index;
 
             if (PeekNonSpaceChar() != '{')
             {
@@ -514,7 +509,7 @@ namespace Ixen.Core.Language.Xns
                     tokenIndex, 1);
             }
 
-            AddToken(tokenIndex, XnsTokenType.ClassName, KEYFRAMES_MARKER + name.ToString(),
+            AddToken(tokenIndex, XnsTokenType.ClassName, KEYFRAMES_MARKER + Slice(nameStart, nameEnd),
                 _index - tokenIndex + 1);
 
             return true;
@@ -536,15 +531,9 @@ namespace Ixen.Core.Language.Xns
 
             if (char.IsLetterOrDigit(c) || c == '.' || c == '#' || c == '_')
             {
-                int tokenIndex = immediate ? markerIndex : _peekIndex;
-                var sb = new StringBuilder();
+                int nameIndex = _peekIndex;
+                int tokenIndex = immediate ? markerIndex : nameIndex;
 
-                if (immediate)
-                {
-                    sb.Append(StyleScope.IMMEDIATE);
-                }
-
-                sb.Append(c);
                 MoveCursor();
 
                 while (true)
@@ -553,7 +542,6 @@ namespace Ixen.Core.Language.Xns
                     if (char.IsLetterOrDigit(c) || c == '_' ||  c == '-' || c == ':' || c == '%'
                         || c == '(' || c == ')')
                     {
-                        sb.Append(c);
                         MoveCursor();
                         continue;
                     }
@@ -561,11 +549,17 @@ namespace Ixen.Core.Language.Xns
                     break;
                 }
 
+                int nameEnd = _index;
+
                 c = PeekNonSpaceChar();
 
-                if (c == '{' && (sb.Length >= 1 || char.IsLetter(sb[0])))
+                if (c == '{')
                 {
-                    AddToken(tokenIndex, XnsTokenType.ClassName, sb.ToString());
+                    string name = Slice(nameIndex, nameEnd);
+
+                    AddToken(tokenIndex, XnsTokenType.ClassName,
+                        immediate ? StyleScope.IMMEDIATE + name : name);
+
                     return true;
                 }
             }
@@ -582,8 +576,7 @@ namespace Ixen.Core.Language.Xns
             if (char.IsLetter(c))
             {
                 int tokenIndex = _peekIndex;
-                var sb = new StringBuilder();
-                sb.Append(c);
+
                 MoveCursor();
 
                 while (true)
@@ -591,7 +584,6 @@ namespace Ixen.Core.Language.Xns
                     c = PeekChar();
                     if (char.IsLetter(c) || c == '-')
                     {
-                        sb.Append(c);
                         MoveCursor();
                         continue;
                     }
@@ -599,11 +591,13 @@ namespace Ixen.Core.Language.Xns
                     break;
                 }
 
+                int nameEnd = _index;
+
                 c = PeekNonSpaceChar();
 
                 if (c == ':')
                 {
-                    AddToken(tokenIndex, XnsTokenType.StyleName, sb.ToString());
+                    AddToken(tokenIndex, XnsTokenType.StyleName, Slice(tokenIndex, nameEnd));
                     return true;
                 }
             }
@@ -620,8 +614,7 @@ namespace Ixen.Core.Language.Xns
             if (char.IsLetterOrDigit(c) || c == '#' || c == '?' || c == '_' || c == '$' || c == '-')
             {
                 int tokenIndex = _peekIndex;
-                var sb = new StringBuilder();
-                sb.Append(c);
+
                 MoveCursor();
 
                 while (true)
@@ -642,7 +635,6 @@ namespace Ixen.Core.Language.Xns
                         || c == '-' || c == '_' || c == '/' || c == '$' || c == '(' || c == ')' || c == '+'
                         || c == ',' || c == ' ' || c == '\t')
                     {
-                        sb.Append(c);
                         MoveCursor();
                         continue;
                     }
@@ -650,11 +642,11 @@ namespace Ixen.Core.Language.Xns
                     break;
                 }
 
-                string value = sb.ToString().TrimEnd();
+                int valueEnd = TrimmedEnd(tokenIndex, _index);
 
-                if (value.Length >= 1)
+                if (valueEnd >= tokenIndex)
                 {
-                    AddToken(tokenIndex, XnsTokenType.StyleValue, value);
+                    AddToken(tokenIndex, XnsTokenType.StyleValue, Slice(tokenIndex, valueEnd));
                     return true;
                 }
             }

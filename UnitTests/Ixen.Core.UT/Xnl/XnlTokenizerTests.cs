@@ -1,5 +1,6 @@
 ﻿using Ixen.Core.Language.Xnl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace Ixen.Core.UT.Xnl
 {
@@ -209,6 +210,17 @@ layout<VisualElement>{class: ""layout"" truc: ""chose""}
             XnlToken token = PropertyValueOf(source);
 
             Assert.AreEqual(token.Content, source.Substring(token.Index, token.Content.Length));
+        }
+
+        [TestMethod]
+        public void ASemicolonInsideAStringDoesNotEndACodeStatement()
+        {
+            var xnlSource = new XnlSource("root {} [\r\n@var label = \"a;b\";\r\nel {}\r\n]");
+            var tokens = xnlSource.Tokenize();
+
+            Assert.IsFalse(xnlSource.HasErrors);
+            Assert.AreEqual("var label = \"a;b\"",
+                tokens.First(t => t.Type == XnlTokenType.CodeStatement).Content);
         }
     }
 }

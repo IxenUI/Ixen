@@ -1,11 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Ixen.Core.Language.Base
 {
     internal abstract class BaseTokenizer
     {
+        private const int CHARS_PER_TOKEN = 8;
+        private const int CHAR_TEXTS = 128;
+
+        private static readonly string[] _charTexts = new string[CHAR_TEXTS];
+
         protected SourceContent _source;
 
         protected int _index = -1;
@@ -83,6 +87,78 @@ namespace Ixen.Core.Language.Base
         {
             _index = _peekIndex;
         }
+
+        protected int EstimatedTokenCount()
+        {
+            return (_source.Content.Length / CHARS_PER_TOKEN) + 1;
+        }
+
+        protected string Slice(int start, int end)
+        {
+            return _source.Content.Substring(start, end - start + 1);
+        }
+
+        protected bool Matches(int start, int end, string keyword)
+        {
+            if (end - start + 1 != keyword.Length)
+            {
+                return false;
+            }
+
+            string content = _source.Content;
+
+            for (int i = 0; i < keyword.Length; i++)
+            {
+                if (content[start + i] != keyword[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        protected int TrimmedStart(int start, int end)
+        {
+            string content = _source.Content;
+
+            while (start <= end && char.IsWhiteSpace(content[start]))
+            {
+                start++;
+            }
+
+            return start;
+        }
+
+        protected int TrimmedEnd(int start, int end)
+        {
+            string content = _source.Content;
+
+            while (end >= start && char.IsWhiteSpace(content[end]))
+            {
+                end--;
+            }
+
+            return end;
+        }
+
+        protected string Trimmed(int start, int end)
+        {
+            int from = TrimmedStart(start, end);
+            int to = TrimmedEnd(start, end);
+
+            return to < from ? string.Empty : Slice(from, to);
+        }
+
+        protected static string TextOf(char c)
+        {
+            if (c >= CHAR_TEXTS)
+            {
+                return c.ToString();
+            }
+
+            return _charTexts[c] ?? (_charTexts[c] = c.ToString());
+        }
     }
 
     internal abstract class BaseTokenizer<TToken, TTokenType, TTokenErrorType> : BaseTokenizer
@@ -138,7 +214,7 @@ namespace Ixen.Core.Language.Base
 
             if (c == expectedChar)
             {
-                AddToken(_peekIndex, type, expectedChar.ToString());
+                AddToken(_peekIndex, type, TextOf(expectedChar));
                 MoveCursor();
                 return true;
             }
@@ -157,13 +233,11 @@ namespace Ixen.Core.Language.Base
             if (c == '/')
             {
                 int tokenIndex = _peekIndex;
-                var sb = new StringBuilder();
-                sb.Append(c);
                 MoveCursor();
 
                 c = PeekChar();
-                if ((c == '/' && ReadLineComment(tokenIndex, sb))
-                 || (c == '*' && ReadMultiLinesComment(tokenIndex, sb)))
+                if ((c == '/' && ReadLineComment(tokenIndex))
+                 || (c == '*' && ReadMultiLinesComment(tokenIndex)))
                 {
                     return true;
                 }
@@ -173,43 +247,38 @@ namespace Ixen.Core.Language.Base
             return false;
         }
 
-        private bool ReadLineComment(int tokenIndex, StringBuilder sb)
+        private bool ReadLineComment(int tokenIndex)
         {
-            char c = PeekChar();
-            sb.Append(c);
             MoveCursor();
 
             while (true)
             {
-                c = PeekChar();
+                char c = PeekChar();
                 if (c == '\0' || c == '\r' || c == '\n')
                 {
                     break;
                 }
 
-                sb.Append(c);
                 MoveCursor();
                 continue;
             }
 
-            if (sb.Length >= 2)
+            if (_index - tokenIndex + 1 >= 2)
             {
-                AddToken(tokenIndex, GetCommentType(), sb.ToString());
+                AddToken(tokenIndex, GetCommentType(), Slice(tokenIndex, _index));
                 return true;
             }
 
             return false;
         }
 
-        private bool ReadMultiLinesComment(int tokenIndex, StringBuilder sb)
+        private bool ReadMultiLinesComment(int tokenIndex)
         {
-            char c = PeekChar();
-            sb.Append(c);
             MoveCursor();
 
             while (true)
             {
-                c = PeekChar();
+                char c = PeekChar();
 
                 if (c == '\0')
                 {
@@ -218,13 +287,11 @@ namespace Ixen.Core.Language.Base
 
                 if (c != '*')
                 {
-                    sb.Append(c);
                     MoveCursor();
                     continue;
                 }
                 else
                 {
-                    sb.Append(c);
                     MoveCursor();
                     c = PeekChar();
 
@@ -233,16 +300,15 @@ namespace Ixen.Core.Language.Base
                         continue;
                     }
 
-                    sb.Append(c);
                     MoveCursor();
                 }
 
                 break;
             }
 
-            if (sb.Length >= 4)
+            if (_index - tokenIndex + 1 >= 4)
             {
-                AddToken(tokenIndex, GetCommentType(), sb.ToString());
+                AddToken(tokenIndex, GetCommentType(), Slice(tokenIndex, _index));
                 return true;
             }
 

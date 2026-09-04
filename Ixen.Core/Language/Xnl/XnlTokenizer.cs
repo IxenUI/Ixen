@@ -1,7 +1,6 @@
 ﻿using Ixen.Core.Language.Base;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Ixen.Core.Language.Xnl
 {
@@ -45,7 +44,7 @@ namespace Ixen.Core.Language.Xnl
 
         public override List<XnlToken> Tokenize()
         {
-            _tokens = new();
+            _tokens = new(EstimatedTokenCount());
             _diagnostics.Clear();
 
             ResetPosition();
@@ -364,9 +363,7 @@ namespace Ixen.Core.Language.Xnl
             int tokenIndex = _peekIndex;
             MoveCursor();
 
-            var sb = new StringBuilder();
-
-            if (!ScanCodeHeader(sb, out char terminator))
+            if (!ScanCodeHeader(out char terminator))
             {
                 _index = index;
                 return false;
@@ -374,7 +371,7 @@ namespace Ixen.Core.Language.Xnl
 
             AddToken(tokenIndex,
                 terminator == '{' ? XnlTokenType.CodeRegionBegin : XnlTokenType.CodeStatement,
-                sb.ToString().Trim(),
+                Trimmed(tokenIndex + 1, _index - 1),
                 _index - tokenIndex + 1);
 
             return true;
@@ -392,32 +389,29 @@ namespace Ixen.Core.Language.Xnl
             }
 
             int tokenIndex = _peekIndex;
-            var sb = new StringBuilder();
 
-            sb.Append(c);
             MoveCursor();
 
             while (char.IsLetter(PeekChar()))
             {
-                sb.Append(PeekChar());
                 MoveCursor();
             }
 
-            if (sb.ToString() != ELSE_KEYWORD
-                || !ScanCodeHeader(sb, out char terminator)
+            if (!Matches(tokenIndex, _index, ELSE_KEYWORD)
+                || !ScanCodeHeader(out char terminator)
                 || terminator != '{')
             {
                 _index = index;
                 return false;
             }
 
-            AddToken(tokenIndex, XnlTokenType.CodeRegionBegin, sb.ToString().Trim(),
+            AddToken(tokenIndex, XnlTokenType.CodeRegionBegin, Trimmed(tokenIndex, _index - 1),
                 _index - tokenIndex + 1);
 
             return true;
         }
 
-        private bool ScanCodeHeader(StringBuilder sb, out char terminator)
+        private bool ScanCodeHeader(out char terminator)
         {
             int depth = 0;
 
@@ -434,7 +428,7 @@ namespace Ixen.Core.Language.Xnl
 
                 if (c == '"' || c == '\'')
                 {
-                    ReadCodeLiteral(sb, c);
+                    ReadCodeLiteral(c);
                     continue;
                 }
 
@@ -455,14 +449,12 @@ namespace Ixen.Core.Language.Xnl
                     depth--;
                 }
 
-                sb.Append(c);
                 MoveCursor();
             }
         }
 
-        private void ReadCodeLiteral(StringBuilder sb, char quote)
+        private void ReadCodeLiteral(char quote)
         {
-            sb.Append(quote);
             MoveCursor();
 
             while (true)
@@ -474,7 +466,6 @@ namespace Ixen.Core.Language.Xnl
                     return;
                 }
 
-                sb.Append(c);
                 MoveCursor();
 
                 if (c == '\\')
@@ -483,7 +474,6 @@ namespace Ixen.Core.Language.Xnl
 
                     if (escaped != '\0')
                     {
-                        sb.Append(escaped);
                         MoveCursor();
                     }
 
@@ -505,8 +495,7 @@ namespace Ixen.Core.Language.Xnl
             if (char.IsLetter(c) || c == '_')
             {
                 int tokenIndex = _peekIndex;
-                var sb = new StringBuilder();
-                sb.Append(c);
+
                 MoveCursor();
 
                 while (true)
@@ -514,7 +503,6 @@ namespace Ixen.Core.Language.Xnl
                     c = PeekChar();
                     if (char.IsLetterOrDigit(c) || c == '_')
                     {
-                        sb.Append(c);
                         MoveCursor();
                         continue;
                     }
@@ -522,11 +510,13 @@ namespace Ixen.Core.Language.Xnl
                     break;
                 }
 
+                int nameEnd = _index;
+
                 c = PeekNonSpaceChar();
 
-                if ((c == '{' || c == '<') && (sb.Length >= 1))
+                if (c == '{' || c == '<')
                 {
-                    AddToken(tokenIndex, XnlTokenType.ElementName, sb.ToString());
+                    AddToken(tokenIndex, XnlTokenType.ElementName, Slice(tokenIndex, nameEnd));
                     return true;
                 }
             }
@@ -543,8 +533,7 @@ namespace Ixen.Core.Language.Xnl
             if (char.IsLetter(c))
             {
                 int tokenIndex = _peekIndex;
-                var sb = new StringBuilder();
-                sb.Append(c);
+
                 MoveCursor();
 
                 while (true)
@@ -552,7 +541,6 @@ namespace Ixen.Core.Language.Xnl
                     c = PeekChar();
                     if (char.IsLetterOrDigit(c))
                     {
-                        sb.Append(c);
                         MoveCursor();
                         continue;
                     }
@@ -560,11 +548,13 @@ namespace Ixen.Core.Language.Xnl
                     break;
                 }
 
+                int nameEnd = _index;
+
                 c = PeekNonSpaceChar();
 
-                if (c == '>' && sb.Length >= 1)
+                if (c == '>')
                 {
-                    AddToken(tokenIndex, XnlTokenType.ElementTypeName, sb.ToString());
+                    AddToken(tokenIndex, XnlTokenType.ElementTypeName, Slice(tokenIndex, nameEnd));
                     return true;
                 }
             }
@@ -581,8 +571,7 @@ namespace Ixen.Core.Language.Xnl
             if (char.IsLetter(c))
             {
                 int tokenIndex = _peekIndex;
-                var sb = new StringBuilder();
-                sb.Append(c);
+
                 MoveCursor();
 
                 while (true)
@@ -590,7 +579,6 @@ namespace Ixen.Core.Language.Xnl
                     c = PeekChar();
                     if (char.IsLetter(c) || c == '-')
                     {
-                        sb.Append(c);
                         MoveCursor();
                         continue;
                     }
@@ -598,11 +586,13 @@ namespace Ixen.Core.Language.Xnl
                     break;
                 }
 
+                int nameEnd = _index;
+
                 c = PeekNonSpaceChar();
 
                 if (c == ':')
                 {
-                    AddToken(tokenIndex, XnlTokenType.PropertyName, sb.ToString());
+                    AddToken(tokenIndex, XnlTokenType.PropertyName, Slice(tokenIndex, nameEnd));
                     return true;
                 }
             }
@@ -615,7 +605,6 @@ namespace Ixen.Core.Language.Xnl
         {
             int index = _index;
             int tokenIndex = _index + 1;
-            var sb = new StringBuilder();
             bool terminated = false;
 
             while (true)
@@ -633,13 +622,12 @@ namespace Ixen.Core.Language.Xnl
                     break;
                 }
 
-                sb.Append(c);
                 MoveCursor();
             }
 
             if (terminated)
             {
-                AddToken(tokenIndex, XnlTokenType.PropertyValue, sb.ToString());
+                AddToken(tokenIndex, XnlTokenType.PropertyValue, Slice(tokenIndex, _index));
                 return true;
             }
 

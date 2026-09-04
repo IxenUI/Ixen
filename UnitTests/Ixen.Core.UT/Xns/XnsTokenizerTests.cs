@@ -209,5 +209,31 @@ namespace Ixen.Core.UT.Xns
             Assert.AreEqual("ew-resize|200px",
                 StyleValuesOf("el { cursor: ew-resize  width: 200px }"));
         }
+
+        [TestMethod]
+        public void AVariableValueStartsAtItsFirstNonBlankCharacter()
+        {
+            string source = "$accent:   #4C6EF5\r\n";
+            var xnsSource = new XnsSource(source);
+            var tokens = xnsSource.Tokenize();
+            XnsToken token = tokens.Single(t => t.Type == XnsTokenType.VariableValue);
+
+            Assert.IsFalse(xnsSource.HasErrors,
+                string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
+            Assert.AreEqual("#4C6EF5", token.Content);
+            Assert.AreEqual(token.Content, source.Substring(token.Index, token.Content.Length));
+        }
+
+        [TestMethod]
+        public void AMediaConditionIsTrimmedAndKeepsItsInnerSpacing()
+        {
+            var xnsSource = new XnsSource("@media   (max-width: 400px)   {\r\n    el { width: 1* }\r\n}");
+            var tokens = xnsSource.Tokenize();
+
+            Assert.IsFalse(xnsSource.HasErrors,
+                string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
+            Assert.AreEqual("(max-width: 400px)",
+                tokens.Single(t => t.Type == XnsTokenType.MediaQuery).Content);
+        }
     }
 }
