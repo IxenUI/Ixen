@@ -24,7 +24,7 @@ namespace Ixen.Core.Accessibility
                 Element = element,
                 Role = role == AccessibleRole.None ? AccessibleRole.Group : role,
                 Name = NameOf(element),
-                Description = string.IsNullOrEmpty(element.Description) ? null : element.Description,
+                Description = DescriptionOf(element),
                 Value = ValueOf(element),
                 States = StatesOf(element, focused),
                 Live = live,
@@ -257,6 +257,16 @@ namespace Ixen.Core.Accessibility
                 || role == AccessibleRole.ComboBox;
         }
 
+        private static string DescriptionOf(VisualElement element)
+        {
+            if (!string.IsNullOrEmpty(element.Error))
+            {
+                return element.Error;
+            }
+
+            return string.IsNullOrEmpty(element.Description) ? null : element.Description;
+        }
+
         private static AccessibleStates StatesOf(VisualElement element, VisualElement focused)
         {
             AccessibleStates states = AccessibleStates.None;
@@ -302,6 +312,11 @@ namespace Ixen.Core.Accessibility
             if (element.HasState(Visual.Styles.StyleStates.EXPANDED))
             {
                 states |= AccessibleStates.Expanded;
+            }
+
+            if (element.HasState(Visual.Styles.StyleStates.INVALID))
+            {
+                states |= AccessibleStates.Invalid;
             }
 
             if (!element.IsEnabled)

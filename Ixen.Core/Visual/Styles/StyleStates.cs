@@ -9,10 +9,11 @@ namespace Ixen.Core.Visual.Styles
         internal const string CHECKED = "checked";
         internal const string SELECTED = "selected";
         internal const string EXPANDED = "expanded";
+        internal const string INVALID = "invalid";
 
         internal static readonly string[] All =
         {
-            HOVER, PRESSED, FOCUS, DISABLED, CHECKED, SELECTED, EXPANDED,
+            HOVER, PRESSED, FOCUS, DISABLED, CHECKED, SELECTED, EXPANDED, INVALID,
             StyleStructural.FIRST_CHILD, StyleStructural.LAST_CHILD,
             StyleStructural.ONLY_CHILD, StyleStructural.NTH_CHILD
         };

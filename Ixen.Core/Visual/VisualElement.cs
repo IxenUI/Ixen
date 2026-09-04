@@ -108,6 +108,41 @@ namespace Ixen.Core.Visual
         public Accessibility.AccessibleRole Role { get; set; }
         public string Label { get; set; }
         public string Description { get; set; }
+
+        private string _error;
+
+        public string Error
+        {
+            get => _error;
+            set
+            {
+                if (_error == value)
+                {
+                    return;
+                }
+
+                _error = value;
+                Invalid = !string.IsNullOrEmpty(value);
+            }
+        }
+
+        private bool _invalid;
+
+        public bool Invalid
+        {
+            get => _invalid;
+            set
+            {
+                if (_invalid == value)
+                {
+                    return;
+                }
+
+                _invalid = value;
+
+                ToggleState(Ixen.Core.Visual.Styles.StyleStates.INVALID, value);
+            }
+        }
         public Accessibility.LiveRegionKind LiveRegion { get; set; }
 
         private bool _scrollable;
