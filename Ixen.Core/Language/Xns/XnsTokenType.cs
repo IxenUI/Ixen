@@ -7,6 +7,7 @@ namespace Ixen.Core.Language.Xns
 
         ClassName,
         MediaQuery,
+        ContainerQuery,
         VariableName,
         VariableValue,
         MixinName,

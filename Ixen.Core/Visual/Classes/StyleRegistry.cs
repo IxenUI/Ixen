@@ -33,7 +33,9 @@ namespace Ixen.Core.Visual.Classes
         private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), List<ScopedClass>> _media = new();
         private readonly Dictionary<(StyleClassTarget target, string name), StyleClass> _defaults = new();
         private readonly Dictionary<string, KeyframesSet> _keyframes = new();
+        private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), List<ScopedClass>> _container = new();
         private readonly List<MediaQuery> _queries = new();
+        private readonly List<MediaQuery> _containerQueries = new();
 
         private int _count;
         private bool _hasStateClasses;
@@ -55,6 +57,8 @@ namespace Ixen.Core.Visual.Classes
         internal bool HasFocusClasses => _hasFocusClasses;
 
         internal bool HasMediaClasses => _media.Count > 0;
+
+        internal bool HasContainerClasses => _container.Count > 0;
 
         internal bool HasDefaultClasses => _defaults.Count > 0;
 
@@ -92,6 +96,12 @@ namespace Ixen.Core.Visual.Classes
                 | StyleStructural.KindsOf(styleClass.Scope);
 
             var key = (styleClass.Target, styleClass.SheetScope, styleClass.Name);
+
+            if (styleClass.Container != null)
+            {
+                AddContainer(key, styleClass);
+                return;
+            }
 
             if (styleClass.Media != null)
             {
@@ -159,6 +169,94 @@ namespace Ixen.Core.Visual.Classes
             if (!_queries.Exists(q => q.Source == styleClass.Media.Source))
             {
                 _queries.Add(styleClass.Media);
+            }
+        }
+
+        private void AddContainer((StyleClassTarget, string, string) key, StyleClass styleClass)
+        {
+            if (!_container.TryGetValue(key, out List<ScopedClass> candidates))
+            {
+                candidates = new List<ScopedClass>();
+                _container[key] = candidates;
+            }
+
+            var entry = new ScopedClass(styleClass);
+            int existing = candidates.FindIndex(c => c.Class.Scope == styleClass.Scope
+                && c.Class.Container.Source == styleClass.Container.Source
+                && c.Class.Media?.Source == styleClass.Media?.Source);
+
+            if (existing >= 0)
+            {
+                candidates[existing] = entry;
+            }
+            else
+            {
+                candidates.Add(entry);
+                _count++;
+            }
+
+            candidates.Sort((a, b) => a.Segments.Length.CompareTo(b.Segments.Length));
+
+            if (!_containerQueries.Exists(q => q.Source == styleClass.Container.Source))
+            {
+                _containerQueries.Add(styleClass.Container);
+            }
+
+            if (styleClass.Media != null && !_queries.Exists(q => q.Source == styleClass.Media.Source))
+            {
+                _queries.Add(styleClass.Media);
+            }
+        }
+
+        internal long ContainerSignature(float width, float height)
+        {
+            long signature = 0;
+
+            for (int index = 0; index < _containerQueries.Count && index < 63; index++)
+            {
+                if (_containerQueries[index].Matches(width, height))
+                {
+                    signature |= 1L << index;
+                }
+            }
+
+            return signature;
+        }
+
+        internal void CollectMatchingContainerClasses(StyleClassTarget target, string name,
+            VisualElement element, float width, float height, List<StyleClass> result)
+        {
+            if (name == null || _container.Count == 0)
+            {
+                return;
+            }
+
+            if (!_container.TryGetValue((target, null, name), out List<ScopedClass> candidates))
+            {
+                return;
+            }
+
+            foreach (ScopedClass candidate in candidates)
+            {
+                StyleClass styleClass = candidate.Class;
+
+                if (styleClass.Media != null && !styleClass.Media.Matches(width, height))
+                {
+                    continue;
+                }
+
+                if (!StyleScope.Matches(candidate.Segments, element,
+                    styleClass.ContainerDepth - 1, out VisualElement container) || container == null)
+                {
+                    continue;
+                }
+
+                container.IsQueryContainer = true;
+
+                if (styleClass.Container.Matches(container.ContentWidth, container.ContentHeight))
+                {
+                    result.Add(styleClass);
+                }
             }
         }
 
@@ -322,6 +420,8 @@ namespace Ixen.Core.Visual.Classes
             _unscoped.Clear();
             _scoped.Clear();
             _media.Clear();
+            _container.Clear();
+            _containerQueries.Clear();
             _queries.Clear();
             _keyframes.Clear();
             _count = 0;

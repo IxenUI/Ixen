@@ -179,10 +179,16 @@ namespace Ixen.Core.Visual.Classes
         }
 
         internal static bool Matches(StyleScopeSegment[] segments, VisualElement element)
+            => Matches(segments, element, -1, out _);
+
+        internal static bool Matches(StyleScopeSegment[] segments, VisualElement element,
+            int containerIndex, out VisualElement container)
         {
+            container = null;
+
             if (segments == null || segments.Length == 0)
             {
-                return true;
+                return containerIndex < 0;
             }
 
             int index = segments.Length - 1;
@@ -191,6 +197,11 @@ namespace Ixen.Core.Visual.Classes
             {
                 if (segments[index].Matches(ancestor))
                 {
+                    if (index == containerIndex)
+                    {
+                        container = ancestor;
+                    }
+
                     index--;
                     continue;
                 }

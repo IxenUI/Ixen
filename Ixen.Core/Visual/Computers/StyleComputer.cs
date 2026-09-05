@@ -124,17 +124,41 @@ namespace Ixen.Core.Visual.Computers
                 ApplyScopedClasses(handlers, registry, target, stated, element, scoped);
             }
 
-            if (!registry.HasMediaClasses)
+            if (registry.HasMediaClasses)
+            {
+                ApplyMediaClasses(handlers, registry, target, name, element);
+
+                for (int i = 0; i < element.States.Count; i++)
+                {
+                    ApplyMediaClasses(handlers, registry, target,
+                        name + StyleScope.STATE_SEPARATOR + element.States[i], element);
+                }
+            }
+
+            if (!registry.HasContainerClasses)
             {
                 return;
             }
 
-            ApplyMediaClasses(handlers, registry, target, name, element);
+            ApplyContainerClasses(handlers, registry, target, name, element);
 
             for (int i = 0; i < element.States.Count; i++)
             {
-                ApplyMediaClasses(handlers, registry, target,
+                ApplyContainerClasses(handlers, registry, target,
                     name + StyleScope.STATE_SEPARATOR + element.States[i], element);
+            }
+        }
+
+        private void ApplyContainerClasses(VisualElementStylesHandlers handlers, StyleRegistry registry,
+            StyleClassTarget target, string name, VisualElement element)
+        {
+            _matches.Clear();
+            registry.CollectMatchingContainerClasses(target, name, element,
+                _viewportWidth, _viewportHeight, _matches);
+
+            foreach (StyleClass styleClass in _matches)
+            {
+                ApplyClass(handlers, styleClass);
             }
         }
 

@@ -18,6 +18,27 @@ namespace Ixen.Core.Language.Xns
 
         private XnsVariables _variables = new XnsVariables();
 
+        private static readonly string CONTAINER_AT =
+            XnsTokenizer.KEYFRAMES_MARKER + XnsTokenizer.CONTAINER_KEYWORD;
+
+        private static readonly string MEDIA_AT =
+            XnsTokenizer.KEYFRAMES_MARKER + XnsTokenizer.MEDIA_KEYWORD;
+
+        private static readonly string NO_CONTAINER =
+            $"A top-level '{CONTAINER_AT}' block has no container to measure."
+                + " Nest it inside the selector whose size it asks about.";
+
+        private static readonly string TWO_CONTAINERS =
+            $"A '{CONTAINER_AT}' block cannot sit inside another one with a selector between"
+                + " them: the two would ask about different containers, and a rule carries one.";
+
+        private static readonly string CONTAINER_HOLDS_SELECTORS =
+            $"A '{CONTAINER_AT}' block holds selectors, not styles: a container query describes"
+                + " what is inside the container, never the container itself.";
+
+        private static readonly string MEDIA_HOLDS_SELECTORS =
+            $"A top-level '{MEDIA_AT}' block holds selectors, not styles.";
+
         public ClassesSet Compile(XnsNode node, List<LanguageError> errors)
         {
             var set = new ClassesSet();
@@ -56,8 +77,8 @@ namespace Ixen.Core.Language.Xns
 
         private static bool IsMixin(XnsNode node) => node.Mixin != null;
 
-        private void AddClasses(XnsNode node, XnsNode selector, MediaQuery media, ClassesSet set,
-            List<LanguageError> errors)
+        private void AddClasses(XnsNode node, XnsNode selector, MediaQuery media, MediaQuery container,
+            int containerDepth, ClassesSet set, List<LanguageError> errors)
         {
             List<StyleDescriptor> styles = ToStyles(node, errors);
 
@@ -81,29 +102,33 @@ namespace Ixen.Core.Language.Xns
 
                 if (scopes == null)
                 {
-                    set.Classes.Add(NewClass(node, target, null, name, styles, media));
+                    set.Classes.Add(NewClass(node, target, null, name, styles, media, container, containerDepth));
                     continue;
                 }
 
                 foreach (string scope in scopes)
                 {
-                    set.Classes.Add(NewClass(node, target, scope, name, styles, media));
+                    set.Classes.Add(NewClass(node, target, scope, name, styles, media, container, containerDepth));
                 }
             }
         }
 
         private static StyleClass NewClass(XnsNode node, StyleClassTarget target, string scope,
-            string name, List<StyleDescriptor> styles, MediaQuery media)
+            string name, List<StyleDescriptor> styles, MediaQuery media, MediaQuery container,
+            int containerDepth)
             => new StyleClass(target, null, scope, name, styles, media)
             {
+                Container = container,
+                ContainerDepth = containerDepth,
                 SourceIndex = node.NameIndex,
                 SourceLength = node.Name == null ? 0 : node.Name.Length
             };
 
         private void Add(XnsNode node, ClassesSet set, List<LanguageError> errors)
-            => Add(node, set, null, errors);
+            => Add(node, set, null, null, 0, errors);
 
-        private void Add(XnsNode node, ClassesSet set, MediaQuery media, List<LanguageError> errors)
+        private void Add(XnsNode node, ClassesSet set, MediaQuery media, MediaQuery container,
+            int containerDepth, List<LanguageError> errors)
         {
             if (IsKeyframes(node))
             {
@@ -116,7 +141,36 @@ namespace Ixen.Core.Language.Xns
                 return;
             }
 
-            if (node.Media != null)
+            if (node.Container != null)
+            {
+                int depth = ScopeDepth(node);
+
+                if (depth == 0)
+                {
+                    Report(node, XnsTokenizer.CONTAINER_KEYWORD, NO_CONTAINER, errors);
+                    return;
+                }
+
+                if (container != null && depth != containerDepth)
+                {
+                    Report(node, XnsTokenizer.CONTAINER_KEYWORD, TWO_CONTAINERS, errors);
+                    return;
+                }
+
+                container = GetContainer(node, container, errors);
+                containerDepth = depth;
+
+                if (container == null)
+                {
+                    return;
+                }
+
+                if (node.Styles.Count > 0)
+                {
+                    Report(node, XnsTokenizer.CONTAINER_KEYWORD, CONTAINER_HOLDS_SELECTORS, errors);
+                }
+            }
+            else if (node.Media != null)
             {
                 media = GetMedia(node, media, errors);
 
@@ -127,22 +181,42 @@ namespace Ixen.Core.Language.Xns
 
                 if (node.Styles.Count > 0)
                 {
-                    AddInherited(node, set, media, errors);
+                    AddInherited(node, set, media, container, containerDepth, errors);
                 }
             }
             else if (node.Styles.Count > 0)
             {
-                AddClasses(node, node, media, set, errors);
+                AddClasses(node, node, media, container, containerDepth, set, errors);
             }
 
             foreach (var child in node.Children)
             {
-                Add(child, set, media, errors);
+                Add(child, set, media, container, containerDepth, errors);
             }
         }
 
-        private void AddInherited(XnsNode node, ClassesSet set, MediaQuery media,
+        private static int ScopeDepth(XnsNode node)
+        {
+            int depth = 0;
+
+            for (XnsNode current = node.Parent; current != null; current = current.Parent)
+            {
+                if (!string.IsNullOrEmpty(current.Name))
+                {
+                    depth++;
+                }
+            }
+
+            return depth;
+        }
+
+        private static void Report(XnsNode node, string keyword, string message,
             List<LanguageError> errors)
+            => errors.Add(new LanguageError(
+                LanguageErrorCode.SYNTAX, message, node.NameIndex, keyword.Length + 1));
+
+        private void AddInherited(XnsNode node, ClassesSet set, MediaQuery media, MediaQuery container,
+            int containerDepth, List<LanguageError> errors)
         {
             XnsNode selector = node.Parent;
 
@@ -153,16 +227,38 @@ namespace Ixen.Core.Language.Xns
 
             if (selector == null)
             {
-                errors.Add(new LanguageError(
-                    LanguageErrorCode.SYNTAX,
-                    $"A top-level '{XnsTokenizer.KEYFRAMES_MARKER}{XnsTokenizer.MEDIA_KEYWORD}' block holds selectors, not styles.",
-                    node.NameIndex,
-                    XnsTokenizer.MEDIA_KEYWORD.Length + 1));
-
+                Report(node, XnsTokenizer.MEDIA_KEYWORD, MEDIA_HOLDS_SELECTORS, errors);
                 return;
             }
 
-            AddClasses(node, selector, media, set, errors);
+            if (container != null)
+            {
+                Report(node, XnsTokenizer.MEDIA_KEYWORD, CONTAINER_HOLDS_SELECTORS, errors);
+                return;
+            }
+
+            AddClasses(node, selector, media, container, containerDepth, set, errors);
+        }
+
+        private MediaQuery GetContainer(XnsNode node, MediaQuery outer, List<LanguageError> errors)
+        {
+            MediaQuery query = MediaQuery.Parse(_variables.IsEmpty
+                ? node.Container
+                : _variables.Substitute(node.Container, node.NameIndex, errors));
+
+            if (query == null)
+            {
+                errors.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_STYLE_VALUE,
+                    $"'{node.Container}' is not a valid container query. Use min-width, max-width, min-height,"
+                        + " max-height or orientation, combined with 'and'.",
+                    node.NameIndex,
+                    XnsTokenizer.CONTAINER_KEYWORD.Length + 1));
+
+                return null;
+            }
+
+            return outer == null ? query : outer.And(query);
         }
 
         private MediaQuery GetMedia(XnsNode node, MediaQuery outer, List<LanguageError> errors)

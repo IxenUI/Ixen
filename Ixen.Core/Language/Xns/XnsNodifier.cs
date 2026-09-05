@@ -88,6 +88,17 @@ namespace Ixen.Core.Language.Xns
                         parent.Children.Add(node);
                         break;
 
+                    case XnsTokenType.ContainerQuery:
+                        node = new XnsNode()
+                        {
+                            Id = ++nodeId,
+                            Parent = parent,
+                            Container = token.Content,
+                            NameIndex = token.Index
+                        };
+                        parent.Children.Add(node);
+                        break;
+
                     case XnsTokenType.BeginClassContent:
                         stack.Push(node);
                         parent = node;

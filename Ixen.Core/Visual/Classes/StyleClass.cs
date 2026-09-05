@@ -17,6 +17,8 @@ namespace Ixen.Core.Visual.Classes
         public string Scope { get; set; }
         public string Name { get; set; }
         public MediaQuery Media { get; set; }
+        public MediaQuery Container { get; set; }
+        public int ContainerDepth { get; set; }
         public List<StyleDescriptor> Styles { get; set; }
 
         internal int SourceIndex { get; set; }

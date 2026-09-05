@@ -173,9 +173,18 @@ namespace Ixen.Core
 
             _damage.SetWhole();
 
-            RenderComponents(Root, logicalWidth, logicalHeight);
-            _styleComputer.Compute(Root, styles, logicalWidth, logicalHeight);
-            _measureComputer.Measure(Root, logicalWidth, logicalHeight, true, true);
+            for (int pass = 0; pass < CONTAINER_PASSES; pass++)
+            {
+                RenderComponents(Root, logicalWidth, logicalHeight);
+                _styleComputer.Compute(Root, styles, logicalWidth, logicalHeight);
+                _measureComputer.Measure(Root, logicalWidth, logicalHeight, true, true);
+
+                if (!SyncContainers(styles))
+                {
+                    break;
+                }
+            }
+
             _arrangeComputer.Arrange(Root, 0, 0, logicalWidth, logicalHeight);
             _clippingComputer.Compute(Root, logicalWidth, logicalHeight);
 
@@ -189,6 +198,35 @@ namespace Ixen.Core
             _keyboardDispatcher.Refresh(TrackStates);
             _pointerDispatcher.Refresh(Root, TrackStates);
             SyncCursor();
+        }
+
+        private const int CONTAINER_PASSES = 2;
+
+        private bool SyncContainers(StyleRegistry styles)
+            => styles.HasContainerClasses && RefreshContainers(styles, Root);
+
+        private static bool RefreshContainers(StyleRegistry styles, VisualElement element)
+        {
+            bool changed = false;
+
+            if (element.IsQueryContainer)
+            {
+                long signature = styles.ContainerSignature(element.ContentWidth, element.ContentHeight);
+
+                if (signature != element.ContainerSignature)
+                {
+                    element.ContainerSignature = signature;
+                    element.Invalidate();
+                    changed = true;
+                }
+            }
+
+            foreach (VisualElement child in element.Children)
+            {
+                changed |= RefreshContainers(styles, child);
+            }
+
+            return changed;
         }
 
         private long _mediaSignature;
@@ -316,7 +354,6 @@ namespace Ixen.Core
             {
                 return;
             }
-
 
             float margin = PaintMargin(element) + extra;
             DimensionalElement clip = element.Clip;

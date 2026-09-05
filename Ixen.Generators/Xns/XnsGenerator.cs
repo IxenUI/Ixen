@@ -143,9 +143,15 @@ namespace Ixen.Generators.Xns
                         }
                     }
 
-                    sb.AppendLine(c.Media != null
-                        ? $"\t\t\t}}, global::Ixen.Core.Visual.Classes.MediaQuery.Parse(\"{c.Media.Source}\")));"
-                        : "\t\t\t}));");
+                    string tail = c.Media != null
+                        ? $"\t\t\t}}, global::Ixen.Core.Visual.Classes.MediaQuery.Parse(\"{c.Media.Source}\")"
+                        : "\t\t\t}";
+
+                    tail += c.Container != null
+                        ? $") {{ Container = global::Ixen.Core.Visual.Classes.MediaQuery.Parse(\"{c.Container.Source}\"), ContainerDepth = {c.ContainerDepth} }});"
+                        : "));";
+
+                    sb.AppendLine(tail);
                     sb.AppendLine();
                 }
 

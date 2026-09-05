@@ -295,6 +295,12 @@ namespace Ixen.Core.Visual
         internal int ChildIndex { get; set; }
 
         internal bool ChildrenChanged { get; set; }
+
+        internal bool IsQueryContainer { get; set; }
+
+        internal const long UNKNOWN_SIGNATURE = -1;
+
+        internal long ContainerSignature { get; set; } = UNKNOWN_SIGNATURE;
         internal List<VisualElement> Children { get; private set; } = new();
 
         public System.Collections.Generic.IReadOnlyList<VisualElement> ChildElements => Children;

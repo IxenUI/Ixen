@@ -10,6 +10,7 @@ namespace Ixen.Core.Language.Xns
         internal const char KEYFRAMES_MARKER = '@';
         internal const string KEYFRAMES_KEYWORD = "keyframes";
         internal const string MEDIA_KEYWORD = "media";
+        internal const string CONTAINER_KEYWORD = "container";
         internal const string MIXIN_KEYWORD = "mixin";
         internal const string INCLUDE_KEYWORD = "include";
         internal const char VARIABLE_MARKER = '$';
@@ -87,6 +88,12 @@ namespace Ixen.Core.Language.Xns
                     continue;
                 }
 
+                if (_expectClassName && ReadContainer())
+                {
+                    SetStatesFlags(XnsTokenType.ContainerQuery);
+                    continue;
+                }
+
                 if (_expectClassName && ReadKeyframes())
                 {
                     SetStatesFlags(XnsTokenType.ClassName);
@@ -161,6 +168,7 @@ namespace Ixen.Core.Language.Xns
 
                 case XnsTokenType.ClassName:
                 case XnsTokenType.MediaQuery:
+                case XnsTokenType.ContainerQuery:
                 case XnsTokenType.MixinName:
                     _expectContentBegin = true;
                     break;
@@ -388,6 +396,12 @@ namespace Ixen.Core.Language.Xns
         }
 
         private bool ReadMedia()
+            => ReadCondition(MEDIA_KEYWORD, XnsTokenType.MediaQuery);
+
+        private bool ReadContainer()
+            => ReadCondition(CONTAINER_KEYWORD, XnsTokenType.ContainerQuery);
+
+        private bool ReadCondition(string keyword, XnsTokenType type)
         {
             int index = _index;
 
@@ -407,7 +421,7 @@ namespace Ixen.Core.Language.Xns
                 MoveCursor();
             }
 
-            if (!Matches(keywordStart, _index, MEDIA_KEYWORD))
+            if (!Matches(keywordStart, _index, keyword))
             {
                 _index = index;
                 return false;
@@ -436,7 +450,7 @@ namespace Ixen.Core.Language.Xns
                 return false;
             }
 
-            AddToken(tokenIndex, XnsTokenType.MediaQuery, Slice(conditionIndex, conditionEnd),
+            AddToken(tokenIndex, type, Slice(conditionIndex, conditionEnd),
                 _index - tokenIndex + 1);
 
             return true;

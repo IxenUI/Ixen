@@ -150,4 +150,14 @@ generated_list_page, generated_list_sheet {
 @keyframes generated_blink {
     0%, 100% { background: #FF0000 }
     50%      { background: #00FF00 }
+}
+
+generated_container_host {
+    width: 300px
+
+    @container (max-width: 400px) {
+        generated_container_child {
+            background: #654321
+        }
+    }
 }
