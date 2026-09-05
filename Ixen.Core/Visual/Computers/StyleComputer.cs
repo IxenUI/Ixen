@@ -12,6 +12,14 @@ namespace Ixen.Core.Visual.Computers
     {
         private readonly List<StyleClass> _matches = new();
 
+        private StyleTrace _trace;
+        private bool _tracing;
+
+        internal StyleTrace Trace
+        {
+            set => _trace = value;
+        }
+
         private float _viewportWidth;
         private float _viewportHeight;
 
@@ -75,6 +83,8 @@ namespace Ixen.Core.Visual.Computers
         // - Global type
         private void ApplyClasses(VisualElement element, StyleRegistry registry)
         {
+            _tracing = _trace != null && _trace.Element == element;
+
             VisualElementStylesHandlers handlers = element.StylesHandlers;
             bool scoped = registry.HasScopedClasses;
 
@@ -100,7 +110,7 @@ namespace Ixen.Core.Visual.Computers
 
             if (defaults)
             {
-                ApplyClass(handlers, registry.GetDefault(target, name));
+                ApplyClass(handlers, registry.GetDefault(target, name), true);
             }
 
             ApplyClass(handlers, registry.GetGlobal(target, name));
@@ -117,7 +127,7 @@ namespace Ixen.Core.Visual.Computers
 
                 if (defaults)
                 {
-                    ApplyClass(handlers, registry.GetDefault(target, stated));
+                    ApplyClass(handlers, registry.GetDefault(target, stated), true);
                 }
 
                 ApplyClass(handlers, registry.GetGlobal(target, stated));
@@ -255,18 +265,24 @@ namespace Ixen.Core.Visual.Computers
 
             if (defaults)
             {
-                ApplyClass(handlers, registry.GetDefault(target, candidate));
+                ApplyClass(handlers, registry.GetDefault(target, candidate), true);
             }
 
             ApplyClass(handlers, registry.GetGlobal(target, candidate));
             ApplyScopedClasses(handlers, registry, target, candidate, element, scoped);
         }
 
-        private void ApplyClass(VisualElementStylesHandlers handlers, StyleClass styleClass)
+        private void ApplyClass(VisualElementStylesHandlers handlers, StyleClass styleClass,
+            bool isDefault = false)
         {
             if (styleClass?.Styles == null)
             {
                 return;
+            }
+
+            if (_tracing)
+            {
+                _trace.Record(styleClass, isDefault);
             }
 
             foreach (StyleDescriptor style in styleClass.Styles)

@@ -193,6 +193,31 @@ namespace Ixen.Core
             RefreshInput();
         }
 
+        public StyleTrace ExplainStyles(VisualElement element)
+        {
+            if (element == null || Root == null)
+            {
+                return null;
+            }
+
+            var trace = new StyleTrace(element);
+
+            _styleComputer.Trace = trace;
+
+            try
+            {
+                element.MustRefreshStyles = true;
+                _styleComputer.Compute(Root, Styles ?? StyleRegistry.Default,
+                    _viewPort.Width, _viewPort.Height);
+            }
+            finally
+            {
+                _styleComputer.Trace = null;
+            }
+
+            return trace;
+        }
+
         private void RefreshInput()
         {
             _keyboardDispatcher.Refresh(TrackStates);
