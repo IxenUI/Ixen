@@ -22,6 +22,33 @@ namespace Ixen.Core.UT.Xns
             => (T)Root().Styles.Single(s => s.GetType() == typeof(T));
 
         [TestMethod]
+        public void ANegatedSelectorSurvivesGeneration()
+        {
+            var root = new Ixen.Core.Visual.VisualElement { Name = "root" };
+            root.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
+
+            var plain = new Ixen.Core.Visual.VisualElement { Name = "generated_not" };
+            var off = new Ixen.Core.Visual.VisualElement { Name = "generated_not" };
+            var last = new Ixen.Core.Visual.VisualElement { Name = "generated_not" };
+
+            off.Classes.Add("generated_off");
+
+            root.AddChild(plain);
+            root.AddChild(off);
+            root.AddChild(last);
+
+            var surface = new IxenSurface(root);
+
+            root.Invalidate();
+            surface.ComputeLayout(200, 200);
+
+            Assert.AreEqual("#445566", plain.StylesHandlers.Background.Descriptor?.Color,
+                "the generated sheet has to carry the negations, or the rule reaches everything");
+            Assert.IsNull(off.StylesHandlers.Background.Descriptor?.Color);
+            Assert.IsNull(last.StylesHandlers.Background.Descriptor?.Color);
+        }
+
+        [TestMethod]
         public void EveryGeneratableStyleSurvivesGeneration()
         {
             Assert.AreEqual(37, Root().Styles.Count, string.Join(", ", Root().Styles.Select(s => s.GetType().Name)));

@@ -16,6 +16,7 @@ namespace Ixen.Core.Visual.Classes
         public string SheetScope { get; set; }
         public string Scope { get; set; }
         public string Name { get; set; }
+        public string Negations { get; set; }
         public MediaQuery Media { get; set; }
         public MediaQuery Container { get; set; }
         public int ContainerDepth { get; set; }

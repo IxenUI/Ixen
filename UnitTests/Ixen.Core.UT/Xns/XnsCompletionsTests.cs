@@ -93,7 +93,7 @@ namespace Ixen.Core.UT.Xns
                 {
                     "hover", "pressed", "focus", "disabled", "checked", "selected", "expanded",
                     "invalid", "dragover",
-                    "first-child", "last-child", "only-child", "nth-child"
+                    "first-child", "last-child", "only-child", "nth-child", "not"
                 },
                 context.Items.ToArray(),
                 "hover, pressed, focus, disabled, invalid and dragover are maintained by the framework; "
@@ -101,7 +101,8 @@ namespace Ixen.Core.UT.Xns
                 + "control library, and they are proposed because Core reads them too - StatesOf "
                 + "turns each into an AccessibleStates flag, which is the only way a screen reader "
                 + "can tell a ticked box, a chosen tab or an open branch from the rest. The last "
-                + "four are not states at all: they are read off the tree at match time");
+                + "five are not states at all: the four structural ones are read off the tree at "
+                + "match time, and not() is a negation of any of the rest");
         }
 
         [TestMethod]

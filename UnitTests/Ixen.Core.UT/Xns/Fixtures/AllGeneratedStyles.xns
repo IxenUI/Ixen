@@ -161,4 +161,8 @@ generated_container_host {
             background: #654321
         }
     }
-}
+}
+
+generated_not:not(.generated_off):not(:last-child) {
+    background: #445566
+}

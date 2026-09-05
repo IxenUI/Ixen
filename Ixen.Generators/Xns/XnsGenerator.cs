@@ -147,8 +147,23 @@ namespace Ixen.Generators.Xns
                         ? $"\t\t\t}}, global::Ixen.Core.Visual.Classes.MediaQuery.Parse(\"{c.Media.Source}\")"
                         : "\t\t\t}";
 
-                    tail += c.Container != null
-                        ? $") {{ Container = global::Ixen.Core.Visual.Classes.MediaQuery.Parse(\"{c.Container.Source}\"), ContainerDepth = {c.ContainerDepth} }});"
+                    var initializers = new List<string>();
+
+                    if (!string.IsNullOrWhiteSpace(c.Negations))
+                    {
+                        initializers.Add($"Negations = \"{c.Negations}\"");
+                    }
+
+                    if (c.Container != null)
+                    {
+                        initializers.Add($"Container = global::Ixen.Core.Visual.Classes.MediaQuery.Parse(\"{c.Container.Source}\")");
+                        initializers.Add($"ContainerDepth = {c.ContainerDepth}");
+                    }
+
+                    string extra = string.Join(", ", initializers);
+
+                    tail += initializers.Count > 0
+                        ? $") {{ {extra} }});"
                         : "));";
 
                     sb.AppendLine(tail);

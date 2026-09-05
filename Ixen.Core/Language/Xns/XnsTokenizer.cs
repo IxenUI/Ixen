@@ -547,12 +547,34 @@ namespace Ixen.Core.Language.Xns
 
             MoveCursor();
 
+            int depth = 0;
+
             while (true)
             {
                 c = PeekChar();
 
-                if (char.IsLetterOrDigit(c) || c == '_' || c == '-' || c == ':' || c == '%'
-                    || c == '(' || c == ')')
+                if (char.IsLetterOrDigit(c) || c == '_' || c == '-' || c == ':' || c == '%')
+                {
+                    MoveCursor();
+                    continue;
+                }
+
+                if (c == '(')
+                {
+                    depth++;
+                    MoveCursor();
+                    continue;
+                }
+
+                if (c == ')' && depth > 0)
+                {
+                    depth--;
+                    MoveCursor();
+                    continue;
+                }
+
+                if (depth > 0 && (c == '.' || c == '#' || c == StyleScope.SELECTOR_SEPARATOR
+                    || c == ' ' || c == '	'))
                 {
                     MoveCursor();
                     continue;

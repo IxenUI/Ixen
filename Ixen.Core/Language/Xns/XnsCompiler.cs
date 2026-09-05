@@ -84,7 +84,14 @@ namespace Ixen.Core.Language.Xns
 
             foreach (string entry in StyleScope.Split(selector.Name))
             {
-                string name = StyleScope.Bare(entry);
+                string name = StyleScope.SplitNegations(StyleScope.Bare(entry),
+                    out string negations);
+
+                if (!IsNegationValid(selector, name, negations, errors))
+                {
+                    continue;
+                }
+
                 var target = StyleClassTarget.ElementName;
 
                 if (name.StartsWith("."))
@@ -102,22 +109,48 @@ namespace Ixen.Core.Language.Xns
 
                 if (scopes == null)
                 {
-                    set.Classes.Add(NewClass(node, target, null, name, styles, media, container, containerDepth));
+                    set.Classes.Add(NewClass(node, target, null, name, negations, styles, media, container, containerDepth));
                     continue;
                 }
 
                 foreach (string scope in scopes)
                 {
-                    set.Classes.Add(NewClass(node, target, scope, name, styles, media, container, containerDepth));
+                    set.Classes.Add(NewClass(node, target, scope, name, negations, styles, media, container, containerDepth));
                 }
             }
         }
 
+        private static bool IsNegationValid(XnsNode selector, string name, string negations,
+            List<LanguageError> errors)
+        {
+            string wrong = null;
+
+            if (StyleScope.DeclaresNegation(name))
+            {
+                wrong = "A ':not(' in a selector needs a closing parenthesis.";
+            }
+            else if (StyleScope.DeclaresNegation(negations))
+            {
+                wrong = "A ':not()' cannot hold another ':not()'.";
+            }
+
+            if (wrong == null)
+            {
+                return true;
+            }
+
+            errors.Add(new LanguageError(LanguageErrorCode.SYNTAX, wrong,
+                selector.NameIndex, selector.Name == null ? 1 : selector.Name.Length));
+
+            return false;
+        }
+
         private static StyleClass NewClass(XnsNode node, StyleClassTarget target, string scope,
-            string name, List<StyleDescriptor> styles, MediaQuery media, MediaQuery container,
-            int containerDepth)
+            string name, string negations, List<StyleDescriptor> styles, MediaQuery media,
+            MediaQuery container, int containerDepth)
             => new StyleClass(target, null, scope, name, styles, media)
             {
+                Negations = negations,
                 Container = container,
                 ContainerDepth = containerDepth,
                 SourceIndex = node.NameIndex,

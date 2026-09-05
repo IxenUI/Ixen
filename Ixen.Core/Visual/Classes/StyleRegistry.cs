@@ -20,11 +20,13 @@ namespace Ixen.Core.Visual.Classes
         {
             internal StyleClass Class { get; }
             internal StyleScopeSegment[] Segments { get; }
+            internal StyleScopeSegment[] Negations { get; }
 
             internal ScopedClass(StyleClass styleClass)
             {
                 Class = styleClass;
                 Segments = StyleScope.Parse(styleClass.Scope);
+                Negations = StyleScope.ParseNegations(styleClass.Negations);
             }
         }
 
@@ -65,7 +67,8 @@ namespace Ixen.Core.Visual.Classes
         internal bool HasKeyframes => _keyframes.Count > 0;
 
         private static bool DeclaresFocus(StyleClass styleClass)
-            => Mentions(styleClass.Name) || Mentions(styleClass.Scope);
+            => Mentions(styleClass.Name) || Mentions(styleClass.Scope)
+                || Mentions(styleClass.Negations);
 
         private static bool Mentions(string selector)
             => selector != null
@@ -73,7 +76,8 @@ namespace Ixen.Core.Visual.Classes
 
         private static bool DeclaresState(StyleClass styleClass)
             => styleClass.Name.IndexOf(StyleScope.STATE_SEPARATOR) >= 0
-                || (styleClass.Scope != null && styleClass.Scope.IndexOf(StyleScope.STATE_SEPARATOR) >= 0);
+                || (styleClass.Scope != null && styleClass.Scope.IndexOf(StyleScope.STATE_SEPARATOR) >= 0)
+                || (styleClass.Negations != null && styleClass.Negations.IndexOf(StyleScope.STATE_SEPARATOR) >= 0);
 
         public void Add(StyleClass styleClass)
         {
@@ -109,7 +113,7 @@ namespace Ixen.Core.Visual.Classes
                 return;
             }
 
-            if (styleClass.Scope == null)
+            if (styleClass.Scope == null && styleClass.Negations == null)
             {
                 if (!_unscoped.ContainsKey(key))
                 {
@@ -127,7 +131,8 @@ namespace Ixen.Core.Visual.Classes
             }
 
             var entry = new ScopedClass(styleClass);
-            int existing = candidates.FindIndex(c => c.Class.Scope == styleClass.Scope);
+            int existing = candidates.FindIndex(c => c.Class.Scope == styleClass.Scope
+                && c.Class.Negations == styleClass.Negations);
 
             if (existing >= 0)
             {
@@ -152,6 +157,7 @@ namespace Ixen.Core.Visual.Classes
 
             var entry = new ScopedClass(styleClass);
             int existing = candidates.FindIndex(c => c.Class.Scope == styleClass.Scope
+                && c.Class.Negations == styleClass.Negations
                 && c.Class.Media.Source == styleClass.Media.Source);
 
             if (existing >= 0)
@@ -182,6 +188,7 @@ namespace Ixen.Core.Visual.Classes
 
             var entry = new ScopedClass(styleClass);
             int existing = candidates.FindIndex(c => c.Class.Scope == styleClass.Scope
+                && c.Class.Negations == styleClass.Negations
                 && c.Class.Container.Source == styleClass.Container.Source
                 && c.Class.Media?.Source == styleClass.Media?.Source);
 
@@ -245,6 +252,11 @@ namespace Ixen.Core.Visual.Classes
                     continue;
                 }
 
+                if (!StyleScope.Holds(candidate.Negations, element))
+                {
+                    continue;
+                }
+
                 if (!StyleScope.Matches(candidate.Segments, element,
                     styleClass.ContainerDepth - 1, out VisualElement container) || container == null)
                 {
@@ -295,7 +307,8 @@ namespace Ixen.Core.Visual.Classes
                     continue;
                 }
 
-                if (StyleScope.Matches(candidate.Segments, element))
+                if (StyleScope.Holds(candidate.Negations, element)
+                    && StyleScope.Matches(candidate.Segments, element))
                 {
                     result.Add(candidate.Class);
                 }
@@ -333,7 +346,7 @@ namespace Ixen.Core.Visual.Classes
 
         internal static bool CanBeDefault(StyleClass styleClass)
             => styleClass != null && styleClass.Name != null && styleClass.Scope == null
-                && styleClass.Media == null;
+                && styleClass.Media == null && styleClass.Negations == null;
 
         private void AddDefault(StyleClass styleClass)
         {
@@ -465,7 +478,8 @@ namespace Ixen.Core.Visual.Classes
 
             foreach (ScopedClass candidate in candidates)
             {
-                if (StyleScope.Matches(candidate.Segments, element))
+                if (StyleScope.Holds(candidate.Negations, element)
+                    && StyleScope.Matches(candidate.Segments, element))
                 {
                     result.Add(candidate.Class);
                 }
