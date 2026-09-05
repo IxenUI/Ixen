@@ -185,6 +185,46 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void AFingerHasToTravelFurtherThanAMouseBeforeItDrags()
+        {
+            WatchDrag(_box, "box");
+
+            _surface.PointerDown(10, 10, PointerButton.Left, PointerKind.Touch);
+            _surface.PointerMove(16, 10, PointerKind.Touch);
+
+            Assert.AreEqual(string.Empty, Log,
+                "six units is a wobble on a touch screen, and a wobble is still a press");
+
+            _surface.PointerMove(20, 10, PointerKind.Touch);
+
+            Assert.IsTrue(Log.StartsWith("start:box"), "ten units is a drag");
+        }
+
+        [TestMethod]
+        public void AMouseDragsAsSoonAsItLeavesTheSpot()
+        {
+            WatchDrag(_box, "box");
+
+            _surface.PointerDown(10, 10, PointerButton.Left);
+            _surface.PointerMove(16, 10);
+
+            Assert.IsTrue(Log.StartsWith("start:box"),
+                "a mouse does not wobble, so six units already means it was moved on purpose");
+        }
+
+        [TestMethod]
+        public void AWobblingTapStillClicks()
+        {
+            _box.PointerClick += (s, e) => _log.Add("click");
+
+            _surface.PointerDown(10, 10, PointerButton.Left, PointerKind.Touch);
+            _surface.PointerMove(16, 10, PointerKind.Touch);
+            _surface.PointerUp(16, 10, PointerButton.Left, PointerKind.Touch);
+
+            Assert.AreEqual("click", Log, "the press was never handed to anything else");
+        }
+
+        [TestMethod]
         public void AFingerMayLandSomewhereElseAndStillDouble()
         {
             _box.PointerDoubleClick += (s, e) => _log.Add("double");

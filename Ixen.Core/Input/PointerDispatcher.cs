@@ -10,6 +10,7 @@ namespace Ixen.Core.Input
 
         private const float WHEEL_STEP = ScrollNavigator.STEP;
         private const float DRAG_THRESHOLD = 4f;
+        private const float TOUCH_DRAG_THRESHOLD = 8f;
         private const float DOUBLE_CLICK_DISTANCE = 4f;
         private const float TOUCH_DOUBLE_CLICK_DISTANCE = 32f;
         private const long DOUBLE_CLICK_DELAY = 500;
@@ -287,6 +288,9 @@ namespace Ixen.Core.Input
         private float CurrentScale()
             => _baseSpan < PINCH_MIN_SPAN ? _pinchScale : _pinchScale * (Span() / _baseSpan);
 
+        private float DragThreshold
+            => _kind == PointerKind.Touch ? TOUCH_DRAG_THRESHOLD : DRAG_THRESHOLD;
+
         private float PanX(float x) => _pointers.Count > 1 ? CentroidX() : x;
 
         private float PanY(float y) => _pointers.Count > 1 ? CentroidY() : y;
@@ -301,8 +305,8 @@ namespace Ixen.Core.Input
             {
                 ActivePointer pointer = _pointers[index];
 
-                if (Math.Abs(pointer.X - pointer.BaseX) >= DRAG_THRESHOLD
-                    || Math.Abs(pointer.Y - pointer.BaseY) >= DRAG_THRESHOLD)
+                if (Math.Abs(pointer.X - pointer.BaseX) >= DragThreshold
+                    || Math.Abs(pointer.Y - pointer.BaseY) >= DragThreshold)
                 {
                     return true;
                 }
@@ -761,7 +765,7 @@ namespace Ixen.Core.Input
 
             if (!_dragging)
             {
-                if (Math.Abs(x - _pressX) < DRAG_THRESHOLD && Math.Abs(y - _pressY) < DRAG_THRESHOLD)
+                if (Math.Abs(x - _pressX) < DragThreshold && Math.Abs(y - _pressY) < DragThreshold)
                 {
                     return;
                 }

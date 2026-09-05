@@ -128,10 +128,11 @@ namespace Ixen.Core.UT.Input
 
             Down(70, 100);
             Down(130, 100, 1);
-            Move(71, 100);
+            Move(76, 100);
             Move(131, 100, 1);
 
-            Assert.AreEqual(0, _starts.Count, "neither finger passed the threshold");
+            Assert.AreEqual(0, _starts.Count,
+                "six units is a wobble, and a finger has to travel eight");
 
             Move(60, 100);
 
