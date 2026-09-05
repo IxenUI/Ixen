@@ -204,6 +204,84 @@ namespace Ixen.Core.Components
                 TaskContinuationOptions.OnlyOnFaulted);
         }
 
+        protected void Load<T>(AsyncValue<T> value, Func<Task<T>> work)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value),
+                    $"{GetType().Name}.Load needs an AsyncValue to settle into. Declare one as a "
+                    + "property so the view can read whether it is loading, ready or failed.");
+            }
+
+            if (work == null)
+            {
+                return;
+            }
+
+            int generation = value.Begin();
+            SetState();
+
+            Task<T> task;
+
+            try
+            {
+                task = work();
+            }
+            catch (Exception error)
+            {
+                Settle(() => Fail(value, generation, error));
+                return;
+            }
+
+            if (task == null)
+            {
+                Settle(() => Fail(value, generation, new InvalidOperationException(
+                    $"{GetType().Name}.Load was given work that returned no task.")));
+                return;
+            }
+
+            task.ContinueWith(
+                finished => Settle(() => Land(value, generation, finished)),
+                TaskContinuationOptions.ExecuteSynchronously);
+        }
+
+        private void Land<T>(AsyncValue<T> value, int generation, Task<T> finished)
+        {
+            if (finished.Status != TaskStatus.RanToCompletion)
+            {
+                Fail(value, generation, Unwrap(finished.Exception)
+                    ?? new OperationCanceledException($"{GetType().Name}.Load was cancelled."));
+
+                return;
+            }
+
+            if (value.Succeed(generation, finished.Result))
+            {
+                SetState();
+            }
+        }
+
+        private void Fail<T>(AsyncValue<T> value, int generation, Exception error)
+        {
+            if (value.Fail(generation, error))
+            {
+                SetState();
+            }
+        }
+
+        private void Settle(Action land)
+        {
+            IElementHost host = GetVisualElement()?.Host;
+
+            if (host == null)
+            {
+                land();
+                return;
+            }
+
+            host.Post(land);
+        }
+
         private static Exception Unwrap(AggregateException error)
             => error == null || error.InnerExceptions.Count != 1
                 ? (Exception)error
