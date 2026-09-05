@@ -29,6 +29,29 @@ namespace Ixen.Core.UT.Components
             }
         }
 
+        private class WriteBackComponent : Component<VisualElement>
+        {
+            internal int Renders;
+            internal bool Rendering = true;
+            internal bool Reenter;
+
+            protected override void Render()
+            {
+                Renders++;
+
+                if (Reenter)
+                {
+                    SetState();
+                    return;
+                }
+
+                if (Rendering)
+                {
+                    ((IBoundModel)this).SetState();
+                }
+            }
+        }
+
         private class LateLoopComponent : Component<VisualElement>
         {
             internal bool Loop;
@@ -113,6 +136,75 @@ namespace Ixen.Core.UT.Components
             component.Loop = false;
             component.Poke();
             component.RenderIfDirty();
+        }
+
+        [TestMethod]
+        public void AWriteBackDuringARenderSaysItWasAWriteBack()
+        {
+            var component = new WriteBackComponent();
+
+            try
+            {
+                component.Initialize();
+                Assert.Fail("the write-back should have been refused");
+            }
+            catch (InvalidOperationException error)
+            {
+                StringAssert.Contains(error.Message, "two-way binding wrote back");
+                StringAssert.Contains(error.Message, "WriteBackComponent");
+            }
+        }
+
+        [TestMethod]
+        public void AnOrdinarySetStateStillSaysItWasASetState()
+        {
+            var component = new LoopingComponent();
+
+            try
+            {
+                component.Initialize();
+                Assert.Fail("the re-entrant SetState should have been refused");
+            }
+            catch (InvalidOperationException error)
+            {
+                StringAssert.Contains(error.Message, "SetState() was called while");
+            }
+        }
+
+        [TestMethod]
+        public void AWriteBackOutsideARenderIsOrdinary()
+        {
+            var component = new WriteBackComponent { Rendering = false };
+
+            component.Initialize();
+            ((IBoundModel)component).SetState();
+
+            component.RenderIfDirty();
+
+            Assert.AreEqual(2, component.Renders);
+        }
+
+        [TestMethod]
+        public void AnEarlierWriteBackDoesNotColourALaterMistake()
+        {
+            var component = new WriteBackComponent { Rendering = false };
+
+            component.Initialize();
+            ((IBoundModel)component).SetState();
+            component.RenderIfDirty();
+
+            component.Reenter = true;
+            ((IBoundModel)component).SetState();
+
+            try
+            {
+                component.RenderIfDirty();
+                Assert.Fail("the re-entrant SetState should have been refused");
+            }
+            catch (InvalidOperationException error)
+            {
+                StringAssert.Contains(error.Message, "SetState() was called while");
+            }
         }
 
         [TestMethod]

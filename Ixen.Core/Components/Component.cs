@@ -12,6 +12,7 @@ namespace Ixen.Core.Components
         private bool _initialized;
         private bool _isStateDirty;
         private bool _rendering;
+        private bool _writingBack;
         private List<Slot> _slots;
         private bool _attached;
 
@@ -232,13 +233,35 @@ namespace Ixen.Core.Components
                 return;
             }
 
+            if (_writingBack)
+            {
+                throw new InvalidOperationException(
+                    $"{GetType().Name}: a two-way binding wrote back while the component was rendering. "
+                    + "An element bound with [Property] must raise its {Property}Changed event on a "
+                    + "user edit only, never on an assignment - otherwise replaying Bind re-enters "
+                    + "this pass and the component would repaint forever. Guard the raise in the "
+                    + "element, the way TextField.Text does.");
+            }
+
             throw new InvalidOperationException(
                 $"{GetType().Name}.SetState() was called while the component was rendering. "
                 + "That marks the component dirty again on every pass, so it would repaint forever. "
                 + "Compute the value inside Render, or raise the change from an event handler instead.");
         }
 
-        void IBoundModel.SetState() => SetState();
+        void IBoundModel.SetState()
+        {
+            _writingBack = true;
+
+            try
+            {
+                SetState();
+            }
+            finally
+            {
+                _writingBack = false;
+            }
+        }
 
         internal void RenderIfDirty()
         {
