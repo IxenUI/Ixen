@@ -546,7 +546,7 @@ namespace Ixen.Core.Input
 
             _scrollLatch = target;
 
-            target.ScrollBy(offsetX, offsetY);
+            target.RequestScroll(offsetX, offsetY);
         }
 
         private VisualElement Latched(long now)

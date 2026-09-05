@@ -38,6 +38,7 @@ generated_root {
     filter: blur(2.5px) drop-shadow(2px 3px 4px #40102030)
     overflow: scroll
     overscroll-behavior: none contain
+    scroll-behavior: smooth
     pointer-events: auto
     backdrop-filter: blur(3px)
     object-position: right 25%

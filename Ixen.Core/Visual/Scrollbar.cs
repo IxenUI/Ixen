@@ -86,6 +86,8 @@ namespace Ixen.Core.Visual
 
             Thumb.PointerDragStart += OnThumbDrag;
             Thumb.PointerDrag += OnThumbDrag;
+
+            PointerDown += OnTrackDown;
         }
 
         private const int REPEAT_DELAY = 400;
@@ -123,8 +125,109 @@ namespace Ixen.Core.Visual
             });
         }
 
-        private bool IsHeld(ScrollbarButton button)
-            => Host != null && Host.PressedElement == button;
+        private float _pageTarget;
+        private float _pageDirection;
+
+        private void OnTrackDown(object sender, PointerEventArgs args)
+        {
+            if (args.Source != this || Parent == null)
+            {
+                return;
+            }
+
+            if (!TrackTarget(IsVertical ? args.Y : args.X, out _pageTarget))
+            {
+                return;
+            }
+
+            _pageDirection = _pageTarget > (IsVertical ? Parent.ScrollY : Parent.ScrollX) ? 1 : -1;
+
+            Page();
+            args.Handled = true;
+
+            _repeat?.Dispose();
+            _repeat = Host?.Scheduler?.Schedule(REPEAT_DELAY, false, StartPageRepeat);
+        }
+
+        private void StartPageRepeat()
+        {
+            if (!IsHeld(this) || !Page())
+            {
+                return;
+            }
+
+            _repeat = Host?.Scheduler?.Schedule(REPEAT_INTERVAL, true, () =>
+            {
+                if (!IsHeld(this) || !Page())
+                {
+                    StopRepeat();
+                }
+            });
+        }
+
+        private bool TrackTarget(float point, out float offset)
+        {
+            offset = 0;
+
+            VisualElement target = Parent;
+            float max = IsVertical ? target.MaxScrollY : target.MaxScrollX;
+            float thumb = IsVertical ? Thumb.ActualHeight : Thumb.ActualWidth;
+            float free = TrackLength() - thumb;
+
+            if (max <= 0 || free <= 0)
+            {
+                return false;
+            }
+
+            float length = IsVertical ? ActualHeight : ActualWidth;
+            float start = (IsVertical ? Y : X) + (HasButtons(length) ? THICKNESS : 0);
+
+            offset = (point - start - thumb / 2f) / free * max;
+
+            if (offset < 0)
+            {
+                offset = 0;
+            }
+            else if (offset > max)
+            {
+                offset = max;
+            }
+
+            return true;
+        }
+
+        private bool Page()
+        {
+            VisualElement target = Parent;
+
+            if (target == null || _pageDirection == 0)
+            {
+                return false;
+            }
+
+            float pending = IsVertical ? target.PendingScrollY : target.PendingScrollX;
+
+            if (_pageDirection > 0 ? pending >= _pageTarget : pending <= _pageTarget)
+            {
+                return false;
+            }
+
+            float page = IsVertical ? target.ContentHeight : target.ContentWidth;
+
+            if (IsVertical)
+            {
+                target.RequestScroll(0, _pageDirection * page);
+            }
+            else
+            {
+                target.RequestScroll(_pageDirection * page, 0);
+            }
+
+            return true;
+        }
+
+        private bool IsHeld(VisualElement element)
+            => Host != null && Host.PressedElement == element;
 
         private void StopRepeat()
         {
@@ -149,11 +252,11 @@ namespace Ixen.Core.Visual
 
             if (IsVertical)
             {
-                Parent.ScrollBy(0, direction * STEP);
+                Parent.RequestScroll(0, direction * STEP);
             }
             else
             {
-                Parent.ScrollBy(direction * STEP, 0);
+                Parent.RequestScroll(direction * STEP, 0);
             }
         }
 

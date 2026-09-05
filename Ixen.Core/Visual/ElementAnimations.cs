@@ -190,6 +190,45 @@ namespace Ixen.Core.Visual
         }
     }
 
+    internal class ScrollTransition
+    {
+        internal float FromX;
+        internal float FromY;
+        internal float ToX;
+        internal float ToY;
+        internal int Step;
+        internal int Steps;
+
+        internal bool Running => Steps > 0 && Step < Steps;
+
+        internal void Start(float fromX, float fromY, float toX, float toY, int steps)
+        {
+            FromX = fromX;
+            FromY = fromY;
+            ToX = toX;
+            ToY = toY;
+            Step = 0;
+            Steps = steps;
+        }
+
+        internal void Stop()
+        {
+            Step = 0;
+            Steps = 0;
+        }
+
+        internal void Advance() => Step++;
+
+        private float Progress
+            => Steps <= 0 || Step >= Steps
+                ? 1f
+                : Visual.Easing.Apply(Styles.EasingKind.EaseOut, (float)Step / Steps);
+
+        internal float X => FromX + (ToX - FromX) * Progress;
+
+        internal float Y => FromY + (ToY - FromY) * Progress;
+    }
+
     internal class ElementAnimations
     {
         internal const int TICK = 16;
@@ -209,6 +248,7 @@ namespace Ixen.Core.Visual
         internal SizeTransition Bottom;
 
         internal TransformTransition Transform;
+        internal ScrollTransition Scroll;
 
         private KeyframeAnimation _keyframes;
 
@@ -299,11 +339,15 @@ namespace Ixen.Core.Visual
         internal TransformTransition TransformFor()
             => Transform ?? (Transform = new TransformTransition());
 
+        internal ScrollTransition ScrollFor()
+            => Scroll ?? (Scroll = new ScrollTransition());
+
         internal bool Running
             => (Background != null && Background.Running)
                 || (Color != null && Color.Running)
                 || (Border != null && Border.Running)
                 || (Transform != null && Transform.Running)
+                || (Scroll != null && Scroll.Running)
                 || HasKeyframes
                 || SizeRunning;
 
@@ -385,6 +429,17 @@ namespace Ixen.Core.Visual
             }
         }
 
+        private void AdvanceScroll()
+        {
+            if (Scroll == null || !Scroll.Running)
+            {
+                return;
+            }
+
+            Scroll.Advance();
+            _element.ApplyScroll(Scroll.X, Scroll.Y);
+        }
+
         private void AdvanceTransform()
         {
             if (Transform == null || !Transform.Running)
@@ -437,6 +492,7 @@ namespace Ixen.Core.Visual
             Advance(Bottom, Styles.StyleIdentifier.BOTTOM);
 
             AdvanceTransform();
+            AdvanceScroll();
 
             if (sizes && CanBeSeen())
             {
@@ -466,6 +522,12 @@ namespace Ixen.Core.Visual
             Bottom?.Jump(Bottom.Unit, Bottom.To);
 
             Transform?.Jump(Transform.To);
+
+            if (Scroll != null && Scroll.Running)
+            {
+                _element.ApplyScroll(Scroll.ToX, Scroll.ToY);
+                Scroll.Stop();
+            }
 
             _keyframes?.Complete();
         }

@@ -31,6 +31,7 @@ namespace Ixen.Core.Visual
         public AspectRatioStyleDescriptor AspectRatio { get; set; } = new();
         public GapStyleDescriptor Gap { get; set; } = new();
         public VisibilityStyleDescriptor Visibility { get; set; } = new();
+        public ScrollBehaviorStyleDescriptor ScrollBehavior { get; set; } = new();
         public FilterStyleDescriptor Filter { get; set; } = new();
         public BackdropFilterStyleDescriptor BackdropFilter { get; set; } = new();
         public FontFamilyStyleDescriptor FontFamily { get; set; } = new();

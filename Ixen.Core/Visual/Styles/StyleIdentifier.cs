@@ -56,6 +56,7 @@ namespace Ixen.Core.Visual.Styles
         public const string PADDING = "padding";
         public const string RIGHT = "right";
         public const string ROW_INDEX = "row-index";
+        public const string SCROLL_BEHAVIOR = "scroll-behavior";
         public const string ROW_SPAN = "row-span";
         public const string ROW_TEMPLATE = "row-template";
         public const string TEXT_ALIGN = "text-align";

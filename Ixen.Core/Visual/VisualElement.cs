@@ -192,13 +192,21 @@ namespace Ixen.Core.Visual
         public float ScrollX
         {
             get => _scrollX;
-            set => SetScroll(value, _scrollY);
+            set
+            {
+                StopSmoothScroll();
+                SetScroll(value, _scrollY);
+            }
         }
 
         public float ScrollY
         {
             get => _scrollY;
-            set => SetScroll(_scrollX, value);
+            set
+            {
+                StopSmoothScroll();
+                SetScroll(_scrollX, value);
+            }
         }
 
         public float OverscrollX => _overscrollX;
@@ -244,8 +252,66 @@ namespace Ixen.Core.Visual
             }
         }
 
+        internal const int SMOOTH_SCROLL_DURATION = 240;
+
         public void ScrollBy(float deltaX, float deltaY)
-            => SetScroll(_scrollX + deltaX, _scrollY + deltaY);
+        {
+            StopSmoothScroll();
+            SetScroll(_scrollX + deltaX, _scrollY + deltaY);
+        }
+
+        internal bool ScrollsSmoothly
+            => StylesHandlers != null && StylesHandlers.ScrollBehavior.Descriptor.IsDeclared;
+
+        internal void RequestScroll(float deltaX, float deltaY)
+        {
+            if (!ScrollsSmoothly)
+            {
+                ScrollBy(deltaX, deltaY);
+                return;
+            }
+
+            ScrollTransition scroll = Animations.ScrollFor();
+
+            float toX = Clamp((scroll.Running ? scroll.ToX : _scrollX) + deltaX, MaxScrollX);
+            float toY = Clamp((scroll.Running ? scroll.ToY : _scrollY) + deltaY, MaxScrollY);
+
+            if (toX == _scrollX && toY == _scrollY)
+            {
+                StopSmoothScroll();
+                return;
+            }
+
+            scroll.Start(_scrollX, _scrollY, toX, toY,
+                SMOOTH_SCROLL_DURATION / ElementAnimations.TICK);
+
+            Animations.Sync();
+        }
+
+        internal void ScrollTo(float x, float y)
+            => RequestScroll(x - _scrollX, y - _scrollY);
+
+        internal float PendingScrollX
+            => IsScrollingSmoothly ? _animations.Scroll.ToX : _scrollX;
+
+        internal float PendingScrollY
+            => IsScrollingSmoothly ? _animations.Scroll.ToY : _scrollY;
+
+        internal bool IsScrollingSmoothly
+            => _animations != null && _animations.Scroll != null && _animations.Scroll.Running;
+
+        private void StopSmoothScroll()
+        {
+            if (_animations == null || _animations.Scroll == null)
+            {
+                return;
+            }
+
+            _animations.Scroll.Stop();
+            _animations.Sync();
+        }
+
+        internal void ApplyScroll(float x, float y) => SetScroll(x, y);
 
         private void SetScroll(float x, float y)
         {

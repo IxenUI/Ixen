@@ -125,7 +125,7 @@ namespace Ixen.Core.Input
                 return false;
             }
 
-            target.ScrollBy(0, offsetY);
+            target.RequestScroll(0, offsetY);
 
             return true;
         }

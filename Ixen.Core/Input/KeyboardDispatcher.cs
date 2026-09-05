@@ -231,7 +231,7 @@ namespace Ixen.Core.Input
                     return;
             }
 
-            Target(from, root, offsetX, offsetY)?.ScrollBy(offsetX, offsetY);
+            Target(from, root, offsetX, offsetY)?.RequestScroll(offsetX, offsetY);
         }
 
         private static VisualElement Target(VisualElement from, VisualElement root,
@@ -263,7 +263,7 @@ namespace Ixen.Core.Input
 
             if (target != null)
             {
-                target.ScrollY = end ? target.MaxScrollY : 0;
+                target.ScrollTo(target.ScrollX, end ? target.MaxScrollY : 0);
             }
         }
 

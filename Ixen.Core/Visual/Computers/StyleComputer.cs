@@ -821,6 +821,13 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultContentAlign;
             }
 
+            if (handlers.ScrollBehavior.Descriptor != styles.ScrollBehavior)
+            {
+                handlers.ScrollBehavior = styles.ScrollBehavior != null && styles.ScrollBehavior.IsDeclared
+                    ? Cached<ScrollBehaviorStyleDescriptor, ScrollBehaviorStyleHandler>(styles.ScrollBehavior, static d => new ScrollBehaviorStyleHandler(d))
+                    : VisualElementStylesHandlers.DefaultScrollBehavior;
+            }
+
             if (handlers.Visibility.Descriptor != styles.Visibility)
             {
                 handlers.Visibility = styles.Visibility != null && styles.Visibility.IsDeclared
@@ -1024,6 +1031,10 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.CONTENT_ALIGN:
                     handlers.ContentAlign = Cached<ContentAlignStyleDescriptor, ContentAlignStyleHandler>(style, static d => new ContentAlignStyleHandler(d));
+                    break;
+
+                case StyleIdentifier.SCROLL_BEHAVIOR:
+                    handlers.ScrollBehavior = Cached<ScrollBehaviorStyleDescriptor, ScrollBehaviorStyleHandler>(style, static d => new ScrollBehaviorStyleHandler(d));
                     break;
 
                 case StyleIdentifier.VISIBILITY:

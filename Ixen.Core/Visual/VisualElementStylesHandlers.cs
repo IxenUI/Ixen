@@ -29,6 +29,7 @@ namespace Ixen.Core.Visual
         internal static readonly AspectRatioStyleHandler DefaultAspectRatio = new();
         internal static readonly GapStyleHandler DefaultGap = new();
         internal static readonly VisibilityStyleHandler DefaultVisibility = new();
+        internal static readonly ScrollBehaviorStyleHandler DefaultScrollBehavior = new();
         internal static readonly FilterStyleHandler DefaultFilter = new();
         internal static readonly FilterStyleHandler DefaultBackdropFilter = new();
         internal static readonly FontFamilyStyleHandler DefaultFontFamily = new();
@@ -86,6 +87,7 @@ namespace Ixen.Core.Visual
         public AspectRatioStyleHandler AspectRatio { get; set; } = DefaultAspectRatio;
         public GapStyleHandler Gap { get; set; } = DefaultGap;
         public VisibilityStyleHandler Visibility { get; set; } = DefaultVisibility;
+        public ScrollBehaviorStyleHandler ScrollBehavior { get; set; } = DefaultScrollBehavior;
         public FilterStyleHandler Filter { get; set; } = DefaultFilter;
         public FilterStyleHandler BackdropFilter { get; set; } = DefaultBackdropFilter;
         public FontFamilyStyleHandler FontFamily { get; set; } = DefaultFontFamily;

@@ -114,6 +114,10 @@ namespace Ixen.Core.Visual.Styles
                     p => ((VisibilityStyleParser)p).Descriptor,
                     new[] { VisibilityStyleParser.VISIBLE, VisibilityStyleParser.HIDDEN }),
 
+                Define(StyleIdentifier.SCROLL_BEHAVIOR, v => new ScrollBehaviorStyleParser(v),
+                    p => ((ScrollBehaviorStyleParser)p).Descriptor,
+                    new[] { ScrollBehaviorStyleParser.AUTO, ScrollBehaviorStyleParser.SMOOTH }),
+
                 Define(StyleIdentifier.ASPECT_RATIO, v => new AspectRatioStyleParser(v),
                     p => ((AspectRatioStyleParser)p).Descriptor),
 
