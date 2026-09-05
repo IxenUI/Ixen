@@ -62,11 +62,23 @@ namespace Ixen.Core.Visual.Classes
 
         private static readonly char[] _separators = { '/' };
 
-        internal static string Build<TNode>(TNode node, Func<TNode, TNode> parentOf, Func<TNode, string> nameOf)
+        internal const char SELECTOR_SEPARATOR = ',';
+
+        private static readonly char[] _selectorSeparators = { SELECTOR_SEPARATOR };
+
+        internal static bool IsList(string selector)
+            => selector != null && selector.IndexOf(SELECTOR_SEPARATOR) >= 0;
+
+        internal static string[] Split(string selector)
+            => IsList(selector)
+                ? selector.Split(_selectorSeparators, StringSplitOptions.RemoveEmptyEntries)
+                : new[] { selector };
+
+        internal static List<string> BuildAll<TNode>(TNode node, string selector,
+            Func<TNode, TNode> parentOf, Func<TNode, string> nameOf)
             where TNode : class
         {
-            var names = new List<string>();
-            TNode below = node;
+            var levels = new List<string[]>();
 
             for (TNode current = parentOf(node); current != null; current = parentOf(current))
             {
@@ -74,19 +86,47 @@ namespace Ixen.Core.Visual.Classes
 
                 if (!string.IsNullOrEmpty(name))
                 {
-                    names.Add(IsImmediate(nameOf(below)) ? IMMEDIATE + Bare(name) : Bare(name));
-                    below = current;
+                    levels.Add(Split(name));
                 }
             }
 
-            if (names.Count == 0)
+            if (levels.Count == 0)
             {
                 return null;
             }
 
-            names.Reverse();
+            var scopes = new List<string>();
 
-            return string.Join(SEPARATOR, names);
+            Combine(levels, 0, selector, new List<string>(), scopes);
+
+            return scopes;
+        }
+
+        private static void Combine(List<string[]> levels, int level, string below,
+            List<string> segments, List<string> scopes)
+        {
+            if (level == levels.Count)
+            {
+                var ordered = new string[segments.Count];
+
+                for (int i = 0; i < segments.Count; i++)
+                {
+                    ordered[i] = segments[segments.Count - 1 - i];
+                }
+
+                scopes.Add(string.Join(SEPARATOR, ordered));
+
+                return;
+            }
+
+            foreach (string entry in levels[level])
+            {
+                segments.Add(IsImmediate(below) ? IMMEDIATE + Bare(entry) : Bare(entry));
+
+                Combine(levels, level + 1, entry, segments, scopes);
+
+                segments.RemoveAt(segments.Count - 1);
+            }
         }
 
         internal static StyleScopeSegment[] Parse(string scope)

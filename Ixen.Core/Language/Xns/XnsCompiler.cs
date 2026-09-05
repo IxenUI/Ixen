@@ -56,32 +56,49 @@ namespace Ixen.Core.Language.Xns
 
         private static bool IsMixin(XnsNode node) => node.Mixin != null;
 
-        private string GetScope(XnsNode node)
-            => StyleScope.Build(node, n => n.Parent, n => n.Name);
-
-        private StyleClass GetClass(XnsNode node, XnsNode selector, MediaQuery media,
+        private void AddClasses(XnsNode node, XnsNode selector, MediaQuery media, ClassesSet set,
             List<LanguageError> errors)
         {
-            string name = StyleScope.Bare(selector.Name);
-            var target = StyleClassTarget.ElementName;
+            List<StyleDescriptor> styles = ToStyles(node, errors);
 
-            if (name.StartsWith("."))
+            foreach (string entry in StyleScope.Split(selector.Name))
             {
-                target = StyleClassTarget.ClassName;
-                name = name.Substring(1);
-            }
-            else if (name.StartsWith("#"))
-            {
-                target = StyleClassTarget.ElementType;
-                name = name.Substring(1);
-            }
+                string name = StyleScope.Bare(entry);
+                var target = StyleClassTarget.ElementName;
 
-            return new StyleClass(target, null, GetScope(selector), name, ToStyles(node, errors), media)
+                if (name.StartsWith("."))
+                {
+                    target = StyleClassTarget.ClassName;
+                    name = name.Substring(1);
+                }
+                else if (name.StartsWith("#"))
+                {
+                    target = StyleClassTarget.ElementType;
+                    name = name.Substring(1);
+                }
+
+                List<string> scopes = StyleScope.BuildAll(selector, entry, n => n.Parent, n => n.Name);
+
+                if (scopes == null)
+                {
+                    set.Classes.Add(NewClass(node, target, null, name, styles, media));
+                    continue;
+                }
+
+                foreach (string scope in scopes)
+                {
+                    set.Classes.Add(NewClass(node, target, scope, name, styles, media));
+                }
+            }
+        }
+
+        private static StyleClass NewClass(XnsNode node, StyleClassTarget target, string scope,
+            string name, List<StyleDescriptor> styles, MediaQuery media)
+            => new StyleClass(target, null, scope, name, styles, media)
             {
                 SourceIndex = node.NameIndex,
                 SourceLength = node.Name == null ? 0 : node.Name.Length
             };
-        }
 
         private void Add(XnsNode node, ClassesSet set, List<LanguageError> errors)
             => Add(node, set, null, errors);
@@ -115,7 +132,7 @@ namespace Ixen.Core.Language.Xns
             }
             else if (node.Styles.Count > 0)
             {
-                set.Classes.Add(GetClass(node, node, media, errors));
+                AddClasses(node, node, media, set, errors);
             }
 
             foreach (var child in node.Children)
@@ -145,7 +162,7 @@ namespace Ixen.Core.Language.Xns
                 return;
             }
 
-            set.Classes.Add(GetClass(node, selector, media, errors));
+            AddClasses(node, selector, media, set, errors);
         }
 
         private MediaQuery GetMedia(XnsNode node, MediaQuery outer, List<LanguageError> errors)
@@ -189,27 +206,37 @@ namespace Ixen.Core.Language.Xns
 
             foreach (XnsNode child in node.Children)
             {
-                if (!TryParseOffset(child.Name, out float offset))
+                List<StyleDescriptor> styles = null;
+
+                foreach (string entry in StyleScope.Split(child.Name))
                 {
-                    errors.Add(new LanguageError(
-                        LanguageErrorCode.SYNTAX,
-                        $"'{child.Name}' is not a valid keyframe offset. Use a whole percentage, '{FROM_OFFSET}' or '{TO_OFFSET}'.",
-                        child.NameIndex,
-                        child.Name?.Length ?? 0));
+                    if (!TryParseOffset(entry, out float offset))
+                    {
+                        errors.Add(new LanguageError(
+                            LanguageErrorCode.SYNTAX,
+                            $"'{entry}' is not a valid keyframe offset. Use a whole percentage, '{FROM_OFFSET}' or '{TO_OFFSET}'.",
+                            child.NameIndex,
+                            child.Name?.Length ?? 0));
 
-                    continue;
+                        continue;
+                    }
+
+                    if (styles == null)
+                    {
+                        if (child.Children.Count > 0)
+                        {
+                            errors.Add(new LanguageError(
+                                LanguageErrorCode.SYNTAX,
+                                "A keyframe offset cannot contain a nested block.",
+                                child.NameIndex,
+                                child.Name.Length));
+                        }
+
+                        styles = ToStyles(child, errors);
+                    }
+
+                    frames.Add(new Keyframe(offset, styles));
                 }
-
-                if (child.Children.Count > 0)
-                {
-                    errors.Add(new LanguageError(
-                        LanguageErrorCode.SYNTAX,
-                        "A keyframe offset cannot contain a nested block.",
-                        child.NameIndex,
-                        child.Name.Length));
-                }
-
-                frames.Add(new Keyframe(offset, ToStyles(child, errors)));
             }
 
             return new KeyframesSet(node.Name.Substring(1), frames);

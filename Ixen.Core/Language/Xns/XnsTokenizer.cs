@@ -33,7 +33,6 @@ namespace Ixen.Core.Language.Xns
             : base(source)
         { }
 
-
         public override List<XnsToken> Tokenize()
         {
             _tokens = new(EstimatedTokenCount());
@@ -515,53 +514,83 @@ namespace Ixen.Core.Language.Xns
             return true;
         }
 
-        private bool ReadClassName()
+        private bool ReadSelectorEntry()
         {
             int index = _index;
             char c = PeekNonSpaceChar();
-            int markerIndex = _peekIndex;
-            bool immediate = false;
 
-            if (c == '>' && _contentLevel > 0)
+            if (c == StyleScope.IMMEDIATE && _contentLevel > 0)
             {
-                immediate = true;
                 MoveCursor();
                 c = PeekNonSpaceChar();
             }
 
-            if (char.IsLetterOrDigit(c) || c == '.' || c == '#' || c == '_')
+            if (!char.IsLetterOrDigit(c) && c != '.' && c != '#' && c != '_')
             {
-                int nameIndex = _peekIndex;
-                int tokenIndex = immediate ? markerIndex : nameIndex;
+                _index = index;
+                return false;
+            }
 
+            MoveCursor();
+
+            while (true)
+            {
+                c = PeekChar();
+
+                if (char.IsLetterOrDigit(c) || c == '_' || c == '-' || c == ':' || c == '%'
+                    || c == '(' || c == ')')
+                {
+                    MoveCursor();
+                    continue;
+                }
+
+                break;
+            }
+
+            return true;
+        }
+
+        private bool ReadClassName()
+        {
+            int index = _index;
+
+            PeekNonSpaceChar();
+
+            int tokenIndex = _peekIndex;
+
+            if (!ReadSelectorEntry())
+            {
+                _index = index;
+                return false;
+            }
+
+            int nameEnd = _index;
+            char c = PeekNonSpaceChar();
+
+            while (c == StyleScope.SELECTOR_SEPARATOR)
+            {
                 MoveCursor();
 
-                while (true)
+                if (!ReadSelectorEntry())
                 {
-                    c = PeekChar();
-                    if (char.IsLetterOrDigit(c) || c == '_' ||  c == '-' || c == ':' || c == '%'
-                        || c == '(' || c == ')')
-                    {
-                        MoveCursor();
-                        continue;
-                    }
+                    c = PeekNonSpaceChar();
+
+                    AddError(LanguageErrorCode.SYNTAX,
+                        "A selector list needs a selector after each comma.", _peekIndex, 1);
 
                     break;
                 }
 
-                int nameEnd = _index;
-
+                nameEnd = _index;
                 c = PeekNonSpaceChar();
+            }
 
-                if (c == '{')
-                {
-                    string name = Slice(nameIndex, nameEnd);
+            if (c == '{')
+            {
+                AddToken(tokenIndex, XnsTokenType.ClassName, Compact(tokenIndex, nameEnd),
+                    nameEnd - tokenIndex + 1);
 
-                    AddToken(tokenIndex, XnsTokenType.ClassName,
-                        immediate ? StyleScope.IMMEDIATE + name : name);
-
-                    return true;
-                }
+                return true;
             }
 
             _index = index;

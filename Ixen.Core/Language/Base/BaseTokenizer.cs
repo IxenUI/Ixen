@@ -150,6 +150,38 @@ namespace Ixen.Core.Language.Base
             return to < from ? string.Empty : Slice(from, to);
         }
 
+        protected string Compact(int start, int end)
+        {
+            string content = _source.Content;
+            int spaces = 0;
+
+            for (int i = start; i <= end; i++)
+            {
+                if (char.IsWhiteSpace(content[i]))
+                {
+                    spaces++;
+                }
+            }
+
+            if (spaces == 0)
+            {
+                return Slice(start, end);
+            }
+
+            var chars = new char[end - start + 1 - spaces];
+            int at = 0;
+
+            for (int i = start; i <= end; i++)
+            {
+                if (!char.IsWhiteSpace(content[i]))
+                {
+                    chars[at++] = content[i];
+                }
+            }
+
+            return new string(chars);
+        }
+
         protected static string TextOf(char c)
         {
             if (c >= CHAR_TEXTS)

@@ -22,7 +22,16 @@ $focus:        #4C6EF5
     transition: background 120ms ease-out
 }
 
-#Button:hover {
+#Button:hover,
+#MenuItem:hover,
+#TabHeader:focus,
+#TreeRow:hover,
+#DataGridHeaderCell:hover,
+#DataGridHeaderCell:focus,
+#DataGridRow:hover,
+#DatePickerPrevious:hover,
+#DatePickerNext:hover,
+#DatePickerDay:hover {
     background: $surface_over
 }
 
@@ -30,11 +39,28 @@ $focus:        #4C6EF5
     background: $surface_down
 }
 
-#Button:focus {
+#Button:focus,
+#CheckBox:hover,
+#CheckBox:focus,
+#RadioButton:hover,
+#RadioButton:checked,
+#RadioButton:focus,
+#Switch:hover,
+#Switch:focus,
+#ComboBox:hover,
+#ComboBox:focus,
+#TreeView:focus,
+#DataGrid:focus,
+#DatePicker:focus,
+#DatePickerDay:today {
     border: $focus 1px inner
 }
 
-#Button:disabled {
+#Button:disabled,
+#CheckBox:disabled,
+#RadioButton:disabled,
+#ComboBox:disabled,
+#DatePicker:disabled {
     background: $surface_off
     border: $line_off 1px inner
     color: $text_off
@@ -60,28 +86,16 @@ $focus:        #4C6EF5
     visibility: hidden
 }
 
-#CheckBoxMark:checked {
+#CheckBoxMark:checked,
+#RadioButtonMark:checked,
+#TabItem:selected,
+#DataGridSortMark:sorted {
     visibility: visible
-}
-
-#CheckBox:hover {
-    border: $focus 1px inner
 }
 
 #CheckBox:checked {
     background: #EEF1FE
     border: $focus 1px inner
-}
-
-#CheckBox:focus {
-    border: $focus 1px inner
-}
-
-#CheckBox:disabled {
-    background: $surface_off
-    border: $line_off 1px inner
-    color: $text_off
-    cursor: not-allowed
 }
 
 #RadioButton {
@@ -103,29 +117,6 @@ $focus:        #4C6EF5
     visibility: hidden
 }
 
-#RadioButtonMark:checked {
-    visibility: visible
-}
-
-#RadioButton:hover {
-    border: $focus 1px inner
-}
-
-#RadioButton:checked {
-    border: $focus 1px inner
-}
-
-#RadioButton:focus {
-    border: $focus 1px inner
-}
-
-#RadioButton:disabled {
-    background: $surface_off
-    border: $line_off 1px inner
-    color: $text_off
-    cursor: not-allowed
-}
-
 #Switch {
     width: 34px
     height: 18px
@@ -145,18 +136,10 @@ $focus:        #4C6EF5
     corner-radius: 6px
 }
 
-#Switch:hover {
-    border: $focus 1px inner
-}
-
 #Switch:checked {
     background: $focus
     border: $focus 1px inner
     content-align: right middle
-}
-
-#Switch:focus {
-    border: $focus 1px inner
 }
 
 #Switch:disabled {
@@ -191,10 +174,6 @@ $focus:        #4C6EF5
     width: ?
 }
 
-#MenuItem:hover {
-    background: $surface_over
-}
-
 #MenuItem:focus {
     background: #EEF1FE
 }
@@ -225,24 +204,9 @@ $focus:        #4C6EF5
     text-align: left middle
 }
 
-#ComboBox:hover {
-    border: $focus 1px inner
-}
-
-#ComboBox:focus {
-    border: $focus 1px inner
-}
-
 #ComboBox:open {
     border: $focus 1px inner
     background: #FCFCFE
-}
-
-#ComboBox:disabled {
-    background: $surface_off
-    border: $line_off 1px inner
-    color: $text_off
-    cursor: not-allowed
 }
 
 #ComboBoxChevron {
@@ -346,7 +310,8 @@ $focus:        #4C6EF5
     corner-radius: 2px
 }
 
-#TabControl {
+#TabControl,
+#DataGridBody {
     width: 1*
     height: 1*
 }
@@ -382,11 +347,8 @@ $focus:        #4C6EF5
     color: $text
 }
 
-#TabHeader:focus {
-    background: $surface_over
-}
-
-#TabHeader:disabled {
+#TabHeader:disabled,
+#DatePickerDay:disabled {
     color: $line_off
     cursor: not-allowed
 }
@@ -397,12 +359,9 @@ $focus:        #4C6EF5
     padding: 12px 4px
 }
 
-#TabItem {
+#TabItem,
+#TreeExpander:leaf {
     visibility: hidden
-}
-
-#TabItem:selected {
-    visibility: visible
 }
 
 #TooltipPanel {
@@ -435,16 +394,13 @@ $focus:        #4C6EF5
     box-shadow: 0px 12px 36px #50000000
 }
 
-#TreeView {
+#TreeView,
+#DataGrid {
     width: 1*
     height: 1*
     background: #FFFFFF
     border: $line 1px inner
     corner-radius: 5px
-}
-
-#TreeView:focus {
-    border: $focus 1px inner
 }
 
 #TreeRows {
@@ -462,11 +418,9 @@ $focus:        #4C6EF5
     transition: background 100ms ease-out
 }
 
-#TreeRow:hover {
-    background: $surface_over
-}
-
-#TreeRow:selected {
+#TreeRow:selected,
+#DataGridRow:selected,
+#DatePickerDay:selected {
     background: $focus
     color: #FFFFFF
 }
@@ -481,24 +435,9 @@ $focus:        #4C6EF5
     transition: transform 120ms ease-out
 }
 
-#TreeExpander:expanded {
+#TreeExpander:expanded,
+#DataGridSortMark:descending {
     transform: rotate(0deg)
-}
-
-#TreeExpander:leaf {
-    visibility: hidden
-}
-
-#DataGrid {
-    width: 1*
-    height: 1*
-    background: #FFFFFF
-    border: $line 1px inner
-    corner-radius: 5px
-}
-
-#DataGrid:focus {
-    border: $focus 1px inner
 }
 
 #DataGridHeader {
@@ -518,16 +457,8 @@ $focus:        #4C6EF5
     transition: background 100ms ease-out
 }
 
-#DataGridHeaderCell:hover {
-    background: $surface_over
-}
-
 #DataGridHeaderCell:sorted {
     color: $text
-}
-
-#DataGridHeaderCell:focus {
-    background: $surface_over
 }
 
 #DataGridHeaderLabel {
@@ -546,32 +477,10 @@ $focus:        #4C6EF5
     transform: rotate(180deg)
 }
 
-#DataGridSortMark:sorted {
-    visibility: visible
-}
-
-#DataGridSortMark:descending {
-    transform: rotate(0deg)
-}
-
-#DataGridBody {
-    width: 1*
-    height: 1*
-}
-
 #DataGridRow {
     color: $text
     font-size: 13px
     cursor: hand
-}
-
-#DataGridRow:hover {
-    background: $surface_over
-}
-
-#DataGridRow:selected {
-    background: $focus
-    color: #FFFFFF
 }
 
 #DataGridCell {
@@ -596,17 +505,6 @@ $focus:        #4C6EF5
 
 #DatePicker:hover {
     background: $surface
-}
-
-#DatePicker:focus {
-    border: $focus 1px inner
-}
-
-#DatePicker:disabled {
-    background: $surface_off
-    border: $line_off 1px inner
-    color: $text_off
-    cursor: not-allowed
 }
 
 #DatePickerLabel {
@@ -661,14 +559,6 @@ $focus:        #4C6EF5
     transform: rotate(-90deg)
 }
 
-#DatePickerPrevious:hover {
-    background: $surface_over
-}
-
-#DatePickerNext:hover {
-    background: $surface_over
-}
-
 #DatePickerWeek {
     width: 1*
     height: 22px
@@ -699,24 +589,7 @@ $focus:        #4C6EF5
     transition: background 100ms ease-out
 }
 
-#DatePickerDay:hover {
-    background: $surface_over
-}
-
 #DatePickerDay:outside {
     color: $line_off
 }
 
-#DatePickerDay:today {
-    border: $focus 1px inner
-}
-
-#DatePickerDay:selected {
-    background: $focus
-    color: #FFFFFF
-}
-
-#DatePickerDay:disabled {
-    color: $line_off
-    cursor: not-allowed
-}

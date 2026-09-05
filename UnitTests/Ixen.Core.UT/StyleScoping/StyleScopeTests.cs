@@ -35,7 +35,7 @@ namespace Ixen.Core.UT.StyleScoping
         }
 
         private static string RuntimeScope(VisualElement element)
-            => StyleScope.Build(element, e => e.Parent, e => e.Name);
+            => StyleScope.BuildAll(element, element.Name, e => e.Parent, e => e.Name)?[0];
 
         [TestMethod]
         public void TopLevelClass_HasNoScope()

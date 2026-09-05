@@ -135,4 +135,19 @@ generated_root {
 @keyframes generated_wobble {
     from { transform: rotate(-8deg) scale(1) }
     to   { transform: rotate(4deg) scale(1.1) }
+}
+
+generated_first, generated_second {
+    background: #123456
+}
+
+generated_list_page, generated_list_sheet {
+    > generated_list_title, generated_list_note {
+        color: #ABCDEF
+    }
+}
+
+@keyframes generated_blink {
+    0%, 100% { background: #FF0000 }
+    50%      { background: #00FF00 }
 }
