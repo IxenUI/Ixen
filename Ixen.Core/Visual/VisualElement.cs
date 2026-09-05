@@ -18,6 +18,9 @@ namespace Ixen.Core.Visual
         public event EventHandler<DragEventArgs> PointerDragStart;
         public event EventHandler<DragEventArgs> PointerDrag;
         public event EventHandler<DragEventArgs> PointerDragEnd;
+        public event EventHandler<PinchEventArgs> PointerPinchStart;
+        public event EventHandler<PinchEventArgs> PointerPinch;
+        public event EventHandler<PinchEventArgs> PointerPinchEnd;
         public event EventHandler<DragEventArgs> DragEnter;
         public event EventHandler<DragEventArgs> DragOver;
         public event EventHandler<DragEventArgs> DragLeave;
@@ -35,6 +38,9 @@ namespace Ixen.Core.Visual
         internal void RaisePointerDragStart(DragEventArgs args) => PointerDragStart?.Invoke(this, args);
         internal void RaisePointerDrag(DragEventArgs args) => PointerDrag?.Invoke(this, args);
         internal void RaisePointerDragEnd(DragEventArgs args) => PointerDragEnd?.Invoke(this, args);
+        internal void RaisePointerPinchStart(PinchEventArgs args) => PointerPinchStart?.Invoke(this, args);
+        internal void RaisePointerPinch(PinchEventArgs args) => PointerPinch?.Invoke(this, args);
+        internal void RaisePointerPinchEnd(PinchEventArgs args) => PointerPinchEnd?.Invoke(this, args);
         internal void RaiseDragEnter(DragEventArgs args) => DragEnter?.Invoke(this, args);
         internal void RaiseDragOver(DragEventArgs args) => DragOver?.Invoke(this, args);
         internal void RaiseDragLeave(DragEventArgs args) => DragLeave?.Invoke(this, args);

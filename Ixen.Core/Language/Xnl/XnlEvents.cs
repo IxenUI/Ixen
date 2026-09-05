@@ -14,7 +14,10 @@ namespace Ixen.Core.Language.Xnl
                 { "wheel", "PointerWheel" },
                 { "drag", "PointerDrag" },
                 { "drag-start", "PointerDragStart" },
-                { "drag-end", "PointerDragEnd" }
+                { "drag-end", "PointerDragEnd" },
+                { "pinch", "PointerPinch" },
+                { "pinch-start", "PointerPinchStart" },
+                { "pinch-end", "PointerPinchEnd" }
             };
 
         internal static IReadOnlyCollection<string> Aliases => _aliases.Keys;

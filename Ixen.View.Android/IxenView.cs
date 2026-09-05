@@ -106,21 +106,32 @@ namespace Ixen.View.Android
                 return;
             }
 
-            float x = motion.GetX();
-            float y = motion.GetY();
+            int index = motion.ActionIndex;
 
-            switch (motion.Action)
+            switch (motion.ActionMasked)
             {
                 case MotionEventActions.Down:
-                    _host.PointerDown(x, y, PointerButton.Left, PointerKind.Touch);
+                case MotionEventActions.PointerDown:
+                    _host.PointerDown(motion.GetX(index), motion.GetY(index), PointerButton.Left,
+                        PointerKind.Touch, motion.GetPointerId(index));
                     break;
 
                 case MotionEventActions.Move:
-                    _host.PointerMove(x, y, PointerKind.Touch);
+                    for (int moved = 0; moved < motion.PointerCount; moved++)
+                    {
+                        _host.PointerMove(motion.GetX(moved), motion.GetY(moved), PointerKind.Touch,
+                            motion.GetPointerId(moved));
+                    }
+                    break;
+
+                case MotionEventActions.PointerUp:
+                    _host.PointerUp(motion.GetX(index), motion.GetY(index), PointerButton.Left,
+                        PointerKind.Touch, motion.GetPointerId(index));
                     break;
 
                 case MotionEventActions.Up:
-                    _host.PointerUp(x, y, PointerButton.Left, PointerKind.Touch);
+                    _host.PointerUp(motion.GetX(index), motion.GetY(index), PointerButton.Left,
+                        PointerKind.Touch, motion.GetPointerId(index));
                     _host.PointerLeave();
                     SyncSoftKeyboard();
                     break;

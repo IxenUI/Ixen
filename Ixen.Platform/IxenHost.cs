@@ -126,11 +126,12 @@ namespace Ixen.Platform
             }
         }
 
-        public void PointerMove(float x, float y, PointerKind kind = PointerKind.Mouse)
+        public void PointerMove(float x, float y, PointerKind kind = PointerKind.Mouse,
+            int pointerId = 0)
         {
             try
             {
-                _surface.PointerMove(x, y, kind);
+                _surface.PointerMove(x, y, kind, pointerId);
             }
             catch (Exception error)
             {
@@ -143,11 +144,11 @@ namespace Ixen.Platform
         }
 
         public void PointerDown(float x, float y, PointerButton button,
-            PointerKind kind = PointerKind.Mouse)
+            PointerKind kind = PointerKind.Mouse, int pointerId = 0)
         {
             try
             {
-                _surface.PointerDown(x, y, button, kind);
+                _surface.PointerDown(x, y, button, kind, pointerId);
             }
             catch (Exception error)
             {
@@ -160,11 +161,11 @@ namespace Ixen.Platform
         }
 
         public void PointerUp(float x, float y, PointerButton button,
-            PointerKind kind = PointerKind.Mouse)
+            PointerKind kind = PointerKind.Mouse, int pointerId = 0)
         {
             try
             {
-                _surface.PointerUp(x, y, button, kind);
+                _surface.PointerUp(x, y, button, kind, pointerId);
             }
             catch (Exception error)
             {

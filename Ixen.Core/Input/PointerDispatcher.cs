@@ -26,8 +26,28 @@ namespace Ixen.Core.Input
         private const float OVERSCROLL_MIN = 0.5f;
         private const float VELOCITY_WEIGHT = 0.6f;
 
+        private const int NO_POINTER = -1;
+        private const float PINCH_MIN_SPAN = 1f;
+
         private readonly List<VisualElement> _leftChain = new();
         private readonly List<VisualElement> _enteredChain = new();
+        private readonly List<ActivePointer> _pointers = new();
+
+        private int _primary = NO_POINTER;
+
+        private VisualElement _pinchTarget;
+        private bool _pinching;
+        private bool _pinchRefused;
+        private float _baseSpan;
+        private float _baseCentroidX;
+        private float _baseCentroidY;
+        private float _lastAngle;
+        private float _pinchScale = 1f;
+        private float _pinchRotation;
+        private float _pinchTotalX;
+        private float _pinchTotalY;
+        private float _pinchX;
+        private float _pinchY;
 
         private bool _trackStates;
 
@@ -77,9 +97,379 @@ namespace Ixen.Core.Input
         internal VisualElement Pressed => _pressed;
         internal VisualElement Captured => _captured;
 
-        internal void Move(VisualElement root, float x, float y, bool trackStates,
-            PointerKind kind = PointerKind.Mouse)
+        internal int PointerCount => _pointers.Count;
+        internal VisualElement PinchTarget => _pinching ? _pinchTarget : null;
+
+        private class ActivePointer
         {
+            internal int Id;
+            internal float X;
+            internal float Y;
+            internal float BaseX;
+            internal float BaseY;
+            internal VisualElement Down;
+        }
+
+        private ActivePointer Find(int id)
+        {
+            for (int index = 0; index < _pointers.Count; index++)
+            {
+                if (_pointers[index].Id == id)
+                {
+                    return _pointers[index];
+                }
+            }
+
+            return null;
+        }
+
+        private void AddPointer(VisualElement root, int id, float x, float y, VisualElement hit)
+        {
+            if (Find(id) != null)
+            {
+                return;
+            }
+
+            Fold();
+
+            _pointers.Add(new ActivePointer { Id = id, X = x, Y = y, Down = hit });
+
+            Rebase();
+        }
+
+        private void RemovePointer(int id)
+        {
+            ActivePointer pointer = Find(id);
+
+            if (pointer == null)
+            {
+                return;
+            }
+
+            Fold();
+
+            _pointers.Remove(pointer);
+
+            if (_pointers.Count < 2)
+            {
+                EndPinch();
+            }
+
+            if (_pointers.Count > 0)
+            {
+                Rebase();
+            }
+        }
+
+        private void ClearPointers()
+        {
+            Fold();
+            EndPinch();
+
+            _pointers.Clear();
+            _primary = NO_POINTER;
+        }
+
+        private void Fold()
+        {
+            if (!_pinching)
+            {
+                return;
+            }
+
+            _pinchScale = CurrentScale();
+            _pinchTotalX = CurrentTotalX();
+            _pinchTotalY = CurrentTotalY();
+        }
+
+        private void Rebase()
+        {
+            _baseSpan = Span();
+            _baseCentroidX = CentroidX();
+            _baseCentroidY = CentroidY();
+            _lastAngle = Angle();
+
+            for (int index = 0; index < _pointers.Count; index++)
+            {
+                _pointers[index].BaseX = _pointers[index].X;
+                _pointers[index].BaseY = _pointers[index].Y;
+            }
+
+            SyncPan();
+        }
+
+        private void SyncPan()
+        {
+            if (_panning == null || _pointers.Count == 0)
+            {
+                return;
+            }
+
+            _lastDragX = CentroidX();
+            _lastDragY = CentroidY();
+        }
+
+        private float CentroidX()
+        {
+            float sum = 0f;
+
+            for (int index = 0; index < _pointers.Count; index++)
+            {
+                sum += _pointers[index].X;
+            }
+
+            return sum / _pointers.Count;
+        }
+
+        private float CentroidY()
+        {
+            float sum = 0f;
+
+            for (int index = 0; index < _pointers.Count; index++)
+            {
+                sum += _pointers[index].Y;
+            }
+
+            return sum / _pointers.Count;
+        }
+
+        private float Span()
+        {
+            if (_pointers.Count < 2)
+            {
+                return 0f;
+            }
+
+            float centroidX = CentroidX();
+            float centroidY = CentroidY();
+            float sum = 0f;
+
+            for (int index = 0; index < _pointers.Count; index++)
+            {
+                float offsetX = _pointers[index].X - centroidX;
+                float offsetY = _pointers[index].Y - centroidY;
+
+                sum += (float)Math.Sqrt(offsetX * offsetX + offsetY * offsetY);
+            }
+
+            return sum / _pointers.Count * 2f;
+        }
+
+        private float Angle()
+        {
+            if (_pointers.Count < 2)
+            {
+                return 0f;
+            }
+
+            ActivePointer first = _pointers[0];
+            ActivePointer second = _pointers[1];
+
+            return (float)(Math.Atan2(second.Y - first.Y, second.X - first.X) * 180 / Math.PI);
+        }
+
+        private static float Turn(float degrees)
+        {
+            while (degrees > 180f)
+            {
+                degrees -= 360f;
+            }
+
+            while (degrees <= -180f)
+            {
+                degrees += 360f;
+            }
+
+            return degrees;
+        }
+
+        private float CurrentScale()
+            => _baseSpan < PINCH_MIN_SPAN ? _pinchScale : _pinchScale * (Span() / _baseSpan);
+
+        private float PanX(float x) => _pointers.Count > 1 ? CentroidX() : x;
+
+        private float PanY(float y) => _pointers.Count > 1 ? CentroidY() : y;
+
+        private float CurrentTotalX() => _pinchTotalX + CentroidX() - _baseCentroidX;
+
+        private float CurrentTotalY() => _pinchTotalY + CentroidY() - _baseCentroidY;
+
+        private bool MovedPastThreshold()
+        {
+            for (int index = 0; index < _pointers.Count; index++)
+            {
+                ActivePointer pointer = _pointers[index];
+
+                if (Math.Abs(pointer.X - pointer.BaseX) >= DRAG_THRESHOLD
+                    || Math.Abs(pointer.Y - pointer.BaseY) >= DRAG_THRESHOLD)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private VisualElement CommonDownElement()
+        {
+            VisualElement common = _pointers[0].Down;
+
+            for (int index = 1; index < _pointers.Count && common != null; index++)
+            {
+                common = CommonAncestor(common, _pointers[index].Down);
+            }
+
+            return common;
+        }
+
+        private static VisualElement CommonAncestor(VisualElement first, VisualElement second)
+        {
+            for (VisualElement mine = first; mine != null; mine = mine.Parent)
+            {
+                for (VisualElement theirs = second; theirs != null; theirs = theirs.Parent)
+                {
+                    if (mine == theirs)
+                    {
+                        return mine;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private void UpdatePinch()
+        {
+            if (_pinchRefused)
+            {
+                return;
+            }
+
+            float angle = Angle();
+
+            _pinchRotation += Turn(angle - _lastAngle);
+            _lastAngle = angle;
+
+            if (_pinching)
+            {
+                RaisePinch(PointerEventKind.Pinch);
+                return;
+            }
+
+            if (!MovedPastThreshold())
+            {
+                return;
+            }
+
+            _pinchTarget = CommonDownElement();
+
+            if (_pinchTarget == null)
+            {
+                _pinchRefused = true;
+                return;
+            }
+
+            _pinching = true;
+            _pinchX = CentroidX();
+            _pinchY = CentroidY();
+
+            if (RaisePinch(PointerEventKind.PinchStart).Handled)
+            {
+                ClaimPinch();
+                return;
+            }
+
+            _pinching = false;
+            _pinchRefused = true;
+            _pinchTarget = null;
+        }
+
+        private PinchEventArgs RaisePinch(PointerEventKind kind)
+        {
+            float centroidX = CentroidX();
+            float centroidY = CentroidY();
+
+            var args = new PinchEventArgs(centroidX, centroidY, _pinchTarget, CurrentScale(),
+                _pinchRotation, centroidX - _pinchX, centroidY - _pinchY,
+                CurrentTotalX(), CurrentTotalY(), _pointers.Count, _kind);
+
+            _pinchX = centroidX;
+            _pinchY = centroidY;
+
+            Bubble(_pinchTarget, args, kind);
+
+            return args;
+        }
+
+        private void ClaimPinch()
+        {
+            CancelLongPress();
+            EndDrag(_lastDragX, _lastDragY);
+
+            SetState(_pressed, StyleStates.PRESSED, false);
+
+            _pressed = null;
+            _captured = null;
+
+            if (_panning == null)
+            {
+                return;
+            }
+
+            VisualElement panning = _panning;
+
+            _panning = null;
+            _velocityX = 0f;
+            _velocityY = 0f;
+
+            StartFling(panning);
+        }
+
+        private void EndPinch()
+        {
+            if (_pinching)
+            {
+                var args = new PinchEventArgs(_pinchX, _pinchY, _pinchTarget, _pinchScale,
+                    _pinchRotation, 0f, 0f, _pinchTotalX, _pinchTotalY, _pointers.Count, _kind);
+
+                Bubble(_pinchTarget, args, PointerEventKind.PinchEnd);
+            }
+
+            _pinching = false;
+            _pinchRefused = false;
+            _pinchTarget = null;
+            _pinchScale = 1f;
+            _pinchRotation = 0f;
+            _pinchTotalX = 0f;
+            _pinchTotalY = 0f;
+        }
+
+        internal void Move(VisualElement root, float x, float y, bool trackStates,
+            PointerKind kind = PointerKind.Mouse, int pointerId = 0)
+        {
+            ActivePointer pointer = Find(pointerId);
+
+            if (pointer != null)
+            {
+                pointer.X = x;
+                pointer.Y = y;
+            }
+
+            if (_pointers.Count > 1)
+            {
+                UpdatePinch();
+            }
+
+            if (_pointers.Count > 0 && pointerId != _primary)
+            {
+                if (_panning != null)
+                {
+                    Pan(CentroidX(), CentroidY());
+                }
+
+                return;
+            }
+
             _trackStates = trackStates;
             _kind = kind;
 
@@ -89,7 +479,7 @@ namespace Ixen.Core.Input
 
             if (_panning != null)
             {
-                Pan(x, y);
+                Pan(PanX(x), PanY(y));
                 return;
             }
 
@@ -193,12 +583,15 @@ namespace Ixen.Core.Input
             _trackStates = trackStates;
             _inside = false;
 
+            ClearPointers();
             UpdateHover(null, 0, 0);
             _pressed = null;
         }
 
         internal void ReleaseCapture()
         {
+            ClearPointers();
+
             _captured = null;
             _panning = null;
             StopFling();
@@ -260,11 +653,31 @@ namespace Ixen.Core.Input
             {
                 _lastClicked = null;
             }
+
+            if (_pinchTarget == element)
+            {
+                _pinching = false;
+                _pinchTarget = null;
+            }
+
+            for (int index = 0; index < _pointers.Count; index++)
+            {
+                if (_pointers[index].Down == element)
+                {
+                    _pointers[index].Down = null;
+                }
+            }
         }
 
         internal void Down(VisualElement root, float x, float y, PointerButton button, bool trackStates,
-            PointerKind kind = PointerKind.Mouse)
+            PointerKind kind = PointerKind.Mouse, int pointerId = 0)
         {
+            if (_pointers.Count > 0 && Find(pointerId) == null)
+            {
+                AddPointer(root, pointerId, x, y, Enabled(HitTester.HitTest(root, x, y)));
+                return;
+            }
+
             _trackStates = trackStates;
             _kind = kind;
 
@@ -285,6 +698,9 @@ namespace Ixen.Core.Input
             VisualElement hit = Enabled(HitTester.HitTest(root, x, y));
 
             UpdateHover(hit, x, y);
+
+            _primary = pointerId;
+            AddPointer(root, pointerId, x, y, hit);
 
             _pressed = hit;
             _captured = hit;
@@ -518,8 +934,11 @@ namespace Ixen.Core.Input
                 return false;
             }
 
-            float offsetX = _pressX - x;
-            float offsetY = _pressY - y;
+            float centroidX = PanX(x);
+            float centroidY = PanY(y);
+
+            float offsetX = _baseCentroidX - centroidX;
+            float offsetY = _baseCentroidY - centroidY;
 
             VisualElement target = PanTarget(_pressed, offsetX, offsetY);
 
@@ -535,8 +954,8 @@ namespace Ixen.Core.Input
             SetState(_pressed, StyleStates.PRESSED, false);
             _pressed = null;
 
-            _lastDragX = _pressX;
-            _lastDragY = _pressY;
+            _lastDragX = _baseCentroidX;
+            _lastDragY = _baseCentroidY;
 
             _velocityX = 0f;
             _velocityY = 0f;
@@ -545,7 +964,7 @@ namespace Ixen.Core.Input
             _panHorizontal = ScrollNavigator.Horizontal(offsetX, offsetY);
             _panTime = TimeSource.Milliseconds;
 
-            Pan(x, y);
+            Pan(centroidX, centroidY);
 
             return true;
         }
@@ -781,7 +1200,37 @@ namespace Ixen.Core.Input
         }
 
         internal void Up(VisualElement root, float x, float y, PointerButton button, bool trackStates,
-            PointerKind kind = PointerKind.Mouse)
+            PointerKind kind = PointerKind.Mouse, int pointerId = 0)
+        {
+            ActivePointer pointer = Find(pointerId);
+
+            if (pointer != null)
+            {
+                pointer.X = x;
+                pointer.Y = y;
+            }
+
+            if (_pointers.Count > 0 && pointerId != _primary)
+            {
+                RemovePointer(pointerId);
+                return;
+            }
+
+            bool visitor = _captured != null && button != _pressedButton;
+
+            UpPrimary(root, x, y, button, trackStates, kind);
+
+            if (visitor)
+            {
+                return;
+            }
+
+            _primary = NO_POINTER;
+            RemovePointer(pointerId);
+        }
+
+        private void UpPrimary(VisualElement root, float x, float y, PointerButton button,
+            bool trackStates, PointerKind kind)
         {
             _trackStates = trackStates;
             _kind = kind;
@@ -798,7 +1247,7 @@ namespace Ixen.Core.Input
 
             if (_panning != null)
             {
-                Pan(x, y);
+                Pan(PanX(x), PanY(y));
                 StartFling(_panning);
                 _panning = null;
 
@@ -949,6 +1398,18 @@ namespace Ixen.Core.Input
 
                     case PointerEventKind.DragEnd:
                         element.RaisePointerDragEnd((DragEventArgs)args);
+                        break;
+
+                    case PointerEventKind.PinchStart:
+                        element.RaisePointerPinchStart((PinchEventArgs)args);
+                        break;
+
+                    case PointerEventKind.Pinch:
+                        element.RaisePointerPinch((PinchEventArgs)args);
+                        break;
+
+                    case PointerEventKind.PinchEnd:
+                        element.RaisePointerPinchEnd((PinchEventArgs)args);
                         break;
                 }
 

@@ -669,23 +669,31 @@ namespace Ixen.Core
 
         private float ToLogical(float deviceValue) => deviceValue / _scale;
 
-        internal void PointerMove(float x, float y, PointerKind kind = PointerKind.Mouse)
+        internal void PointerMove(float x, float y, PointerKind kind = PointerKind.Mouse,
+            int pointerId = 0)
         {
-            _pointerDispatcher.Move(Root, ToLogical(x), ToLogical(y), TrackStates, kind);
+            _pointerDispatcher.Move(Root, ToLogical(x), ToLogical(y), TrackStates, kind, pointerId);
             SyncCursor();
         }
 
         internal void PointerDown(float x, float y, PointerButton button,
-            PointerKind kind = PointerKind.Mouse)
+            PointerKind kind = PointerKind.Mouse, int pointerId = 0)
         {
-            _pointerDispatcher.Down(Root, ToLogical(x), ToLogical(y), button, TrackStates, kind);
-            _keyboardDispatcher.FocusFromPointer(_pointerDispatcher.Pressed, TrackStates);
+            bool primary = _pointerDispatcher.PointerCount == 0;
+
+            _pointerDispatcher.Down(Root, ToLogical(x), ToLogical(y), button, TrackStates, kind, pointerId);
+
+            if (primary)
+            {
+                _keyboardDispatcher.FocusFromPointer(_pointerDispatcher.Pressed, TrackStates);
+            }
+
             SyncCursor();
         }
 
         internal void PointerUp(float x, float y, PointerButton button,
-            PointerKind kind = PointerKind.Mouse)
-            => _pointerDispatcher.Up(Root, ToLogical(x), ToLogical(y), button, TrackStates, kind);
+            PointerKind kind = PointerKind.Mouse, int pointerId = 0)
+            => _pointerDispatcher.Up(Root, ToLogical(x), ToLogical(y), button, TrackStates, kind, pointerId);
 
         internal ITimeSource TimeSource
         {

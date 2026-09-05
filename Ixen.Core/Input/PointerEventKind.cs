@@ -10,6 +10,9 @@ namespace Ixen.Core.Input
         LongPress,
         DragStart,
         Drag,
-        DragEnd
+        DragEnd,
+        PinchStart,
+        Pinch,
+        PinchEnd
     }
 }
