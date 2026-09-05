@@ -11,6 +11,7 @@ namespace Ixen.Core.Input
         private const float WHEEL_STEP = ScrollNavigator.STEP;
         private const float DRAG_THRESHOLD = 4f;
         private const float DOUBLE_CLICK_DISTANCE = 4f;
+        private const float TOUCH_DOUBLE_CLICK_DISTANCE = 32f;
         private const long DOUBLE_CLICK_DELAY = 500;
         private const int LONG_PRESS_DELAY = 500;
         private const long WHEEL_LATCH_DELAY = 150;
@@ -1186,10 +1187,14 @@ namespace Ixen.Core.Input
         {
             long now = TimeSource.Milliseconds;
 
+            float distance = _kind == PointerKind.Touch
+                ? TOUCH_DOUBLE_CLICK_DISTANCE
+                : DOUBLE_CLICK_DISTANCE;
+
             bool doubled = hit == _lastClicked
                 && now - _lastClickTime <= DOUBLE_CLICK_DELAY
-                && Math.Abs(x - _lastClickX) <= DOUBLE_CLICK_DISTANCE
-                && Math.Abs(y - _lastClickY) <= DOUBLE_CLICK_DISTANCE;
+                && Math.Abs(x - _lastClickX) <= distance
+                && Math.Abs(y - _lastClickY) <= distance;
 
             _lastClicked = doubled ? null : hit;
             _lastClickTime = now;

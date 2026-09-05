@@ -185,6 +185,44 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void AFingerMayLandSomewhereElseAndStillDouble()
+        {
+            _box.PointerDoubleClick += (s, e) => _log.Add("double");
+
+            Tap(10, 10);
+            _time.Now = 100;
+            Tap(30, 30);
+
+            Assert.AreEqual("double", Log,
+                "a finger cannot land twice on the same pixel, so touch gets a wider window");
+        }
+
+        [TestMethod]
+        public void AMouseStillHasToBePrecise()
+        {
+            _box.PointerDoubleClick += (s, e) => _log.Add("double");
+
+            Click(10, 10);
+            _time.Now = 100;
+            Click(30, 30);
+
+            Assert.AreEqual(string.Empty, Log,
+                "a mouse does not wander between two clicks, so its window is unchanged");
+        }
+
+        [TestMethod]
+        public void AFingerThatLandsFarAwayIsStillNotADouble()
+        {
+            _box.PointerDoubleClick += (s, e) => _log.Add("double");
+
+            Tap(10, 10);
+            _time.Now = 100;
+            Tap(90, 90);
+
+            Assert.AreEqual(string.Empty, Log, "the wider window is still a window");
+        }
+
+        [TestMethod]
         public void AClickOnAnotherElementResetsTheSequence()
         {
             var other = new VisualElement { Name = "other" };
@@ -237,6 +275,12 @@ namespace Ixen.Core.UT.Input
         {
             _surface.PointerDown(x, y, PointerButton.Left);
             _surface.PointerUp(x, y, PointerButton.Left);
+        }
+
+        private void Tap(float x, float y)
+        {
+            _surface.PointerDown(x, y, PointerButton.Left, PointerKind.Touch);
+            _surface.PointerUp(x, y, PointerButton.Left, PointerKind.Touch);
         }
     }
 }
