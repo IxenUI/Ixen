@@ -1431,6 +1431,11 @@ namespace Ixen.Core.Input
 
         private void UpdateHover(VisualElement hit, float x, float y)
         {
+            if (_kind == PointerKind.Touch)
+            {
+                hit = null;
+            }
+
             if (hit == _hovered)
             {
                 return;

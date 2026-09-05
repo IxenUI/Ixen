@@ -197,6 +197,46 @@ namespace Ixen.Core.UT.StyleScoping
         }
 
         [TestMethod]
+        public void AFingerNeverHovers()
+        {
+            VisualElement root = Element("root");
+            VisualElement box = Element("box");
+            box.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
+            box.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
+            root.AddChild(box);
+
+            IxenSurface surface = Surface(
+                "box {\r\n    background: #111111\r\n}\r\nbox:hover {\r\n    background: #222222\r\n}", root);
+
+            surface.PointerDown(40, 40, PointerButton.Left, PointerKind.Touch);
+            surface.PointerMove(40, 50, PointerKind.Touch);
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Assert.IsFalse(box.HasState("hover"),
+                "a finger has no resting position, so there is nothing for it to hover");
+            Assert.AreEqual("#111111", BackgroundOf(box));
+        }
+
+        [TestMethod]
+        public void AMouseHoversAgainAfterAFingerHasBeenThrough()
+        {
+            VisualElement root = Element("root");
+            VisualElement box = Element("box");
+            box.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
+            box.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
+            root.AddChild(box);
+
+            IxenSurface surface = Surface("box:hover {\r\n    background: #222222\r\n}", root);
+
+            surface.PointerDown(40, 40, PointerButton.Left, PointerKind.Touch);
+            surface.PointerUp(40, 40, PointerButton.Left, PointerKind.Touch);
+            surface.PointerMove(40, 40);
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Assert.IsTrue(box.HasState("hover"), "the kind is read per event, not latched");
+        }
+
+        [TestMethod]
         public void ThePressedStateIsMaintainedByThePointer()
         {
             VisualElement root = Element("root");
