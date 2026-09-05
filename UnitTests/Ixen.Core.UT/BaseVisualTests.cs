@@ -1,4 +1,5 @@
-﻿using Ixen.Core.Visual;
+﻿using Ixen.Core.Rendering;
+using Ixen.Core.Visual;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SkiaSharp;
 using System;
@@ -31,10 +32,13 @@ namespace Ixen.Core.UT
 
             string fileExpectedPath = Path.Combine(_outputRendersDir, $"{testMethodName}_EXPECTED.png");
             string fileErrorPath = Path.Combine(_outputRendersDir, $"{testMethodName}_NOK.png");
+            string fileDiffPath = Path.Combine(_outputRendersDir, $"{testMethodName}_DIFF.png");
 
             if (expectedHash == hash)
             {
                 File.Delete(fileErrorPath);
+                File.Delete(fileDiffPath);
+
                 if (!File.Exists(fileExpectedPath))
                 {
                     DumpBitmapToFile(fileExpectedPath, bitmap);
@@ -48,9 +52,55 @@ namespace Ixen.Core.UT
                     $"Render mismatch for {testMethodName} at {width}x{height}." +
                     $"{Environment.NewLine}  expected hash : {expectedHash}" +
                     $"{Environment.NewLine}  actual hash   : {hash}" +
+                    $"{Environment.NewLine}  difference    : {Differences(fileExpectedPath, bitmap, fileDiffPath)}" +
                     $"{Environment.NewLine}  rendered      : {fileErrorPath}" +
                     $"{Environment.NewLine}  baseline      : {fileExpectedPath}" +
                     $"{Environment.NewLine}If the change is intentional, inspect the rendered file then update the expected hash.");
+            }
+        }
+
+        private string Differences(string baselinePath, SKBitmap rendered, string diffPath)
+        {
+            if (!File.Exists(baselinePath))
+            {
+                return "no baseline on this machine, so nothing to compare against";
+            }
+
+            using (SKBitmap decoded = SKBitmap.Decode(baselinePath))
+            {
+                if (decoded == null)
+                {
+                    return $"the baseline at {baselinePath} could not be read";
+                }
+
+                using (SKBitmap baseline = BitmapDifference.Normalized(decoded))
+                using (SKBitmap actual = BitmapDifference.Normalized(rendered))
+                {
+                    if (baseline == null || actual == null)
+                    {
+                        return "one of the two pictures could not be read";
+                    }
+
+                    if (!BitmapDifference.Comparable(baseline, actual))
+                    {
+                        return $"a {baseline.Width}x{baseline.Height} baseline against a "
+                            + $"{actual.Width}x{actual.Height} render, so the sizes alone differ";
+                    }
+
+                    BitmapDifference difference = BitmapDifference.Compare(baseline, actual);
+
+                    if (!difference.Any)
+                    {
+                        return "the pixels are identical, so the baseline is older than this hash";
+                    }
+
+                    using (SKBitmap highlight = BitmapDifference.Highlight(baseline, actual))
+                    {
+                        DumpBitmapToFile(diffPath, highlight);
+                    }
+
+                    return $"{difference.Describe()}{Environment.NewLine}  highlighted   : {diffPath}";
+                }
             }
         }
 
