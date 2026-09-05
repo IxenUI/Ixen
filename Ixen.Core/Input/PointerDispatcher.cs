@@ -42,6 +42,10 @@ namespace Ixen.Core.Input
         private float _lastDragX;
         private float _lastDragY;
         private bool _dragging;
+        private object _dragData;
+        private VisualElement _dropTarget;
+        private bool _dropAccepted;
+        private bool _dropped;
         private float _lastX;
         private float _lastY;
         private bool _inside;
@@ -95,7 +99,7 @@ namespace Ixen.Core.Input
             {
                 UpdateHover(CaptureHoverTarget(hit), x, y);
                 Bubble(_captured, new PointerEventArgs(x, y, PointerButton.None, _captured), PointerEventKind.Move);
-                UpdateDrag(x, y);
+                UpdateDrag(hit, x, y);
                 return;
             }
 
@@ -224,6 +228,13 @@ namespace Ixen.Core.Input
                 CancelLongPress();
             }
 
+            if (_dropTarget == element)
+            {
+                SetState(element, StyleStates.DRAG_OVER, false);
+                _dropTarget = null;
+                _dropAccepted = false;
+            }
+
             if (_captured == element)
             {
                 _captured = null;
@@ -324,7 +335,7 @@ namespace Ixen.Core.Input
             _longPress = null;
         }
 
-        private void UpdateDrag(float x, float y)
+        private void UpdateDrag(VisualElement hit, float x, float y)
         {
             if (_pressed == null)
             {
@@ -341,15 +352,20 @@ namespace Ixen.Core.Input
                 _dragging = true;
                 CancelLongPress();
 
-                if (!RaiseDrag(x, y, PointerEventKind.DragStart))
+                bool claimed = RaiseDrag(x, y, PointerEventKind.DragStart);
+
+                if (!claimed && _dragData == null)
                 {
                     TryStartPan(x, y);
                 }
+
+                SyncDropTarget(hit, x, y);
 
                 return;
             }
 
             RaiseDrag(x, y, PointerEventKind.Drag);
+            SyncDropTarget(hit, x, y);
         }
 
         private void EndDrag(float x, float y)
@@ -360,21 +376,140 @@ namespace Ixen.Core.Input
             }
 
             _dragging = false;
+
+            LeaveDropTarget(x, y);
             RaiseDrag(x, y, PointerEventKind.DragEnd);
+
+            _dragData = null;
+            _dropped = false;
         }
 
         private bool RaiseDrag(float x, float y, PointerEventKind kind)
         {
             var args = new DragEventArgs(x, y, _pressedButton, _pressed,
-                x - _lastDragX, y - _lastDragY, x - _pressX, y - _pressY, _kind);
+                x - _lastDragX, y - _lastDragY, x - _pressX, y - _pressY, _kind)
+            {
+                Data = _dragData
+            };
+
+            if (kind == PointerEventKind.DragEnd)
+            {
+                args.Accepted = _dropped;
+            }
 
             _lastDragX = x;
             _lastDragY = y;
 
             Bubble(_pressed, args, kind);
 
+            if (kind == PointerEventKind.DragStart)
+            {
+                _dragData = args.Data;
+            }
+
             return args.Handled;
         }
+
+        private void SyncDropTarget(VisualElement hit, float x, float y)
+        {
+            if (_dragData == null)
+            {
+                return;
+            }
+
+            VisualElement target = DropTarget(hit);
+
+            if (target != _dropTarget)
+            {
+                LeaveDropTarget(x, y);
+
+                _dropTarget = target;
+
+                if (target == null)
+                {
+                    return;
+                }
+
+                DragEventArgs entered = DropArgs(x, y, target, true);
+
+                target.RaiseDragEnter(entered);
+
+                _dropAccepted = entered.Accepted;
+                SetState(target, StyleStates.DRAG_OVER, _dropAccepted);
+
+                return;
+            }
+
+            if (target == null)
+            {
+                return;
+            }
+
+            DragEventArgs moved = DropArgs(x, y, target, _dropAccepted);
+
+            target.RaiseDragOver(moved);
+
+            if (moved.Accepted != _dropAccepted)
+            {
+                _dropAccepted = moved.Accepted;
+                SetState(target, StyleStates.DRAG_OVER, _dropAccepted);
+            }
+        }
+
+        private void LeaveDropTarget(float x, float y)
+        {
+            if (_dropTarget == null)
+            {
+                return;
+            }
+
+            VisualElement target = _dropTarget;
+
+            _dropTarget = null;
+
+            SetState(target, StyleStates.DRAG_OVER, false);
+            target.RaiseDragLeave(DropArgs(x, y, target, _dropAccepted));
+
+            _dropAccepted = false;
+        }
+
+        private void PerformDrop(float x, float y)
+        {
+            if (_dropTarget == null)
+            {
+                return;
+            }
+
+            if (!_dropAccepted)
+            {
+                LeaveDropTarget(x, y);
+                return;
+            }
+
+            VisualElement target = _dropTarget;
+
+            _dropTarget = null;
+            _dropped = true;
+
+            SetState(target, StyleStates.DRAG_OVER, false);
+            target.RaiseDrop(DropArgs(x, y, target, true));
+        }
+
+        private static VisualElement DropTarget(VisualElement hit)
+        {
+            for (VisualElement element = hit; element != null; element = element.Parent)
+            {
+                if (element.AllowDrop)
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
+
+        private DragEventArgs DropArgs(float x, float y, VisualElement target, bool accepted)
+            => new DragEventArgs(x, y, _pressedButton, target, _pressed, _dragData, accepted, _kind);
 
         private bool TryStartPan(float x, float y)
         {
@@ -681,6 +816,7 @@ namespace Ixen.Core.Input
             Bubble(target, new PointerEventArgs(x, y, button, target), PointerEventKind.Up);
 
             CancelLongPress();
+            PerformDrop(x, y);
             EndDrag(x, y);
 
             bool isClick = hit != null && hit == _pressed && !_longPressHandled;

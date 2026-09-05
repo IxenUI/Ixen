@@ -18,6 +18,10 @@ namespace Ixen.Core.Visual
         public event EventHandler<DragEventArgs> PointerDragStart;
         public event EventHandler<DragEventArgs> PointerDrag;
         public event EventHandler<DragEventArgs> PointerDragEnd;
+        public event EventHandler<DragEventArgs> DragEnter;
+        public event EventHandler<DragEventArgs> DragOver;
+        public event EventHandler<DragEventArgs> DragLeave;
+        public event EventHandler<DragEventArgs> Drop;
 
         internal void RaisePointerDown(PointerEventArgs args) => PointerDown?.Invoke(this, args);
         internal void RaisePointerUp(PointerEventArgs args) => PointerUp?.Invoke(this, args);
@@ -31,6 +35,10 @@ namespace Ixen.Core.Visual
         internal void RaisePointerDragStart(DragEventArgs args) => PointerDragStart?.Invoke(this, args);
         internal void RaisePointerDrag(DragEventArgs args) => PointerDrag?.Invoke(this, args);
         internal void RaisePointerDragEnd(DragEventArgs args) => PointerDragEnd?.Invoke(this, args);
+        internal void RaiseDragEnter(DragEventArgs args) => DragEnter?.Invoke(this, args);
+        internal void RaiseDragOver(DragEventArgs args) => DragOver?.Invoke(this, args);
+        internal void RaiseDragLeave(DragEventArgs args) => DragLeave?.Invoke(this, args);
+        internal void RaiseDrop(DragEventArgs args) => Drop?.Invoke(this, args);
 
         public event EventHandler<KeyEventArgs> KeyDown;
         public event EventHandler<KeyEventArgs> KeyUp;
@@ -104,6 +112,7 @@ namespace Ixen.Core.Visual
 
         public bool Focusable { get; set; }
         public bool Modal { get; set; }
+        public bool AllowDrop { get; set; }
 
         public Accessibility.AccessibleRole Role { get; set; }
         public string Label { get; set; }

@@ -92,11 +92,11 @@ namespace Ixen.Core.UT.Xns
                 new[]
                 {
                     "hover", "pressed", "focus", "disabled", "checked", "selected", "expanded",
-                    "invalid",
+                    "invalid", "dragover",
                     "first-child", "last-child", "only-child", "nth-child"
                 },
                 context.Items.ToArray(),
-                "hover, pressed, focus, disabled and invalid are maintained by the framework; "
+                "hover, pressed, focus, disabled, invalid and dragover are maintained by the framework; "
                 + "checked, selected and expanded are minted by a "
                 + "control library, and they are proposed because Core reads them too - StatesOf "
                 + "turns each into an AccessibleStates flag, which is the only way a screen reader "
