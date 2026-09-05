@@ -120,6 +120,26 @@ namespace Ixen.Core.Visual
         public bool Modal { get; set; }
         public bool AllowDrop { get; set; }
 
+        private string _shortcut;
+        private Input.KeyShortcut _parsedShortcut;
+
+        public string Shortcut
+        {
+            get => _shortcut;
+            set
+            {
+                _shortcut = string.IsNullOrWhiteSpace(value) ? null : value;
+                _parsedShortcut = _shortcut == null
+                    ? default
+                    : Input.KeyShortcut.Parse(_shortcut);
+            }
+        }
+
+        internal bool HasShortcut => _shortcut != null;
+
+        internal bool MatchesShortcut(Input.Key key, Input.KeyModifiers modifiers)
+            => _shortcut != null && _parsedShortcut.Matches(key, modifiers);
+
         public Accessibility.AccessibleRole Role { get; set; }
         public string Label { get; set; }
         public string Description { get; set; }
@@ -589,6 +609,12 @@ namespace Ixen.Core.Visual
         internal List<VisualElement> Overlays => _overlays ?? (_overlays = new List<VisualElement>());
 
         internal bool HasOverlays => _overlays != null && _overlays.Count > 0;
+
+        private List<VisualElement> _shortcuts;
+
+        internal List<VisualElement> Shortcuts => _shortcuts ?? (_shortcuts = new List<VisualElement>());
+
+        internal bool HasShortcuts => _shortcuts != null && _shortcuts.Count > 0;
 
         private ElementAnimations _animations;
 

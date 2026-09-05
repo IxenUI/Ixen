@@ -8,6 +8,7 @@ namespace Ixen.Core.Visual.Computers
         private float _viewportHeight;
 
         private List<VisualElement> _collected;
+        private List<VisualElement> _shortcuts;
         private bool _layered;
 
         internal void Compute(VisualElement element, float viewportWidth, float viewportHeight)
@@ -19,6 +20,9 @@ namespace Ixen.Core.Visual.Computers
             _collected = element.Overlays;
             _collected.Clear();
 
+            _shortcuts = element.Shortcuts;
+            _shortcuts.Clear();
+
             Compute(element, false);
 
             if (_layered)
@@ -27,6 +31,7 @@ namespace Ixen.Core.Visual.Computers
             }
 
             _collected = null;
+            _shortcuts = null;
         }
 
         private static void SortByDepth(List<VisualElement> layers)
@@ -74,6 +79,11 @@ namespace Ixen.Core.Visual.Computers
 
         private void ComputeElementClip(VisualElement element, bool transformed)
         {
+            if (element.HasShortcut)
+            {
+                _shortcuts?.Add(element);
+            }
+
             if (element.IsOverlay)
             {
                 _collected?.Add(element);

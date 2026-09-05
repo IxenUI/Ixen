@@ -129,6 +129,7 @@ namespace Ixen.Platform.Windows.Accessibility
         internal const int AUTOMATION_ID = 30011;
         internal const int CLASS_NAME = 30012;
         internal const int HELP_TEXT = 30013;
+        internal const int ACCELERATOR_KEY = 30006;
         internal const int IS_PASSWORD = 30019;
         internal const int IS_OFFSCREEN = 30022;
         internal const int IS_CONTROL_ELEMENT = 30016;

@@ -26,6 +26,7 @@ namespace Ixen.Core.Accessibility
                 Name = NameOf(element),
                 Description = DescriptionOf(element),
                 Value = ValueOf(element),
+                Shortcut = element.Shortcut,
                 States = StatesOf(element, focused),
                 Live = live,
                 Actions = ActionsOf(element, role),
@@ -71,6 +72,7 @@ namespace Ixen.Core.Accessibility
         private static bool IsExposed(VisualElement element)
         {
             return element.Role != AccessibleRole.None
+                || element.HasShortcut
                 || element.LiveRegion != LiveRegionKind.None
                 || element.Focusable
                 || element.Scrollable

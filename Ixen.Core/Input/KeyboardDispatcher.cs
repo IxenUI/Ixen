@@ -177,6 +177,11 @@ namespace Ixen.Core.Input
                 }
             }
 
+            if (TryShortcut(root, key, modifiers))
+            {
+                return;
+            }
+
             if (key == Key.Tab)
             {
                 MoveFocus(root, args.HasModifier(KeyModifiers.Shift), trackStates);
@@ -184,6 +189,33 @@ namespace Ixen.Core.Input
             }
 
             ScrollBy(target, root, key);
+        }
+
+        private static bool TryShortcut(VisualElement root, Key key, KeyModifiers modifiers)
+        {
+            if (root == null || !root.HasShortcuts)
+            {
+                return false;
+            }
+
+            foreach (VisualElement element in root.Shortcuts)
+            {
+                if (!element.MatchesShortcut(key, modifiers))
+                {
+                    continue;
+                }
+
+                if (element.IsHiddenInTree || !element.IsEnabled)
+                {
+                    continue;
+                }
+
+                element.PerformClick();
+
+                return true;
+            }
+
+            return false;
         }
 
         private static void ScrollBy(VisualElement from, VisualElement root, Key key)
