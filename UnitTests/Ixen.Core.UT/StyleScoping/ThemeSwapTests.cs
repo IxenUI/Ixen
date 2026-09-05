@@ -1,4 +1,5 @@
 using Ixen.Core.Language.Xns;
+using Ixen.Core.UT.Input;
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles.Descriptors;
@@ -79,6 +80,87 @@ namespace Ixen.Core.UT.StyleScoping
             Assert.IsTrue(pixel.Blue > 200 && pixel.Red < 60,
                 $"the setter has to invalidate, or StyleComputer skips every element whose "
                 + $"MustRefreshStyles is already false; got {pixel}");
+        }
+
+        [TestMethod]
+        public void ARuleTheNewRegistryDoesNotHaveStopsApplying()
+        {
+            (IxenSurface surface, VisualElement _) = Tree();
+
+            surface.Styles = Sheet("panel { width: 1*  height: 1*  background: #4C6EF5 }");
+
+            Assert.AreEqual(new SKColor(0x4C, 0x6E, 0xF5), Fill(surface, 60, 60));
+
+            surface.Styles = Sheet("panel { width: 1*  height: 1* }");
+
+            Assert.AreNotEqual(new SKColor(0x4C, 0x6E, 0xF5), Fill(surface, 60, 60),
+                "editing a stylesheet is mostly deleting declarations, so a swap has to forget "
+                + "as well as remember");
+        }
+
+        private const string FADE = "@keyframes fade {\r\n"
+            + "    0%   { background: #000000 }\r\n"
+            + "    100% { background: #FFFFFF }\r\n"
+            + "}\r\n"
+            + "panel { width: 1*  height: 1*  background: #FF0000  animation: fade ";
+
+        private static (IxenSurface, FakeScheduler) Fading(string duration)
+        {
+            var scheduler = new FakeScheduler();
+            var root = new VisualElement { Name = "root" };
+
+            root.AddChild(new VisualElement { Name = "panel" });
+
+            var surface = new IxenSurface(root)
+            {
+                Styles = Sheet(FADE + duration + " }"),
+                Scheduler = scheduler
+            };
+
+            root.Invalidate();
+            surface.ComputeLayout(60, 60);
+
+            return (surface, scheduler);
+        }
+
+        [TestMethod]
+        public void SwappingTheRegistryDoesNotRestartARunningAnimation()
+        {
+            (IxenSurface surface, FakeScheduler scheduler) = Fading("320ms");
+
+            for (int tick = 0; tick < 10; tick++)
+            {
+                scheduler.FireAll();
+            }
+
+            SKColor midway = Fill(surface, 60, 60);
+
+            Assert.IsTrue(midway.Red > 40 && midway.Red < 215,
+                $"the fade has to be part way through for this to say anything ({midway})");
+
+            surface.Styles = Sheet(FADE + "320ms }");
+
+            Assert.AreEqual(midway, Fill(surface, 60, 60),
+                "a swapped registry carries new descriptor objects, so comparing them by "
+                + "reference alone restarts every running animation from frame 0");
+        }
+
+        [TestMethod]
+        public void ButAnAnimationThatGenuinelyChangedDoesRestart()
+        {
+            (IxenSurface surface, FakeScheduler scheduler) = Fading("320ms");
+
+            for (int tick = 0; tick < 10; tick++)
+            {
+                scheduler.FireAll();
+            }
+
+            Assert.IsTrue(Fill(surface, 60, 60).Red > 40);
+
+            surface.Styles = Sheet(FADE + "640ms }");
+
+            Assert.IsTrue(Fill(surface, 60, 60).Red < 20,
+                "a different duration is a different animation, and it starts at its first frame");
         }
 
         [TestMethod]

@@ -60,7 +60,8 @@ namespace Ixen.Core.Visual
 
         internal bool Drives(string identifier) => _instances.Exists(i => i.Owns(identifier));
 
-        internal bool StartedWith(AnimationStyleDescriptor spec) => ReferenceEquals(_started, spec);
+        internal bool StartedWith(AnimationStyleDescriptor spec)
+            => ReferenceEquals(_started, spec) || (_started != null && _started.Matches(spec));
 
         internal void Start(AnimationStyleDescriptor declaration, StyleRegistry registry)
         {
