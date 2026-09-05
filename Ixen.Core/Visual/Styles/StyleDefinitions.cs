@@ -92,7 +92,7 @@ namespace Ixen.Core.Visual.Styles
                 Define(StyleIdentifier.FILTER, v => new FilterStyleParser(v),
                     p => ((FilterStyleParser)p).Descriptor,
                     new[] { FilterStyleParser.NONE },
-                    new[] { FilterStyleParser.BLUR }),
+                    new[] { FilterStyleParser.BLUR, FilterStyleParser.DROP_SHADOW }),
 
                 Define(StyleIdentifier.FONT_FAMILY, v => new FontFamilyStyleParser(v),
                     p => ((FontFamilyStyleParser)p).Descriptor),
@@ -179,7 +179,7 @@ namespace Ixen.Core.Visual.Styles
                 Define(StyleIdentifier.BACKDROP_FILTER, v => new BackdropFilterStyleParser(v),
                     p => ((BackdropFilterStyleParser)p).Descriptor,
                     new[] { FilterStyleParser.NONE },
-                    new[] { FilterStyleParser.BLUR }),
+                    new[] { FilterStyleParser.BLUR, FilterStyleParser.DROP_SHADOW }),
 
                 Define(StyleIdentifier.POINTER_EVENTS, v => new PointerEventsStyleParser(v),
                     p => ((PointerEventsStyleParser)p).Descriptor,

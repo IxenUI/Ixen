@@ -16,6 +16,26 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         private static string Of(float value)
             => value.ToString("R", CultureInfo.InvariantCulture) + "f";
 
+        internal Shadow Copy()
+            => new Shadow
+            {
+                OffsetX = OffsetX,
+                OffsetY = OffsetY,
+                Blur = Blur,
+                Spread = Spread,
+                Color = Color,
+                Inset = Inset
+            };
+
+        internal bool SameAs(Shadow other)
+            => other != null
+                && OffsetX == other.OffsetX
+                && OffsetY == other.OffsetY
+                && Blur == other.Blur
+                && Spread == other.Spread
+                && Color == other.Color
+                && Inset == other.Inset;
+
         internal string ToSource()
             => $"new {nameof(Shadow)} {{ "
                 + $"{nameof(OffsetX)} = {Of(OffsetX)}, "

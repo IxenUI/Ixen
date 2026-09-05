@@ -19,6 +19,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
         internal const string CONTRAST = "contrast";
         internal const string HUE_ROTATE = "hue-rotate";
         internal const string OPACITY = "opacity";
+        internal const string DROP_SHADOW = "drop-shadow";
 
         private static Regex _length = new Regex(@"^([0-9]+(?:\.[0-9]+)?)(px|)$");
         private static Regex _amount = new Regex(@"^([0-9]+(?:\.[0-9]+)?)(%|)$");
@@ -103,9 +104,30 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 case HUE_ROTATE:
                     return Add(FilterKind.HueRotate, Angle(body));
 
+                case DROP_SHADOW:
+                    return AddDropShadow(body);
+
                 default:
                     return false;
             }
+        }
+
+        private bool AddDropShadow(string body)
+        {
+            var parser = new DropShadowStyleParser(body);
+
+            if (!parser.IsValid || parser.Descriptor.Count != 1)
+            {
+                return false;
+            }
+
+            Descriptor.Operations.Add(new FilterOperation
+            {
+                Kind = FilterKind.DropShadow,
+                Shadow = parser.Descriptor.First
+            });
+
+            return true;
         }
 
         private bool Add(FilterKind kind, float? value)

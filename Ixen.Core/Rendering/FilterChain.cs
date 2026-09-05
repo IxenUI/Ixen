@@ -19,6 +19,8 @@ namespace Ixen.Core.Rendering
 
         private const float SIGMAS = 3f;
 
+        private static float Sigma(float blur) => blur / 2f;
+
         internal float Margin
         {
             get
@@ -28,13 +30,24 @@ namespace Ixen.Core.Rendering
 
                 for (int index = 0; index < operations.Count; index++)
                 {
-                    if (operations[index].Kind == FilterKind.Blur)
+                    FilterOperation operation = operations[index];
+
+                    if (operation.Kind == FilterKind.Blur)
                     {
-                        total += operations[index].Value;
+                        total += operation.Value * SIGMAS;
+                        continue;
+                    }
+
+                    if (operation.Kind == FilterKind.DropShadow && operation.Shadow != null)
+                    {
+                        total += Math.Max(
+                                Math.Abs(operation.Shadow.OffsetX),
+                                Math.Abs(operation.Shadow.OffsetY))
+                            + Sigma(operation.Shadow.Blur) * SIGMAS;
                     }
                 }
 
-                return total * SIGMAS;
+                return total;
             }
         }
 
@@ -66,6 +79,23 @@ namespace Ixen.Core.Rendering
                 if (operation.Kind == FilterKind.Blur)
                 {
                     filter = SKImageFilter.CreateBlur(operation.Value, operation.Value, filter);
+                    continue;
+                }
+
+                if (operation.Kind == FilterKind.DropShadow)
+                {
+                    Shadow shadow = operation.Shadow;
+
+                    if (shadow == null)
+                    {
+                        continue;
+                    }
+
+                    filter = SKImageFilter.CreateDropShadow(
+                        shadow.OffsetX, shadow.OffsetY,
+                        Sigma(shadow.Blur), Sigma(shadow.Blur),
+                        new Color(shadow.Color).SKColor, filter);
+
                     continue;
                 }
 

@@ -14,18 +14,37 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         Brightness,
         Contrast,
         HueRotate,
-        Opacity
+        Opacity,
+        DropShadow
     }
 
     public class FilterOperation
     {
         public FilterKind Kind { get; set; }
         public float Value { get; set; }
+        public Shadow Shadow { get; set; }
+
+        internal FilterOperation Copy()
+            => new FilterOperation
+            {
+                Kind = Kind,
+                Value = Value,
+                Shadow = Shadow?.Copy()
+            };
+
+        internal bool SameAs(FilterOperation other)
+            => Kind == other.Kind
+                && Value == other.Value
+                && (Shadow == null
+                    ? other.Shadow == null
+                    : Shadow.SameAs(other.Shadow));
 
         internal string ToSource()
             => $"new {nameof(FilterOperation)} {{ "
                 + $"{nameof(Kind)} = {nameof(FilterKind)}.{Kind}, "
-                + $"{nameof(Value)} = {Value.ToString("R", CultureInfo.InvariantCulture)}f }}";
+                + $"{nameof(Value)} = {Value.ToString("R", CultureInfo.InvariantCulture)}f"
+                + (Shadow == null ? string.Empty : $", {nameof(Shadow)} = {Shadow.ToSource()}")
+                + " }";
     }
 
     public class FilterStyleDescriptor : StyleDescriptor
@@ -44,11 +63,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 
             for (int index = 0; index < other.Count; index++)
             {
-                Operations.Add(new FilterOperation
-                {
-                    Kind = other.Operations[index].Kind,
-                    Value = other.Operations[index].Value
-                });
+                Operations.Add(other.Operations[index].Copy());
             }
         }
 
@@ -58,13 +73,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 
             for (int index = 0; index < Count; index++)
             {
-                FilterOperation operation = Operations[index];
-
-                copy.Operations.Add(new FilterOperation
-                {
-                    Kind = operation.Kind,
-                    Value = operation.Value
-                });
+                copy.Operations.Add(Operations[index].Copy());
             }
 
             return copy;
@@ -79,8 +88,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 
             for (int index = 0; index < Count; index++)
             {
-                if (Operations[index].Kind != other.Operations[index].Kind
-                    || Operations[index].Value != other.Operations[index].Value)
+                if (!Operations[index].SameAs(other.Operations[index]))
                 {
                     return false;
                 }

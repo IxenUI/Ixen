@@ -69,9 +69,19 @@ namespace Ixen.Core.UT.Xns
         {
             FilterStyleDescriptor filter = Style<FilterStyleDescriptor>();
 
-            Assert.AreEqual(1, filter.Count);
+            Assert.AreEqual(2, filter.Count);
             Assert.AreEqual(FilterKind.Blur, filter.Operations[0].Kind);
             Assert.AreEqual(2.5f, filter.Operations[0].Value);
+
+            Assert.AreEqual(FilterKind.DropShadow, filter.Operations[1].Kind);
+
+            Shadow shadow = filter.Operations[1].Shadow;
+
+            Assert.IsNotNull(shadow, "a drop shadow carries a Shadow through the generated source");
+            Assert.AreEqual(2f, shadow.OffsetX);
+            Assert.AreEqual(3f, shadow.OffsetY);
+            Assert.AreEqual(4f, shadow.Blur);
+            Assert.AreEqual("#40102030", shadow.Color);
         }
 
         [TestMethod]

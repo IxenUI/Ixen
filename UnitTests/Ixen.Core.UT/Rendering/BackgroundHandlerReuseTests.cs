@@ -249,5 +249,59 @@ namespace Ixen.Core.UT.Rendering
             }
         }
 
+        [TestMethod]
+        public void MutatingADropShadowInPlaceStillRepaints()
+        {
+            var registry = new StyleRegistry();
+
+            var sheet = new XnsSource(
+                "panel { background: #0000FF  filter: drop-shadow(0px -10px 0px #FF0000) }");
+
+            ClassesSet set = sheet.Compile();
+
+            Assert.IsFalse(sheet.HasErrors, string.Join(" | ", sheet.Diagnostics.Select(d => d.Message)));
+            registry.Add(set);
+
+            var root = new VisualElement { Name = "root" };
+            root.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
+
+            var spacer = new VisualElement { Name = "spacer" };
+            spacer.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 40 };
+            root.AddChild(spacer);
+
+            var panel = new VisualElement { Name = "panel" };
+            panel.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 60 };
+            root.AddChild(panel);
+
+            var surface = new IxenSurface(root) { Styles = registry };
+
+            surface.ComputeLayout(200, 200);
+
+            using (SkiaSharp.SKBitmap first = surface.RenderToBitmap())
+            {
+                SkiaSharp.SKColor above = first.GetPixel(100, 20);
+
+                Assert.IsTrue(above.Red < 100,
+                    $"the shadow is ten units up, so the panel top is at 30 and y=20 is clear; got {above}");
+            }
+
+            StyleClass rule = registry.GetGlobalElementClass("panel");
+            var filter = rule.Styles.OfType<FilterStyleDescriptor>().Single();
+
+            filter.Operations[0].Shadow.OffsetY = -30f;
+
+            root.Invalidate();
+            surface.ComputeLayout(200, 200);
+
+            using (SkiaSharp.SKBitmap second = surface.RenderToBitmap())
+            {
+                SkiaSharp.SKColor above = second.GetPixel(100, 20);
+
+                Assert.IsTrue(above.Red > 200,
+                    "a shadow mutated in place must rebuild the chain, so the snapshot has to "
+                    + "carry a copy of the Shadow rather than a reference to the same object; "
+                    + $"got {above}");
+            }
+        }
     }
 }

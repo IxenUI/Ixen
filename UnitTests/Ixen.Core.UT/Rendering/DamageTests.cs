@@ -215,6 +215,36 @@ namespace Ixen.Core.UT.Rendering
         }
 
         [TestMethod]
+        public void ADropShadowsOffsetIsCoveredByTheDamage()
+        {
+            _near.Styles.Filter = new FilterStyleDescriptor();
+            _near.Styles.Filter.Operations.Add(new FilterOperation
+            {
+                Kind = FilterKind.DropShadow,
+                Shadow = new Shadow
+                {
+                    OffsetX = 0,
+                    OffsetY = 60,
+                    Blur = 0,
+                    Color = "#FF000000"
+                }
+            });
+
+            _near.Invalidate();
+            Frame();
+
+            Mark(30, 100);
+
+            _surface.InvalidateVisual(_near);
+            Frame();
+
+            Assert.IsFalse(Survived(30, 100),
+                "the element is 40 tall at y 20, so a shadow offset by 60 lands at y 80 to 120 - "
+                + "entirely outside its own bounds. The damage is grown by FilterChain.Margin, "
+                + "which therefore has to count a drop shadow's offset and not only a blur");
+        }
+
+        [TestMethod]
         public void AnOuterBorderIsCoveredToo()
         {
             _near.Styles.Border = new BorderStyleDescriptor
