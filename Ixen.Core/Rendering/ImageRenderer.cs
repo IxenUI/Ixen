@@ -77,9 +77,7 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            SKBitmap bitmap = _images.Get(layer.ImageUrl);
-
-            if (bitmap == null || bitmap.Width <= 0 || bitmap.Height <= 0)
+            if (!_images.TryNatural(layer.ImageUrl, out int naturalWidth, out int naturalHeight))
             {
                 return;
             }
@@ -93,8 +91,8 @@ namespace Ixen.Core.Rendering
 
             if (layer.RepeatX || layer.RepeatY)
             {
-                float bandWidth = layer.RepeatX ? width : Math.Min(width, bitmap.Width);
-                float bandHeight = layer.RepeatY ? height : Math.Min(height, bitmap.Height);
+                float bandWidth = layer.RepeatX ? width : Math.Min(width, naturalWidth);
+                float bandHeight = layer.RepeatY ? height : Math.Min(height, naturalHeight);
 
                 context.TileImage(_images.GetTile(layer.ImageUrl),
                     element.X + (width - bandWidth) * layer.AnchorX,
@@ -110,13 +108,26 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            float drawWidth = bitmap.Width;
-            float drawHeight = bitmap.Height;
+            float drawWidth = naturalWidth;
+            float drawHeight = naturalHeight;
 
             if (layer.IsScaled)
             {
-                Resolve(layer.Fit, bitmap.Width, bitmap.Height, width, height,
+                Resolve(layer.Fit, naturalWidth, naturalHeight, width, height,
                     out drawWidth, out drawHeight);
+            }
+
+            SKBitmap bitmap = _images.Get(layer.ImageUrl,
+                drawWidth * context.Scale, drawHeight * context.Scale);
+
+            if (bitmap == null || bitmap.Width <= 0 || bitmap.Height <= 0)
+            {
+                if (rounded)
+                {
+                    context.PopClip();
+                }
+
+                return;
             }
 
             bool overflows = drawWidth > width + EPSILON || drawHeight > height + EPSILON;
@@ -150,9 +161,7 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            SKBitmap bitmap = _images.Get(image.Source);
-
-            if (bitmap == null || bitmap.Width <= 0 || bitmap.Height <= 0)
+            if (!_images.TryNatural(image.Source, out int naturalWidth, out int naturalHeight))
             {
                 return;
             }
@@ -168,8 +177,16 @@ namespace Ixen.Core.Rendering
             float boxX = element.X + element.PaddingLeft + element.BorderInsideLeft;
             float boxY = element.Y + element.PaddingTop + element.BorderInsideTop;
 
-            Resolve(element.StylesHandlers.ObjectFit.Descriptor.Value, bitmap.Width, bitmap.Height,
+            Resolve(element.StylesHandlers.ObjectFit.Descriptor.Value, naturalWidth, naturalHeight,
                 boxWidth, boxHeight, out float width, out float height);
+
+            SKBitmap bitmap = _images.Get(image.Source,
+                width * context.Scale, height * context.Scale);
+
+            if (bitmap == null || bitmap.Width <= 0 || bitmap.Height <= 0)
+            {
+                return;
+            }
 
             CornerRadiusStyleDescriptor radius = element.StylesHandlers.CornerRadius.Descriptor;
 

@@ -57,7 +57,7 @@ namespace Ixen.Core.UT.Rendering
 
             for (int index = 0; index < 30; index++)
             {
-                store.TryMeasure($"photo{index}.png", out _, out _);
+                store.Get($"photo{index}.png", SIDE, SIDE);
                 store.Trim();
             }
 
@@ -73,29 +73,31 @@ namespace Ixen.Core.UT.Rendering
             var source = new MemorySource();
             var store = new ImageStore { Source = source, Budget = ONE * 2 };
 
-            store.TryMeasure("a.png", out _, out _);
-            store.TryMeasure("b.png", out _, out _);
+            store.Get("a.png", SIDE, SIDE);
+            store.Get("b.png", SIDE, SIDE);
 
             store.Trim();
 
             int reads = source.Reads;
 
-            store.TryMeasure("a.png", out _, out _);
+            store.Get("a.png", SIDE, SIDE);
 
             Assert.AreEqual(reads, source.Reads, "both still fit, so nothing was reloaded");
 
-            store.TryMeasure("c.png", out _, out _);
+            store.Get("c.png", SIDE, SIDE);
             store.Trim();
 
-            store.TryMeasure("a.png", out _, out _);
-
-            Assert.AreEqual(reads + 1, source.Reads,
-                "a was touched more recently than b, so b is the one that left");
-
-            store.TryMeasure("b.png", out _, out _);
+            store.Get("a.png", SIDE, SIDE);
 
             Assert.AreEqual(reads + 2, source.Reads,
-                "and b, having been evicted, has to be decoded again - one read for c and one for b");
+                "a was touched more recently than b, so b is the one that left, and the two reads "
+                + "are c alone: one for its header and one for its pixels, which are two separate "
+                + "opens now that measuring never decodes");
+
+            store.Get("b.png", SIDE, SIDE);
+
+            Assert.AreEqual(reads + 4, source.Reads,
+                "and b, having been evicted, costs its header and its pixels over again");
         }
 
         [TestMethod]
@@ -108,7 +110,7 @@ namespace Ixen.Core.UT.Rendering
 
             for (int index = 0; index < 10; index++)
             {
-                store.TryMeasure($"photo{index}.png", out _, out _);
+                store.Get($"photo{index}.png", SIDE, SIDE);
                 store.Trim();
             }
 
@@ -128,7 +130,7 @@ namespace Ixen.Core.UT.Rendering
 
             Assert.IsNotNull(store.GetTile("a.png"), "a tile shader is built from the bitmap");
 
-            store.TryMeasure("b.png", out _, out _);
+            store.Get("b.png", SIDE, SIDE);
             store.Trim();
 
             SKPaint tile = store.GetTile("a.png");
@@ -158,7 +160,7 @@ namespace Ixen.Core.UT.Rendering
         {
             var store = new ImageStore { Source = new MemorySource(), Budget = ONE * 100 };
 
-            store.TryMeasure("a.png", out _, out _);
+            store.Get("a.png", SIDE, SIDE);
 
             Assert.IsTrue(store.Bytes > 0);
 

@@ -10,6 +10,7 @@ namespace Ixen.Core.Rendering
     internal class ImageStore : IImageMeasurer
     {
         private const long DEFAULT_BUDGET = 64 * 1024 * 1024;
+        private const int MAX_DIVISOR = 8;
 
         private sealed class Entry
         {
@@ -17,9 +18,15 @@ namespace Ixen.Core.Rendering
             internal SKPaint Tile;
             internal long Bytes;
             internal long Stamp;
+            internal int NaturalWidth;
+            internal int NaturalHeight;
+            internal int Divisor;
+            internal bool Read;
         }
 
         private readonly Dictionary<string, Entry> _entries = new Dictionary<string, Entry>();
+
+        private readonly HashSet<string> _pending = new HashSet<string>();
 
         private IImageSource _source;
         private long _bytes;
@@ -47,11 +54,84 @@ namespace Ixen.Core.Rendering
             }
         }
 
-        internal SKBitmap Get(string name)
+        internal SKBitmap Get(string name) => Get(name, 0, 0);
+
+        internal SKBitmap Get(string name, float width, float height)
         {
             Entry entry = Touch(name);
 
-            return entry?.Bitmap;
+            if (entry == null)
+            {
+                return null;
+            }
+
+            Pixels(name, entry, width, height);
+
+            return entry.Bitmap;
+        }
+
+        internal bool TryNatural(string name, out int width, out int height)
+        {
+            Entry entry = Touch(name);
+
+            width = entry == null ? 0 : entry.NaturalWidth;
+            height = entry == null ? 0 : entry.NaturalHeight;
+
+            return width > 0 && height > 0;
+        }
+
+        private static int DivisorFor(Entry entry, float width, float height)
+        {
+            if (width <= 0 || height <= 0)
+            {
+                return 1;
+            }
+
+            for (int divisor = MAX_DIVISOR; divisor > 1; divisor /= 2)
+            {
+                if (entry.NaturalWidth / divisor >= width
+                    && entry.NaturalHeight / divisor >= height)
+                {
+                    return divisor;
+                }
+            }
+
+            return 1;
+        }
+
+        private void Pixels(string name, Entry entry, float width, float height)
+        {
+            if (entry.NaturalWidth <= 0 || _pending.Contains(name))
+            {
+                return;
+            }
+
+            int divisor = DivisorFor(entry, width, height);
+
+            if (entry.Bitmap != null && entry.Divisor <= divisor)
+            {
+                return;
+            }
+
+            SKBitmap decoded = Load(name, divisor);
+
+            if (decoded == null)
+            {
+                return;
+            }
+
+            _bytes -= entry.Bytes;
+
+            entry.Tile?.Shader?.Dispose();
+            entry.Tile?.Dispose();
+            entry.Tile = null;
+            entry.Bitmap?.Dispose();
+
+            entry.Bitmap = decoded;
+            entry.Divisor = divisor;
+            entry.Bytes = decoded.ByteCount;
+
+            _bytes += entry.Bytes;
         }
 
         private Entry Touch(string name)
@@ -71,27 +151,27 @@ namespace Ixen.Core.Rendering
             {
                 var waiting = new Entry
                 {
-                    Stamp = ++_clock
+                    Stamp = ++_clock,
+                    Read = true
                 };
 
                 _entries[name] = waiting;
+                _pending.Add(name);
 
                 Start(asynchronous, name, waiting);
 
                 return waiting;
             }
 
-            SKBitmap bitmap = Load(name);
-
             var entry = new Entry
             {
-                Bitmap = bitmap,
-                Bytes = bitmap == null ? 0 : bitmap.ByteCount,
-                Stamp = ++_clock
+                Stamp = ++_clock,
+                Read = true
             };
 
+            Natural(name, entry);
+
             _entries[name] = entry;
-            _bytes += entry.Bytes;
 
             return entry;
         }
@@ -104,6 +184,8 @@ namespace Ixen.Core.Rendering
             {
                 return null;
             }
+
+            Pixels(name, entry, entry.NaturalWidth, entry.NaturalHeight);
 
             if (entry.Tile != null || entry.Bitmap == null)
             {
@@ -121,20 +203,12 @@ namespace Ixen.Core.Rendering
 
         public bool TryMeasure(string source, out float width, out float height)
         {
-            SKBitmap bitmap = Get(source);
+            bool known = TryNatural(source, out int natural, out int high);
 
-            if (bitmap == null)
-            {
-                width = 0;
-                height = 0;
+            width = natural;
+            height = high;
 
-                return false;
-            }
-
-            width = bitmap.Width;
-            height = bitmap.Height;
-
-            return true;
+            return known;
         }
 
         internal void Trim()
@@ -237,6 +311,11 @@ namespace Ixen.Core.Rendering
 
             waiting.Bitmap = bitmap;
             waiting.Bytes = bitmap == null ? 0 : bitmap.ByteCount;
+            waiting.Divisor = 1;
+            waiting.NaturalWidth = bitmap == null ? 0 : bitmap.Width;
+            waiting.NaturalHeight = bitmap == null ? 0 : bitmap.Height;
+
+            _pending.Remove(name);
 
             _bytes += waiting.Bytes;
 
@@ -251,10 +330,11 @@ namespace Ixen.Core.Rendering
             }
 
             _entries.Clear();
+            _pending.Clear();
             _bytes = 0;
         }
 
-        private SKBitmap Load(string name)
+        private SKBitmap Load(string name, int divisor)
         {
             IImageSource source = _source;
 
@@ -267,12 +347,70 @@ namespace Ixen.Core.Rendering
             {
                 using (Stream stream = source.Open(name))
                 {
-                    return stream == null ? null : SKBitmap.Decode(stream);
+                    if (stream == null)
+                    {
+                        return null;
+                    }
+
+                    if (divisor <= 1)
+                    {
+                        return SKBitmap.Decode(stream);
+                    }
+
+                    using (SKCodec codec = SKCodec.Create(stream))
+                    {
+                        if (codec == null)
+                        {
+                            return null;
+                        }
+
+                        SKSizeI wanted = codec.GetScaledDimensions(1f / divisor);
+                        SKImageInfo info = codec.Info
+                            .WithSize(wanted.Width, wanted.Height)
+                            .WithColorType(SKImageInfo.PlatformColorType);
+
+                        return SKBitmap.Decode(codec, info);
+                    }
                 }
             }
             catch
             {
                 return null;
+            }
+        }
+
+        private void Natural(string name, Entry entry)
+        {
+            IImageSource source = _source;
+
+            if (source == null)
+            {
+                return;
+            }
+
+            try
+            {
+                using (Stream stream = source.Open(name))
+                {
+                    if (stream == null)
+                    {
+                        return;
+                    }
+
+                    using (SKCodec codec = SKCodec.Create(stream))
+                    {
+                        if (codec == null)
+                        {
+                            return;
+                        }
+
+                        entry.NaturalWidth = codec.Info.Width;
+                        entry.NaturalHeight = codec.Info.Height;
+                    }
+                }
+            }
+            catch
+            {
             }
         }
     }

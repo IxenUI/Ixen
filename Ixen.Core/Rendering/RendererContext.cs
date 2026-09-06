@@ -37,9 +37,12 @@ namespace Ixen.Core.Rendering
         private readonly SKSamplingOptions _sampling =
             new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
 
+        internal float Scale { get; private set; } = 1;
+
         internal void BeginFrame(SKCanvas canvas, float scale)
         {
             SKCanvas = canvas;
+            Scale = scale <= 0 ? 1 : scale;
             _clipDepth = 0;
             _transformDepths.Clear();
             _filtered = false;
