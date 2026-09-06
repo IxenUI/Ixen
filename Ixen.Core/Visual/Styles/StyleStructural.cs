@@ -13,7 +13,24 @@ namespace Ixen.Core.Visual.Styles
         Only = 4,
         Nth = 8,
         Odd = 16,
-        Even = 32
+        Even = 32,
+        Formula = 64
+    }
+
+    internal readonly struct NthFormula
+    {
+        internal string Argument { get; }
+        internal int Step { get; }
+        internal int Offset { get; }
+
+        internal NthFormula(string argument, int step, int offset)
+        {
+            Argument = argument;
+            Step = step;
+            Offset = offset;
+        }
+
+        internal bool Matches(int position) => StyleStructural.Matches(Step, Offset, position);
     }
 
     internal static class StyleStructural
@@ -25,6 +42,10 @@ namespace Ixen.Core.Visual.Styles
         internal const string ODD = "odd";
         internal const string EVEN = "even";
 
+        private const char STEP_MARKER = 'n';
+        private const char PLUS = '+';
+        private const char MINUS = '-';
+        private const char CLOSE = ')';
         private const string NTH_OPEN = NTH_CHILD + "(";
 
         internal static readonly string[] All =
@@ -77,14 +98,10 @@ namespace Ixen.Core.Visual.Styles
                     return Holds(StructuralKinds.Only, index, count);
             }
 
-            if (!pseudo.StartsWith(NTH_OPEN, StringComparison.Ordinal)
-                || pseudo[pseudo.Length - 1] != ')')
+            if (!IsNth(pseudo, out string argument))
             {
                 return false;
             }
-
-            string argument = pseudo.Substring(NTH_OPEN.Length,
-                pseudo.Length - NTH_OPEN.Length - 1);
 
             switch (argument)
             {
@@ -95,8 +112,13 @@ namespace Ixen.Core.Visual.Styles
                     return Holds(StructuralKinds.Even, index, count);
             }
 
-            return int.TryParse(argument, NumberStyles.Integer, CultureInfo.InvariantCulture,
-                out int wanted) && wanted == index + 1;
+            if (TryWhole(argument, out int wanted))
+            {
+                return wanted == index + 1;
+            }
+
+            return TryFormula(argument, out int step, out int offset)
+                && Matches(step, offset, index + 1);
         }
 
         internal static bool Holds(StructuralKinds kind, int index, int count)
@@ -122,7 +144,101 @@ namespace Ixen.Core.Visual.Styles
             return false;
         }
 
-        internal static StructuralKinds KindsOf(string selector)
+        internal static bool Matches(int step, int offset, int position)
+        {
+            if (step == 0)
+            {
+                return position == offset;
+            }
+
+            int reach = position - offset;
+
+            if (reach % step != 0)
+            {
+                return false;
+            }
+
+            return step > 0 ? reach >= 0 : reach <= 0;
+        }
+
+        internal static bool IsArgumentValid(string argument)
+            => argument == ODD || argument == EVEN
+                || TryWhole(argument, out _)
+                || TryFormula(argument, out _, out _);
+
+        internal static bool TryFormula(string argument, out int step, out int offset)
+        {
+            step = 0;
+            offset = 0;
+
+            if (string.IsNullOrEmpty(argument))
+            {
+                return false;
+            }
+
+            int marker = argument.IndexOf(STEP_MARKER);
+
+            if (marker < 0)
+            {
+                return false;
+            }
+
+            string head = argument.Substring(0, marker);
+            string tail = argument.Substring(marker + 1);
+
+            if (head.Length == 0 || head == "+")
+            {
+                step = 1;
+            }
+            else if (head == "-")
+            {
+                step = -1;
+            }
+            else if (!TryWhole(head, out step))
+            {
+                return false;
+            }
+
+            if (tail.Length == 0)
+            {
+                return true;
+            }
+
+            return (tail[0] == PLUS || tail[0] == MINUS) && TryWhole(tail, out offset);
+        }
+
+        internal static bool NextArgument(string selector, ref int at, out string argument)
+        {
+            argument = null;
+
+            if (selector == null || at < 0)
+            {
+                return false;
+            }
+
+            int open = selector.IndexOf(NTH_OPEN, at, StringComparison.Ordinal);
+
+            if (open < 0)
+            {
+                return false;
+            }
+
+            open += NTH_OPEN.Length;
+
+            int close = selector.IndexOf(CLOSE, open);
+
+            if (close < 0)
+            {
+                return false;
+            }
+
+            argument = selector.Substring(open, close - open);
+            at = close + 1;
+
+            return true;
+        }
+
+        internal static StructuralKinds Scan(string selector, List<NthFormula> formulas)
         {
             if (selector == null || selector.IndexOf(':') < 0)
             {
@@ -146,18 +262,10 @@ namespace Ixen.Core.Visual.Styles
                 kinds |= StructuralKinds.Only;
             }
 
-            for (int at = 0; (at = selector.IndexOf(NTH_OPEN, at, StringComparison.Ordinal)) >= 0;)
+            int at = 0;
+
+            while (NextArgument(selector, ref at, out string argument))
             {
-                int open = at + NTH_OPEN.Length;
-                int close = selector.IndexOf(')', open);
-
-                if (close < 0)
-                {
-                    break;
-                }
-
-                string argument = selector.Substring(open, close - open);
-
                 if (argument == ODD)
                 {
                     kinds |= StructuralKinds.Odd;
@@ -166,16 +274,55 @@ namespace Ixen.Core.Visual.Styles
                 {
                     kinds |= StructuralKinds.Even;
                 }
-                else
+                else if (TryWhole(argument, out _))
                 {
                     kinds |= StructuralKinds.Nth;
                 }
-
-                at = close + 1;
+                else if (TryFormula(argument, out int step, out int offset))
+                {
+                    kinds |= StructuralKinds.Formula;
+                    Remember(formulas, argument, step, offset);
+                }
             }
 
             return kinds;
         }
+
+        private static void Remember(List<NthFormula> formulas, string argument, int step, int offset)
+        {
+            if (formulas == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < formulas.Count; i++)
+            {
+                if (formulas[i].Argument == argument)
+                {
+                    return;
+                }
+            }
+
+            formulas.Add(new NthFormula(argument, step, offset));
+        }
+
+        private static bool IsNth(string pseudo, out string argument)
+        {
+            argument = null;
+
+            if (!pseudo.StartsWith(NTH_OPEN, StringComparison.Ordinal)
+                || pseudo[pseudo.Length - 1] != CLOSE)
+            {
+                return false;
+            }
+
+            argument = pseudo.Substring(NTH_OPEN.Length, pseudo.Length - NTH_OPEN.Length - 1);
+
+            return true;
+        }
+
+        private static bool TryWhole(string text, out int value)
+            => int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
 
         private static bool Mentions(string selector, string pseudo)
             => selector.IndexOf(":" + pseudo, StringComparison.Ordinal) >= 0;

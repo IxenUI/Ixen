@@ -573,7 +573,8 @@ namespace Ixen.Core.Language.Xns
                     continue;
                 }
 
-                if (depth > 0 && (c == '.' || c == '#' || c == StyleScope.SELECTOR_SEPARATOR
+                if (depth > 0 && (c == '.' || c == '#' || c == '+'
+                    || c == StyleScope.SELECTOR_SEPARATOR
                     || c == ' ' || c == '	'))
                 {
                     MoveCursor();

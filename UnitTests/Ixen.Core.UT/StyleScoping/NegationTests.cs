@@ -381,6 +381,19 @@ namespace Ixen.Core.UT.StyleScoping
         }
 
         [TestMethod]
+        public void ANegationHoldingAParenthesisKeepsItsOwnClose()
+        {
+            Build("row:not(:nth-child(3)) { background: #111111 }");
+
+            Assert.AreEqual("#111111", BackgroundOf(Plain),
+                "the split took the FIRST closing parenthesis, so the inner one of a pseudo-class "
+                + "ended the negation and left a stray bracket on the bare selector - which made "
+                + "every :not(:nth-child(...)) silently match nothing. It counts depth now.");
+            Assert.AreEqual("#111111", BackgroundOf(Wide));
+            Assert.IsNull(BackgroundOf(Typed), "the third child is the one excluded");
+        }
+
+        [TestMethod]
         public void ADotOutsideAParenthesisIsStillASyntaxError()
         {
             var source = new XnsSource("row.wide { background: #111111 }");

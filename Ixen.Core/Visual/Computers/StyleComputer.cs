@@ -242,6 +242,20 @@ namespace Ixen.Core.Visual.Computers
                     element, scoped, defaults);
             }
 
+            if ((kinds & StructuralKinds.Formula) != 0)
+            {
+                IReadOnlyList<NthFormula> formulas = registry.NthFormulas;
+
+                for (int i = 0; i < formulas.Count; i++)
+                {
+                    if (formulas[i].Matches(index + 1))
+                    {
+                        ApplyVariant(handlers, registry, target, name,
+                            Nth(formulas[i].Argument), element, scoped, defaults);
+                    }
+                }
+            }
+
             if ((kinds & StructuralKinds.Nth) != 0)
             {
                 ApplyVariant(handlers, registry, target, name,

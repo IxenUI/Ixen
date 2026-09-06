@@ -166,3 +166,7 @@ generated_container_host {
 generated_not:not(.generated_off):not(:last-child) {
     background: #445566
 }
+
+generated_striped:nth-child(2n+1) {
+    background: #556677
+}

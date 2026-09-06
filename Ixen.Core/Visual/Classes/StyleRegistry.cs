@@ -38,6 +38,7 @@ namespace Ixen.Core.Visual.Classes
         private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), List<ScopedClass>> _container = new();
         private readonly List<MediaQuery> _queries = new();
         private readonly List<MediaQuery> _containerQueries = new();
+        private readonly List<NthFormula> _nth = new();
 
         private int _count;
         private bool _hasStateClasses;
@@ -55,6 +56,8 @@ namespace Ixen.Core.Visual.Classes
         internal StructuralKinds Structural => _structural;
 
         internal bool HasStructuralClasses => _structural != StructuralKinds.None;
+
+        internal IReadOnlyList<NthFormula> NthFormulas => _nth;
 
         internal bool HasFocusClasses => _hasFocusClasses;
 
@@ -96,8 +99,8 @@ namespace Ixen.Core.Visual.Classes
                 _hasFocusClasses = true;
             }
 
-            _structural |= StyleStructural.KindsOf(styleClass.Name)
-                | StyleStructural.KindsOf(styleClass.Scope);
+            _structural |= StyleStructural.Scan(styleClass.Name, _nth)
+                | StyleStructural.Scan(styleClass.Scope, _nth);
 
             var key = (styleClass.Target, styleClass.SheetScope, styleClass.Name);
 

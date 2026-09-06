@@ -92,6 +92,7 @@ namespace Ixen.Core.Visual.Classes
 
         internal const string NOT_OPEN = ":not(";
         internal const char NOT_CLOSE = ')';
+        private const char NOT_GROUP = '(';
 
         internal static string[] Split(string selector)
         {
@@ -183,7 +184,7 @@ namespace Ixen.Core.Visual.Classes
 
                 bare.Append(selector, at, open - at);
 
-                int close = selector.IndexOf(NOT_CLOSE, open + NOT_OPEN.Length);
+                int close = Closing(selector, open + NOT_OPEN.Length);
 
                 if (close < 0)
                 {
@@ -203,6 +204,36 @@ namespace Ixen.Core.Visual.Classes
             }
 
             return bare.ToString();
+        }
+
+        private static int Closing(string selector, int from)
+        {
+            int depth = 0;
+
+            for (int at = from; at < selector.Length; at++)
+            {
+                char c = selector[at];
+
+                if (c == NOT_GROUP)
+                {
+                    depth++;
+                    continue;
+                }
+
+                if (c != NOT_CLOSE)
+                {
+                    continue;
+                }
+
+                if (depth == 0)
+                {
+                    return at;
+                }
+
+                depth--;
+            }
+
+            return -1;
         }
 
         internal static StyleScopeSegment[] ParseNegations(string negations)
