@@ -45,15 +45,8 @@ namespace Ixen.Core.UT.Text
 
             surface.ComputeLayout(VIEWPORT, VIEWPORT);
 
-            long before = System.GC.GetAllocatedBytesForCurrentThread();
-
-            for (int pass = 0; pass < 10; pass++)
-            {
-                field.InvalidateLayout();
-                surface.ComputeLayout(VIEWPORT, VIEWPORT);
-            }
-
-            long each = (System.GC.GetAllocatedBytesForCurrentThread() - before) / 10;
+            long each = Allocations.PerPass(10,
+                () => { field.InvalidateLayout(); surface.ComputeLayout(VIEWPORT, VIEWPORT); });
 
             Assert.IsTrue(each < BUDGET,
                 $"one layout of a {LENGTH} character field allocated {each / 1024} KB. The caret "

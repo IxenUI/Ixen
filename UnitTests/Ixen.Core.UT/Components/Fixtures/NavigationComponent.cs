@@ -34,6 +34,11 @@ namespace Ixen.Core.UT.Components.Fixtures
             Follow(Navigation);
         }
 
+        public void Poke()
+        {
+            SetState();
+        }
+
         public void FollowNothing()
         {
             Follow(null);

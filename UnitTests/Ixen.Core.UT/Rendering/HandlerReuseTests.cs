@@ -51,15 +51,8 @@ namespace Ixen.Core.UT.Rendering
 
             surface.ComputeLayout(VIEWPORT, VIEWPORT);
 
-            long before = System.GC.GetAllocatedBytesForCurrentThread();
-
-            for (int pass = 0; pass < PASSES; pass++)
-            {
-                surface.Root.Invalidate();
-                surface.ComputeLayout(VIEWPORT, VIEWPORT);
-            }
-
-            return (System.GC.GetAllocatedBytesForCurrentThread() - before) / PASSES;
+            return Allocations.PerPass(PASSES,
+                () => { surface.Root.Invalidate(); surface.ComputeLayout(VIEWPORT, VIEWPORT); });
         }
 
         private static long Extra(string rule)

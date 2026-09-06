@@ -53,15 +53,8 @@ namespace Ixen.Core.UT.Rendering
 
             surface.ComputeLayout(VIEWPORT, VIEWPORT);
 
-            long before = System.GC.GetAllocatedBytesForCurrentThread();
-
-            for (int pass = 0; pass < PASSES; pass++)
-            {
-                surface.Root.Invalidate();
-                surface.ComputeLayout(VIEWPORT, VIEWPORT);
-            }
-
-            return (System.GC.GetAllocatedBytesForCurrentThread() - before) / PASSES;
+            return Allocations.PerPass(PASSES,
+                () => { surface.Root.Invalidate(); surface.ComputeLayout(VIEWPORT, VIEWPORT); });
         }
 
         [TestMethod]
@@ -101,15 +94,8 @@ namespace Ixen.Core.UT.Rendering
             var surface = new IxenSurface(root) { Styles = registry };
             surface.ComputeLayout(VIEWPORT, VIEWPORT);
 
-            long before = System.GC.GetAllocatedBytesForCurrentThread();
-
-            for (int pass = 0; pass < PASSES; pass++)
-            {
-                root.Invalidate();
-                surface.ComputeLayout(VIEWPORT, VIEWPORT);
-            }
-
-            long each = (System.GC.GetAllocatedBytesForCurrentThread() - before) / PASSES;
+            long each = Allocations.PerPass(PASSES,
+                () => { root.Invalidate(); surface.ComputeLayout(VIEWPORT, VIEWPORT); });
 
             Assert.IsTrue(each < BUDGET,
                 $"one style pass over {CELLS} filtered cells allocated {each / 1024} KB; a filter "
