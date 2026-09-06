@@ -48,6 +48,7 @@
     <AdditionalFiles Include="Components\Fixtures\LoopView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\NestedView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\LifecycleView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\NavigationView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\LifecycleInnerView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\LifecycleHostView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\NamedSlotCardView.xnl" />

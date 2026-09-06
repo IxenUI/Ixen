@@ -244,15 +244,17 @@ namespace Ixen.Platform
             }
         }
 
-        public void KeyDown(Key key, KeyModifiers modifiers, bool? isRepeat = null)
+        public bool KeyDown(Key key, KeyModifiers modifiers, bool? isRepeat = null)
         {
             try
             {
-                _surface.KeyDown(key, modifiers, isRepeat);
+                return _surface.KeyDown(key, modifiers, isRepeat);
             }
             catch (Exception error)
             {
                 Fail(IxenErrorPhase.Keyboard, error);
+
+                return false;
             }
             finally
             {

@@ -32,6 +32,8 @@ namespace Ixen.Core.Input
 
         Shift,
         Control,
-        Alt
+        Alt,
+
+        Back
     }
 }

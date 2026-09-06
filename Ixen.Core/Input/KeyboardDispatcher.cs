@@ -151,7 +151,7 @@ namespace Ixen.Core.Input
             }
         }
 
-        internal void KeyDown(VisualElement root, Key key, KeyModifiers modifiers, bool trackStates,
+        internal bool KeyDown(VisualElement root, Key key, KeyModifiers modifiers, bool trackStates,
             bool? isRepeat = null)
         {
             _trackStates = trackStates;
@@ -160,7 +160,7 @@ namespace Ixen.Core.Input
 
             if (target == null)
             {
-                return;
+                return false;
             }
 
             bool derived = PressAndTellIfRepeat(key);
@@ -173,22 +173,22 @@ namespace Ixen.Core.Input
 
                 if (args.Handled)
                 {
-                    return;
+                    return true;
                 }
             }
 
             if (TryShortcut(root, key, modifiers))
             {
-                return;
+                return true;
             }
 
             if (key == Key.Tab)
             {
                 MoveFocus(root, args.HasModifier(KeyModifiers.Shift), trackStates);
-                return;
+                return true;
             }
 
-            ScrollBy(target, root, key);
+            return ScrollBy(target, root, key);
         }
 
         private static bool TryShortcut(VisualElement root, Key key, KeyModifiers modifiers)
@@ -218,7 +218,7 @@ namespace Ixen.Core.Input
             return false;
         }
 
-        private static void ScrollBy(VisualElement from, VisualElement root, Key key)
+        private static bool ScrollBy(VisualElement from, VisualElement root, Key key)
         {
             VisualElement page = Target(from, root, PageStep(key, true), PageStep(key, false));
 
@@ -252,18 +252,25 @@ namespace Ixen.Core.Input
                     break;
 
                 case Key.Home:
-                    ScrollToEnd(from, root, false);
-                    return;
+                    return ScrollToEnd(from, root, false);
 
                 case Key.End:
-                    ScrollToEnd(from, root, true);
-                    return;
+                    return ScrollToEnd(from, root, true);
 
                 default:
-                    return;
+                    return false;
             }
 
-            Target(from, root, offsetX, offsetY)?.RequestScroll(offsetX, offsetY);
+            VisualElement scroller = Target(from, root, offsetX, offsetY);
+
+            if (scroller == null)
+            {
+                return false;
+            }
+
+            scroller.RequestScroll(offsetX, offsetY);
+
+            return true;
         }
 
         private static VisualElement Target(VisualElement from, VisualElement root,
@@ -289,14 +296,18 @@ namespace Ixen.Core.Input
             return key == Key.PageUp ? -1 : key == Key.PageDown ? 1 : 0;
         }
 
-        private static void ScrollToEnd(VisualElement from, VisualElement root, bool end)
+        private static bool ScrollToEnd(VisualElement from, VisualElement root, bool end)
         {
             VisualElement target = Target(from, root, 0, end ? 1 : -1);
 
-            if (target != null)
+            if (target == null)
             {
-                target.ScrollTo(target.ScrollX, end ? target.MaxScrollY : 0);
+                return false;
             }
+
+            target.ScrollTo(target.ScrollX, end ? target.MaxScrollY : 0);
+
+            return true;
         }
 
         internal void KeyUp(VisualElement root, Key key, KeyModifiers modifiers, bool trackStates)

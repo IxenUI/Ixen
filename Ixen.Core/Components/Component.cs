@@ -15,10 +15,13 @@ namespace Ixen.Core.Components
         private bool _writingBack;
         private List<Slot> _slots;
         private bool _attached;
+        private List<Navigator> _followed;
 
         internal abstract VisualElement GetVisualElement();
 
         internal bool IsStateDirty => _isStateDirty;
+
+        internal int FollowedCount => _followed == null ? 0 : _followed.Count;
 
         public VisualElement Initialize()
         {
@@ -149,6 +152,8 @@ namespace Ixen.Core.Components
 
             _attached = attached;
 
+            Listen(attached);
+
             if (attached)
             {
                 OnAttached();
@@ -156,6 +161,59 @@ namespace Ixen.Core.Components
             }
 
             OnDetached();
+        }
+
+        protected void Follow(Navigator navigator)
+        {
+            if (navigator == null)
+            {
+                return;
+            }
+
+            if (_followed == null)
+            {
+                _followed = new List<Navigator>();
+            }
+
+            if (_followed.Contains(navigator))
+            {
+                return;
+            }
+
+            _followed.Add(navigator);
+
+            if (_attached)
+            {
+                navigator.Changed += OnNavigated;
+            }
+        }
+
+        private void Listen(bool attached)
+        {
+            if (_followed == null)
+            {
+                return;
+            }
+
+            foreach (Navigator navigator in _followed)
+            {
+                navigator.Changed -= OnNavigated;
+
+                if (attached)
+                {
+                    navigator.Changed += OnNavigated;
+                }
+            }
+
+            if (attached)
+            {
+                SetState();
+            }
+        }
+
+        private void OnNavigated(object sender, EventArgs e)
+        {
+            SetState();
         }
 
         protected virtual void Render()

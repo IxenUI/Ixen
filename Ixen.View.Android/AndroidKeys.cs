@@ -112,6 +112,9 @@ namespace Ixen.View.Android
                 case Keycode.AltRight:
                     return Key.Alt;
 
+                case Keycode.Back:
+                    return Key.Back;
+
                 default: return Key.None;
             }
         }
@@ -120,7 +123,6 @@ namespace Ixen.View.Android
         {
             switch (code)
             {
-                case Keycode.Back:
                 case Keycode.Home:
                 case Keycode.Menu:
                 case Keycode.AppSwitch:

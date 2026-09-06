@@ -45,6 +45,8 @@ namespace Ixen.View.Android
         }
 
         private bool _softKeyboardShown;
+        private bool _backHandled;
+        private BackGesture _backGesture;
         private TextField _editing;
         private IxenAccessibilityProvider _accessibility;
 
@@ -209,6 +211,26 @@ namespace Ixen.View.Android
                 : InputTypes.ClassText;
         }
 
+        public bool Offer(Key key)
+        {
+            return _host.KeyDown(key, KeyModifiers.None);
+        }
+
+        protected override void OnAttachedToWindow()
+        {
+            base.OnAttachedToWindow();
+
+            _backGesture = BackGesture.Register(this);
+        }
+
+        protected override void OnDetachedFromWindow()
+        {
+            _backGesture?.Release();
+            _backGesture = null;
+
+            base.OnDetachedFromWindow();
+        }
+
         public override bool DispatchKeyEvent(KeyEvent e)
         {
             if (e == null || AndroidKeys.IsSystemKey(e.KeyCode))
@@ -216,12 +238,20 @@ namespace Ixen.View.Android
                 return base.DispatchKeyEvent(e);
             }
 
+            bool isBack = e.KeyCode == Keycode.Back;
             KeyModifiers modifiers = AndroidKeys.ToModifiers(e.MetaState);
 
             switch (e.Action)
             {
                 case KeyEventActions.Down:
-                    _host.KeyDown(AndroidKeys.ToKey(e.KeyCode), modifiers, e.RepeatCount > 0);
+                    bool handled = _host.KeyDown(AndroidKeys.ToKey(e.KeyCode), modifiers, e.RepeatCount > 0);
+
+                    if (isBack)
+                    {
+                        _backHandled = handled;
+
+                        return handled || base.DispatchKeyEvent(e);
+                    }
 
                     int unicode = e.UnicodeChar;
 
@@ -234,6 +264,12 @@ namespace Ixen.View.Android
 
                 case KeyEventActions.Up:
                     _host.KeyUp(AndroidKeys.ToKey(e.KeyCode), modifiers);
+
+                    if (isBack && !_backHandled)
+                    {
+                        return base.DispatchKeyEvent(e);
+                    }
+
                     return true;
             }
 
