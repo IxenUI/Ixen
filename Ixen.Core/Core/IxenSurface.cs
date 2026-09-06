@@ -32,6 +32,7 @@ namespace Ixen.Core
         private VisualElement _root;
         private float _scale = 1;
         private bool _visualDirty;
+        private Dictionary<string, Dictionary<string, string>> _pendingState;
 
         private readonly ConcurrentQueue<Action> _posted = new ConcurrentQueue<Action>();
         private readonly int _thread = Thread.CurrentThread.ManagedThreadId;
@@ -175,7 +176,7 @@ namespace Ixen.Core
 
             for (int pass = 0; pass < CONTAINER_PASSES; pass++)
             {
-                RenderComponents(Root, logicalWidth, logicalHeight);
+                RenderComponents(Root, string.Empty, logicalWidth, logicalHeight);
                 _styleComputer.Compute(Root, styles, logicalWidth, logicalHeight);
                 _measureComputer.Measure(Root, logicalWidth, logicalHeight, true, true);
 
@@ -279,15 +280,98 @@ namespace Ixen.Core
             return changed;
         }
 
-        private static void RenderComponents(VisualElement element, float width, float height)
+        private void RenderComponents(VisualElement element, string prefix, float width, float height)
         {
+            string path = PathOf(element, prefix);
+
+            RestoreIfPending(element, path);
+
             element.Owner?.RenderIfDirty();
             element.OnPrepass(width, height);
 
             foreach (VisualElement child in element.Children)
             {
-                RenderComponents(child, width, height);
+                RenderComponents(child, path, width, height);
             }
+        }
+
+        public string SaveState()
+        {
+            var states = new Dictionary<string, ComponentState>();
+
+            if (Root != null)
+            {
+                CollectState(Root, string.Empty, states);
+            }
+
+            return StateFormat.Write(states);
+        }
+
+        public void RestoreState(string state)
+        {
+            _pendingState = StateFormat.Read(state);
+
+            if (_pendingState.Count > 0)
+            {
+                Root?.InvalidateLayout();
+            }
+        }
+
+        internal int PendingStateCount => _pendingState == null ? 0 : _pendingState.Count;
+
+        private static void CollectState(VisualElement element, string prefix,
+            Dictionary<string, ComponentState> states)
+        {
+            string path = PathOf(element, prefix);
+
+            if (element.Owner != null)
+            {
+                ComponentState state = element.Owner.SaveState();
+
+                if (state.Count > 0)
+                {
+                    if (states.ContainsKey(path))
+                    {
+                        throw new InvalidOperationException(
+                            $"Two components resolve to the state path '{path}', so neither could be "
+                            + "restored without the other. Give one of their elements a different name.");
+                    }
+
+                    states[path] = state;
+                }
+            }
+
+            foreach (VisualElement child in element.Children)
+            {
+                CollectState(child, path, states);
+            }
+        }
+
+        private static string PathOf(VisualElement element, string prefix)
+        {
+            if (string.IsNullOrEmpty(element.Name))
+            {
+                return prefix;
+            }
+
+            return prefix.Length == 0 ? element.Name : prefix + "/" + element.Name;
+        }
+
+        private void RestoreIfPending(VisualElement element, string path)
+        {
+            if (_pendingState == null || element.Owner == null)
+            {
+                return;
+            }
+
+            if (!_pendingState.TryGetValue(path, out Dictionary<string, string> values))
+            {
+                return;
+            }
+
+            _pendingState.Remove(path);
+
+            element.Owner.RestoreState(new ComponentState(values));
         }
 
         internal VisualElement HitTest(float x, float y)

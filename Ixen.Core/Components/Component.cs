@@ -141,6 +141,27 @@ namespace Ixen.Core.Components
         protected virtual void OnDetached()
         { }
 
+        protected virtual void OnSaveState(ComponentState state)
+        { }
+
+        protected virtual void OnRestoreState(ComponentState state)
+        { }
+
+        internal ComponentState SaveState()
+        {
+            var state = new ComponentState();
+
+            OnSaveState(state);
+
+            return state;
+        }
+
+        internal void RestoreState(ComponentState state)
+        {
+            OnRestoreState(state);
+            SetState();
+        }
+
         internal void HostChanged()
         {
             bool attached = GetVisualElement()?.Host != null;
