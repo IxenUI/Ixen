@@ -35,6 +35,52 @@ namespace Ixen.Generators.Xns
 
         private const string DEFAULTS_ATTRIBUTE = "Ixen.Core.Visual.Classes.IxenDefaultStylesAttribute";
 
+        private const int CLASSES_A_METHOD = 20;
+
+        private static void AppendClass(StringBuilder sb, StyleClass c)
+        {
+            sb.AppendLine($"\t\t\tAddClass(new StyleClass(StyleClassTarget.{c.Target}, " +
+                $"null, " +
+                $"{(!string.IsNullOrWhiteSpace(c.Scope) ? $"\"{c.Scope}\"" : "null")}, " +
+                $"{(!string.IsNullOrWhiteSpace(c.Name) ? $"\"{c.Name}\"" : "null")}, " +
+                $"new List<StyleDescriptor>()");
+            sb.AppendLine("\t\t\t{");
+
+            foreach (var style in c.Styles)
+            {
+                if (style.CanGenerateSource)
+                {
+                    sb.AppendLine($"\t\t\t\t{style.ToSource()},");
+                }
+            }
+
+            string tail = c.Media != null
+                ? $"\t\t\t}}, global::Ixen.Core.Visual.Classes.MediaQuery.Parse(\"{c.Media.Source}\")"
+                : "\t\t\t}";
+
+            var initializers = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(c.Negations))
+            {
+                initializers.Add($"Negations = \"{c.Negations}\"");
+            }
+
+            if (c.Container != null)
+            {
+                initializers.Add($"Container = global::Ixen.Core.Visual.Classes.MediaQuery.Parse(\"{c.Container.Source}\")");
+                initializers.Add($"ContainerDepth = {c.ContainerDepth}");
+            }
+
+            string extra = string.Join(", ", initializers);
+
+            tail += initializers.Count > 0
+                ? $") {{ {extra} }});"
+                : "));";
+
+            sb.AppendLine(tail);
+            sb.AppendLine();
+        }
+
         private static bool ShipsDefaultStyles(Compilation compilation)
         {
             INamedTypeSymbol attribute = compilation.GetTypeByMetadataName(DEFAULTS_ATTRIBUTE);
@@ -124,49 +170,18 @@ namespace Ixen.Generators.Xns
                     + "=> global::Ixen.Core.Visual.Classes.StyleFormat.VERSION;");
                 sb.AppendLine();
 
+                int batches = (sheet.Classes.Count + CLASSES_A_METHOD - 1) / CLASSES_A_METHOD;
+
                 sb.AppendLine($"\t\tpublic {name}_StyleSheet() ");
                 sb.AppendLine("\t\t{");
-                foreach (var c in sheet.Classes)
+
+                for (int batch = 0; batch < batches; batch++)
                 {
-                    sb.AppendLine($"\t\t\tAddClass(new StyleClass(StyleClassTarget.{c.Target}, " +
-                        $"null, " +
-                        $"{(!string.IsNullOrWhiteSpace(c.Scope) ? $"\"{c.Scope}\"" : "null")}, " +
-                        $"{(!string.IsNullOrWhiteSpace(c.Name) ? $"\"{c.Name}\"" : "null")}, " +
-                        $"new List<StyleDescriptor>()");
-                    sb.AppendLine("\t\t\t{");
+                    sb.AppendLine($"\t\t\tAddClasses{batch}();");
+                }
 
-                    foreach (var style in c.Styles)
-                    {
-                        if (style.CanGenerateSource)
-                        {
-                            sb.AppendLine($"\t\t\t\t{style.ToSource()},");
-                        }
-                    }
-
-                    string tail = c.Media != null
-                        ? $"\t\t\t}}, global::Ixen.Core.Visual.Classes.MediaQuery.Parse(\"{c.Media.Source}\")"
-                        : "\t\t\t}";
-
-                    var initializers = new List<string>();
-
-                    if (!string.IsNullOrWhiteSpace(c.Negations))
-                    {
-                        initializers.Add($"Negations = \"{c.Negations}\"");
-                    }
-
-                    if (c.Container != null)
-                    {
-                        initializers.Add($"Container = global::Ixen.Core.Visual.Classes.MediaQuery.Parse(\"{c.Container.Source}\")");
-                        initializers.Add($"ContainerDepth = {c.ContainerDepth}");
-                    }
-
-                    string extra = string.Join(", ", initializers);
-
-                    tail += initializers.Count > 0
-                        ? $") {{ {extra} }});"
-                        : "));";
-
-                    sb.AppendLine(tail);
+                if (batches > 0)
+                {
                     sb.AppendLine();
                 }
 
@@ -196,6 +211,24 @@ namespace Ixen.Generators.Xns
                 }
 
                 sb.AppendLine("\t\t}");
+
+                for (int batch = 0; batch < batches; batch++)
+                {
+                    int from = batch * CLASSES_A_METHOD;
+                    int to = System.Math.Min(from + CLASSES_A_METHOD, sheet.Classes.Count);
+
+                    sb.AppendLine();
+                    sb.AppendLine($"\t\tprivate void AddClasses{batch}()");
+                    sb.AppendLine("\t\t{");
+
+                    for (int index = from; index < to; index++)
+                    {
+                        AppendClass(sb, sheet.Classes[index]);
+                    }
+
+                    sb.AppendLine("\t\t}");
+                }
+
                 sb.AppendLine("\t}");
                 sb.AppendLine("}");
 
