@@ -24,7 +24,6 @@ namespace Ixen.Core.UT.Perf
 
         private const long ONE_EVENT = 128;
         private const long RELAYOUT = 150 * 1024;
-        private const long PER_TEXT_DRAW = 200;
         private const long PER_TOKEN = 100;
         private const long STYLE_SLACK = 1024;
 
@@ -55,6 +54,9 @@ namespace Ixen.Core.UT.Perf
         }
 
         private static IxenSurface Grid(string cell, string text)
+            => Grid(cell, text, false);
+
+        private static IxenSurface Grid(string cell, string text, bool distinct)
         {
             var registry = new StyleRegistry();
             var sheet = new XnsSource(
@@ -73,7 +75,11 @@ namespace Ixen.Core.UT.Perf
 
                 for (int across = 0; across < GRID; across++)
                 {
-                    band.AddChild(new VisualElement { Name = "cell", Text = text });
+                    band.AddChild(new VisualElement
+                    {
+                        Name = "cell",
+                        Text = distinct ? (down * GRID + across).ToString("D5") : text
+                    });
                 }
 
                 root.AddChild(band);
@@ -182,24 +188,41 @@ namespace Ixen.Core.UT.Perf
         }
 
         [TestMethod]
-        public void PaintingTextCostsOneSkiaCallPerElementAndNoMore()
+        public void PaintingTextAllocatesNothingEither()
         {
             IxenSurface surface = Grid("color: #E8ECF5  font-size: 11px", "x");
 
             long each = PaintOnce(surface);
 
-            Assert.IsTrue(each / CELLS <= PER_TEXT_DRAW,
-                $"{each / CELLS} bytes per text draw over {CELLS} cells, against a budget of "
-                + $"{PER_TEXT_DRAW}. The floor is 160 and it is not ours: SKCanvas.DrawText's string "
-                + "overload allocates per call, constant whatever the length - one character and "
-                + "forty both cost 160, and a text-shadow doubles it because it is a second call. So "
-                + "an element that paints a box costs nothing and an element that paints text costs "
-                + "160 bytes a frame, which is the largest per-element allocation left on the paint "
-                + "path. Removing it means caching an SKTextBlob per text and font, which is a real "
-                + "feature with a real invalidation question; this budget is here so that the day it "
-                + "is done the number moves, and so that nothing else creeps in beside it. The forty "
-                + "bytes of headroom are what make FontCache the thing this also pins: a face and a "
-                + "font minted per draw rather than per spec is what it catches.");
+            Assert.AreEqual(0, each,
+                $"one frame over {CELLS} cells of text allocated {each} bytes, and it should be "
+                + "none. This guard used to read 160 a cell and said so: SKCanvas.DrawText's "
+                + "string overload allocates per call, constant whatever the length, doubling with "
+                + "a text-shadow because that is a second call - 144 KB a frame over this grid, "
+                + "and the largest per-element allocation left on the paint path. It is a cached "
+                + "SKTextBlob now, keyed on the text, the SKFont instance and the letter-spacing, "
+                + "so the shaping happens once and a shadow shares the run with its glyphs. What "
+                + "the number cannot show is that a blob built per draw and thrown away is NO "
+                + "faster than the string overload - 0.363 ms against 0.351 over thirty labels - "
+                + "so it is the cache rather than the blob that earns this, which is the reason "
+                + "the cache exists at all.");
+        }
+
+        [TestMethod]
+        public void AScreenfulOfDistinctLabelsIsStillFreeOnceShaped()
+        {
+            IxenSurface surface = Grid("color: #E8ECF5  font-size: 11px", null, true);
+
+            long each = PaintOnce(surface);
+
+            Assert.AreEqual(0, each,
+                $"{CELLS} cells each carrying DIFFERENT text allocated {each} bytes a frame. The "
+                + "guard above would pass on a cache that only ever held one entry, so this is "
+                + "the one that says the budget is not so small that an ordinary screen churns: a "
+                + "run costs about 500 bytes plus ten a character - measured - so nine hundred "
+                + "short labels come to roughly 460 KB against a default budget of 2 MB. Lowering "
+                + "that default far enough turns every frame back into a shaping pass, and this "
+                + "is what would notice.");
         }
 
         [TestMethod]

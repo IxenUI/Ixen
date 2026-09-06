@@ -229,15 +229,42 @@ namespace Ixen.Core.Rendering
         private float[] _spacedAdvances = new float[64];
         private SKPoint[] _spacedPositions = new SKPoint[64];
 
-        private void DrawSpaced(string text, float x, float baseline, FontSpec fontSpec,
+        private readonly TextBlobCache _blobs = new TextBlobCache();
+
+        internal TextBlobCache Blobs => _blobs;
+
+        private void DrawRun(string text, float x, float baseline, FontSpec fontSpec,
             SKFont font, SKPaint paint)
         {
-            if (font.CountGlyphs(text) != text.Length)
+            float spacing = fontSpec.LetterSpacing;
+
+            if (spacing != 0 && !string.IsNullOrEmpty(text)
+                && font.CountGlyphs(text) != text.Length)
             {
                 DrawSpacedOneByOne(text, x, baseline, fontSpec, font, paint);
                 return;
             }
 
+            if (!_blobs.TryGet(text, font, spacing, out SKTextBlob blob))
+            {
+                blob = string.IsNullOrEmpty(text) ? null
+                    : spacing != 0 ? Positioned(text, font, spacing)
+                    : SKTextBlob.Create(text, font, SKPoint.Empty);
+
+                _blobs.Add(text, font, spacing, blob);
+            }
+
+            if (blob == null)
+            {
+                SKCanvas.DrawText(text, x, baseline, SKTextAlign.Left, font, paint);
+                return;
+            }
+
+            SKCanvas.DrawText(blob, x, baseline, paint);
+        }
+
+        private SKTextBlob Positioned(string text, SKFont font, float spacing)
+        {
             if (_spacedAdvances.Length < text.Length)
             {
                 _spacedAdvances = new float[text.Length];
@@ -252,17 +279,11 @@ namespace Ixen.Core.Rendering
             for (int index = 0; index < text.Length; index++)
             {
                 _spacedPositions[index] = new SKPoint(offset, 0);
-                offset += _spacedAdvances[index] + fontSpec.LetterSpacing;
+                offset += _spacedAdvances[index] + spacing;
             }
 
-            using (SKTextBlob blob = SKTextBlob.CreatePositioned(text, font,
-                new ReadOnlySpan<SKPoint>(_spacedPositions, 0, text.Length)))
-            {
-                if (blob != null)
-                {
-                    SKCanvas.DrawText(blob, x, baseline, paint);
-                }
-            }
+            return SKTextBlob.CreatePositioned(text, font,
+                new ReadOnlySpan<SKPoint>(_spacedPositions, 0, text.Length));
         }
 
         private void DrawSpacedOneByOne(string text, float x, float baseline, FontSpec fontSpec,
@@ -283,15 +304,7 @@ namespace Ixen.Core.Rendering
 
             brush.Antialisasing = true;
 
-            float baseline = Baseline(top, fontSpec, font);
-
-            if (fontSpec.LetterSpacing != 0)
-            {
-                DrawSpaced(text, x, baseline, fontSpec, font, brush.SKPaint);
-                return;
-            }
-
-            SKCanvas.DrawText(text, x, baseline, SKTextAlign.Left, font, brush.SKPaint);
+            DrawRun(text, x, Baseline(top, fontSpec, font), fontSpec, font, brush.SKPaint);
         }
 
         internal void DrawTextShadow(string text, float x, float top, FontSpec fontSpec,
@@ -327,14 +340,7 @@ namespace Ixen.Core.Rendering
 
             float shadowBaseline = Baseline(top + shadow.OffsetY, fontSpec, font);
 
-            if (fontSpec.LetterSpacing != 0)
-            {
-                DrawSpaced(text, x + shadow.OffsetX, shadowBaseline, fontSpec, font, _textShadowPaint);
-                return;
-            }
-
-            SKCanvas.DrawText(text, x + shadow.OffsetX, shadowBaseline,
-                SKTextAlign.Left, font, _textShadowPaint);
+            DrawRun(text, x + shadow.OffsetX, shadowBaseline, fontSpec, font, _textShadowPaint);
         }
 
         internal void DrawTextDecoration(string text, float x, float top, FontSpec fontSpec,

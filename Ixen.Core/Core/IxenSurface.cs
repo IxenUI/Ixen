@@ -641,6 +641,18 @@ namespace Ixen.Core
 
         internal long ImageBytes => _images.Bytes;
 
+        internal long TextBlobBytes => _rendererContext.Blobs.Bytes;
+
+        internal int TextBlobCount => _rendererContext.Blobs.Count;
+
+        internal bool HoldsTextBlob(string text) => _rendererContext.Blobs.Holds(text);
+
+        public long TextBlobCacheBudget
+        {
+            get => _rendererContext.Blobs.Budget;
+            set => _rendererContext.Blobs.Budget = value;
+        }
+
         public long ImageCacheBudget
         {
             get => _images.Budget;
