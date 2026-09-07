@@ -42,6 +42,7 @@ namespace Ixen.Core.Visual.Classes
 
         private int _count;
         private bool _hasStateClasses;
+        private bool _hasSiblingClasses;
         private bool _hasFocusClasses;
         private StructuralKinds _structural;
 
@@ -52,6 +53,8 @@ namespace Ixen.Core.Visual.Classes
         internal bool HasScopedClasses => _scoped.Count > 0;
 
         internal bool HasStateClasses => _hasStateClasses;
+
+        internal bool HasSiblingClasses => _hasSiblingClasses;
 
         internal StructuralKinds Structural => _structural;
 
@@ -97,6 +100,11 @@ namespace Ixen.Core.Visual.Classes
             if (!_hasFocusClasses && DeclaresFocus(styleClass))
             {
                 _hasFocusClasses = true;
+            }
+
+            if (!_hasSiblingClasses && StyleScope.HasSibling(styleClass.Scope))
+            {
+                _hasSiblingClasses = true;
             }
 
             _structural |= StyleStructural.Scan(styleClass.Name, _nth)

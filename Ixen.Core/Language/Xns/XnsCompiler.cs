@@ -39,6 +39,11 @@ namespace Ixen.Core.Language.Xns
         private static readonly string MEDIA_HOLDS_SELECTORS =
             $"A top-level '{MEDIA_AT}' block holds selectors, not styles.";
 
+        private static readonly string SIBLING_CONTAINER =
+            $"A '{CONTAINER_AT}' block cannot style a sibling of its container: the query asks"
+                + " about the element the block is nested inside, so that element has to contain"
+                + " what the rule styles.";
+
         public ClassesSet Compile(XnsNode node, List<LanguageError> errors)
         {
             var set = new ClassesSet();
@@ -84,6 +89,15 @@ namespace Ixen.Core.Language.Xns
 
             foreach (string entry in StyleScope.Split(selector.Name))
             {
+                if (container != null && StyleScope.IsSibling(entry)
+                    && ScopeDepth(selector) == containerDepth)
+                {
+                    errors.Add(new LanguageError(LanguageErrorCode.SYNTAX, SIBLING_CONTAINER,
+                        selector.NameIndex, selector.Name == null ? 1 : selector.Name.Length));
+
+                    continue;
+                }
+
                 string name = StyleScope.SplitNegations(StyleScope.Bare(entry),
                     out string negations);
 

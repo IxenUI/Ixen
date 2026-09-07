@@ -12,26 +12,29 @@ namespace Ixen.Core.Visual.Classes
         Type
     }
 
+    internal enum StyleScopeRelation
+    {
+        Descendant,
+        Child,
+        AdjacentSibling,
+        GeneralSibling
+    }
+
     internal readonly struct StyleScopeSegment
     {
         internal StyleScopeSegmentKind Kind { get; }
         internal string Value { get; }
         internal string State { get; }
-        internal bool Immediate { get; }
+        internal StyleScopeRelation Relation { get; }
         internal StyleScopeSegment[] Not { get; }
 
         internal StyleScopeSegment(StyleScopeSegmentKind kind, string value, string state,
-            bool immediate)
-            : this(kind, value, state, immediate, null)
-        { }
-
-        internal StyleScopeSegment(StyleScopeSegmentKind kind, string value, string state,
-            bool immediate, StyleScopeSegment[] not)
+            StyleScopeRelation relation, StyleScopeSegment[] not)
         {
             Kind = kind;
             Value = value;
             State = state;
-            Immediate = immediate;
+            Relation = relation;
             Not = not;
         }
 
@@ -77,12 +80,74 @@ namespace Ixen.Core.Visual.Classes
     {
         internal const string SEPARATOR = "/";
         internal const char IMMEDIATE = '>';
+        internal const char ADJACENT = '+';
+        internal const char SIBLING = '~';
 
-        internal static bool IsImmediate(string selector)
-            => !string.IsNullOrEmpty(selector) && selector[0] == IMMEDIATE;
+        internal static bool IsMarker(char c)
+            => c == IMMEDIATE || c == ADJACENT || c == SIBLING;
+
+        internal static StyleScopeRelation RelationOf(string selector)
+        {
+            if (string.IsNullOrEmpty(selector))
+            {
+                return StyleScopeRelation.Descendant;
+            }
+
+            switch (selector[0])
+            {
+                case IMMEDIATE:
+                    return StyleScopeRelation.Child;
+
+                case ADJACENT:
+                    return StyleScopeRelation.AdjacentSibling;
+
+                case SIBLING:
+                    return StyleScopeRelation.GeneralSibling;
+
+                default:
+                    return StyleScopeRelation.Descendant;
+            }
+        }
+
+        internal static bool IsSibling(string selector)
+        {
+            StyleScopeRelation relation = RelationOf(selector);
+
+            return relation == StyleScopeRelation.AdjacentSibling
+                || relation == StyleScopeRelation.GeneralSibling;
+        }
+
+        internal static bool HasSibling(string scope)
+        {
+            if (string.IsNullOrEmpty(scope))
+            {
+                return false;
+            }
+
+            if (IsSibling(scope))
+            {
+                return true;
+            }
+
+            for (int at = 1; at < scope.Length; at++)
+            {
+                if (scope[at - 1] == SEPARATOR[0]
+                    && (scope[at] == ADJACENT || scope[at] == SIBLING))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         internal static string Bare(string selector)
-            => IsImmediate(selector) ? selector.Substring(1) : selector;
+            => !string.IsNullOrEmpty(selector) && IsMarker(selector[0])
+                ? selector.Substring(1)
+                : selector;
+
+        private static string Marked(string below, string bare)
+            => !string.IsNullOrEmpty(below) && IsMarker(below[0]) ? below[0] + bare : bare;
 
         private static readonly char[] _separators = { '/' };
 
@@ -254,13 +319,13 @@ namespace Ixen.Core.Visual.Classes
 
             for (int i = 0; i < parts.Length; i++)
             {
-                segments[i] = Simple(parts[i], false);
+                segments[i] = Simple(parts[i], StyleScopeRelation.Descendant);
             }
 
             return segments;
         }
 
-        private static StyleScopeSegment Simple(string part, bool immediate)
+        private static StyleScopeSegment Simple(string part, StyleScopeRelation relation)
         {
             string bare = SplitNegations(part, out string negations);
             StyleScopeSegment[] not = ParseNegations(negations);
@@ -268,22 +333,22 @@ namespace Ixen.Core.Visual.Classes
 
             if (value.Length == 0)
             {
-                return new StyleScopeSegment(StyleScopeSegmentKind.Name, null, state, immediate, not);
+                return new StyleScopeSegment(StyleScopeSegmentKind.Name, null, state, relation, not);
             }
 
             if (value[0] == '.')
             {
                 return new StyleScopeSegment(StyleScopeSegmentKind.Class, value.Substring(1),
-                    state, immediate, not);
+                    state, relation, not);
             }
 
             if (value[0] == '#')
             {
                 return new StyleScopeSegment(StyleScopeSegmentKind.Type, value.Substring(1),
-                    state, immediate, not);
+                    state, relation, not);
             }
 
-            return new StyleScopeSegment(StyleScopeSegmentKind.Name, value, state, immediate, not);
+            return new StyleScopeSegment(StyleScopeSegmentKind.Name, value, state, relation, not);
         }
 
         internal static List<string> BuildAll<TNode>(TNode node, string selector,
@@ -333,7 +398,7 @@ namespace Ixen.Core.Visual.Classes
 
             foreach (string entry in levels[level])
             {
-                segments.Add(IsImmediate(below) ? IMMEDIATE + Bare(entry) : Bare(entry));
+                segments.Add(Marked(below, Bare(entry)));
 
                 Combine(levels, level + 1, entry, segments, scopes);
 
@@ -353,7 +418,7 @@ namespace Ixen.Core.Visual.Classes
 
             for (int i = 0; i < parts.Length; i++)
             {
-                segments[i] = Simple(Bare(parts[i]), IsImmediate(parts[i]));
+                segments[i] = Simple(Bare(parts[i]), RelationOf(parts[i]));
             }
 
             return segments;
@@ -389,28 +454,84 @@ namespace Ixen.Core.Visual.Classes
                 return containerIndex < 0;
             }
 
-            int index = segments.Length - 1;
+            VisualElement node = element;
 
-            for (VisualElement ancestor = element.Parent; ancestor != null && index >= 0; ancestor = ancestor.Parent)
+            for (int index = segments.Length - 1; index >= 0; index--)
             {
-                if (segments[index].Matches(ancestor))
-                {
-                    if (index == containerIndex)
-                    {
-                        container = ancestor;
-                    }
+                node = Step(segments[index], node);
 
-                    index--;
-                    continue;
-                }
-
-                if (segments[index].Immediate)
+                if (node == null)
                 {
                     return false;
                 }
+
+                if (index == containerIndex)
+                {
+                    container = node;
+                }
             }
 
-            return index < 0;
+            return true;
+        }
+
+        private static VisualElement Step(StyleScopeSegment segment, VisualElement node)
+        {
+            switch (segment.Relation)
+            {
+                case StyleScopeRelation.Child:
+                    VisualElement parent = node.Parent;
+
+                    return parent != null && segment.Matches(parent) ? parent : null;
+
+                case StyleScopeRelation.AdjacentSibling:
+                    VisualElement previous = PreviousSibling(node);
+
+                    return previous != null && segment.Matches(previous) ? previous : null;
+
+                case StyleScopeRelation.GeneralSibling:
+                    for (VisualElement sibling = PreviousSibling(node); sibling != null;
+                        sibling = PreviousSibling(sibling))
+                    {
+                        if (segment.Matches(sibling))
+                        {
+                            return sibling;
+                        }
+                    }
+
+                    return null;
+
+                default:
+                    for (VisualElement ancestor = node.Parent; ancestor != null;
+                        ancestor = ancestor.Parent)
+                    {
+                        if (segment.Matches(ancestor))
+                        {
+                            return ancestor;
+                        }
+                    }
+
+                    return null;
+            }
+        }
+
+        private static VisualElement PreviousSibling(VisualElement element)
+        {
+            VisualElement parent = element.Parent;
+
+            if (parent == null)
+            {
+                return null;
+            }
+
+            IReadOnlyList<VisualElement> children = parent.ChildElements;
+            int at = element.ChildIndex;
+
+            if (at <= 0 || at >= children.Count || children[at] != element)
+            {
+                return null;
+            }
+
+            return children[at - 1];
         }
 
         internal static bool Holds(StyleScopeSegment[] negations, VisualElement element)

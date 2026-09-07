@@ -170,3 +170,13 @@ generated_not:not(.generated_off):not(:last-child) {
 generated_striped:nth-child(2n+1) {
     background: #556677
 }
+
+generated_head {
+    + generated_next {
+        background: #667788
+    }
+
+    ~ generated_later {
+        background: #778899
+    }
+}

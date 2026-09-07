@@ -21,10 +21,13 @@ namespace Ixen.Controls.UT
 
         [TestInitialize]
         public void Setup()
+            => Build("row:nth-child(2n) { background: " + STRIPE + " }");
+
+        private void Build(string xns)
         {
             var registry = new StyleRegistry();
 
-            registry.Add(new XnsSource("row:nth-child(2n) { background: " + STRIPE + " }").Compile());
+            registry.Add(new XnsSource(xns).Compile());
 
             var root = new VisualElement { Name = "root" };
             root.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
@@ -84,6 +87,35 @@ namespace Ixen.Controls.UT
                 + "its position while the items flow through it. That is the same shape as the "
                 + "hover that walked down a list, and it is why nth-child belongs on a @foreach "
                 + "rather than on a virtual one.");
+        }
+
+        [TestMethod]
+        public void ASiblingCombinatorIsTheOneThatSurvivesRecycling()
+        {
+            Build("row {\r\n    + row { background: " + STRIPE + " }\r\n}");
+
+            Assert.AreEqual("item 0", Slot(1).Text);
+
+            Assert.IsNull(BackgroundOf(Slot(1)),
+                "the spacer is not a row, so the topmost slot has nothing of the right kind "
+                + "before it");
+
+            Assert.AreEqual(STRIPE, BackgroundOf(Slot(2)));
+
+            _list.ScrollY = 9 * ROW;
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Assert.AreEqual("item 8", Slot(1).Text, "nine rows further down");
+
+            Assert.IsNull(BackgroundOf(Slot(1)),
+                "and it is STILL the top slot that carries nothing, whatever item it holds - "
+                + "which is exactly what a separator between rows wants, since the line an author "
+                + "does not want is the one above whatever is at the top. So do not generalise "
+                + "the nth-child warning above: a combinator asks about the slot before this one "
+                + "and a recycled list keeps its slots in order, so the answer stays right while "
+                + "a position keyed on an index does not.");
+
+            Assert.AreEqual(STRIPE, BackgroundOf(Slot(2)));
         }
     }
 }

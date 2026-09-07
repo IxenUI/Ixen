@@ -286,6 +286,28 @@ namespace Ixen.Core.UT.StyleScoping
         }
 
         [TestMethod]
+        public void AnInsertionRestylesInsideTheRowsAndNotOnlyTheRows()
+        {
+            VisualElement root = Groups("group:first-child {\r\n    label { background: #222222 }\r\n}", 2);
+
+            Assert.AreEqual("#222222", BackgroundOf(LabelOf(root, 0)));
+
+            var fresh = new VisualElement { Name = "group" };
+            fresh.AddChild(new VisualElement { Name = "label" });
+
+            root.InsertChild(0, fresh);
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Assert.AreEqual("#222222", BackgroundOf(LabelOf(root, 0)),
+                "the group that was inserted is the first one now");
+
+            Assert.IsNull(BackgroundOf(LabelOf(root, 1)),
+                "and the label inside the group that LOST the pseudo-class has to be restyled as "
+                + "well: the scope sits on the group, so what an insertion moves is the resolved "
+                + "style of everything under it, not only of the children of the list");
+        }
+
+        [TestMethod]
         public void TheRootMatchesNothing()
         {
             Build("list:first-child { background: #222222 }", 1);

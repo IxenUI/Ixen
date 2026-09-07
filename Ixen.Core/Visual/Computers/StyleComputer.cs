@@ -49,13 +49,18 @@ namespace Ixen.Core.Visual.Computers
             {
                 element.ChildrenChanged = false;
 
-                if (registry.HasStructuralClasses)
+                if (registry.HasStructuralClasses || registry.HasSiblingClasses)
                 {
                     foreach (VisualElement child in element.Children)
                     {
-                        child.MustRefreshStyles = true;
+                        child.MarkStylesDirty();
                     }
                 }
+            }
+
+            if (registry.HasSiblingClasses)
+            {
+                Follow(element);
             }
 
             foreach (VisualElement child in element.Children)
@@ -71,6 +76,22 @@ namespace Ixen.Core.Visual.Computers
             foreach (VisualElement chrome in element.Chrome)
             {
                 ComputeTree(chrome, registry);
+            }
+        }
+
+        private static void Follow(VisualElement element)
+        {
+            bool dirty = false;
+
+            foreach (VisualElement child in element.Children)
+            {
+                if (dirty)
+                {
+                    child.MarkStylesDirty();
+                    continue;
+                }
+
+                dirty = child.MustRefreshStyles;
             }
         }
 

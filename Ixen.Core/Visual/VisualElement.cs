@@ -984,7 +984,7 @@ namespace Ixen.Core.Visual
             }
         }
 
-        private void MarkStylesDirty()
+        internal void MarkStylesDirty()
         {
             MustRefreshStyles = true;
 

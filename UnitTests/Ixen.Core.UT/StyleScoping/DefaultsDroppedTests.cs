@@ -56,6 +56,17 @@ namespace Ixen.Core.UT.StyleScoping
         }
 
         [TestMethod]
+        public void NorASiblingRule()
+        {
+            Assert.IsFalse(StyleRegistry.CanBeDefault(
+                ClassNamed(Compile("#MenuItem {\r\n    + #MenuItem { background: #FF0000 } }"),
+                    "MenuItem")),
+                "a sibling combinator makes a scope, so a control theme cannot say 'a separator "
+                + "between rows' either - the same limitation a negation has, and for the same "
+                + "reason: the defaults layer is one rule per selector by construction");
+        }
+
+        [TestMethod]
         public void NorOneInsideAMediaBlock()
         {
             Assert.IsFalse(StyleRegistry.CanBeDefault(

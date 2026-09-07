@@ -533,7 +533,7 @@ namespace Ixen.Core.Language.Xns
             int index = _index;
             char c = PeekNonSpaceChar();
 
-            if (c == StyleScope.IMMEDIATE && _contentLevel > 0)
+            if (StyleScope.IsMarker(c) && _contentLevel > 0)
             {
                 MoveCursor();
                 c = PeekNonSpaceChar();
