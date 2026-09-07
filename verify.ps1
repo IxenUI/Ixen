@@ -259,6 +259,32 @@ else
     }
 }
 
+$solution = Join-Path $workspace 'Demo App\Ixen.DemoApp.sln'
+
+if (-not (Test-Path $solution))
+{
+    Record 'SKIP' 'demo solution, warning-free' 'Demo App is not beside Framework'
+}
+elseif ($null -eq $msbuild)
+{
+    Record 'SKIP' 'demo solution, warning-free' 'vswhere found no MSBuild'
+}
+else
+{
+    $out = @(& $msbuild $solution ('-p:Configuration=' + $Configuration) '-warnaserror' '-nologo' '-v:m' 2>&1)
+    $code = $LASTEXITCODE
+
+    if ($code -eq 0)
+    {
+        Record 'OK' 'demo solution, warning-free' 'the Android demo lives only in this one'
+    }
+    else
+    {
+        Show @($out | Where-Object { $_ -match ': (error|warning) ' }) 12
+        Record 'FAIL' 'demo solution, warning-free' ('exit ' + $code)
+    }
+}
+
 $demo = Join-Path $workspace 'Demo App\Ixen.DemoApp\Ixen.DemoApp.csproj'
 $reference = Join-Path $framework 'ci\demo-frame.md5'
 

@@ -686,6 +686,7 @@ namespace Ixen.Core
 
         private Action<CursorKind> _cursorSetter;
         private CursorKind _cursor = CursorKind.Default;
+        private bool _inspector;
 
         internal Action<CursorKind> CursorSetter
         {
@@ -721,8 +722,11 @@ namespace Ixen.Core
 
         internal void PointerLeaveSurface()
         {
+            VisualElement before = _pointerDispatcher.Hovered;
+
             _pointerDispatcher.LeaveSurface(TrackStates);
             SyncCursor();
+            DamageInspector(before);
         }
 
         private const float FOCUS_RING = 2f;
@@ -750,6 +754,41 @@ namespace Ixen.Core
 
             _rendererContext.DrawRoundRectangle(focused.X, focused.Y,
                 focused.ActualWidth, focused.ActualHeight, radius, _focusInner, BorderType.Outer);
+        }
+
+        public bool Inspector
+        {
+            get => _inspector;
+
+            set
+            {
+                if (_inspector == value)
+                {
+                    return;
+                }
+
+                _inspector = value;
+                InvalidateVisual();
+            }
+        }
+
+        public InspectorHit Inspect(float x, float y)
+        {
+            VisualElement element = HitTest(x, y);
+
+            if (element == null)
+            {
+                return null;
+            }
+
+            int depth = 0;
+
+            for (VisualElement walked = element.Parent; walked != null; walked = walked.Parent)
+            {
+                depth++;
+            }
+
+            return new InspectorHit(element, ExplainStyles(element), depth);
         }
 
         public VisualElement FocusedElement => _keyboardDispatcher.Focused;
@@ -832,8 +871,21 @@ namespace Ixen.Core
         internal void PointerMove(float x, float y, PointerKind kind = PointerKind.Mouse,
             int pointerId = 0)
         {
+            VisualElement before = _pointerDispatcher.Hovered;
+
             _pointerDispatcher.Move(Root, ToLogical(x), ToLogical(y), TrackStates, kind, pointerId);
             SyncCursor();
+            DamageInspector(before);
+        }
+
+        private void DamageInspector(VisualElement before)
+        {
+            if (!_inspector || before == _pointerDispatcher.Hovered)
+            {
+                return;
+            }
+
+            InvalidateVisual();
         }
 
         internal void PointerDown(float x, float y, PointerButton button,
@@ -892,6 +944,11 @@ namespace Ixen.Core
             {
                 _renderer.Render(Root, _rendererContext, _viewPort);
                 RenderFocusRing();
+
+                if (_inspector)
+                {
+                    InspectorRenderer.Render(_rendererContext, _pointerDispatcher.Hovered);
+                }
             }
 
             if (clipped)
