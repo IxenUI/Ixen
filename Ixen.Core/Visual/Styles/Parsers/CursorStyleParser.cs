@@ -1,9 +1,13 @@
 using Ixen.Core.Visual.Styles.Descriptors;
+using System;
+using System.Globalization;
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
     internal class CursorStyleParser : StyleParser
     {
+        private static readonly char[] _separators = { ' ', '\t' };
+
         public CursorStyleDescriptor Descriptor { get; } = new();
 
         public CursorStyleParser(string content)
@@ -12,69 +16,138 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
         protected override bool Parse()
         {
-            switch (_content?.Trim().ToLower())
+            string[] parts = _content?.Trim()
+                .Split(_separators, StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts == null || parts.Length == 0)
+            {
+                return false;
+            }
+
+            CursorKind kind = CursorKind.Unset;
+            string image = null;
+            int hotspots = 0;
+            int hotspotX = 0;
+            int hotspotY = 0;
+
+            foreach (string part in parts)
+            {
+                if (int.TryParse(part, NumberStyles.None, CultureInfo.InvariantCulture, out int hotspot))
+                {
+                    if (hotspots == 0)
+                    {
+                        hotspotX = hotspot;
+                    }
+                    else if (hotspots == 1)
+                    {
+                        hotspotY = hotspot;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+
+                    hotspots++;
+                    continue;
+                }
+
+                if (IsImageName(part))
+                {
+                    if (image != null)
+                    {
+                        return false;
+                    }
+
+                    image = part;
+                    continue;
+                }
+
+                CursorKind named = Named(part);
+
+                if (named == CursorKind.Unset || kind != CursorKind.Unset)
+                {
+                    return false;
+                }
+
+                kind = named;
+            }
+
+            if (image == null)
+            {
+                if (hotspots > 0 || kind == CursorKind.Unset)
+                {
+                    return false;
+                }
+
+                Descriptor.Value = kind;
+
+                return true;
+            }
+
+            if (kind != CursorKind.Unset || hotspots == 1)
+            {
+                return false;
+            }
+
+            Descriptor.Value = CursorKind.Image;
+            Descriptor.Image = image;
+            Descriptor.HotspotX = hotspotX;
+            Descriptor.HotspotY = hotspotY;
+
+            return true;
+        }
+
+        private static CursorKind Named(string value)
+        {
+            switch (value.ToLower())
             {
                 case "default":
                 case "arrow":
-                    Descriptor.Value = CursorKind.Default;
-                    return true;
+                    return CursorKind.Default;
 
                 case "hand":
                 case "pointer":
-                    Descriptor.Value = CursorKind.Hand;
-                    return true;
+                    return CursorKind.Hand;
 
                 case "text":
                 case "caret":
-                    Descriptor.Value = CursorKind.Text;
-                    return true;
+                    return CursorKind.Text;
 
                 case "wait":
-                    Descriptor.Value = CursorKind.Wait;
-                    return true;
+                    return CursorKind.Wait;
 
                 case "crosshair":
-                    Descriptor.Value = CursorKind.Crosshair;
-                    return true;
+                    return CursorKind.Crosshair;
 
                 case "ew-resize":
-                    Descriptor.Value = CursorKind.ResizeHorizontal;
-                    return true;
+                    return CursorKind.ResizeHorizontal;
 
                 case "ns-resize":
-                    Descriptor.Value = CursorKind.ResizeVertical;
-                    return true;
+                    return CursorKind.ResizeVertical;
 
                 case "nesw-resize":
-                    Descriptor.Value = CursorKind.ResizeDiagonalUp;
-                    return true;
+                    return CursorKind.ResizeDiagonalUp;
 
                 case "nwse-resize":
-                    Descriptor.Value = CursorKind.ResizeDiagonalDown;
-                    return true;
+                    return CursorKind.ResizeDiagonalDown;
 
                 case "move":
-                    Descriptor.Value = CursorKind.Move;
-                    return true;
+                    return CursorKind.Move;
 
                 case "not-allowed":
-                    Descriptor.Value = CursorKind.NotAllowed;
-                    return true;
+                    return CursorKind.NotAllowed;
 
                 case "help":
-                    Descriptor.Value = CursorKind.Help;
-                    return true;
+                    return CursorKind.Help;
 
                 case "progress":
-                    Descriptor.Value = CursorKind.Progress;
-                    return true;
+                    return CursorKind.Progress;
 
                 case "none":
-                    Descriptor.Value = CursorKind.Hidden;
-                    return true;
+                    return CursorKind.Hidden;
 
                 default:
-                    return false;
+                    return CursorKind.Unset;
             }
         }
     }

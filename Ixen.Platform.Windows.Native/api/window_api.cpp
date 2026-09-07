@@ -121,6 +121,16 @@ void WA_SetWindowCursor(NativeWindow* window, int kind)
     window->SetCursorKind(kind);
 }
 
+void WA_SetWindowCursorHandle(NativeWindow* window, void* cursor)
+{
+    if (!window)
+    {
+        return;
+    }
+
+    window->SetCursorHandle(cursor);
+}
+
 unsigned int WA_GetWindowDpi(NativeWindow* window)
 {
     if (!window)

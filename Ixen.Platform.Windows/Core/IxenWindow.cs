@@ -21,6 +21,7 @@ namespace Ixen.Platform.Windows
         private readonly WindowApi.OnAccessibilityCallBack _onAccessibility;
 
         private readonly UiaBridge _accessibility;
+        private readonly NativeCursorImages _cursors = new();
 
         private IxenSurface _ixenSurface;
         private readonly IxenHost _host;
@@ -120,8 +121,19 @@ namespace Ixen.Platform.Windows
         private void RequestRepaint()
             => WindowApi.InvalidateWindow(_windowPtr);
 
-        private void SetCursor(Ixen.Core.Visual.Styles.Descriptors.CursorKind kind)
-            => WindowApi.SetWindowCursor(_windowPtr, NativeCursors.ToNative(kind));
+        private void SetCursor(Ixen.Core.Visual.Styles.Descriptors.CursorKind kind, CursorImage image)
+        {
+            IntPtr handle = _cursors.Get(image);
+
+            if (handle != IntPtr.Zero)
+            {
+                WindowApi.SetWindowCursorHandle(_windowPtr, handle);
+
+                return;
+            }
+
+            WindowApi.SetWindowCursor(_windowPtr, NativeCursors.ToNative(kind));
+        }
 
         private void OnPointer(int kind, int x, int y, int button)
         {
@@ -186,6 +198,7 @@ namespace Ixen.Platform.Windows
         public void Dispose()
         {
             _renderer.Dispose();
+            _cursors.Dispose();
         }
     }
 }

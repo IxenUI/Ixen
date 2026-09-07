@@ -180,3 +180,7 @@ generated_head {
         background: #778899
     }
 }
+
+generated_pointing {
+    cursor: generated_cursor.png 6 8
+}

@@ -16,7 +16,8 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         NotAllowed,
         Help,
         Progress,
-        Hidden
+        Hidden,
+        Image
     }
 
     public class CursorStyleDescriptor : StyleDescriptor
@@ -25,11 +26,21 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 
         public CursorKind Value { get; set; } = CursorKind.Unset;
 
+        public string Image { get; set; }
+
+        public int HotspotX { get; set; }
+
+        public int HotspotY { get; set; }
+
         internal override bool CanGenerateSource => true;
         internal override string ToSource()
             => $"new {nameof(CursorStyleDescriptor)} " +
                 "{ " +
-                    $"{nameof(Value)} = {nameof(CursorKind)}.{Value} " +
+                    $"{nameof(Value)} = {nameof(CursorKind)}.{Value}" +
+                    (string.IsNullOrWhiteSpace(Image)
+                        ? " " : $", {nameof(Image)} = \"{Image}\", " +
+                            $"{nameof(HotspotX)} = {HotspotX}, " +
+                            $"{nameof(HotspotY)} = {HotspotY} ") +
                 "}";
     }
 }

@@ -20,6 +20,7 @@ IXEN_API_ENTRY void WA_RegisterAccessibilityCallBack(NativeWindow* window, __int
 IXEN_API_ENTRY void* WA_GetWindowHandle(NativeWindow* window);
 IXEN_API_ENTRY void WA_InvalidateWindow(NativeWindow* window);
 IXEN_API_ENTRY void WA_SetWindowCursor(NativeWindow* window, int kind);
+IXEN_API_ENTRY void WA_SetWindowCursorHandle(NativeWindow* window, void* cursor);
 IXEN_API_ENTRY unsigned int WA_GetWindowDpi(NativeWindow* window);
 IXEN_API_ENTRY int WA_CreateGlContext(NativeWindow* window);
 IXEN_API_ENTRY void WA_SwapGlBuffers(NativeWindow* window);

@@ -684,40 +684,90 @@ namespace Ixen.Core
             }
         }
 
-        private Action<CursorKind> _cursorSetter;
+        private Action<CursorKind, CursorImage> _cursorSetter;
         private CursorKind _cursor = CursorKind.Default;
+        private CursorImage _cursorImage;
         private bool _inspector;
 
-        internal Action<CursorKind> CursorSetter
+        internal Action<CursorKind, CursorImage> CursorSetter
         {
             set
             {
                 _cursorSetter = value;
                 _cursor = CursorKind.Unset;
+                _cursorImage = null;
                 SyncCursor();
             }
         }
 
         internal CursorKind Cursor => _cursor;
 
+        internal CursorImage CursorPicture => _cursorImage;
+
         private void SyncCursor()
         {
-            CursorKind resolved = CursorAt(_pointerDispatcher.Hovered);
+            CursorKind resolved = CursorAt(_pointerDispatcher.Hovered, out CursorImage image);
 
-            if (resolved == _cursor)
+            if (resolved == _cursor && ReferenceEquals(image, _cursorImage))
             {
                 return;
             }
 
             _cursor = resolved;
-            _cursorSetter?.Invoke(resolved);
+            _cursorImage = image;
+            _cursorSetter?.Invoke(resolved, image);
         }
 
-        private static CursorKind CursorAt(VisualElement element)
+        private CursorKind CursorAt(VisualElement element, out CursorImage image)
         {
-            CursorKind resolved = element?.StylesHandlers?.Cursor?.Descriptor?.Value ?? CursorKind.Unset;
+            image = null;
 
-            return resolved == CursorKind.Unset ? CursorKind.Default : resolved;
+            CursorStyleDescriptor descriptor = element?.StylesHandlers?.Cursor?.Descriptor;
+            CursorKind resolved = descriptor?.Value ?? CursorKind.Unset;
+
+            if (resolved != CursorKind.Image)
+            {
+                return resolved == CursorKind.Unset ? CursorKind.Default : resolved;
+            }
+
+            SKBitmap bitmap = _images.Get(descriptor.Image);
+
+            if (bitmap == null)
+            {
+                return CursorKind.Default;
+            }
+
+            image = Picture(descriptor, bitmap);
+
+            return CursorKind.Image;
+        }
+
+        private CursorImage Picture(CursorStyleDescriptor descriptor, SKBitmap bitmap)
+        {
+            int hotspotX = Hotspot(descriptor.HotspotX, bitmap.Width);
+            int hotspotY = Hotspot(descriptor.HotspotY, bitmap.Height);
+            CursorImage current = _cursorImage;
+
+            if (current != null
+                && current.Bitmap == bitmap
+                && current.Name == descriptor.Image
+                && current.HotspotX == hotspotX
+                && current.HotspotY == hotspotY)
+            {
+                return current;
+            }
+
+            return new CursorImage(descriptor.Image, bitmap, hotspotX, hotspotY);
+        }
+
+        private static int Hotspot(int value, int size)
+        {
+            if (value < 0)
+            {
+                return 0;
+            }
+
+            return value >= size ? size - 1 : value;
         }
 
         internal void PointerLeaveSurface()

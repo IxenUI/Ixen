@@ -391,7 +391,17 @@ void NativeWindow::SetCursorKind(int kind)
     case IXEN_CURSOR_HIDDEN: name = nullptr; break;
     }
 
-    _cursor = name == nullptr ? nullptr : LoadCursor(nullptr, name);
+    ApplyCursor(name == nullptr ? nullptr : LoadCursor(nullptr, name));
+}
+
+void NativeWindow::SetCursorHandle(void* cursor)
+{
+    ApplyCursor((HCURSOR)cursor);
+}
+
+void NativeWindow::ApplyCursor(HCURSOR cursor)
+{
+    _cursor = cursor;
 
     POINT point = {};
 

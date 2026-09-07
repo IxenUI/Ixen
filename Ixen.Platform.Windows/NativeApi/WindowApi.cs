@@ -52,6 +52,9 @@ namespace Ixen.Platform.Windows.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowCursor", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetWindowCursor(IntPtr windowPtr, int kind);
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowCursorHandle", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetWindowCursorHandle(IntPtr windowPtr, IntPtr cursor);
+
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterAccessibilityCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterAccessibilityCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnAccessibilityCallBack callback);
 

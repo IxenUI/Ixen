@@ -16,6 +16,7 @@ namespace IxenWindowsNative
         static map<HWND, NativeWindow*> _windowsByHandle;
         static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam);
         static void EnsureDpiAwareness();
+        void ApplyCursor(HCURSOR cursor);
 
         HWND _handle = nullptr;
         void (*_paintCallBack)(int, int) = nullptr;
@@ -62,6 +63,7 @@ namespace IxenWindowsNative
         void SetTitle(LPCWSTR value);
         void Invalidate();
         void SetCursorKind(int kind);
+        void SetCursorHandle(void* cursor);
         UINT GetDpi();
         bool CreateGlContext();
         void SwapGlBuffers();

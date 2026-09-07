@@ -45,7 +45,7 @@ namespace Ixen.Core.UT.Input
 
             _surface = new IxenSurface(_root) { Styles = new StyleRegistry() };
             _surface.ComputeLayout(VIEWPORT, VIEWPORT);
-            _surface.CursorSetter = kind => _set.Add(kind);
+            _surface.CursorSetter = (kind, image) => _set.Add(kind);
             _set.Clear();
         }
 
