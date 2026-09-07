@@ -97,6 +97,7 @@ namespace Ixen.View.Android
 
             _host.Surface.Scale = density > 0 ? density : 1f;
             _host.Paint(e.Surface.Canvas, e.Info.Width, e.Info.Height);
+            _accessibility?.Sync();
         }
 
         private void OnTouch(object sender, TouchEventArgs e)
@@ -276,7 +277,7 @@ namespace Ixen.View.Android
             return base.DispatchKeyEvent(e);
         }
 
-        private void SyncSoftKeyboard()
+        internal void SyncSoftKeyboard()
         {
             var field = _host.FocusedElement as TextField;
             bool wanted = field != null;

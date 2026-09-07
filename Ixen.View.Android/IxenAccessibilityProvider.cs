@@ -1,10 +1,10 @@
+using Android.Content;
 using Android.Graphics;
 using Android.OS;
 using Android.Views;
 using Android.Views.Accessibility;
 using Ixen.Core;
 using Ixen.Core.Accessibility;
-using Ixen.Core.Visual;
 using System.Collections.Generic;
 
 namespace Ixen.View.Android
@@ -16,17 +16,13 @@ namespace Ixen.View.Android
         private readonly IxenView _view;
         private readonly IxenSurface _surface;
 
-        private readonly Dictionary<VisualElement, int> _ids
-            = new Dictionary<VisualElement, int>();
+        private readonly AccessibilityIds _ids = new AccessibilityIds();
+        private readonly List<AccessibilityChange> _changes = new List<AccessibilityChange>();
 
-        private readonly Dictionary<int, AccessibleNode> _nodes
-            = new Dictionary<int, AccessibleNode>();
-
-        private readonly Dictionary<int, int> _parents = new Dictionary<int, int>();
-        private readonly Dictionary<int, List<int>> _children = new Dictionary<int, List<int>>();
-
-        private int _nextId;
-        private int _rootId = HOST;
+        private AccessibilitySnapshot _snapshot = AccessibilitySnapshot.Empty;
+        private AccessibilitySnapshot _spoken = AccessibilitySnapshot.Empty;
+        private AccessibilityManager _manager;
+        private int _focused = HOST;
 
         internal IxenAccessibilityProvider(IxenView view, IxenSurface surface)
         {
@@ -34,50 +30,74 @@ namespace Ixen.View.Android
             _surface = surface;
         }
 
+        private bool Listening
+        {
+            get
+            {
+                if (_manager == null)
+                {
+                    _manager = _view.Context?.GetSystemService(Context.AccessibilityService)
+                        as AccessibilityManager;
+                }
+
+                return _manager != null && _manager.IsEnabled;
+            }
+        }
+
         private void Refresh()
         {
-            AccessibleNode root = _surface.BuildAccessibilityTree();
-
-            _nodes.Clear();
-            _parents.Clear();
-            _children.Clear();
-
-            _rootId = root == null ? HOST : Walk(root, HOST);
+            _snapshot = AccessibilitySnapshot.Take(_surface.BuildAccessibilityTree(), _ids, null);
         }
 
-        private int Walk(AccessibleNode node, int parentId)
+        internal void Sync()
         {
-            int id = IdOf(node.Element);
-
-            _nodes[id] = node;
-            _parents[id] = parentId;
-
-            var children = new List<int>();
-
-            _children[id] = children;
-
-            foreach (AccessibleNode child in node.Children)
+            if (!Listening)
             {
-                children.Add(Walk(child, id));
+                return;
             }
 
-            return id;
+            Refresh();
+
+            _changes.Clear();
+
+            AccessibilitySnapshot.Diff(_spoken, _snapshot, _changes);
+
+            _spoken = _snapshot;
+
+            Announce();
         }
 
-        private int IdOf(VisualElement element)
+        private void Announce()
         {
-            if (element == null)
+            for (int index = 0; index < _changes.Count; index++)
             {
-                return _nextId++;
-            }
+                AccessibilityChange change = _changes[index];
 
-            if (!_ids.TryGetValue(element, out int id))
-            {
-                id = _nextId++;
-                _ids[element] = id;
-            }
+                switch (change.Kind)
+                {
+                    case AccessibilityChangeKind.Name:
+                        Send(change.Id, EventTypes.WindowContentChanged,
+                            ContentChangeTypes.ContentDescription);
+                        break;
 
-            return id;
+                    case AccessibilityChangeKind.Value:
+                        Send(change.Id, EventTypes.WindowContentChanged, ContentChangeTypes.Text);
+                        break;
+
+                    case AccessibilityChangeKind.Focus:
+                        if (change.TookFocus)
+                        {
+                            Send(change.Id, EventTypes.ViewFocused);
+                        }
+
+                        break;
+
+                    case AccessibilityChangeKind.Structure:
+                        Send(change.Id, EventTypes.WindowContentChanged,
+                            ContentChangeTypes.Subtree);
+                        break;
+                }
+            }
         }
 
         public override AccessibilityNodeInfo CreateAccessibilityNodeInfo(int virtualViewId)
@@ -89,12 +109,9 @@ namespace Ixen.View.Android
                 return Host();
             }
 
-            if (!_nodes.TryGetValue(virtualViewId, out AccessibleNode node))
-            {
-                return null;
-            }
+            AccessibleNode node = _snapshot.NodeOf(virtualViewId);
 
-            return Info(virtualViewId, node);
+            return node == null ? null : Info(virtualViewId, node);
         }
 
         private AccessibilityNodeInfo Host()
@@ -103,9 +120,9 @@ namespace Ixen.View.Android
 
             _view.OnInitializeAccessibilityNodeInfo(info);
 
-            if (_rootId != HOST)
+            if (_snapshot.RootId != HOST)
             {
-                info.AddChild(_view, _rootId);
+                info.AddChild(_view, _snapshot.RootId);
             }
 
             return info;
@@ -124,14 +141,13 @@ namespace Ixen.View.Android
                 info.Text = node.Value;
             }
 
-            info.SetParent(_view, _parents.TryGetValue(id, out int parent) ? parent : HOST);
+            info.SetParent(_view, _snapshot.ParentOf(id));
 
-            if (_children.TryGetValue(id, out List<int> children))
+            IReadOnlyList<int> children = _snapshot.ChildrenOf(id);
+
+            for (int index = 0; index < children.Count; index++)
             {
-                foreach (int child in children)
-                {
-                    info.AddChild(_view, child);
-                }
+                info.AddChild(_view, children[index]);
             }
 
             info.Focusable = node.HasState(AccessibleStates.Focusable);
@@ -174,7 +190,6 @@ namespace Ixen.View.Android
             {
                 info.AddAction(AccessibilityNodeInfo.AccessibilityAction.ActionShowOnScreen);
             }
-
 
             info.SetBoundsInScreen(BoundsOf(node));
 
@@ -292,7 +307,9 @@ namespace Ixen.View.Android
 
             Refresh();
 
-            if (!_nodes.TryGetValue(virtualViewId, out AccessibleNode node))
+            AccessibleNode node = _snapshot.NodeOf(virtualViewId);
+
+            if (node == null)
             {
                 return false;
             }
@@ -308,7 +325,14 @@ namespace Ixen.View.Android
                     return _surface.Perform(node, AccessibleActions.Invoke);
 
                 case Action.Focus:
-                    return _surface.Perform(node, AccessibleActions.Focus);
+                    if (!_surface.Perform(node, AccessibleActions.Focus))
+                    {
+                        return false;
+                    }
+
+                    _view.SyncSoftKeyboard();
+
+                    return true;
 
                 case Action.SetText:
                     return _surface.Perform(node, AccessibleActions.SetValue,
@@ -334,8 +358,6 @@ namespace Ixen.View.Android
             }
         }
 
-        private int _focused = HOST;
-
         public override AccessibilityNodeInfo FindFocus(NodeFocus focus)
         {
             Refresh();
@@ -345,18 +367,15 @@ namespace Ixen.View.Android
                 return _focused == HOST ? Host() : CreateAccessibilityNodeInfo(_focused);
             }
 
-            foreach (KeyValuePair<int, AccessibleNode> entry in _nodes)
-            {
-                if (entry.Value.HasState(AccessibleStates.Focused))
-                {
-                    return Info(entry.Key, entry.Value);
-                }
-            }
+            int id = _snapshot.FocusedId();
 
-            return null;
+            return id == HOST ? null : Info(id, _snapshot.NodeOf(id));
         }
 
         internal void Send(int virtualViewId, EventTypes type)
+            => Send(virtualViewId, type, ContentChangeTypes.Undefined);
+
+        private void Send(int virtualViewId, EventTypes type, ContentChangeTypes changes)
         {
             if (!_view.IsShown)
             {
@@ -366,6 +385,7 @@ namespace Ixen.View.Android
             AccessibilityEvent args = FreshEvent(type);
 
             args.PackageName = _view.Context?.PackageName;
+            args.ContentChangeTypes = changes;
             args.SetSource(_view, virtualViewId);
 
             _view.Parent?.RequestSendAccessibilityEvent(_view, args);

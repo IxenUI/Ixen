@@ -1,6 +1,5 @@
 using Ixen.Core;
 using Ixen.Core.Accessibility;
-using Ixen.Core.Visual;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -9,25 +8,15 @@ namespace Ixen.Platform.Windows.Accessibility
 {
     internal sealed class UiaBridge
     {
-        private sealed class Snapshot
-        {
-            internal readonly Dictionary<int, AccessibleNode> Nodes
-                = new Dictionary<int, AccessibleNode>();
-
-            internal readonly Dictionary<int, int> Parents = new Dictionary<int, int>();
-
-            internal readonly Dictionary<int, List<int>> ChildIds
-                = new Dictionary<int, List<int>>();
-
-            internal int RootId = -1;
-        }
+        private const long UIA_ROOT_OBJECT_ID = -25;
 
         private readonly IxenSurface _surface;
         private readonly Action _invalidate;
         private readonly Func<IntPtr> _handle;
 
-        private readonly ConcurrentDictionary<VisualElement, int> _ids
-            = new ConcurrentDictionary<VisualElement, int>();
+        private readonly AccessibilityIds _ids = new AccessibilityIds();
+        private readonly List<int> _dropped = new List<int>();
+        private readonly List<AccessibilityChange> _changes = new List<AccessibilityChange>();
 
         private readonly ConcurrentDictionary<int, UiaProvider> _providers
             = new ConcurrentDictionary<int, UiaProvider>();
@@ -35,9 +24,8 @@ namespace Ixen.Platform.Windows.Accessibility
         private readonly ConcurrentQueue<(int Id, AccessibleActions Action, string Value)> _pending
             = new ConcurrentQueue<(int, AccessibleActions, string)>();
 
-        private Snapshot _snapshot = new Snapshot();
+        private AccessibilitySnapshot _snapshot = AccessibilitySnapshot.Empty;
         private IRawElementProviderSimple _host;
-        private int _nextId;
 
         internal UiaBridge(IxenSurface surface, Func<IntPtr> handle, Action invalidate)
         {
@@ -79,8 +67,6 @@ namespace Ixen.Platform.Windows.Accessibility
             return UiaNative.UiaReturnRawElementProvider(_handle(), wParam, lParam, provider);
         }
 
-        private const long UIA_ROOT_OBJECT_ID = -25;
-
         internal void Sync()
         {
             Drain();
@@ -102,106 +88,64 @@ namespace Ixen.Platform.Windows.Accessibility
                 return;
             }
 
-            var snapshot = new Snapshot();
-            var seen = new HashSet<VisualElement>();
+            _dropped.Clear();
 
-            snapshot.RootId = Walk(root, -1, snapshot, seen);
+            AccessibilitySnapshot snapshot = AccessibilitySnapshot.Take(root, _ids, _dropped);
 
-            foreach (KeyValuePair<VisualElement, int> entry in _ids)
+            for (int index = 0; index < _dropped.Count; index++)
             {
-                if (seen.Contains(entry.Key))
-                {
-                    continue;
-                }
-
-                _ids.TryRemove(entry.Key, out _);
-                _providers.TryRemove(entry.Value, out _);
+                _providers.TryRemove(_dropped[index], out _);
             }
 
-            Snapshot previous = _snapshot;
+            AccessibilitySnapshot previous = _snapshot;
 
             _snapshot = snapshot;
 
-            if (previous.RootId >= 0)
-            {
-                Announce(previous, snapshot);
-            }
+            _changes.Clear();
+
+            AccessibilitySnapshot.Diff(previous, snapshot, _changes);
+
+            Announce();
         }
 
-        private void Announce(Snapshot previous, Snapshot current)
+        private void Announce()
         {
-            foreach (KeyValuePair<int, AccessibleNode> entry in current.Nodes)
+            for (int index = 0; index < _changes.Count; index++)
             {
-                if (!previous.Nodes.TryGetValue(entry.Key, out AccessibleNode was))
+                AccessibilityChange change = _changes[index];
+
+                switch (change.Kind)
                 {
-                    continue;
-                }
+                    case AccessibilityChangeKind.Name:
+                        Raise(change.Id, UiaProperty.NAME, change.Previous.Name,
+                            change.Current.Name);
+                        break;
 
-                AccessibleNode now = entry.Value;
+                    case AccessibilityChangeKind.Value:
+                        Raise(change.Id, UiaProperty.VALUE_VALUE, change.Previous.Value,
+                            change.Current.Value);
+                        break;
 
-                bool spoke = false;
+                    case AccessibilityChangeKind.LiveRegion:
+                        Event(change.Id, UiaEvent.LIVE_REGION_CHANGED);
+                        break;
 
-                if (was.Name != now.Name)
-                {
-                    Raise(entry.Key, UiaProperty.NAME, was.Name, now.Name);
-                    spoke = true;
-                }
+                    case AccessibilityChangeKind.Focus:
+                        Raise(change.Id, UiaProperty.HAS_KEYBOARD_FOCUS, !change.TookFocus,
+                            change.TookFocus);
 
-                if (was.Value != now.Value)
-                {
-                    Raise(entry.Key, UiaProperty.VALUE_VALUE, was.Value, now.Value);
-                    spoke = true;
-                }
+                        if (change.TookFocus)
+                        {
+                            Event(change.Id, UiaEvent.FOCUS_CHANGED);
+                        }
 
-                if (spoke && now.Live != LiveRegionKind.None)
-                {
-                    Event(entry.Key, UiaEvent.LIVE_REGION_CHANGED);
-                }
+                        break;
 
-                bool had = was.HasState(AccessibleStates.Focused);
-                bool has = now.HasState(AccessibleStates.Focused);
-
-                if (had == has)
-                {
-                    continue;
-                }
-
-                Raise(entry.Key, UiaProperty.HAS_KEYBOARD_FOCUS, had, has);
-
-                if (has)
-                {
-                    Event(entry.Key, UiaEvent.FOCUS_CHANGED);
+                    case AccessibilityChangeKind.Structure:
+                        Structure(change.Id);
+                        break;
                 }
             }
-
-            foreach (KeyValuePair<int, List<int>> entry in current.ChildIds)
-            {
-                if (!previous.ChildIds.TryGetValue(entry.Key, out List<int> was)
-                    || Same(was, entry.Value))
-                {
-                    continue;
-                }
-
-                Structure(entry.Key);
-            }
-        }
-
-        private static bool Same(List<int> left, List<int> right)
-        {
-            if (left.Count != right.Count)
-            {
-                return false;
-            }
-
-            for (int index = 0; index < left.Count; index++)
-            {
-                if (left[index] != right[index])
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         private void Raise(int id, int property, object was, object now)
@@ -231,40 +175,7 @@ namespace Ixen.Platform.Windows.Accessibility
             }
         }
 
-        private int Walk(AccessibleNode node, int parentId, Snapshot snapshot,
-            HashSet<VisualElement> seen)
-        {
-            int id = IdOf(node);
-
-            seen.Add(node.Element);
-
-            snapshot.Nodes[id] = node;
-            snapshot.Parents[id] = parentId;
-
-            var children = new List<int>();
-
-            snapshot.ChildIds[id] = children;
-
-            foreach (AccessibleNode child in node.Children)
-            {
-                children.Add(Walk(child, id, snapshot, seen));
-            }
-
-            return id;
-        }
-
-        private int IdOf(AccessibleNode node)
-        {
-            if (node.Element == null)
-            {
-                return _nextId++;
-            }
-
-            return _ids.GetOrAdd(node.Element, _ => ++_nextId);
-        }
-
-        internal AccessibleNode NodeOf(int id)
-            => _snapshot.Nodes.TryGetValue(id, out AccessibleNode node) ? node : null;
+        internal AccessibleNode NodeOf(int id) => _snapshot.NodeOf(id);
 
         private UiaProvider ProviderFor(int id)
         {
@@ -281,9 +192,9 @@ namespace Ixen.Platform.Windows.Accessibility
 
         internal IRawElementProviderFragment Navigate(int id, NavigateDirection direction)
         {
-            Snapshot snapshot = _snapshot;
+            AccessibilitySnapshot snapshot = _snapshot;
 
-            if (!snapshot.Nodes.ContainsKey(id))
+            if (!snapshot.Contains(id))
             {
                 return null;
             }
@@ -291,52 +202,23 @@ namespace Ixen.Platform.Windows.Accessibility
             switch (direction)
             {
                 case NavigateDirection.Parent:
-                    return snapshot.Parents.TryGetValue(id, out int parent) && parent >= 0
-                        ? ProviderFor(parent)
-                        : null;
+                    return ProviderFor(snapshot.ParentOf(id));
 
                 case NavigateDirection.FirstChild:
-                    return Child(snapshot, id, 0);
+                    return ProviderFor(snapshot.ChildOf(id, 0));
 
                 case NavigateDirection.LastChild:
-                    return Child(snapshot, id, -1);
+                    return ProviderFor(snapshot.ChildOf(id, -1));
 
                 case NavigateDirection.NextSibling:
-                    return Sibling(snapshot, id, 1);
+                    return ProviderFor(snapshot.SiblingOf(id, 1));
 
                 case NavigateDirection.PreviousSibling:
-                    return Sibling(snapshot, id, -1);
+                    return ProviderFor(snapshot.SiblingOf(id, -1));
 
                 default:
                     return null;
             }
-        }
-
-        private IRawElementProviderFragment Child(Snapshot snapshot, int id, int index)
-        {
-            if (!snapshot.ChildIds.TryGetValue(id, out List<int> children) || children.Count == 0)
-            {
-                return null;
-            }
-
-            return ProviderFor(index < 0 ? children[children.Count - 1] : children[index]);
-        }
-
-        private IRawElementProviderFragment Sibling(Snapshot snapshot, int id, int step)
-        {
-            if (!snapshot.Parents.TryGetValue(id, out int parent) || parent < 0)
-            {
-                return null;
-            }
-
-            if (!snapshot.ChildIds.TryGetValue(parent, out List<int> children))
-            {
-                return null;
-            }
-
-            int at = children.IndexOf(id) + step;
-
-            return at >= 0 && at < children.Count ? ProviderFor(children[at]) : null;
         }
 
         internal UiaRect RectangleOf(int id)
@@ -372,7 +254,7 @@ namespace Ixen.Platform.Windows.Accessibility
 
         internal IRawElementProviderFragment FromPoint(double x, double y)
         {
-            Snapshot snapshot = _snapshot;
+            AccessibilitySnapshot snapshot = _snapshot;
 
             if (snapshot.RootId < 0)
             {
@@ -387,54 +269,11 @@ namespace Ixen.Platform.Windows.Accessibility
             }
 
             float scale = _surface.Scale;
-            double localX = (x - point.X) / scale;
-            double localY = (y - point.Y) / scale;
 
-            int found = Deepest(snapshot, snapshot.RootId, localX, localY);
-
-            return found >= 0 ? ProviderFor(found) : null;
+            return ProviderFor(snapshot.FindAt((x - point.X) / scale, (y - point.Y) / scale));
         }
 
-        private int Deepest(Snapshot snapshot, int id, double x, double y)
-        {
-            AccessibleNode node = NodeOf(id);
-
-            if (node == null || x < node.X || y < node.Y
-                || x >= node.X + node.Width || y >= node.Y + node.Height)
-            {
-                return -1;
-            }
-
-            if (snapshot.ChildIds.TryGetValue(id, out List<int> children))
-            {
-                for (int index = children.Count - 1; index >= 0; index--)
-                {
-                    int hit = Deepest(snapshot, children[index], x, y);
-
-                    if (hit >= 0)
-                    {
-                        return hit;
-                    }
-                }
-            }
-
-            return id;
-        }
-
-        internal IRawElementProviderFragment Focused()
-        {
-            Snapshot snapshot = _snapshot;
-
-            foreach (KeyValuePair<int, AccessibleNode> entry in snapshot.Nodes)
-            {
-                if (entry.Value.HasState(AccessibleStates.Focused))
-                {
-                    return ProviderFor(entry.Key);
-                }
-            }
-
-            return null;
-        }
+        internal IRawElementProviderFragment Focused() => ProviderFor(_snapshot.FocusedId());
 
         internal void Post(int id, AccessibleActions action, string value)
         {
