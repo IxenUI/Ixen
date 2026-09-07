@@ -1,0 +1,6 @@
+observable_root {} [
+	observable_count { text: "{Entries.Count} entries" }
+	@foreach (var entry in Entries) {
+		observable_row { text: "{entry}" }
+	@}
+]

@@ -10,9 +10,11 @@ namespace Ixen.Core.Components
         Failed
     }
 
-    public class AsyncValue<T>
+    public class AsyncValue<T> : IObservableState
     {
         private int _generation;
+
+        public event EventHandler Changed;
 
         public AsyncState State { get; private set; }
 
@@ -39,6 +41,8 @@ namespace Ixen.Core.Components
             Value = default(T);
             Error = null;
             HasValue = false;
+
+            Announce();
         }
 
         internal int Begin()
@@ -46,7 +50,11 @@ namespace Ixen.Core.Components
             State = AsyncState.Loading;
             Error = null;
 
-            return ++_generation;
+            int generation = ++_generation;
+
+            Announce();
+
+            return generation;
         }
 
         internal bool Succeed(int generation, T value)
@@ -59,6 +67,8 @@ namespace Ixen.Core.Components
             State = AsyncState.Ready;
             Value = value;
             HasValue = true;
+
+            Announce();
 
             return true;
         }
@@ -73,7 +83,14 @@ namespace Ixen.Core.Components
             State = AsyncState.Failed;
             Error = error;
 
+            Announce();
+
             return true;
+        }
+
+        private void Announce()
+        {
+            Changed?.Invoke(this, EventArgs.Empty);
         }
     }
 }

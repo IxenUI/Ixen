@@ -15,7 +15,7 @@ namespace Ixen.Core.Components
         private bool _writingBack;
         private List<Slot> _slots;
         private bool _attached;
-        private List<Navigator> _followed;
+        private List<IObservableState> _followed;
 
         internal abstract VisualElement GetVisualElement();
 
@@ -184,28 +184,28 @@ namespace Ixen.Core.Components
             OnDetached();
         }
 
-        protected void Follow(Navigator navigator)
+        protected void Follow(IObservableState state)
         {
-            if (navigator == null)
+            if (state == null)
             {
                 return;
             }
 
             if (_followed == null)
             {
-                _followed = new List<Navigator>();
+                _followed = new List<IObservableState>();
             }
 
-            if (_followed.Contains(navigator))
+            if (_followed.Contains(state))
             {
                 return;
             }
 
-            _followed.Add(navigator);
+            _followed.Add(state);
 
             if (_attached)
             {
-                navigator.Changed += OnNavigated;
+                state.Changed += OnFollowedChanged;
             }
         }
 
@@ -216,13 +216,13 @@ namespace Ixen.Core.Components
                 return;
             }
 
-            foreach (Navigator navigator in _followed)
+            foreach (IObservableState state in _followed)
             {
-                navigator.Changed -= OnNavigated;
+                state.Changed -= OnFollowedChanged;
 
                 if (attached)
                 {
-                    navigator.Changed += OnNavigated;
+                    state.Changed += OnFollowedChanged;
                 }
             }
 
@@ -232,7 +232,7 @@ namespace Ixen.Core.Components
             }
         }
 
-        private void OnNavigated(object sender, EventArgs e)
+        private void OnFollowedChanged(object sender, EventArgs e)
         {
             SetState();
         }

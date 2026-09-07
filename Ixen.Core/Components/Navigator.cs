@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Ixen.Core.Components
 {
-    public class Navigator
+    public class Navigator : IObservableState
     {
         public const string ROOT = "/";
         public const int DEFAULT_LIMIT = 100;
