@@ -8,6 +8,7 @@ namespace Ixen.Core.Input
     {
 
         private readonly List<VisualElement> _focusables = new();
+        private readonly List<int> _positions = new();
 
         private bool _trackStates;
         private VisualElement _focused;
@@ -17,6 +18,7 @@ namespace Ixen.Core.Input
 
         private VisualElement _resumeParent;
         private int _resumeIndex;
+        private int _resumeTab;
 
         internal VisualElement Focused => _focused;
 
@@ -55,6 +57,7 @@ namespace Ixen.Core.Input
         private void Remember(VisualElement element)
         {
             _resumeParent = null;
+            _resumeTab = element == null ? 0 : element.TabIndex;
             _chain.Clear();
             _chainAt.Clear();
 
@@ -362,20 +365,24 @@ namespace Ixen.Core.Input
 
         internal void MoveFocus(VisualElement root, bool backwards, bool trackStates)
         {
+            VisualElement scope = ModalScope(root) ?? root;
+
             _focusables.Clear();
-            Collect(ModalScope(root) ?? root, _focusables);
+            Collect(scope, _focusables);
 
             if (_focusables.Count == 0)
             {
                 return;
             }
 
+            Order();
+
             int index = _focused == null ? -1 : _focusables.IndexOf(_focused);
             int next;
 
             if (index < 0)
             {
-                int resume = ResumeAt(ModalScope(root) ?? root);
+                int resume = Anchor(scope);
 
                 if (resume < 0)
                 {
@@ -407,18 +414,71 @@ namespace Ixen.Core.Input
             Focus(_focusables[next], trackStates);
         }
 
-        private int ResumeAt(VisualElement scope)
+        private static int Bucket(int tabIndex) => tabIndex > 0 ? tabIndex : int.MaxValue;
+
+        private void Order()
         {
-            if (_resumeParent == null)
+            _positions.Clear();
+
+            for (int index = 0; index < _focusables.Count; index++)
+            {
+                _positions.Add(index);
+            }
+
+            for (int index = 1; index < _focusables.Count; index++)
+            {
+                VisualElement element = _focusables[index];
+                int bucket = Bucket(element.TabIndex);
+                int position = _positions[index];
+                int at = index;
+
+                while (at > 0 && Bucket(_focusables[at - 1].TabIndex) > bucket)
+                {
+                    _focusables[at] = _focusables[at - 1];
+                    _positions[at] = _positions[at - 1];
+                    at--;
+                }
+
+                _focusables[at] = element;
+                _positions[at] = position;
+            }
+        }
+
+        private int Anchor(VisualElement scope)
+        {
+            if (_focused != null)
+            {
+                return Resume(scope, _focused.Parent, _focused.ChildIndex, _focused.TabIndex);
+            }
+
+            return _resumeParent == null
+                ? -1
+                : Resume(scope, _resumeParent, _resumeIndex, _resumeTab);
+        }
+
+        private int Resume(VisualElement scope, VisualElement parent, int at, int tabIndex)
+        {
+            int before = 0;
+
+            if (!CountBefore(scope, parent, at, ref before))
             {
                 return -1;
             }
 
-            int before = 0;
+            int bucket = Bucket(tabIndex);
+            int resume = 0;
 
-            return CountBefore(scope, _resumeParent, _resumeIndex, ref before)
-                ? before
-                : -1;
+            for (int index = 0; index < _focusables.Count; index++)
+            {
+                int other = Bucket(_focusables[index].TabIndex);
+
+                if (other < bucket || (other == bucket && _positions[index] < before))
+                {
+                    resume++;
+                }
+            }
+
+            return resume;
         }
 
         private static bool CountBefore(VisualElement element, VisualElement parent, int at,
@@ -429,7 +489,7 @@ namespace Ixen.Core.Input
                 return false;
             }
 
-            if (element.Focusable && element.IsEnabled)
+            if (element.Focusable && element.IsEnabled && element.TabIndex >= 0)
             {
                 before++;
             }
@@ -463,9 +523,11 @@ namespace Ixen.Core.Input
 
             for (int index = root.Overlays.Count - 1; index >= 0; index--)
             {
-                if (root.Overlays[index].Modal)
+                VisualElement layer = root.Overlays[index];
+
+                if (layer.Modal && !layer.IsHiddenInTree)
                 {
-                    return root.Overlays[index];
+                    return layer;
                 }
             }
 
@@ -484,7 +546,7 @@ namespace Ixen.Core.Input
                 return;
             }
 
-            if (element.Focusable && element.IsEnabled)
+            if (element.Focusable && element.IsEnabled && element.TabIndex >= 0)
             {
                 result.Add(element);
             }

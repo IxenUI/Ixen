@@ -140,6 +140,24 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void AHiddenModalIsNotAModal()
+        {
+            _layer.Modal = true;
+            _layer.Styles.Visibility = new VisibilityStyleDescriptor { Value = Visibility.Hidden };
+            _layer.Invalidate();
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            _surface.Focus(_behind);
+
+            Tab();
+
+            Assert.AreEqual("behind2", _surface.FocusedElement.Name,
+                "a dialog closes by hiding rather than by leaving the tree, and a trap that "
+                + "counted a hidden layer swallowed the whole tab order: the scope held nothing "
+                + "focusable, so Tab moved nowhere at all");
+        }
+
+        [TestMethod]
         public void ClosingTheModalGivesTheTreeBack()
         {
             _layer.Modal = true;

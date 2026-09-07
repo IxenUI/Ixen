@@ -51,6 +51,32 @@ namespace Ixen.Controls.UT
         private void Layout() => _surface.ComputeLayout(VIEWPORT, VIEWPORT);
 
         [TestMethod]
+        public void AClosedDialogDoesNotTrapTheTabOrder()
+        {
+            var other = new Button { Name = "other", Text = "Rename" };
+            other.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 90 };
+            other.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 30 };
+
+            _root.InsertChild(1, other);
+            Layout();
+
+            Assert.IsFalse(_dialog.Open);
+
+            _surface.KeyDown(Key.Tab, KeyModifiers.None);
+            Layout();
+
+            Assert.AreSame(_behind, _surface.FocusedElement,
+                "a Dialog is Modal for its whole life and closes by HIDING, so a focus trap that "
+                + "counted a hidden layer left the whole application with a dead Tab key - and an "
+                + "application that declares one dialog anywhere is every application");
+
+            _surface.KeyDown(Key.Tab, KeyModifiers.None);
+            Layout();
+
+            Assert.AreSame(other, _surface.FocusedElement);
+        }
+
+        [TestMethod]
         public void ItsContentGoesIntoTheSheet()
         {
             Assert.AreSame(_dialog.Sheet, _ok.Parent,

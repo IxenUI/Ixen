@@ -117,6 +117,7 @@ namespace Ixen.Core.Visual
         public void PerformClick() => Input.PointerDispatcher.Invoke(this);
 
         public bool Focusable { get; set; }
+        public int TabIndex { get; set; }
         public bool Modal { get; set; }
         public bool AllowDrop { get; set; }
 

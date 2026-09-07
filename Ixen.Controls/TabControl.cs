@@ -155,6 +155,7 @@ namespace Ixen.Controls
             for (int i = 0; i < _headers.Count; i++)
             {
                 _headers[i].ToggleState(TabItem.SELECTED, i == _selected);
+                _headers[i].TabIndex = i == _selected ? 0 : -1;
             }
         }
 

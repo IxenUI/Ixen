@@ -71,6 +71,30 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
+        public void TabEntersTheStripOnceAndTheArrowsMoveInsideIt()
+        {
+            Assert.AreEqual(0, Header(0).TabIndex);
+            Assert.AreEqual(-1, Header(1).TabIndex,
+                "which is the ARIA pattern for a tab strip: one stop for the whole strip, and the "
+                + "arrows to move within it");
+
+            _surface.KeyDown(Key.Tab, KeyModifiers.None);
+            Assert.AreSame(Header(0), _surface.FocusedElement);
+
+            _surface.KeyDown(Key.Tab, KeyModifiers.None);
+            Assert.AreSame(_field, _surface.FocusedElement,
+                "Tab leaves the strip rather than walking every tab of it");
+
+            Header(0).Focus();
+            _surface.KeyDown(Key.Right, KeyModifiers.None);
+            Layout();
+
+            Assert.AreSame(Header(1), _surface.FocusedElement, "the arrows still move inside");
+            Assert.AreEqual(0, Header(1).TabIndex, "and the stop follows the selection");
+            Assert.AreEqual(-1, Header(0).TabIndex);
+        }
+
+        [TestMethod]
         public void TheItemsGoIntoTheContentAndTheHeadersAreBuiltFromThem()
         {
             Assert.AreEqual(2, _tabs.Items.Count());
