@@ -284,6 +284,8 @@ namespace Ixen.Core
         {
             string path = PathOf(element, prefix);
 
+            element.Owner?.AttachIfPending();
+
             RestoreIfPending(element, path);
 
             element.Owner?.RenderIfDirty();

@@ -15,6 +15,8 @@ namespace Ixen.Core.Components
         private bool _writingBack;
         private List<Slot> _slots;
         private bool _attached;
+        private bool _pendingAttach;
+        private bool _notifiedAttach;
         private List<IObservableState> _followed;
 
         internal abstract VisualElement GetVisualElement();
@@ -177,11 +179,32 @@ namespace Ixen.Core.Components
 
             if (attached)
             {
-                OnAttached();
+                _pendingAttach = true;
                 return;
             }
 
-            OnDetached();
+            bool notified = _notifiedAttach;
+
+            _pendingAttach = false;
+            _notifiedAttach = false;
+
+            if (notified)
+            {
+                OnDetached();
+            }
+        }
+
+        internal void AttachIfPending()
+        {
+            if (!_pendingAttach)
+            {
+                return;
+            }
+
+            _pendingAttach = false;
+            _notifiedAttach = true;
+
+            OnAttached();
         }
 
         protected void Follow(IObservableState state)

@@ -1,4 +1,5 @@
 lifecycle_root {} [
 	lifecycle_label { text: "tracked" }
+	lifecycle_stamp { text: "{Stamp}" }
 	inner<LifecycleInnerComponent> {}
 ]
