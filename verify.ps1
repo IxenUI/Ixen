@@ -3,7 +3,8 @@ param(
     [string] $Configuration = 'Debug',
     [switch] $Rebuild,
     [switch] $SkipFigures,
-    [switch] $SkipDemo
+    [switch] $SkipDemo,
+    [switch] $SkipHostFrame
 )
 
 $ErrorActionPreference = 'Continue'
@@ -260,6 +261,7 @@ else
 }
 
 $solution = Join-Path $workspace 'Demo App\Ixen.DemoApp.sln'
+$demoSolutionBuilt = $false
 
 if (-not (Test-Path $solution))
 {
@@ -276,6 +278,7 @@ else
 
     if ($code -eq 0)
     {
+        $demoSolutionBuilt = $true
         Record 'OK' 'demo solution, warning-free' 'the Android demo lives only in this one'
     }
     else
@@ -343,6 +346,81 @@ else
 
             Remove-Item $shot -ErrorAction SilentlyContinue
         }
+    }
+}
+
+$exe = Join-Path $workspace ('Demo App\Ixen.DemoApp.Desktop\bin\' + $Configuration + '\net10.0\Ixen.DemoApp.Desktop.exe')
+
+if ($SkipHostFrame)
+{
+    Record 'SKIP' 'host frame matches library' 'asked to skip'
+}
+elseif ($SkipDemo -or -not (Test-Path $exe))
+{
+    Record 'SKIP' 'host frame matches library' 'no desktop demo beside Framework'
+}
+elseif (-not $toolBuilt)
+{
+    Record 'SKIP' 'host frame matches library' 'Ixen.Docs was not built'
+}
+elseif (-not $demoSolutionBuilt)
+{
+    Record 'SKIP' 'host frame matches library' 'the demo solution did not build'
+}
+else
+{
+    $shot = Join-Path ([System.IO.Path]::GetTempPath()) 'ixen-verify-host.png'
+    $said = $shot + '.txt'
+    $lib = Join-Path ([System.IO.Path]::GetTempPath()) 'ixen-verify-lib.png'
+
+    Remove-Item $shot -ErrorAction SilentlyContinue
+    Remove-Item $said -ErrorAction SilentlyContinue
+
+    $run = Start-Process -FilePath $exe -ArgumentList '--capture', ('"' + $shot + '"') -Wait -PassThru
+    $code = $run.ExitCode
+
+    if ($code -ne 0 -or -not (Test-Path $shot) -or -not (Test-Path $said))
+    {
+        Record 'FAIL' 'host frame matches library' ('the host produced no frame, exit ' + $code + ' - a runner with no interactive desktop needs -SkipHostFrame')
+    }
+    else
+    {
+        $geometry = @(((Get-Content $said -TotalCount 1) -split '\s+') | Where-Object { $_ -ne '' })
+        $device_w = $geometry[0]
+        $device_h = $geometry[1]
+        $scale = $geometry[2]
+        $dll = Join-Path $workspace ('Demo App\Ixen.DemoApp\bin\' + $Configuration + '\net10.0\Ixen.DemoApp.dll')
+
+        $out = @(& dotnet run --project $tools -c $Configuration --no-build -- --render $dll $device_w $device_h $lib --component MainComponent --scale $scale 2>&1)
+        $code = $LASTEXITCODE
+
+        if ($code -ne 0 -or -not (Test-Path $lib))
+        {
+            Show @($out | Select-Object -Last 6) 6
+            Record 'FAIL' 'host frame matches library' ('the render failed, exit ' + $code)
+        }
+        else
+        {
+            $one = (Get-FileHash $shot -Algorithm MD5).Hash.ToUpperInvariant()
+            $two = (Get-FileHash $lib -Algorithm MD5).Hash.ToUpperInvariant()
+
+            if ($one -eq $two)
+            {
+                Record 'OK' 'host frame matches library' ('{0} x {1} at scale {2}, {3}' -f $device_w, $device_h, $scale, $one)
+            }
+            else
+            {
+                $out = @(& dotnet run --project $tools -c $Configuration --no-build -- --diff $shot $lib 2>&1)
+
+                Show @($out | Where-Object { $_ -match '^difference' }) 2
+                Record 'FAIL' 'host frame matches library' ('the native path and the library disagree at {0} x {1} scale {2}' -f $device_w, $device_h, $scale)
+            }
+
+            Remove-Item $lib -ErrorAction SilentlyContinue
+        }
+
+        Remove-Item $shot -ErrorAction SilentlyContinue
+        Remove-Item $said -ErrorAction SilentlyContinue
     }
 }
 

@@ -4,6 +4,8 @@ using Ixen.Platform.Windows.Accessibility;
 using Ixen.Platform.Windows.NativeApi;
 using SkiaSharp;
 using System;
+using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Ixen.Platform.Windows
 {
@@ -188,7 +190,48 @@ namespace Ixen.Platform.Windows
             _renderer.Paint(width, height, canvas => _host.Paint(canvas, width, height));
 
             _accessibility.Sync();
+
+            _paints++;
+
+            if (_capturePath != null && _paints >= _capturePaints)
+            {
+                Capture();
+            }
         }
+
+        private string _capturePath;
+        private int _capturePaints;
+        private int _paints;
+
+        internal void CaptureAfter(string path, int paints)
+        {
+            _capturePath = path;
+            _capturePaints = paints < 1 ? 1 : paints;
+        }
+
+        private void Capture()
+        {
+            string path = _capturePath;
+
+            _capturePath = null;
+
+            using SKImage image = _renderer.Snapshot();
+
+            if (image != null)
+            {
+                using SKData data = image.Encode(SKEncodedImageFormat.Png, 100);
+                using FileStream file = File.Create(path);
+
+                data.SaveTo(file);
+            }
+
+            PostMessage(WindowApi.GetWindowHandle(_windowPtr), WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+        }
+
+        private const uint WM_CLOSE = 0x0010;
+
+        [DllImport("user32.dll")]
+        private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
 
         private IntPtr OnAccessibility(IntPtr wParam, IntPtr lParam)
             => _accessibility.Answer(wParam, lParam);

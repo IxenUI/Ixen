@@ -38,6 +38,8 @@ namespace Ixen.Platform.Windows
             WindowApi.SetWindowPixelsBuffer(Window, _pixelBuffer.Ptr);
         }
 
+        internal override SKImage Snapshot() => _surface?.Snapshot();
+
         private SKSurface Surface(int width, int height)
         {
             if (_surface != null && width == _width && height == _height

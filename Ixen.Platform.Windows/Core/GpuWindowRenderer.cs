@@ -108,6 +108,19 @@ namespace Ixen.Platform.Windows
             WindowApi.SwapGlBuffers(Window);
         }
 
+        internal override SKImage Snapshot()
+        {
+            if (_surface == null)
+            {
+                return null;
+            }
+
+            _context.Flush();
+            _context.Submit(true);
+
+            return _surface.Snapshot();
+        }
+
         private SKSurface Surface(int width, int height)
         {
             if (_surface != null && _width == width && _height == height)

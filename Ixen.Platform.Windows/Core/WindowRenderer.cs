@@ -18,6 +18,8 @@ namespace Ixen.Platform.Windows
 
         internal abstract void Paint(int width, int height, Action<SKCanvas> render);
 
+        internal abstract SKImage Snapshot();
+
         public virtual void Dispose()
         {
         }

@@ -1,4 +1,5 @@
 using Ixen.Core.Input;
+using Ixen.Core.Rendering;
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles.Descriptors;
@@ -160,6 +161,54 @@ namespace Ixen.Core.UT.Rendering
             surface.PointerUp(90, 90, PointerButton.Left);
 
             Assert.AreEqual("box", clicked);
+        }
+
+        [TestMethod]
+        public void TheBitmapIsSizedInDevicePixels()
+        {
+            VisualElement root = Root();
+            root.AddChild(Box("box", 50, 50, "#FF0000"));
+
+            using (SKBitmap bitmap = Surface(root, 2).RenderToBitmap())
+            {
+                Assert.AreEqual(DEVICE, bitmap.Width,
+                    "Render scales the canvas, so a bitmap sized from the logical viewport "
+                        + "would be a quarter of the frame it is asked to hold");
+                Assert.AreEqual(DEVICE, bitmap.Height);
+            }
+        }
+
+        [TestMethod]
+        public void TheBitmapHoldsWhatADeviceSizedCanvasWouldGet()
+        {
+            VisualElement root = Root();
+            root.AddChild(Box("box", 50, 50, "#FF0000"));
+
+            IxenSurface surface = Surface(root, 2);
+
+            using (SKBitmap drawn = surface.RenderToBitmap())
+            using (var expected = new SKBitmap(DEVICE, DEVICE))
+            using (var canvas = new SKCanvas(expected))
+            {
+                surface.Render(canvas);
+
+                BitmapDifference difference = BitmapDifference.Compare(drawn, expected);
+
+                Assert.IsFalse(difference.Any, difference.Describe());
+            }
+        }
+
+        [TestMethod]
+        public void AtScaleOneTheBitmapIsStillExactlyTheViewport()
+        {
+            VisualElement root = Root();
+            root.AddChild(Box("box", 50, 50, "#FF0000"));
+
+            using (SKBitmap bitmap = Surface(root, 1).RenderToBitmap())
+            {
+                Assert.AreEqual(DEVICE, bitmap.Width, "every figure in the workspace is at scale 1");
+                Assert.AreEqual(DEVICE, bitmap.Height);
+            }
         }
 
         [TestMethod]

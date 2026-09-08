@@ -1017,7 +1017,9 @@ namespace Ixen.Core
         {
             try
             {
-                SKBitmap bitmap = new SKBitmap((int)_viewPort.Width, (int)_viewPort.Height);
+                SKBitmap bitmap = new SKBitmap(
+                    (int)Math.Round(_viewPort.Width * _scale),
+                    (int)Math.Round(_viewPort.Height * _scale));
                 using (var canvas = new SKCanvas(bitmap))
                 {
                     Render(canvas);
