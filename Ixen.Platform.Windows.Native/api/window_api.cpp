@@ -11,6 +11,11 @@ NativeWindow* WA_CreateWindow(LPCWSTR title, int width, int height)
     return new NativeWindow(title, width, height);
 }
 
+void WA_DestroyWindow(NativeWindow* window)
+{
+    delete window;
+}
+
 LRESULT WA_ShowWindow(NativeWindow* window)
 {
     if (!window)

@@ -33,7 +33,7 @@ namespace Ixen.Platform.Windows
             _ixenSurface = ixenSurface;
             _ixenSurface.ReducedMotion = SystemPreferences.PrefersReducedMotion();
             _host = new IxenHost(ixenSurface, RequestRepaint, new MessageScheduler(), new WindowsClipboard(),
-                SetCursor, new WindowsImageSource());
+                SetCursor, new WindowsImageSource(), null, CanPresent);
 
             IxenSynchronizationContext.Install(ixenSurface);
 
@@ -183,8 +183,15 @@ namespace Ixen.Platform.Windows
 
         private const float DEFAULT_DPI = 96f;
 
+        private bool CanPresent()
+            => !IsIconic(WindowApi.GetWindowHandle(_windowPtr));
+
+        [DllImport("user32.dll")]
+        private static extern bool IsIconic(IntPtr window);
+
         private void OnPaint(int width, int height)
         {
+            _ixenSurface.Presentable = CanPresent();
             _ixenSurface.Scale = WindowApi.GetWindowDpi(_windowPtr) / DEFAULT_DPI;
 
             _renderer.Paint(width, height, canvas => _host.Paint(canvas, width, height));
@@ -242,6 +249,8 @@ namespace Ixen.Platform.Windows
         {
             _renderer.Dispose();
             _cursors.Dispose();
+
+            WindowApi.DestroyWindow(_windowPtr);
         }
     }
 }

@@ -13,13 +13,15 @@ namespace Ixen.Platform
     {
         private readonly IxenSurface _surface;
         private readonly Action _requestRepaint;
+        private readonly Func<bool> _canPresent;
 
         public IxenHost(IxenSurface surface, Action requestRepaint, IScheduler scheduler = null,
             IClipboard clipboard = null, Action<CursorKind, CursorImage> setCursor = null, IImageSource images = null,
-            Action wake = null)
+            Action wake = null, Func<bool> canPresent = null)
         {
             _surface = surface ?? throw new ArgumentNullException(nameof(surface));
             _requestRepaint = requestRepaint;
+            _canPresent = canPresent;
 
             _surface.Wake = wake ?? requestRepaint;
             _surface.PostedError = error => Fail(IxenErrorPhase.Posted, error);
@@ -407,6 +409,11 @@ namespace Ixen.Platform
 
         private void RepaintIfDirty()
         {
+            if (_canPresent != null)
+            {
+                _surface.Presentable = _canPresent();
+            }
+
             if (_requestRepaint != null && _surface.IsDirty)
             {
                 _requestRepaint();

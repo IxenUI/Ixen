@@ -21,6 +21,9 @@ namespace Ixen.Platform.Windows.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_ShowWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern int ShowWindow(IntPtr windowPtr);
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_DestroyWindow", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void DestroyWindow(IntPtr windowPtr);
+
         [DllImport(LIB_NAME, EntryPoint = "WA_GetWindowTitle", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         [return: MarshalAs(UnmanagedType.LPWStr)]
         public static extern string GetWindowTitle(IntPtr windowPtr);

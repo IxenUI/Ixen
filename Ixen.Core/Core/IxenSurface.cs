@@ -518,6 +518,29 @@ namespace Ixen.Core
 
         internal int AnimatingCount => _animating.Count;
 
+        private bool _presentable = true;
+
+        public bool Presentable
+        {
+            get => _presentable;
+            set
+            {
+                if (_presentable == value)
+                {
+                    return;
+                }
+
+                _presentable = value;
+
+                SyncAnimationTicker();
+
+                if (value)
+                {
+                    InvalidateVisual();
+                }
+            }
+        }
+
         private bool _reducedMotion;
 
         public bool ReducedMotion
@@ -543,7 +566,7 @@ namespace Ixen.Core
                 }
 
                 _animating.Clear();
-                StopAnimationTicker();
+                SyncAnimationTicker();
                 InvalidateVisual();
             }
         }
@@ -566,10 +589,7 @@ namespace Ixen.Core
                 _animating.Add(element);
             }
 
-            if (_animationTicker == null)
-            {
-                _animationTicker = _scheduler.Schedule(ElementAnimations.TICK, true, TickAnimations);
-            }
+            SyncAnimationTicker();
         }
 
         public void StopAnimating(VisualElement element)
@@ -579,9 +599,20 @@ namespace Ixen.Core
                 return;
             }
 
-            if (_animating.Count == 0)
+            SyncAnimationTicker();
+        }
+
+        private void SyncAnimationTicker()
+        {
+            if (_scheduler == null || _animating.Count == 0 || !_presentable)
             {
                 StopAnimationTicker();
+                return;
+            }
+
+            if (_animationTicker == null)
+            {
+                _animationTicker = _scheduler.Schedule(ElementAnimations.TICK, true, TickAnimations);
             }
         }
 
@@ -626,10 +657,7 @@ namespace Ixen.Core
                 AddDamage(element);
             }
 
-            if (_animating.Count == 0)
-            {
-                StopAnimationTicker();
-            }
+            SyncAnimationTicker();
         }
 
         private IScheduler _scheduler;

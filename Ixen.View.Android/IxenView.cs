@@ -59,7 +59,8 @@ namespace Ixen.View.Android
 
             _host = new IxenHost(new IxenSurface(), _skCanvasView.Invalidate,
                 new AndroidScheduler(), new AndroidClipboard(Context), null,
-                new AssetImageSource(Context?.Assets), _skCanvasView.PostInvalidate);
+                new AssetImageSource(Context?.Assets), _skCanvasView.PostInvalidate,
+                () => IsShown);
 
             IxenSynchronizationContext.Install(_host.Surface);
 
@@ -93,6 +94,8 @@ namespace Ixen.View.Android
 
         private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
         {
+            _host.Surface.Presentable = IsShown;
+
             float density = Context?.Resources?.DisplayMetrics?.Density ?? 1f;
 
             _host.Surface.Scale = density > 0 ? density : 1f;
