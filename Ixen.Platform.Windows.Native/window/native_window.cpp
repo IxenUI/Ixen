@@ -7,6 +7,7 @@
 #include <string>
 #include <GL/gl.h>
 #include <imm.h>
+#include <shellapi.h>
 
 #define IXEN_POINTER_MOVE 0
 #define IXEN_POINTER_DOWN 1
@@ -478,6 +479,57 @@ static std::wstring ReadComposition(HIMC context, DWORD which)
     return text;
 }
 
+LRESULT NativeWindow::HandleDropFiles(WPARAM wParam)
+{
+    HDROP drop = (HDROP)wParam;
+
+    if (_dropCallBack == nullptr)
+    {
+        DragFinish(drop);
+        return 0;
+    }
+
+    POINT point = {};
+    DragQueryPoint(drop, &point);
+
+    UINT count = DragQueryFileW(drop, 0xFFFFFFFF, nullptr, 0);
+    std::wstring paths;
+
+    for (UINT index = 0; index < count; index++)
+    {
+        UINT length = DragQueryFileW(drop, index, nullptr, 0);
+
+        if (length == 0)
+        {
+            continue;
+        }
+
+        std::wstring path(length, L'\0');
+        DragQueryFileW(drop, index, &path[0], length + 1);
+
+        if (!paths.empty())
+        {
+            paths += L'\n';
+        }
+
+        paths += path;
+    }
+
+    DragFinish(drop);
+
+    _dropCallBack(point.x, point.y, paths.c_str());
+
+    return 0;
+}
+
+void NativeWindow::SetAcceptsFiles(bool value)
+{
+    if (_handle)
+    {
+        DragAcceptFiles(_handle, value ? TRUE : FALSE);
+    }
+}
+
 LRESULT NativeWindow::HandleComposition(LPARAM lParam)
 {
     if (_imeCallBack == nullptr)
@@ -577,6 +629,9 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
         return HandleCaptureLost();
     case WM_DPICHANGED:
         return HandleDpiChanged(lParam);
+
+    case WM_DROPFILES:
+        return HandleDropFiles(wParam);
 
     case WM_IME_COMPOSITION:
         return HandleComposition(lParam);

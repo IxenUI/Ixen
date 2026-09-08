@@ -800,6 +800,13 @@ namespace Ixen.Core
             return value >= size ? size - 1 : value;
         }
 
+        public bool AcceptsDrops => Root != null && Root.HasDropTargets;
+
+        internal void PointerDrop(float x, float y, object data)
+        {
+            _pointerDispatcher.Drop(Root, x / _scale, y / _scale, data, TrackStates);
+        }
+
         internal void PointerLeaveSurface()
         {
             VisualElement before = _pointerDispatcher.Hovered;

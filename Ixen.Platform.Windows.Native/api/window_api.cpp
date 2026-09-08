@@ -154,6 +154,22 @@ void WA_RegisterAccessibilityCallBack(NativeWindow* window, __int64 __stdcall ca
     }
 }
 
+void WA_RegisterDropCallBack(NativeWindow* window, void __stdcall callBack(int, int, const wchar_t*))
+{
+    if (window)
+    {
+        window->SetOnDropCallBack(callBack);
+    }
+}
+
+void WA_SetWindowAcceptsFiles(NativeWindow* window, int value)
+{
+    if (window)
+    {
+        window->SetAcceptsFiles(value != 0);
+    }
+}
+
 void* WA_GetWindowHandle(NativeWindow* window)
 {
     return window ? (void*)window->GetHandle() : nullptr;

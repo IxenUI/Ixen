@@ -25,6 +25,7 @@ namespace IxenWindowsNative
         void (*_imeCallBack)(int, const wchar_t*, int) = nullptr;
         void (*_wheelCallBack)(int, int, int, int, int) = nullptr;
         __int64 (*_accessibilityCallBack)(__int64, __int64) = nullptr;
+        void (*_dropCallBack)(int, int, const wchar_t*) = nullptr;
         void* _pixelsBuffer = nullptr;
         HCURSOR _cursor = nullptr;
         HDC _deviceContext = nullptr;
@@ -48,6 +49,7 @@ namespace IxenWindowsNative
         LRESULT HandleEndComposition();
         LRESULT HandleWheel(WPARAM wParam, LPARAM lParam, bool horizontal);
         LRESULT HandleSetCursor(LPARAM lParam);
+        LRESULT HandleDropFiles(WPARAM wParam);
         LRESULT HandleGetObject(WPARAM wParam, LPARAM lParam);
         void DestroyGlContext();
         static int GetModifiers();
@@ -77,6 +79,8 @@ namespace IxenWindowsNative
         void SetOnImeCallBack(void __stdcall callback(int, const wchar_t*, int)) { _imeCallBack = callback; }
         void SetOnWheelCallBack(void __stdcall callback(int, int, int, int, int)) { _wheelCallBack = callback; }
         void SetOnAccessibilityCallBack(__int64 __stdcall callback(__int64, __int64)) { _accessibilityCallBack = callback; }
+        void SetOnDropCallBack(void __stdcall callback(int, int, const wchar_t*)) { _dropCallBack = callback; }
+        void SetAcceptsFiles(bool value);
     };
 }
 

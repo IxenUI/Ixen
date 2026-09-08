@@ -196,6 +196,22 @@ namespace Ixen.Platform
             }
         }
 
+        public void PointerDrop(float x, float y, object data)
+        {
+            try
+            {
+                _surface.PointerDrop(x, y, data);
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Pointer, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
+        }
+
         public void PointerLeave()
         {
             try

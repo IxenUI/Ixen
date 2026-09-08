@@ -10,12 +10,14 @@ namespace Ixen.Core.Visual.Computers
         private List<VisualElement> _collected;
         private List<VisualElement> _shortcuts;
         private bool _layered;
+        private bool _droppable;
 
         internal void Compute(VisualElement element, float viewportWidth, float viewportHeight)
         {
             _viewportWidth = viewportWidth;
             _viewportHeight = viewportHeight;
             _layered = false;
+            _droppable = false;
 
             _collected = element.Overlays;
             _collected.Clear();
@@ -32,6 +34,8 @@ namespace Ixen.Core.Visual.Computers
 
             _collected = null;
             _shortcuts = null;
+
+            element.HasDropTargets = _droppable;
         }
 
         private static void SortByDepth(List<VisualElement> layers)
@@ -82,6 +86,11 @@ namespace Ixen.Core.Visual.Computers
             if (element.HasShortcut)
             {
                 _shortcuts?.Add(element);
+            }
+
+            if (element.AllowDrop && !element.IsHiddenInTree)
+            {
+                _droppable = true;
             }
 
             if (element.IsOverlay)

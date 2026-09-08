@@ -18,6 +18,8 @@ IXEN_API_ENTRY void WA_RegisterKeyCallBack(NativeWindow* window, void __stdcall 
 IXEN_API_ENTRY void WA_RegisterImeCallBack(NativeWindow* window, void __stdcall callBack(int, const wchar_t*, int));
 IXEN_API_ENTRY void WA_RegisterWheelCallBack(NativeWindow* window, void __stdcall callBack(int, int, int, int, int));
 IXEN_API_ENTRY void WA_RegisterAccessibilityCallBack(NativeWindow* window, __int64 __stdcall callBack(__int64, __int64));
+IXEN_API_ENTRY void WA_RegisterDropCallBack(NativeWindow* window, void __stdcall callBack(int, int, const wchar_t*));
+IXEN_API_ENTRY void WA_SetWindowAcceptsFiles(NativeWindow* window, int value);
 IXEN_API_ENTRY void* WA_GetWindowHandle(NativeWindow* window);
 IXEN_API_ENTRY void WA_InvalidateWindow(NativeWindow* window);
 IXEN_API_ENTRY void WA_SetWindowCursor(NativeWindow* window, int kind);

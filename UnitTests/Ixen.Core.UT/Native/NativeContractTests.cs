@@ -64,7 +64,8 @@ namespace Ixen.Core.UT.Native
             { "_keyCallBack", "OnKeyCallBack" },
             { "_imeCallBack", "OnImeCallBack" },
             { "_wheelCallBack", "OnWheelCallBack" },
-            { "_accessibilityCallBack", "OnAccessibilityCallBack" }
+            { "_accessibilityCallBack", "OnAccessibilityCallBack" },
+            { "_dropCallBack", "OnDropCallBack" }
         };
 
         private static readonly Dictionary<string, string> _returns

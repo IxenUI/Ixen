@@ -5,6 +5,7 @@ using Ixen.Core.Visual.Styles.Descriptors;
 using Ixen.Platform;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SkiaSharp;
+using System;
 
 namespace Ixen.Core.UT.Input
 {
@@ -230,6 +231,53 @@ namespace Ixen.Core.UT.Input
             _host.FinishComposition();
 
             Assert.AreEqual(string.Empty, _box.Text ?? string.Empty);
+        }
+
+        [TestMethod]
+        public void ADropFromTheOperatingSystemGoesThroughToTheSurface()
+        {
+            object dropped = null;
+
+            _box.AllowDrop = true;
+            _box.Drop += (s, e) => dropped = e.Data;
+
+            Paint();
+            _host.PointerDrop(40, 40, new[] { @"C:\poems\swans.txt" });
+
+            Assert.IsNotNull(dropped, "a file dropped from the shell is an ordinary drop");
+        }
+
+        [TestMethod]
+        public void ADropThatChangesTheTreeRequestsARepaint()
+        {
+            _box.AllowDrop = true;
+            _box.Drop += (s, e) => _box.Text = "caught";
+
+            Paint();
+            _host.PointerDrop(40, 40, new[] { @"C:\poems\swans.txt" });
+
+            Assert.AreEqual(1, _repaints,
+                "nothing else asks for the frame that shows what was dropped");
+        }
+
+        [TestMethod]
+        public void ADropHandlerThatThrowsIsReportedRatherThanKillingTheLoop()
+        {
+            IxenErrorPhase phase = IxenErrorPhase.Frame;
+
+            _box.AllowDrop = true;
+            _box.Drop += (s, e) => throw new InvalidOperationException("no");
+
+            _host.UnhandledError += (s, e) =>
+            {
+                phase = e.Phase;
+                e.Handled = true;
+            };
+
+            Paint();
+            _host.PointerDrop(40, 40, new[] { @"C:\poems\swans.txt" });
+
+            Assert.AreEqual(IxenErrorPhase.Pointer, phase);
         }
     }
 }

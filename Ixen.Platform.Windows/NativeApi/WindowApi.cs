@@ -14,6 +14,8 @@ namespace Ixen.Platform.Windows.NativeApi
             [MarshalAs(UnmanagedType.LPWStr)] string text, int caret);
         public delegate void OnWheelCallBack(int x, int y, int deltaX, int deltaY, int modifiers);
         public delegate IntPtr OnAccessibilityCallBack(IntPtr wParam, IntPtr lParam);
+        public delegate void OnDropCallBack(int x, int y,
+            [MarshalAs(UnmanagedType.LPWStr)] string paths);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr CreateWindow([MarshalAs(UnmanagedType.LPWStr)] string title, int width, int height);
@@ -60,6 +62,12 @@ namespace Ixen.Platform.Windows.NativeApi
 
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterAccessibilityCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterAccessibilityCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnAccessibilityCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterDropCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterDropCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnDropCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowAcceptsFiles", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetWindowAcceptsFiles(IntPtr windowPtr, int value);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_GetWindowHandle", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr GetWindowHandle(IntPtr windowPtr);

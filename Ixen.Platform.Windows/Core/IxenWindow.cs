@@ -21,6 +21,7 @@ namespace Ixen.Platform.Windows
         private readonly WindowApi.OnImeCallBack _onIme;
         private readonly WindowApi.OnWheelCallBack _onWheel;
         private readonly WindowApi.OnAccessibilityCallBack _onAccessibility;
+        private readonly WindowApi.OnDropCallBack _onDrop;
 
         private readonly UiaBridge _accessibility;
         private readonly NativeCursorImages _cursors = new();
@@ -43,6 +44,7 @@ namespace Ixen.Platform.Windows
             _onIme = OnIme;
             _onWheel = OnWheel;
             _onAccessibility = OnAccessibility;
+            _onDrop = OnDrop;
             _windowPtr = WindowApi.CreateWindow(_ixenSurface.InitOptions.Title, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
@@ -69,6 +71,7 @@ namespace Ixen.Platform.Windows
             WindowApi.RegisterImeCallBack(_windowPtr, _onIme);
             WindowApi.RegisterWheelCallBack(_windowPtr, _onWheel);
             WindowApi.RegisterAccessibilityCallBack(_windowPtr, _onAccessibility);
+            WindowApi.RegisterDropCallBack(_windowPtr, _onDrop);
 
             return WindowApi.ShowWindow(_windowPtr);
         }
@@ -189,6 +192,34 @@ namespace Ixen.Platform.Windows
         [DllImport("user32.dll")]
         private static extern bool IsIconic(IntPtr window);
 
+        private static readonly char[] _dropSeparator = { '\n' };
+
+        private void OnDrop(int x, int y, string paths)
+        {
+            if (string.IsNullOrEmpty(paths))
+            {
+                return;
+            }
+
+            _host.PointerDrop(x, y, paths.Split(_dropSeparator));
+        }
+
+        private bool _acceptsFiles;
+
+        private void SyncAcceptsFiles()
+        {
+            bool wanted = _ixenSurface.AcceptsDrops;
+
+            if (wanted == _acceptsFiles)
+            {
+                return;
+            }
+
+            _acceptsFiles = wanted;
+
+            WindowApi.SetWindowAcceptsFiles(_windowPtr, wanted ? 1 : 0);
+        }
+
         private void OnPaint(int width, int height)
         {
             _ixenSurface.Presentable = CanPresent();
@@ -197,6 +228,7 @@ namespace Ixen.Platform.Windows
             _renderer.Paint(width, height, canvas => _host.Paint(canvas, width, height));
 
             _accessibility.Sync();
+            SyncAcceptsFiles();
 
             _paints++;
 

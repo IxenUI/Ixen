@@ -615,6 +615,8 @@ namespace Ixen.Core.Visual
 
         internal List<VisualElement> Shortcuts => _shortcuts ?? (_shortcuts = new List<VisualElement>());
 
+        internal bool HasDropTargets { get; set; }
+
         internal bool HasShortcuts => _shortcuts != null && _shortcuts.Count > 0;
 
         private ElementAnimations _animations;

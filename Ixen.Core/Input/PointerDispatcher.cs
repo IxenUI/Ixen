@@ -831,6 +831,35 @@ namespace Ixen.Core.Input
             return args.Handled;
         }
 
+        internal void Drop(VisualElement root, float x, float y, object data, bool trackStates)
+        {
+            if (root == null || data == null || _dragData != null || _pressed != null)
+            {
+                return;
+            }
+
+            _trackStates = trackStates;
+            _kind = PointerKind.Mouse;
+            _dragData = data;
+
+            try
+            {
+                SyncDropTarget(Enabled(HitTester.HitTest(root, x, y)), x, y);
+
+                if (_dropAccepted)
+                {
+                    SyncDropTarget(_dropTarget, x, y);
+                }
+
+                PerformDrop(x, y);
+            }
+            finally
+            {
+                _dragData = null;
+                _dropped = false;
+            }
+        }
+
         private void SyncDropTarget(VisualElement hit, float x, float y)
         {
             if (_dragData == null)
