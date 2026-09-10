@@ -175,6 +175,14 @@ void* WA_GetWindowHandle(NativeWindow* window)
     return window ? (void*)window->GetHandle() : nullptr;
 }
 
+void WA_RegisterSuspendCallBack(NativeWindow* window, void __stdcall callBack())
+{
+    if (window)
+    {
+        window->SetOnSuspendCallBack(callBack);
+    }
+}
+
 int WA_CreateGlContext(NativeWindow* window)
 {
     if (!window)
@@ -183,6 +191,16 @@ int WA_CreateGlContext(NativeWindow* window)
     }
 
     return window->CreateGlContext() ? 1 : 0;
+}
+
+int WA_EnsureGlContext(NativeWindow* window)
+{
+    if (!window)
+    {
+        return 0;
+    }
+
+    return window->EnsureGlContext();
 }
 
 void WA_SwapGlBuffers(NativeWindow* window)

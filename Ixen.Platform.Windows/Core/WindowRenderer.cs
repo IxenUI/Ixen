@@ -16,6 +16,8 @@ namespace Ixen.Platform.Windows
 
         internal abstract bool PreservesFrame { get; }
 
+        internal virtual bool Alive => true;
+
         internal abstract void Paint(int width, int height, Action<SKCanvas> render);
 
         internal abstract SKImage Snapshot();

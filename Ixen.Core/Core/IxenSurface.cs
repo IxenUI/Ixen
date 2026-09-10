@@ -689,6 +689,17 @@ namespace Ixen.Core
             set => _images.Budget = value;
         }
 
+        public void ReleaseCaches()
+        {
+            _images.Clear();
+            _rendererContext.Blobs.Clear();
+
+            SKGraphics.PurgeResourceCache();
+            SKGraphics.PurgeFontCache();
+
+            Root?.InvalidateLayout();
+        }
+
         public IImageSource ImageSource
         {
             get => _images.Source;

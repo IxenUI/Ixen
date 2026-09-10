@@ -212,6 +212,18 @@ namespace Ixen.Platform
             }
         }
 
+        public void ReleaseCaches()
+        {
+            try
+            {
+                _surface.ReleaseCaches();
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Frame, error);
+            }
+        }
+
         public void PointerLeave()
         {
             try

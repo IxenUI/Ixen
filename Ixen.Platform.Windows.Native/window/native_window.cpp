@@ -42,6 +42,10 @@
 #define IXEN_CURSOR_PROGRESS 12
 #define IXEN_CURSOR_HIDDEN 13
 
+#define IXEN_GL_NONE 0
+#define IXEN_GL_CURRENT 1
+#define IXEN_GL_RECREATED 2
+
 #define IXEN_BUTTON_NONE 0
 #define IXEN_BUTTON_LEFT 1
 #define IXEN_BUTTON_MIDDLE 2
@@ -110,6 +114,86 @@ LRESULT NativeWindow::HandleDpiChanged(LPARAM lParam)
     Invalidate();
 
     return 0;
+}
+
+LRESULT NativeWindow::HandleDisplayChange()
+{
+    ClampToWorkArea();
+    Invalidate();
+
+    return 0;
+}
+
+void NativeWindow::ClampToWorkArea()
+{
+    if (_handle == nullptr || IsIconic(_handle) || IsZoomed(_handle))
+    {
+        return;
+    }
+
+    HMONITOR monitor = MonitorFromWindow(_handle, MONITOR_DEFAULTTONEAREST);
+    MONITORINFO info = {};
+    info.cbSize = sizeof(MONITORINFO);
+
+    RECT window = {};
+
+    if (monitor == nullptr || !GetMonitorInfo(monitor, &info) || !GetWindowRect(_handle, &window))
+    {
+        return;
+    }
+
+    RECT work = info.rcWork;
+
+    int width = window.right - window.left;
+    int height = window.bottom - window.top;
+    int available = work.right - work.left;
+    int room = work.bottom - work.top;
+
+    if (width > available)
+    {
+        width = available;
+    }
+
+    if (height > room)
+    {
+        height = room;
+    }
+
+    int left = window.left < work.left ? work.left : window.left;
+    int top = window.top < work.top ? work.top : window.top;
+
+    if (left + width > work.right)
+    {
+        left = work.right - width;
+    }
+
+    if (top + height > work.bottom)
+    {
+        top = work.bottom - height;
+    }
+
+    if (left == window.left && top == window.top
+        && width == window.right - window.left && height == window.bottom - window.top)
+    {
+        return;
+    }
+
+    SetWindowPos(_handle, nullptr, left, top, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
+LRESULT NativeWindow::HandlePower(WPARAM wParam)
+{
+    if (wParam == PBT_APMSUSPEND && _suspendCallBack != nullptr)
+    {
+        _suspendCallBack();
+    }
+
+    if (wParam == PBT_APMRESUMESUSPEND || wParam == PBT_APMRESUMEAUTOMATIC)
+    {
+        Invalidate();
+    }
+
+    return TRUE;
 }
 
 NativeWindow::NativeWindow(LPCWSTR title, int width, int height)
@@ -258,6 +342,23 @@ bool NativeWindow::CreateGlContext()
     }
 
     return true;
+}
+
+int NativeWindow::EnsureGlContext()
+{
+    if (_glContext == nullptr || _deviceContext == nullptr)
+    {
+        return IXEN_GL_NONE;
+    }
+
+    if (wglMakeCurrent(_deviceContext, _glContext))
+    {
+        return IXEN_GL_CURRENT;
+    }
+
+    DestroyGlContext();
+
+    return CreateGlContext() ? IXEN_GL_RECREATED : IXEN_GL_NONE;
 }
 
 void NativeWindow::SwapGlBuffers()
@@ -629,6 +730,12 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
         return HandleCaptureLost();
     case WM_DPICHANGED:
         return HandleDpiChanged(lParam);
+
+    case WM_DISPLAYCHANGE:
+        return HandleDisplayChange();
+
+    case WM_POWERBROADCAST:
+        return HandlePower(wParam);
 
     case WM_DROPFILES:
         return HandleDropFiles(wParam);

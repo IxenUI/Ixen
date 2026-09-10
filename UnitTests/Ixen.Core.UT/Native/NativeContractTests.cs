@@ -21,6 +21,10 @@ namespace Ixen.Core.UT.Native
             { "IXEN_POINTER_LEAVE", "Leave" },
             { "IXEN_POINTER_CAPTURELOST", "CaptureLost" },
 
+            { "IXEN_GL_NONE", "None" },
+            { "IXEN_GL_CURRENT", "Current" },
+            { "IXEN_GL_RECREATED", "Recreated" },
+
             { "IXEN_BUTTON_NONE", "None" },
             { "IXEN_BUTTON_LEFT", "Left" },
             { "IXEN_BUTTON_MIDDLE", "Middle" },
@@ -65,7 +69,8 @@ namespace Ixen.Core.UT.Native
             { "_imeCallBack", "OnImeCallBack" },
             { "_wheelCallBack", "OnWheelCallBack" },
             { "_accessibilityCallBack", "OnAccessibilityCallBack" },
-            { "_dropCallBack", "OnDropCallBack" }
+            { "_dropCallBack", "OnDropCallBack" },
+            { "_suspendCallBack", "OnSuspendCallBack" }
         };
 
         private static readonly Dictionary<string, string> _returns
@@ -249,6 +254,7 @@ namespace Ixen.Core.UT.Native
 
             ReadEnum(kinds, "NativePointerKind", found);
             ReadEnum(kinds, "NativePointerButton", found);
+            ReadEnum(kinds, "NativeGlStatus", found);
             ReadEnum(keys, "NativeKeyKind", found);
             ReadEnum(keys, "NativeImeKind", found);
 
@@ -281,6 +287,11 @@ namespace Ixen.Core.UT.Native
             if (define.StartsWith("IXEN_BUTTON_", StringComparison.Ordinal))
             {
                 return "NativePointerButton." + suffix;
+            }
+
+            if (define.StartsWith("IXEN_GL_", StringComparison.Ordinal))
+            {
+                return "NativeGlStatus." + suffix;
             }
 
             if (define.StartsWith("IXEN_IME_", StringComparison.Ordinal))

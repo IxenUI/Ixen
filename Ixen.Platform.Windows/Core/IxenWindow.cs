@@ -22,6 +22,7 @@ namespace Ixen.Platform.Windows
         private readonly WindowApi.OnWheelCallBack _onWheel;
         private readonly WindowApi.OnAccessibilityCallBack _onAccessibility;
         private readonly WindowApi.OnDropCallBack _onDrop;
+        private readonly WindowApi.OnSuspendCallBack _onSuspend;
 
         private readonly UiaBridge _accessibility;
         private readonly NativeCursorImages _cursors = new();
@@ -45,6 +46,7 @@ namespace Ixen.Platform.Windows
             _onWheel = OnWheel;
             _onAccessibility = OnAccessibility;
             _onDrop = OnDrop;
+            _onSuspend = OnSuspend;
             _windowPtr = WindowApi.CreateWindow(_ixenSurface.InitOptions.Title, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
@@ -72,6 +74,7 @@ namespace Ixen.Platform.Windows
             WindowApi.RegisterWheelCallBack(_windowPtr, _onWheel);
             WindowApi.RegisterAccessibilityCallBack(_windowPtr, _onAccessibility);
             WindowApi.RegisterDropCallBack(_windowPtr, _onDrop);
+            WindowApi.RegisterSuspendCallBack(_windowPtr, _onSuspend);
 
             return WindowApi.ShowWindow(_windowPtr);
         }
@@ -204,6 +207,8 @@ namespace Ixen.Platform.Windows
             _host.PointerDrop(x, y, paths.Split(_dropSeparator));
         }
 
+        private void OnSuspend() => _host.ReleaseCaches();
+
         private bool _acceptsFiles;
 
         private void SyncAcceptsFiles()
@@ -225,7 +230,7 @@ namespace Ixen.Platform.Windows
             _ixenSurface.Presentable = CanPresent();
             _ixenSurface.Scale = WindowApi.GetWindowDpi(_windowPtr) / DEFAULT_DPI;
 
-            _renderer.Paint(width, height, canvas => _host.Paint(canvas, width, height));
+            Render(width, height);
 
             _accessibility.Sync();
             SyncAcceptsFiles();
@@ -236,6 +241,22 @@ namespace Ixen.Platform.Windows
             {
                 Capture();
             }
+        }
+
+        private void Render(int width, int height)
+        {
+            _renderer.Paint(width, height, canvas => _host.Paint(canvas, width, height));
+
+            if (_renderer.Alive)
+            {
+                return;
+            }
+
+            _renderer.Dispose();
+            _renderer = new RasterWindowRenderer(_windowPtr);
+            _ixenSurface.PreservesFrame = _renderer.PreservesFrame;
+
+            _renderer.Paint(width, height, canvas => _host.Paint(canvas, width, height));
         }
 
         private string _capturePath;

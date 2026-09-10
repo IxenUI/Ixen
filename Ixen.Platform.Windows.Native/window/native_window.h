@@ -26,6 +26,7 @@ namespace IxenWindowsNative
         void (*_wheelCallBack)(int, int, int, int, int) = nullptr;
         __int64 (*_accessibilityCallBack)(__int64, __int64) = nullptr;
         void (*_dropCallBack)(int, int, const wchar_t*) = nullptr;
+        void (*_suspendCallBack)() = nullptr;
         void* _pixelsBuffer = nullptr;
         HCURSOR _cursor = nullptr;
         HDC _deviceContext = nullptr;
@@ -44,6 +45,9 @@ namespace IxenWindowsNative
         LRESULT HandleMouseLeave();
         LRESULT HandleCaptureLost();
         LRESULT HandleDpiChanged(LPARAM lParam);
+        LRESULT HandleDisplayChange();
+        LRESULT HandlePower(WPARAM wParam);
+        void ClampToWorkArea();
         LRESULT HandleKey(int kind, WPARAM wParam, LPARAM lParam);
         LRESULT HandleComposition(LPARAM lParam);
         LRESULT HandleEndComposition();
@@ -68,6 +72,7 @@ namespace IxenWindowsNative
         void SetCursorHandle(void* cursor);
         UINT GetDpi();
         bool CreateGlContext();
+        int EnsureGlContext();
         void SwapGlBuffers();
         bool HasGlContext() { return _glContext != nullptr; }
 
@@ -80,6 +85,7 @@ namespace IxenWindowsNative
         void SetOnWheelCallBack(void __stdcall callback(int, int, int, int, int)) { _wheelCallBack = callback; }
         void SetOnAccessibilityCallBack(__int64 __stdcall callback(__int64, __int64)) { _accessibilityCallBack = callback; }
         void SetOnDropCallBack(void __stdcall callback(int, int, const wchar_t*)) { _dropCallBack = callback; }
+        void SetOnSuspendCallBack(void __stdcall callback()) { _suspendCallBack = callback; }
         void SetAcceptsFiles(bool value);
     };
 }

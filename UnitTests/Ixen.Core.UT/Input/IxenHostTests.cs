@@ -234,6 +234,25 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void ReleasingTheCachesAsksForNoFrameAtAll()
+        {
+            _box.Text = "something to shape";
+
+            Paint();
+
+            Assert.AreEqual(0, _repaints);
+
+            _host.ReleaseCaches();
+
+            Assert.AreEqual(0, _repaints,
+                "the machine is about to stop, so asking for a frame would re-decode and re-shape "
+                + "everything that was just dropped");
+
+            Assert.IsTrue(_host.Root.IsLayoutDirty,
+                "and this is what says the call reached the surface rather than doing nothing");
+        }
+
+        [TestMethod]
         public void ADropFromTheOperatingSystemGoesThroughToTheSurface()
         {
             object dropped = null;

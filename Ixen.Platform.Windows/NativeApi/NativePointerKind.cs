@@ -9,6 +9,13 @@ namespace Ixen.Platform.Windows.NativeApi
         CaptureLost = 4
     }
 
+    internal enum NativeGlStatus
+    {
+        None = 0,
+        Current = 1,
+        Recreated = 2
+    }
+
     internal enum NativePointerButton
     {
         None = 0,

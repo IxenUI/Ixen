@@ -16,24 +16,20 @@ namespace Ixen.Platform.Windows
         [DllImport("opengl32.dll", EntryPoint = "glGetIntegerv")]
         private static extern void GetIntegerValue(uint name, out int value);
 
-        private readonly GRGlInterface _glInterface;
-        private readonly GRContext _context;
-        private readonly int _samples;
-        private readonly int _stencilBits;
+        private GRGlInterface _glInterface;
+        private GRContext _context;
+        private int _samples;
+        private int _stencilBits;
 
         private GRBackendRenderTarget _target;
         private SKSurface _surface;
         private int _width;
         private int _height;
+        private bool _dead;
 
-        private GpuWindowRenderer(IntPtr window, GRGlInterface glInterface, GRContext context,
-            int samples, int stencilBits)
+        private GpuWindowRenderer(IntPtr window)
             : base(window)
         {
-            _glInterface = glInterface;
-            _context = context;
-            _samples = samples;
-            _stencilBits = stencilBits;
         }
 
         internal static GpuWindowRenderer TryCreate(IntPtr window)
@@ -43,56 +39,24 @@ namespace Ixen.Platform.Windows
                 return null;
             }
 
-            GRGlInterface glInterface = null;
-            GRContext context = null;
+            var renderer = new GpuWindowRenderer(window);
 
-            try
-            {
-                glInterface = GRGlInterface.Create();
-
-                if (glInterface == null || !glInterface.Validate())
-                {
-                    glInterface?.Dispose();
-
-                    return null;
-                }
-
-                context = GRContext.CreateGl(glInterface);
-
-                if (context == null)
-                {
-                    glInterface.Dispose();
-
-                    return null;
-                }
-
-                GetIntegerValue(GL_SAMPLES, out int samples);
-                GetIntegerValue(GL_STENCIL_BITS, out int stencilBits);
-
-                int maxSamples = context.GetMaxSurfaceSampleCount(COLOR_TYPE);
-
-                if (samples > maxSamples)
-                {
-                    samples = maxSamples;
-                }
-
-                return new GpuWindowRenderer(window, glInterface, context, samples, stencilBits);
-            }
-            catch (Exception)
-            {
-                context?.Dispose();
-                glInterface?.Dispose();
-
-                return null;
-            }
+            return renderer.Attach() ? renderer : null;
         }
 
         internal override string Backend => "gpu";
 
         internal override bool PreservesFrame => false;
 
+        internal override bool Alive => !_dead;
+
         internal override void Paint(int width, int height, Action<SKCanvas> render)
         {
+            if (!Ready())
+            {
+                return;
+            }
+
             SKSurface surface = Surface(width, height);
 
             if (surface == null)
@@ -121,6 +85,92 @@ namespace Ixen.Platform.Windows
             return _surface.Snapshot();
         }
 
+        private bool Ready()
+        {
+            if (_dead)
+            {
+                return false;
+            }
+
+            int status = WindowApi.EnsureGlContext(Window);
+
+            if (status == (int)NativeGlStatus.Current)
+            {
+                return true;
+            }
+
+            if (status == (int)NativeGlStatus.Recreated && Rebuild())
+            {
+                return true;
+            }
+
+            _dead = true;
+
+            return false;
+        }
+
+        private bool Rebuild()
+        {
+            Release();
+
+            return Attach();
+        }
+
+        private bool Attach()
+        {
+            try
+            {
+                _glInterface = GRGlInterface.Create();
+
+                if (_glInterface == null || !_glInterface.Validate())
+                {
+                    Release();
+
+                    return false;
+                }
+
+                _context = GRContext.CreateGl(_glInterface);
+
+                if (_context == null)
+                {
+                    Release();
+
+                    return false;
+                }
+
+                GetIntegerValue(GL_SAMPLES, out int samples);
+                GetIntegerValue(GL_STENCIL_BITS, out _stencilBits);
+
+                int maxSamples = _context.GetMaxSurfaceSampleCount(COLOR_TYPE);
+
+                _samples = samples > maxSamples ? maxSamples : samples;
+
+                return true;
+            }
+            catch (Exception)
+            {
+                Release();
+
+                return false;
+            }
+        }
+
+        private void Release()
+        {
+            _surface?.Dispose();
+            _target?.Dispose();
+            _context?.AbandonContext(false);
+            _context?.Dispose();
+            _glInterface?.Dispose();
+
+            _surface = null;
+            _target = null;
+            _context = null;
+            _glInterface = null;
+            _width = 0;
+            _height = 0;
+        }
+
         private SKSurface Surface(int width, int height)
         {
             if (_surface != null && _width == width && _height == height)
@@ -144,12 +194,7 @@ namespace Ixen.Platform.Windows
 
         public override void Dispose()
         {
-            _context?.AbandonContext(false);
-
-            _surface?.Dispose();
-            _target?.Dispose();
-            _context?.Dispose();
-            _glInterface?.Dispose();
+            Release();
         }
     }
 }
