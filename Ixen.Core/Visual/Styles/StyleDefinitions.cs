@@ -41,6 +41,12 @@ namespace Ixen.Core.Visual.Styles
                         AnimationStyleParser.FORWARDS, AnimationStyleParser.NO_FILL,
                         Easing.LINEAR, Easing.EASE_IN, Easing.EASE_OUT, Easing.EASE_IN_OUT }),
 
+                Define(StyleIdentifier.AREA_TEMPLATE, v => new AreaTemplateStyleParser(v),
+                    p => ((AreaTemplateStyleParser)p).Descriptor),
+
+                Define(StyleIdentifier.GRID_AREA, v => new GridAreaStyleParser(v),
+                    p => ((GridAreaStyleParser)p).Descriptor),
+
                 Define(StyleIdentifier.BACKGROUND, v => new BackgroundStyleParser(v),
                     p => ((BackgroundStyleParser)p).Descriptor),
 

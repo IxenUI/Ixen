@@ -194,3 +194,12 @@ generated_tracks {
     row-template: repeat(auto-fill, minmax(160px, 1*))
     column-template: repeat(2, minmax(40px, ?)) min(300px, 50%)
 }
+
+generated_areas {
+    layout: grid
+    area-template: . head head / nav main main / . foot foot
+}
+
+generated_area {
+    grid-area: main
+}

@@ -280,6 +280,45 @@ namespace Ixen.Core.UT.Xns
         }
 
         [TestMethod]
+        public void ANamedAreaTemplateSurvivesGeneration()
+        {
+            StyleClass areas = StyleRegistry.Default.GetGlobalElementClass("generated_areas");
+
+            Assert.IsNotNull(areas);
+
+            var template = (AreaTemplateStyleDescriptor)areas.Styles
+                .Single(s => s.GetType() == typeof(AreaTemplateStyleDescriptor));
+
+            Assert.AreEqual(3, template.RowCount);
+            Assert.AreEqual(3, template.ColumnCount);
+            Assert.AreEqual(AreaTemplateStyleDescriptor.EMPTY, template.Rows[0][0]);
+            Assert.AreEqual("head", template.Rows[0][2]);
+            Assert.AreEqual("foot", template.Rows[2][1]);
+
+            Assert.IsTrue(template.TryFind("main", out int row, out int column,
+                out int rowSpan, out int columnSpan));
+
+            Assert.AreEqual(1, row);
+            Assert.AreEqual(1, column);
+            Assert.AreEqual(1, rowSpan);
+            Assert.AreEqual(2, columnSpan);
+        }
+
+        [TestMethod]
+        public void AGridAreaSurvivesGenerationToo()
+        {
+            StyleClass cell = StyleRegistry.Default.GetGlobalElementClass("generated_area");
+
+            Assert.IsNotNull(cell);
+
+            var area = (GridAreaStyleDescriptor)cell.Styles
+                .Single(s => s.GetType() == typeof(GridAreaStyleDescriptor));
+
+            Assert.AreEqual("main", area.Value);
+            Assert.IsTrue(area.IsDeclared);
+        }
+
+        [TestMethod]
         public void TheFontStylesSurviveGeneration()
         {
             Assert.AreEqual("Segoe UI", Style<FontFamilyStyleDescriptor>().Value);

@@ -194,6 +194,33 @@ namespace Ixen.Core.UT.Xns
         }
 
         [TestMethod]
+        public void AValueMayStartWithADot()
+        {
+            var xnsSource = new XnsSource("box {\r\n    area-template: . head / . foot\r\n}");
+            var tokens = xnsSource.Tokenize();
+
+            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
+            Assert.AreEqual(". head / . foot", tokens.Single(t => t.Type == XnsTokenType.StyleValue).Content);
+        }
+
+        [TestMethod]
+        public void ALeadingDotMakesABareFractionAValueRatherThanASyntaxError()
+        {
+            var xnsSource = new XnsSource("box {\r\n    width: .5px\r\n}");
+            var tokens = xnsSource.Tokenize();
+
+            Assert.IsFalse(xnsSource.HasErrors, string.Join(" | ", xnsSource.Diagnostics.Select(d => d.Message)));
+            Assert.AreEqual(".5px", tokens.Single(t => t.Type == XnsTokenType.StyleValue).Content);
+
+            var compiled = new XnsSource("box { width: .5px }");
+
+            compiled.Compile();
+
+            Assert.IsTrue(compiled.HasErrors,
+                "the size parser is anchored, so it is a value diagnostic rather than a silent size");
+        }
+
+        [TestMethod]
         public void AHyphenatedValueIsReadWhole()
         {
             var xnsSource = new XnsSource("box {\r\n    cursor: ew-resize\r\n}");

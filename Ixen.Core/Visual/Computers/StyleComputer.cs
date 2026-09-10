@@ -753,6 +753,20 @@ namespace Ixen.Core.Visual.Computers
                     : VisualElementStylesHandlers.DefaultRowIndex;
             }
 
+            if (handlers.AreaTemplate.Descriptor != styles.AreaTemplate)
+            {
+                handlers.AreaTemplate = styles.AreaTemplate != null && styles.AreaTemplate.IsDeclared
+                    ? Cached<AreaTemplateStyleDescriptor, AreaTemplateStyleHandler>(styles.AreaTemplate, static d => new AreaTemplateStyleHandler(d))
+                    : VisualElementStylesHandlers.DefaultAreaTemplate;
+            }
+
+            if (handlers.GridArea.Descriptor != styles.GridArea)
+            {
+                handlers.GridArea = styles.GridArea != null && styles.GridArea.IsDeclared
+                    ? Cached<GridAreaStyleDescriptor, GridAreaStyleHandler>(styles.GridArea, static d => new GridAreaStyleHandler(d))
+                    : VisualElementStylesHandlers.DefaultGridArea;
+            }
+
             if (handlers.ColumnSpan.Descriptor != styles.ColumnSpan)
             {
                 handlers.ColumnSpan = styles.ColumnSpan != null
@@ -1158,6 +1172,14 @@ namespace Ixen.Core.Visual.Computers
 
                 case StyleIdentifier.ROW_INDEX:
                     handlers.RowIndex = Cached<RowIndexStyleDescriptor, RowIndexStyleHandler>(style, static d => new RowIndexStyleHandler(d));
+                    break;
+
+                case StyleIdentifier.AREA_TEMPLATE:
+                    handlers.AreaTemplate = Cached<AreaTemplateStyleDescriptor, AreaTemplateStyleHandler>(style, static d => new AreaTemplateStyleHandler(d));
+                    break;
+
+                case StyleIdentifier.GRID_AREA:
+                    handlers.GridArea = Cached<GridAreaStyleDescriptor, GridAreaStyleHandler>(style, static d => new GridAreaStyleHandler(d));
                     break;
 
                 case StyleIdentifier.COLUMN_SPAN:

@@ -966,7 +966,10 @@ namespace Ixen.Core.Visual.Computers
 
             int columnCount = element.StylesHandlers.RowTemplate.Descriptor.AutoFill
                 ? AutoFillCount(columnTemplate, contentWidth, columnGap)
-                : columnTemplate.Count > 0 ? columnTemplate.Count : 1;
+                : columnTemplate.Count > 0 ? columnTemplate.Count
+                : element.StylesHandlers.AreaTemplate.Descriptor.ColumnCount > 0
+                    ? element.StylesHandlers.AreaTemplate.Descriptor.ColumnCount
+                    : 1;
 
             int rowCount = PlaceCells(element, columnCount);
 
@@ -1004,11 +1007,22 @@ namespace Ixen.Core.Visual.Computers
 
         private static int PlaceCells(VisualElement element, int columnCount)
         {
+            AreaTemplateStyleDescriptor areas = element.StylesHandlers.AreaTemplate.Descriptor;
+
             var taken = new List<bool[]>();
-            int rowCount = 0;
+            int rowCount = areas.RowCount;
 
             foreach (VisualElement child in element.Children)
             {
+                if (AreaOf(areas, child, out int areaRow, out int areaColumn,
+                    out int areaRowSpan, out int areaColumnSpan))
+                {
+                    child.GridColumnSpan = Clamp(areaColumnSpan, columnCount);
+                    child.GridRowSpan = Math.Max(1, areaRowSpan);
+
+                    continue;
+                }
+
                 child.GridColumnSpan = Clamp(child.StylesHandlers.ColumnSpan.Descriptor.Value, columnCount);
                 child.GridRowSpan = Math.Max(1, child.StylesHandlers.RowSpan.Descriptor.Value);
             }
@@ -1018,15 +1032,23 @@ namespace Ixen.Core.Visual.Computers
                 GridIndexStyleDescriptor columnStyle = child.StylesHandlers.ColumnIndex.Descriptor;
                 GridIndexStyleDescriptor rowStyle = child.StylesHandlers.RowIndex.Descriptor;
 
-                if (columnStyle.IsAuto && rowStyle.IsAuto)
+                bool named = AreaOf(areas, child, out int areaRow, out int areaColumn,
+                    out int areaRowSpan, out int areaColumnSpan);
+
+                if (!named && columnStyle.IsAuto && rowStyle.IsAuto)
                 {
                     continue;
                 }
 
-                int column = columnStyle.IsAuto ? 0 : Math.Min(columnStyle.Value, columnCount - 1);
-                int row = rowStyle.IsAuto ? 0 : rowStyle.Value;
+                int column = named
+                    ? Math.Min(areaColumn, columnCount - 1)
+                    : columnStyle.IsAuto ? 0 : Math.Min(columnStyle.Value, columnCount - 1);
 
-                if (columnStyle.IsAuto)
+                int row = named
+                    ? areaRow
+                    : rowStyle.IsAuto ? 0 : rowStyle.Value;
+
+                if (!named && columnStyle.IsAuto)
                 {
                     column = FirstFreeColumn(taken, row, columnCount, child.GridColumnSpan);
                 }
@@ -1044,7 +1066,8 @@ namespace Ixen.Core.Visual.Computers
             foreach (VisualElement child in element.Children)
             {
                 if (!child.StylesHandlers.ColumnIndex.Descriptor.IsAuto
-                    || !child.StylesHandlers.RowIndex.Descriptor.IsAuto)
+                    || !child.StylesHandlers.RowIndex.Descriptor.IsAuto
+                    || AreaOf(areas, child, out _, out _, out _, out _))
                 {
                     continue;
                 }
@@ -1071,6 +1094,21 @@ namespace Ixen.Core.Visual.Computers
 
         private static int Clamp(int span, int columnCount)
             => Math.Min(Math.Max(1, span), columnCount);
+
+        private static bool AreaOf(AreaTemplateStyleDescriptor areas, VisualElement child,
+            out int row, out int column, out int rowSpan, out int columnSpan)
+        {
+            row = 0;
+            column = 0;
+            rowSpan = 0;
+            columnSpan = 0;
+
+            GridAreaStyleDescriptor area = child.StylesHandlers.GridArea.Descriptor;
+
+            return areas.IsDeclared
+                && area.IsDeclared
+                && areas.TryFind(area.Value, out row, out column, out rowSpan, out columnSpan);
+        }
 
         private static bool[] RowOf(List<bool[]> taken, int row, int columnCount)
         {

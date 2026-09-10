@@ -22,6 +22,8 @@ namespace Ixen.Core.Visual
         public BottomStyleDescriptor Bottom { get; set; } = new();
         public ColorStyleDescriptor Color { get; set; } = new();
         public ColumnIndexStyleDescriptor ColumnIndex { get; set; } = new();
+        public AreaTemplateStyleDescriptor AreaTemplate { get; set; } = new();
+        public GridAreaStyleDescriptor GridArea { get; set; } = new();
         public ColumnSpanStyleDescriptor ColumnSpan { get; set; } = new();
         public ColumnTemplateStyleDescriptor ColumnTemplate { get; set; } = new();
         public CornerRadiusStyleDescriptor CornerRadius { get; set; } = new();

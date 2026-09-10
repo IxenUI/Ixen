@@ -16,6 +16,7 @@ namespace Ixen.Core.Visual.Styles
         public const string ANCHOR = "anchor";
         public const string ANCHOR_PLACEMENT = "anchor-placement";
         public const string ANIMATION = "animation";
+        public const string AREA_TEMPLATE = "area-template";
         public const string BACKGROUND = "background";
         public const string BORDER = "border";
         public const string BOTTOM = "bottom";
@@ -30,6 +31,7 @@ namespace Ixen.Core.Visual.Styles
         public const string CONTENT_ALIGN = "content-align";
         public const string ASPECT_RATIO = "aspect-ratio";
         public const string GAP = "gap";
+        public const string GRID_AREA = "grid-area";
         public const string FILTER = "filter";
         public const string FONT_FAMILY = "font-family";
         public const string FONT_SIZE = "font-size";

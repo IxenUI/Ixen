@@ -677,7 +677,7 @@ namespace Ixen.Core.Language.Xns
             int index = _index;
             char c = PeekNonSpaceChar();
 
-            if (char.IsLetterOrDigit(c) || c == '#' || c == '?' || c == '_' || c == '$' || c == '-')
+            if (char.IsLetterOrDigit(c) || c == '#' || c == '?' || c == '_' || c == '$' || c == '-' || c == '.')
             {
                 int tokenIndex = _peekIndex;
 
