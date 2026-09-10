@@ -211,7 +211,7 @@ namespace Ixen.Core.Visual.Styles
                     p => ((TextOverflowStyleParser)p).Descriptor, new[] { "clip", "ellipsis" }),
 
                 Define(StyleIdentifier.TEXT_WRAP, v => new TextWrapStyleParser(v),
-                    p => ((TextWrapStyleParser)p).Descriptor, new[] { "wrap", "nowrap" }),
+                    p => ((TextWrapStyleParser)p).Descriptor, new[] { "wrap", "nowrap", "break-word" }),
 
                 Define(StyleIdentifier.TOP, v => new TopStyleParser(v),
                     p => ((TopStyleParser)p).Descriptor),

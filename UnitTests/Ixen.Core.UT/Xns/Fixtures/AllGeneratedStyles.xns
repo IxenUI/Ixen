@@ -184,3 +184,7 @@ generated_head {
 generated_pointing {
     cursor: generated_cursor.png 6 8
 }
+
+generated_breaking {
+    text-wrap: break-word
+}

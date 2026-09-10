@@ -3,7 +3,8 @@ namespace Ixen.Core.Visual.Styles.Descriptors
     public enum TextWrap
     {
         Wrap,
-        NoWrap
+        NoWrap,
+        BreakWord
     }
 
     public class TextWrapStyleDescriptor : StyleDescriptor

@@ -299,7 +299,9 @@ namespace Ixen.Core.Visual.Computers
             }
 
             FontSpec fontSpec = FontSpec.From(element.StylesHandlers);
-            bool wrap = element.StylesHandlers.TextWrap.Descriptor.Value == TextWrap.Wrap;
+            TextWrap wrap = element.StylesHandlers.TextWrap.Descriptor.Value;
+            bool wraps = wrap != TextWrap.NoWrap;
+            bool breakWord = wrap == TextWrap.BreakWord;
             bool ellipsis = element.StylesHandlers.TextOverflow.Descriptor.Value == TextOverflow.Ellipsis;
 
             float limit = ellipsis ? availableHeight : 0;
@@ -315,7 +317,7 @@ namespace Ixen.Core.Visual.Computers
 
             List<string> lines = element.EnsureTextLines();
 
-            width = BuildLines(element.Text, fontSpec, availableWidth, wrap, ellipsis, lines);
+            width = BuildLines(element.Text, fontSpec, availableWidth, wraps, breakWord, ellipsis, lines);
 
             float lineHeight = _textMeasurer.GetLineHeight(fontSpec);
 
@@ -346,7 +348,7 @@ namespace Ixen.Core.Visual.Computers
 
             bool breaks = field.Multiline;
             bool wraps = breaks
-                && field.StylesHandlers.TextWrap.Descriptor.Value == TextWrap.Wrap
+                && field.StylesHandlers.TextWrap.Descriptor.Value != TextWrap.NoWrap
                 && availableWidth > 0;
 
             float[] offsets = EnsureCaretOffsets(field, value.Length + 1);
@@ -510,27 +512,28 @@ namespace Ixen.Core.Visual.Computers
             }
         }
 
-        private float BuildLines(string text, FontSpec fontSpec, float maxWidth, bool wrap, bool ellipsis,
-            List<string> lines)
+        private float BuildLines(string text, FontSpec fontSpec, float maxWidth, bool wrap, bool breakWord,
+            bool ellipsis, List<string> lines)
         {
             float widest = 0;
 
             if (text.IndexOf('\n') < 0)
             {
-                AppendLine(text, fontSpec, maxWidth, wrap, ellipsis, lines, ref widest);
+                AppendLine(text, fontSpec, maxWidth, wrap, breakWord, ellipsis, lines, ref widest);
                 return widest;
             }
 
             foreach (string hardLine in text.Split('\n'))
             {
-                AppendLine(hardLine.TrimEnd('\r'), fontSpec, maxWidth, wrap, ellipsis, lines, ref widest);
+                AppendLine(hardLine.TrimEnd('\r'), fontSpec, maxWidth, wrap, breakWord, ellipsis, lines,
+                    ref widest);
             }
 
             return widest;
         }
 
         private void AppendLine(string line, FontSpec fontSpec, float maxWidth,
-            bool wrap, bool ellipsis, List<string> lines, ref float widest)
+            bool wrap, bool breakWord, bool ellipsis, List<string> lines, ref float widest)
         {
             float[] advances = EnsureAdvances(line.Length);
 
@@ -555,6 +558,18 @@ namespace Ixen.Core.Visual.Computers
                 {
                     prefix += advances[index];
                     index++;
+
+                    if (breakWord && prefix > maxWidth && lastSpace <= lineStart
+                        && index - lineStart > 1)
+                    {
+                        AddLine(lines, line, lineStart, index - 1 - lineStart,
+                            advances, fontSpec, maxWidth, ellipsis, ref widest);
+
+                        lineStart = index - 1;
+                        lastSpace = -1;
+                        prefix = advances[lineStart];
+                    }
+
                     continue;
                 }
 
@@ -565,7 +580,16 @@ namespace Ixen.Core.Visual.Computers
 
                     lineStart = lastSpace + 1;
                     lastSpace = -1;
-                    prefix = Width(advances, lineStart, index);
+
+                    if (breakWord)
+                    {
+                        index = lineStart;
+                        prefix = 0;
+                    }
+                    else
+                    {
+                        prefix = Width(advances, lineStart, index);
+                    }
 
                     continue;
                 }

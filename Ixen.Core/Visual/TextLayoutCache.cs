@@ -1,3 +1,5 @@
+using Ixen.Core.Visual.Styles.Descriptors;
+
 namespace Ixen.Core.Visual
 {
     internal class TextLayoutCache
@@ -5,7 +7,7 @@ namespace Ixen.Core.Visual
         private ITextMeasurer _measurer;
         private string _text;
         private FontSpec _font;
-        private bool _wrap;
+        private TextWrap _wrap;
         private bool _ellipsis;
         private float _availableWidth;
         private float _availableHeight;
@@ -14,7 +16,7 @@ namespace Ixen.Core.Visual
         internal float Width { get; private set; }
         internal float Height { get; private set; }
 
-        internal bool Matches(ITextMeasurer measurer, string text, FontSpec font, bool wrap, bool ellipsis,
+        internal bool Matches(ITextMeasurer measurer, string text, FontSpec font, TextWrap wrap, bool ellipsis,
             float availableWidth, float availableHeight)
         {
             return _valid
@@ -27,7 +29,7 @@ namespace Ixen.Core.Visual
                 && _font.SameAs(font);
         }
 
-        internal void Set(ITextMeasurer measurer, string text, FontSpec font, bool wrap, bool ellipsis,
+        internal void Set(ITextMeasurer measurer, string text, FontSpec font, TextWrap wrap, bool ellipsis,
             float availableWidth, float availableHeight, float width, float height)
         {
             _measurer = measurer;

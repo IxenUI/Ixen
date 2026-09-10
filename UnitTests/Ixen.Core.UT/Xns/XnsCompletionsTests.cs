@@ -68,6 +68,17 @@ namespace Ixen.Core.UT.Xns
         }
 
         [TestMethod]
+        public void TheWrapModesAreWhatTheParserAccepts()
+        {
+            XnsCompletionContext context = At("el {\r\n    text-wrap: |\r\n}");
+
+            Assert.AreEqual(XnsCompletionKind.StyleValue, context.Kind);
+            CollectionAssert.AreEquivalent(
+                new[] { "wrap", "nowrap", "break-word" },
+                context.Items.ToArray());
+        }
+
+        [TestMethod]
         public void TheSecondStyleOnALineIsWhatCounts()
         {
             XnsCompletionContext context = At("el { width: 200px  layout: ro| }");

@@ -22,6 +22,10 @@ namespace Ixen.Core.Visual.Styles.Parsers
                     Descriptor.Value = TextWrap.NoWrap;
                     return true;
 
+                case "break-word":
+                    Descriptor.Value = TextWrap.BreakWord;
+                    return true;
+
                 default:
                     return false;
             }
