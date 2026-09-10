@@ -72,6 +72,7 @@ namespace Ixen.Core.Accessibility
         private static bool IsExposed(VisualElement element)
         {
             return element.Role != AccessibleRole.None
+                || element.Command != null
                 || element.HasShortcut
                 || element.LiveRegion != LiveRegionKind.None
                 || element.Focusable
@@ -221,7 +222,7 @@ namespace Ixen.Core.Accessibility
                 return actions;
             }
 
-            if (IsInvocable(role))
+            if (IsInvocable(role) || element.Command != null)
             {
                 actions |= AccessibleActions.Invoke;
             }

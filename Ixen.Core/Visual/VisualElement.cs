@@ -29,7 +29,19 @@ namespace Ixen.Core.Visual
         internal void RaisePointerDown(PointerEventArgs args) => PointerDown?.Invoke(this, args);
         internal void RaisePointerUp(PointerEventArgs args) => PointerUp?.Invoke(this, args);
         internal void RaisePointerMove(PointerEventArgs args) => PointerMove?.Invoke(this, args);
-        internal void RaisePointerClick(PointerEventArgs args) => PointerClick?.Invoke(this, args);
+        internal void RaisePointerClick(PointerEventArgs args)
+        {
+            PointerClick?.Invoke(this, args);
+
+            if (_command == null || !IsEnabled)
+            {
+                return;
+            }
+
+            args.Handled = true;
+
+            _command.Execute();
+        }
         internal void RaisePointerEnter(PointerEventArgs args) => PointerEnter?.Invoke(this, args);
         internal void RaisePointerLeave(PointerEventArgs args) => PointerLeave?.Invoke(this, args);
         internal void RaisePointerWheel(WheelEventArgs args) => PointerWheel?.Invoke(this, args);
@@ -72,7 +84,7 @@ namespace Ixen.Core.Visual
 
                 _enabled = value;
 
-                ToggleState(Ixen.Core.Visual.Styles.StyleStates.DISABLED, !value);
+                SyncDisabledState();
             }
         }
 
@@ -82,7 +94,7 @@ namespace Ixen.Core.Visual
             {
                 for (VisualElement element = this; element != null; element = element.Parent)
                 {
-                    if (!element._enabled)
+                    if (!element._enabled || !element.CommandEnabled)
                     {
                         return false;
                     }
@@ -91,6 +103,91 @@ namespace Ixen.Core.Visual
                 return true;
             }
         }
+
+        private Components.Command _command;
+        private string _commandText;
+        private bool _commandShortcut;
+
+        public Components.Command Command
+        {
+            get => _command;
+            set
+            {
+                if (_command == value)
+                {
+                    return;
+                }
+
+                if (_command != null)
+                {
+                    _command.Changed -= OnCommandChanged;
+                }
+
+                _command = value;
+
+                if (_command != null && Host != null)
+                {
+                    _command.Changed += OnCommandChanged;
+                }
+
+                SyncCommand();
+            }
+        }
+
+        private bool CommandEnabled => _command == null || _command.Enabled;
+
+        private void OnCommandChanged(object sender, EventArgs args) => SyncCommand();
+
+        private void ListenToCommand(bool attached)
+        {
+            if (_command == null)
+            {
+                return;
+            }
+
+            _command.Changed -= OnCommandChanged;
+
+            if (attached)
+            {
+                _command.Changed += OnCommandChanged;
+
+                SyncCommand();
+            }
+        }
+
+        private void SyncCommand()
+        {
+            string label = _command?.Label;
+
+            if (label != null && (string.IsNullOrEmpty(_text) || _text == _commandText))
+            {
+                Text = label;
+                _commandText = label;
+            }
+            else if (label == null && _commandText != null && _text == _commandText)
+            {
+                Text = null;
+                _commandText = null;
+            }
+
+            string shortcut = _command?.Shortcut;
+
+            if (shortcut != null && (_shortcut == null || _commandShortcut))
+            {
+                Shortcut = shortcut;
+                _commandShortcut = true;
+            }
+            else if (shortcut == null && _commandShortcut)
+            {
+                Shortcut = null;
+                _commandShortcut = false;
+            }
+
+            SyncDisabledState();
+        }
+
+        private void SyncDisabledState()
+            => ToggleState(Ixen.Core.Visual.Styles.StyleStates.DISABLED, !(_enabled && CommandEnabled));
 
         internal bool IsHidden
             => StylesHandlers != null
@@ -519,6 +616,8 @@ namespace Ixen.Core.Visual
             IElementHost previous = Host;
 
             Host = host;
+
+            ListenToCommand(host != null);
             OnHostChanged();
 
             if (host == null)
