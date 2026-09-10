@@ -66,7 +66,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
         private bool ParseLayer(string entry, BackgroundLayer layer, ref bool colorSeen)
         {
-            string[] parts = Split(entry);
+            string[] parts = SplitTokens(entry);
 
             if (parts == null || parts.Length == 0)
             {
@@ -303,47 +303,5 @@ namespace Ixen.Core.Visual.Styles.Parsers
             return entries.ToArray();
         }
 
-        private static string[] Split(string content)
-        {
-            if (string.IsNullOrEmpty(content))
-            {
-                return null;
-            }
-
-            var parts = new List<string>();
-            var current = new StringBuilder();
-            int depth = 0;
-
-            foreach (char c in content)
-            {
-                if (c == '(')
-                {
-                    depth++;
-                }
-                else if (c == ')')
-                {
-                    depth--;
-                }
-                else if ((c == ' ' || c == '\t') && depth == 0)
-                {
-                    if (current.Length > 0)
-                    {
-                        parts.Add(current.ToString());
-                        current.Clear();
-                    }
-
-                    continue;
-                }
-
-                current.Append(c);
-            }
-
-            if (current.Length > 0)
-            {
-                parts.Add(current.ToString());
-            }
-
-            return depth == 0 ? parts.ToArray() : null;
-        }
     }
 }

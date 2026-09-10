@@ -244,6 +244,42 @@ namespace Ixen.Core.UT.Xns
         }
 
         [TestMethod]
+        public void ARepeatedAutoFilledTemplateSurvivesGeneration()
+        {
+            StyleClass tracks = StyleRegistry.Default.GetGlobalElementClass("generated_tracks");
+
+            Assert.IsNotNull(tracks);
+
+            var columns = (RowTemplateStyleDescriptor)tracks.Styles
+                .Single(s => s.GetType() == typeof(RowTemplateStyleDescriptor));
+
+            Assert.IsTrue(columns.AutoFill, "the auto-fill flag has to reach the runtime");
+            Assert.AreEqual(1, columns.Value.Count);
+            Assert.AreEqual(SizeUnit.Weight, columns.Value[0].Unit);
+            Assert.IsNotNull(columns.Value[0].TrackMin, "the floor has to reach the runtime");
+            Assert.AreEqual(160, columns.Value[0].TrackMin.Value);
+            Assert.AreEqual(SizeUnit.Pixels, columns.Value[0].TrackMin.Unit);
+        }
+
+        [TestMethod]
+        public void ATrackFunctionSurvivesGenerationToo()
+        {
+            StyleClass tracks = StyleRegistry.Default.GetGlobalElementClass("generated_tracks");
+
+            var rows = (ColumnTemplateStyleDescriptor)tracks.Styles
+                .Single(s => s.GetType() == typeof(ColumnTemplateStyleDescriptor));
+
+            Assert.IsFalse(rows.AutoFill);
+            Assert.AreEqual(3, rows.Value.Count, "the repeat is expanded at build time");
+            Assert.AreEqual(40, rows.Value[0].TrackMin.Value);
+            Assert.AreEqual(40, rows.Value[1].TrackMin.Value);
+
+            Assert.AreEqual(SizeFunction.Min, rows.Value[2].Function,
+                "a size function in a track used to be dropped on the way through ToSource");
+            Assert.AreEqual(2, rows.Value[2].Parts.Count);
+        }
+
+        [TestMethod]
         public void TheFontStylesSurviveGeneration()
         {
             Assert.AreEqual("Segoe UI", Style<FontFamilyStyleDescriptor>().Value);

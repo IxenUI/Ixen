@@ -1,5 +1,6 @@
 using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
+using Ixen.Core.Visual.Styles.Parsers;
 using System;
 using System.Collections.Generic;
 
@@ -960,14 +961,17 @@ namespace Ixen.Core.Visual.Computers
             List<SizeStyleDescriptor> columnTemplate = element.StylesHandlers.RowTemplate.Descriptor.Value;
             List<SizeStyleDescriptor> rowTemplate = element.StylesHandlers.ColumnTemplate.Descriptor.Value;
 
-            int columnCount = columnTemplate.Count > 0 ? columnTemplate.Count : 1;
+            float columnGap = GapOf(element, true);
+            float rowGap = GapOf(element, false);
+
+            int columnCount = element.StylesHandlers.RowTemplate.Descriptor.AutoFill
+                ? AutoFillCount(columnTemplate, contentWidth, columnGap)
+                : columnTemplate.Count > 0 ? columnTemplate.Count : 1;
+
             int rowCount = PlaceCells(element, columnCount);
 
             float[] columns = element.EnsureGridColumns(columnCount);
             float[] rows = element.EnsureGridRows(rowCount);
-
-            float columnGap = GapOf(element, true);
-            float rowGap = GapOf(element, false);
 
             ResolveColumnTracks(element, columnTemplate, columns,
                 contentWidth - columnGap * (columnCount - 1));
@@ -1134,6 +1138,26 @@ namespace Ixen.Core.Visual.Computers
             {
                 SizeStyleDescriptor style = TrackStyle(template, i, _fillTrack);
 
+                if (style.TrackMin != null)
+                {
+                    float extent = MeasureColumnExtent(element, columns.Length, i, available);
+                    float low = TrackBound(style.TrackMin, available, extent);
+
+                    if (style.Unit == SizeUnit.Weight || style.Unit == SizeUnit.Unset)
+                    {
+                        columns[i] = low;
+                        pool -= low;
+                        totalWeight += style.Value;
+
+                        continue;
+                    }
+
+                    columns[i] = Math.Max(low, Math.Min(extent, TrackBound(style, available, extent)));
+                    pool -= columns[i];
+
+                    continue;
+                }
+
                 switch (style.Unit)
                 {
                     case SizeUnit.Pixels:
@@ -1170,6 +1194,26 @@ namespace Ixen.Core.Visual.Computers
             for (int i = 0; i < rows.Length; i++)
             {
                 SizeStyleDescriptor style = TrackStyle(template, i, _contentTrack);
+
+                if (style.TrackMin != null)
+                {
+                    float extent = MeasureRowExtent(element, columns, i, available);
+                    float low = TrackBound(style.TrackMin, available, extent);
+
+                    if (style.Unit == SizeUnit.Weight || style.Unit == SizeUnit.Unset)
+                    {
+                        rows[i] = low;
+                        pool -= low;
+                        totalWeight += style.Value;
+
+                        continue;
+                    }
+
+                    rows[i] = Math.Max(low, Math.Min(extent, TrackBound(style, available, extent)));
+                    pool -= rows[i];
+
+                    continue;
+                }
 
                 switch (style.Unit)
                 {
@@ -1215,7 +1259,7 @@ namespace Ixen.Core.Visual.Computers
 
                 if (style.Unit == SizeUnit.Weight || style.Unit == SizeUnit.Unset)
                 {
-                    tracks[i] = (pool / totalWeight) * style.Value;
+                    tracks[i] += (pool / totalWeight) * style.Value;
                 }
             }
         }
@@ -1385,6 +1429,44 @@ namespace Ixen.Core.Visual.Computers
 
         private static SizeStyleDescriptor TrackStyle(List<SizeStyleDescriptor> template, int index, SizeStyleDescriptor fallback)
             => template.Count > 0 ? template[index % template.Count] : fallback;
+
+        private static float TrackBound(SizeStyleDescriptor bound, float available, float extent)
+        {
+            switch (bound.Unit)
+            {
+                case SizeUnit.Pixels:
+                    return bound.Value;
+
+                case SizeUnit.Percents:
+                    return bound.Of(available);
+
+                default:
+                    return extent;
+            }
+        }
+
+        private static int AutoFillCount(List<SizeStyleDescriptor> group, float available, float gap)
+        {
+            int count = 0;
+            float used = 0;
+
+            while (count < SizeTemplateStyleParser.MAX_TRACKS)
+            {
+                SizeStyleDescriptor track = group[count % group.Count];
+                float floor = TrackBound(track.TrackMin ?? track, available, 0);
+                float taken = used + floor + (count > 0 ? gap : 0);
+
+                if (taken > available)
+                {
+                    break;
+                }
+
+                used = taken;
+                count++;
+            }
+
+            return Math.Max(1, count);
+        }
 
         private static float Sum(float[] values)
         {

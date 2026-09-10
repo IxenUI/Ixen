@@ -12,7 +12,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
         protected override bool Parse()
         {
-            bool valid = base.Parse();
+            bool valid = base.Parse() && !base.Descriptor.AutoFill;
             
             if (valid)
             {

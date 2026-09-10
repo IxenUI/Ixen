@@ -68,6 +68,24 @@ namespace Ixen.Core.UT.Xns
         }
 
         [TestMethod]
+        public void TheTrackFunctionsAreProposedInATemplate()
+        {
+            XnsCompletionContext columns = At("el {\r\n    row-template: 1* re|\r\n}");
+
+            Assert.AreEqual(XnsCompletionKind.StyleValue, columns.Kind);
+            CollectionAssert.AreEquivalent(
+                new[] { "repeat", "minmax", "auto-fill" },
+                columns.Items.ToArray());
+
+            XnsCompletionContext rows = At("el {\r\n    column-template: |\r\n}");
+
+            CollectionAssert.AreEquivalent(
+                new[] { "repeat", "minmax" },
+                rows.Items.ToArray(),
+                "auto-fill has no width to fill on the row-heights axis");
+        }
+
+        [TestMethod]
         public void TheWrapModesAreWhatTheParserAccepts()
         {
             XnsCompletionContext context = At("el {\r\n    text-wrap: |\r\n}");

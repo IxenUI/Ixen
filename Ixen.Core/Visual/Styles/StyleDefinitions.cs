@@ -63,7 +63,9 @@ namespace Ixen.Core.Visual.Styles
                     p => ((ColorStyleParser)p).Descriptor),
 
                 Define(StyleIdentifier.COLUMN_TEMPLATE, v => new ColumnTemplateStyleParser(v),
-                    p => ((ColumnTemplateStyleParser)p).Descriptor),
+                    p => ((ColumnTemplateStyleParser)p).Descriptor,
+                    null,
+                    new[] { "repeat", "minmax" }),
 
                 Define(StyleIdentifier.CORNER_RADIUS, v => new CornerRadiusStyleParser(v),
                     p => ((CornerRadiusStyleParser)p).Descriptor),
@@ -196,7 +198,9 @@ namespace Ixen.Core.Visual.Styles
                     p => ((RightStyleParser)p).Descriptor),
 
                 Define(StyleIdentifier.ROW_TEMPLATE, v => new RowTemplateStyleParser(v),
-                    p => ((RowTemplateStyleParser)p).Descriptor),
+                    p => ((RowTemplateStyleParser)p).Descriptor,
+                    null,
+                    new[] { "repeat", "minmax", "auto-fill" }),
 
                 Define(StyleIdentifier.TEXT_ALIGN, v => new TextAlignStyleParser(v),
                     p => ((TextAlignStyleParser)p).Descriptor,

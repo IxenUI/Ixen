@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace Ixen.Core.Visual.Styles.Descriptors
+﻿namespace Ixen.Core.Visual.Styles.Descriptors
 {
     public class ColumnTemplateStyleDescriptor : SizeTemplateStyleDescriptor
     {
@@ -9,22 +7,11 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         public void Set(SizeTemplateStyleDescriptor sizeTemplateDescriptor)
         {
             Value = sizeTemplateDescriptor.Value;
+            AutoFill = sizeTemplateDescriptor.AutoFill;
         }
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()
-            => $"new {nameof(ColumnTemplateStyleDescriptor)} " +
-                "{ " +
-                    $"{nameof(Value)} = new() {{ " +
-                        string.Join(", ", Value.Select(d =>
-                            $"new {nameof(SizeStyleDescriptor)} " +
-                            "{ " +
-                                $"{nameof(SizeStyleDescriptor.Unit)} = {nameof(SizeUnit)}.{d.Unit}, " +
-                                $"{nameof(SizeStyleDescriptor.Value)} = {SourceOf(d.Value)}, " +
-                                $"{nameof(SizeStyleDescriptor.Offset)} = {SourceOf(d.Offset)} " +
-                            "}"
-                        )) +
-                    "} " +
-                "}";
+            => $"new {nameof(ColumnTemplateStyleDescriptor)} {{ {Fields()}}}";
     }
 }

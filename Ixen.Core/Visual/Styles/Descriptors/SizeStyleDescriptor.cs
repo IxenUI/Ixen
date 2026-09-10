@@ -29,6 +29,8 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         public SizeFunction Function { get; set; } = SizeFunction.None;
         public List<SizePart> Parts { get; set; } = new List<SizePart>();
 
+        public SizeStyleDescriptor TrackMin { get; set; }
+
         public void Set(SizeStyleDescriptor other)
         {
             Unit = other.Unit;
@@ -36,6 +38,7 @@ namespace Ixen.Core.Visual.Styles.Descriptors
             Offset = other.Offset;
             Function = other.Function;
             Parts = other.Parts;
+            TrackMin = other.TrackMin;
         }
 
         internal float Of(float available)
@@ -68,11 +71,15 @@ namespace Ixen.Core.Visual.Styles.Descriptors
                     + string.Join(", ", Parts.Select(p => p.ToSource()))
                     + "}";
 
+            string trackMin = TrackMin == null
+                ? ""
+                : $", {nameof(TrackMin)} = new {nameof(SizeStyleDescriptor)} {{ {TrackMin.Fields()}}}";
+
             return $"{nameof(Unit)} = {nameof(SizeUnit)}.{Unit}, "
                 + $"{nameof(Value)} = {SourceOf(Value)}, "
                 + $"{nameof(Offset)} = {SourceOf(Offset)}, "
                 + $"{nameof(Function)} = {nameof(SizeFunction)}.{Function}"
-                + parts + " ";
+                + parts + trackMin + " ";
         }
     }
 }

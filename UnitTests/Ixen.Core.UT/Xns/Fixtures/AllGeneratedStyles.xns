@@ -188,3 +188,9 @@ generated_pointing {
 generated_breaking {
     text-wrap: break-word
 }
+
+generated_tracks {
+    layout: grid
+    row-template: repeat(auto-fill, minmax(160px, 1*))
+    column-template: repeat(2, minmax(40px, ?)) min(300px, 50%)
+}
