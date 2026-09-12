@@ -11,10 +11,18 @@ namespace Ixen.Core.Components
         private const char SEPARATOR = '/';
         private const char PARAMETER_OPEN = '{';
         private const char PARAMETER_CLOSE = '}';
+        private const char QUERY = '?';
+        private const char PAIR = '&';
+        private const char ASSIGN = '=';
+
         private static readonly char[] _separators = { SEPARATOR };
+        private static readonly char[] _pairs = { PAIR };
 
         private readonly List<string> _stack = new List<string>();
+        private readonly List<string> _forward = new List<string>();
         private Dictionary<string, string> _parameters;
+        private Dictionary<string, string> _query;
+        private string _queried;
         private int _limit = DEFAULT_LIMIT;
 
         public Navigator()
@@ -28,13 +36,21 @@ namespace Ixen.Core.Components
 
         public event EventHandler Changed;
 
-        public string Path => _stack[_stack.Count - 1];
+        public string Location => _stack[_stack.Count - 1];
+
+        public string Path => PathOf(Location);
+
+        public string QueryString => QueryOf(Location);
 
         public string Previous => CanGoBack ? _stack[_stack.Count - 2] : null;
+
+        public string Next => CanGoForward ? _forward[_forward.Count - 1] : null;
 
         public int Depth => _stack.Count;
 
         public bool CanGoBack => _stack.Count > 1;
+
+        public bool CanGoForward => _forward.Count > 0;
 
         public int Limit
         {
@@ -48,6 +64,7 @@ namespace Ixen.Core.Components
 
         public void Navigate(string path)
         {
+            _forward.Clear();
             _stack.Add(Normalized(path));
             Trim();
             Raise();
@@ -57,7 +74,7 @@ namespace Ixen.Core.Components
         {
             string wanted = Normalized(path);
 
-            if (wanted == Path)
+            if (wanted == Location)
             {
                 return;
             }
@@ -73,7 +90,24 @@ namespace Ixen.Core.Components
                 return false;
             }
 
+            _forward.Add(_stack[_stack.Count - 1]);
             _stack.RemoveAt(_stack.Count - 1);
+            Trim();
+            Raise();
+
+            return true;
+        }
+
+        public bool Forward()
+        {
+            if (!CanGoForward)
+            {
+                return false;
+            }
+
+            _stack.Add(_forward[_forward.Count - 1]);
+            _forward.RemoveAt(_forward.Count - 1);
+            Trim();
             Raise();
 
             return true;
@@ -83,13 +117,14 @@ namespace Ixen.Core.Components
         {
             string wanted = Normalized(path);
 
-            if (_stack.Count == 1 && wanted == Path)
+            if (_stack.Count == 1 && _forward.Count == 0 && wanted == Location)
             {
                 return;
             }
 
             _stack.Clear();
             _stack.Add(wanted);
+            _forward.Clear();
             Raise();
         }
 
@@ -143,6 +178,16 @@ namespace Ixen.Core.Components
             return _parameters.TryGetValue(name, out string value) ? value : null;
         }
 
+        public string Query(string name)
+        {
+            if (name == null)
+            {
+                return null;
+            }
+
+            return Parameters().TryGetValue(name, out string value) ? value : null;
+        }
+
         public static string Normalized(string path)
         {
             string trimmed = path?.Trim();
@@ -152,7 +197,16 @@ namespace Ixen.Core.Components
                 return ROOT;
             }
 
-            if (trimmed[0] != SEPARATOR)
+            string query = null;
+            int mark = trimmed.IndexOf(QUERY);
+
+            if (mark >= 0)
+            {
+                query = trimmed.Substring(mark + 1);
+                trimmed = trimmed.Substring(0, mark);
+            }
+
+            if (trimmed.Length == 0 || trimmed[0] != SEPARATOR)
             {
                 trimmed = SEPARATOR + trimmed;
             }
@@ -162,12 +216,65 @@ namespace Ixen.Core.Components
                 trimmed = trimmed.Substring(0, trimmed.Length - 1);
             }
 
-            return trimmed;
+            return string.IsNullOrEmpty(query) ? trimmed : trimmed + QUERY + query;
+        }
+
+        private static string PathOf(string location)
+        {
+            int mark = location.IndexOf(QUERY);
+
+            return mark < 0 ? location : location.Substring(0, mark);
+        }
+
+        private static string QueryOf(string location)
+        {
+            int mark = location.IndexOf(QUERY);
+
+            return mark < 0 ? null : location.Substring(mark + 1);
+        }
+
+        private Dictionary<string, string> Parameters()
+        {
+            string location = Location;
+
+            if (!string.Equals(_queried, location, StringComparison.Ordinal))
+            {
+                _queried = location;
+                _query = Parsed(QueryOf(location));
+            }
+
+            return _query;
+        }
+
+        private static Dictionary<string, string> Parsed(string query)
+        {
+            var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            if (string.IsNullOrEmpty(query))
+            {
+                return values;
+            }
+
+            foreach (string entry in query.Split(_pairs, StringSplitOptions.RemoveEmptyEntries))
+            {
+                int assign = entry.IndexOf(ASSIGN);
+                string name = assign < 0 ? entry : entry.Substring(0, assign);
+
+                if (name.Length == 0)
+                {
+                    continue;
+                }
+
+                values[Uri.UnescapeDataString(name)] =
+                    assign < 0 ? string.Empty : Uri.UnescapeDataString(entry.Substring(assign + 1));
+            }
+
+            return values;
         }
 
         private static string[] Segments(string path)
         {
-            return Normalized(path).Split(_separators, StringSplitOptions.RemoveEmptyEntries);
+            return PathOf(Normalized(path)).Split(_separators, StringSplitOptions.RemoveEmptyEntries);
         }
 
         private static string NameOf(string segment)
@@ -187,6 +294,11 @@ namespace Ixen.Core.Components
             while (_stack.Count > _limit)
             {
                 _stack.RemoveAt(0);
+            }
+
+            while (_forward.Count > _limit)
+            {
+                _forward.RemoveAt(0);
             }
         }
 
