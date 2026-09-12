@@ -16,6 +16,8 @@ namespace Ixen.Core.Visual.Computers
         private readonly ITextMeasurer _textMeasurer;
         private readonly IImageMeasurer _imageMeasurer;
 
+        internal int Measured;
+
         private float _viewportWidth;
         private float _viewportHeight;
 
@@ -32,6 +34,16 @@ namespace Ixen.Core.Visual.Computers
                 _viewportWidth = availableWidth;
                 _viewportHeight = availableHeight;
             }
+
+            if (!element.IsLayoutDirty
+                && element.MeasuredWith(availableWidth, availableHeight, widthIsDefinite, heightIsDefinite))
+            {
+                return;
+            }
+
+            element.RecordMeasure(availableWidth, availableHeight, widthIsDefinite, heightIsDefinite);
+
+            Measured++;
 
             ResolveBorders(element);
 

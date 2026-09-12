@@ -43,6 +43,7 @@ namespace Ixen.Core.Visual.Computers
                 SyncTransitions(element, registry);
 
                 element.MustRefreshStyles = false;
+                element.InvalidateLayout();
             }
 
             if (element.ChildrenChanged)

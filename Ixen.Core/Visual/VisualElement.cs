@@ -1076,6 +1076,47 @@ namespace Ixen.Core.Visual
             }
         }
 
+        internal void InvalidateLayoutTree()
+        {
+            IsLayoutDirty = true;
+
+            foreach (VisualElement child in Children)
+            {
+                child.InvalidateLayoutTree();
+            }
+
+            if (!HasChrome)
+            {
+                return;
+            }
+
+            foreach (VisualElement chrome in Chrome)
+            {
+                chrome.InvalidateLayoutTree();
+            }
+        }
+
+        private float _measuredWidth = float.NaN;
+        private float _measuredHeight = float.NaN;
+        private bool _measuredWidthIsDefinite;
+        private bool _measuredHeightIsDefinite;
+
+        internal bool MeasuredWith(float availableWidth, float availableHeight,
+            bool widthIsDefinite, bool heightIsDefinite)
+            => _measuredWidth == availableWidth
+                && _measuredHeight == availableHeight
+                && _measuredWidthIsDefinite == widthIsDefinite
+                && _measuredHeightIsDefinite == heightIsDefinite;
+
+        internal void RecordMeasure(float availableWidth, float availableHeight,
+            bool widthIsDefinite, bool heightIsDefinite)
+        {
+            _measuredWidth = availableWidth;
+            _measuredHeight = availableHeight;
+            _measuredWidthIsDefinite = widthIsDefinite;
+            _measuredHeightIsDefinite = heightIsDefinite;
+        }
+
         internal void ClearLayoutDirty()
         {
             IsLayoutDirty = false;

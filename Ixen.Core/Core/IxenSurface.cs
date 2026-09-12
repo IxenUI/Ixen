@@ -132,7 +132,7 @@ namespace Ixen.Core
             _renderer = new VisualRenderer(_images);
 
             _images.Poster = Post;
-            _images.Arrived = () => Root?.InvalidateLayout();
+            _images.Arrived = () => Root?.InvalidateLayoutTree();
 
             InitOptions = initOptions ?? new();
             Root = root ?? new();
@@ -170,9 +170,16 @@ namespace Ixen.Core
                 return;
             }
 
+            if (viewPortChanged)
+            {
+                Root.InvalidateLayoutTree();
+            }
+
             LastLayoutRan = true;
 
             _damage.SetWhole();
+
+            _measureComputer.Measured = 0;
 
             for (int pass = 0; pass < CONTAINER_PASSES; pass++)
             {
@@ -185,6 +192,8 @@ namespace Ixen.Core
                     break;
                 }
             }
+
+            LastMeasuredElements = _measureComputer.Measured;
 
             _arrangeComputer.Arrange(Root, 0, 0, logicalWidth, logicalHeight);
             _clippingComputer.Compute(Root, logicalWidth, logicalHeight);
@@ -435,6 +444,8 @@ namespace Ixen.Core
         internal bool IsDirty => _visualDirty || (Root != null && Root.IsLayoutDirty);
 
         internal bool LastLayoutRan { get; private set; }
+
+        internal int LastMeasuredElements { get; private set; }
 
         public bool PreservesFrame { get; set; } = true;
 
@@ -697,7 +708,7 @@ namespace Ixen.Core
             SKGraphics.PurgeResourceCache();
             SKGraphics.PurgeFontCache();
 
-            Root?.InvalidateLayout();
+            Root?.InvalidateLayoutTree();
         }
 
         public IImageSource ImageSource
@@ -711,7 +722,7 @@ namespace Ixen.Core
                 }
 
                 _images.Source = value;
-                Root?.InvalidateLayout();
+                Root?.InvalidateLayoutTree();
             }
         }
 
