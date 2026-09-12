@@ -260,6 +260,60 @@ else
     }
 }
 
+$api = Join-Path $docs 'api'
+$surfaces = @(
+    (Join-Path $framework ('Ixen.Core\bin\' + $Configuration + '\netstandard2.0\Ixen.Core.dll')),
+    (Join-Path $framework ('Ixen.Controls\bin\' + $Configuration + '\netstandard2.0\Ixen.Controls.dll')),
+    (Join-Path $framework ('Ixen.Platform\bin\' + $Configuration + '\net10.0\Ixen.Platform.dll'))
+)
+
+$absent = @($surfaces | Where-Object { -not (Test-Path $_) })
+
+if (-not (Test-Path $docs))
+{
+    Record 'SKIP' 'api reference byte-identical' 'Documentation is not beside Framework'
+}
+elseif (-not $toolBuilt)
+{
+    Record 'SKIP' 'api reference byte-identical' 'Ixen.Docs was not built'
+}
+elseif ($absent.Count -gt 0)
+{
+    Record 'SKIP' 'api reference byte-identical' ('{0} was not built' -f (Split-Path -Leaf $absent[0]))
+}
+else
+{
+    $out = @(& dotnet run --project $tools -c $Configuration --no-build -- --api $api @surfaces 2>&1)
+    $code = $LASTEXITCODE
+
+    if ($code -ne 0)
+    {
+        Show @($out | Select-Object -Last 8) 8
+        Record 'FAIL' 'api reference byte-identical' ('the generator failed, exit ' + $code)
+    }
+    else
+    {
+        $status = @(& git -C $docs status --porcelain -- api 2>&1)
+        $moved = @($status | Where-Object { $_ -notmatch '^\?\?' })
+        $members = 0
+
+        foreach ($line in @($out | Where-Object { $_ -match '^\S+\s+\d+ types\s+\d+ members' }))
+        {
+            $members += [int] ($line -replace '^\S+\s+\d+ types\s+(\d+) members.*$', '$1')
+        }
+
+        if ($moved.Count -eq 0)
+        {
+            Record 'OK' 'api reference byte-identical' ('{0} public members over {1} assemblies' -f $members, $surfaces.Count)
+        }
+        else
+        {
+            Show $moved 12
+            Record 'FAIL' 'api reference byte-identical' ('{0} of {1} pages moved' -f $moved.Count, $surfaces.Count)
+        }
+    }
+}
+
 $solution = Join-Path $workspace 'Demo App\Ixen.DemoApp.sln'
 $demoSolutionBuilt = $false
 
