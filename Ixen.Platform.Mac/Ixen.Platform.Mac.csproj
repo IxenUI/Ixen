@@ -26,7 +26,7 @@
 
 	<PropertyGroup>
 		<IxenMacRuntime Condition="'$(IxenMacRuntime)' == ''">osx-arm64</IxenMacRuntime>
-		<IxenMacDylib>$(MSBuildThisFileDirectory)..\Ixen.Platform.Mac.Native\bin\libixen.dylib</IxenMacDylib>
+		<IxenMacDylib>$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)', '..', 'Ixen.Platform.Mac.Native', 'bin', 'libixen.dylib'))</IxenMacDylib>
 	</PropertyGroup>
 
 	<Target Name="IxenIncludeMacLibrary" BeforeTargets="AssignTargetPaths">

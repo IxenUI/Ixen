@@ -28,9 +28,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-		<None Include="$(OutputPath)\Ixen.Core.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-		<None Include="msbuild\Ixen.Generators.props" Pack="true" PackagePath="build" Visible="false" />
+		<None Include="$([MSBuild]::NormalizePath('$(OutputPath)', '$(AssemblyName).dll'))" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<None Include="$([MSBuild]::NormalizePath('$(OutputPath)', 'Ixen.Core.dll'))" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<None Include="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)', 'msbuild', 'Ixen.Generators.props'))" Pack="true" PackagePath="build" Visible="false" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -43,7 +43,7 @@
 
 	<Target Name="GetDependencyTargetPaths">
 		<ItemGroup>
-			<TargetPathWithTargetPlatformMoniker Include="$(ProjectDir)\..\Ixen.Core\$(OutputPath)\Ixen.Core.dll" IncludeRuntimeDependency="false" />
+			<TargetPathWithTargetPlatformMoniker Include="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)', '..', 'Ixen.Core', '$(OutputPath)', 'Ixen.Core.dll'))" IncludeRuntimeDependency="false" />
 		</ItemGroup>
 	</Target>
 

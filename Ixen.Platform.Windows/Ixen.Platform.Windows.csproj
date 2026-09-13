@@ -42,7 +42,7 @@
 
 	<PropertyGroup>
 		<IxenNativePlatform Condition="'$(IxenNativePlatform)' == ''">x64</IxenNativePlatform>
-		<IxenNativeDll>$(MSBuildThisFileDirectory)..\Ixen.Platform.Windows.Native\bin\$(IxenNativePlatform)\$(Configuration)\Ixen.Platform.Windows.Native.dll</IxenNativeDll>
+		<IxenNativeDll>$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)', '..', 'Ixen.Platform.Windows.Native', 'bin', '$(IxenNativePlatform)', '$(Configuration)', 'Ixen.Platform.Windows.Native.dll'))</IxenNativeDll>
 	</PropertyGroup>
 
 	<Target Name="IxenIncludeNativeLibrary" BeforeTargets="AssignTargetPaths">
