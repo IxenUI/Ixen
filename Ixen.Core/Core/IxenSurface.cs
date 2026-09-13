@@ -291,7 +291,7 @@ namespace Ixen.Core
 
         private void RenderComponents(VisualElement element, string prefix, float width, float height)
         {
-            string path = PathOf(element, prefix);
+            string path = PendingStateCount > 0 ? PathOf(element, prefix) : null;
 
             element.Owner?.AttachIfPending();
 
@@ -370,7 +370,7 @@ namespace Ixen.Core
 
         private void RestoreIfPending(VisualElement element, string path)
         {
-            if (_pendingState == null || element.Owner == null)
+            if (_pendingState == null || path == null || element.Owner == null)
             {
                 return;
             }
