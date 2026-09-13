@@ -5,8 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(IxenIncludeViews)' == 'true'">
-    <AdditionalFiles Include="**\*.xnl" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)" />
-    <AdditionalFiles Include="**\*.xns" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)" />
+    <AdditionalFiles Include="**/*.xnl" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)" />
+    <AdditionalFiles Include="**/*.xns" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)" />
   </ItemGroup>
 
 </Project>
