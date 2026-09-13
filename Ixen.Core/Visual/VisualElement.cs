@@ -554,6 +554,14 @@ namespace Ixen.Core.Visual
         public VisualElement Parent { get; private set; }
         internal DimensionalElement Clip { get; set; }
         internal bool MustRefreshStyles { get; set; } = true;
+
+        internal bool NeedsRepaint { get; set; } = true;
+
+        internal bool Painted;
+        internal float PaintedLeft;
+        internal float PaintedTop;
+        internal float PaintedRight;
+        internal float PaintedBottom;
         internal bool IsLayoutDirty { get; private set; } = true;
 
         private string _text;
@@ -1069,6 +1077,7 @@ namespace Ixen.Core.Visual
         public void InvalidateLayout()
         {
             IsLayoutDirty = true;
+            NeedsRepaint = true;
 
             for (VisualElement parent = Parent; parent != null && !parent.IsLayoutDirty; parent = parent.Parent)
             {
@@ -1079,6 +1088,7 @@ namespace Ixen.Core.Visual
         internal void InvalidateLayoutTree()
         {
             IsLayoutDirty = true;
+            NeedsRepaint = true;
 
             foreach (VisualElement child in Children)
             {

@@ -177,7 +177,10 @@ namespace Ixen.Core
 
             LastLayoutRan = true;
 
-            _damage.SetWhole();
+            if (viewPortChanged)
+            {
+                _damage.SetWhole();
+            }
 
             _measureComputer.Measured = 0;
 
@@ -197,6 +200,8 @@ namespace Ixen.Core
 
             _arrangeComputer.Arrange(Root, 0, 0, logicalWidth, logicalHeight);
             _clippingComputer.Compute(Root, logicalWidth, logicalHeight);
+
+            DamageLayout(Root, null);
 
             Root.ClearLayoutDirty();
 
@@ -398,6 +403,8 @@ namespace Ixen.Core
 
         public void ElementDetached(VisualElement element)
         {
+            DamagePainted(element);
+
             _pointerDispatcher.ElementDetached(element);
             _keyboardDispatcher.ElementDetached(element);
         }
@@ -449,6 +456,8 @@ namespace Ixen.Core
 
         public bool PreservesFrame { get; set; } = true;
 
+        private const float DAMAGE_PAD = 1f;
+
         private DamageRegion _damage;
 
         public void InvalidateVisual()
@@ -462,6 +471,110 @@ namespace Ixen.Core
             _visualDirty = true;
 
             AddDamage(element);
+        }
+
+        private void DamageLayout(VisualElement element, VisualElement filtered)
+        {
+            if (element.HasFilter || element.HasBackdropFilter)
+            {
+                filtered = element;
+            }
+
+            DamageElement(element, filtered);
+
+            foreach (VisualElement child in element.Children)
+            {
+                DamageLayout(child, filtered);
+            }
+
+            if (!element.HasChrome)
+            {
+                return;
+            }
+
+            foreach (VisualElement chrome in element.Chrome)
+            {
+                DamageLayout(chrome, filtered);
+            }
+        }
+
+        private void DamageElement(VisualElement element, VisualElement filtered)
+        {
+            bool repaint = element.NeedsRepaint;
+
+            if (element.HasBackdropFilter && !element.IsHiddenInTree)
+            {
+                repaint = true;
+            }
+
+            element.NeedsRepaint = false;
+
+            float left = 0;
+            float top = 0;
+            float right = 0;
+            float bottom = 0;
+            bool visible = false;
+
+            DimensionalElement clip = element.Clip;
+
+            if (element.StylesHandlers != null && clip != null && !clip.IsVoidOrInvalid)
+            {
+                float margin = PaintMargin(element);
+
+                left = clip.X - margin;
+                top = clip.Y - margin;
+                right = clip.X + clip.ActualWidth + margin;
+                bottom = clip.Y + clip.ActualHeight + margin;
+                visible = true;
+            }
+            else if (repaint && element.StylesHandlers == null)
+            {
+                _damage.SetWhole();
+            }
+
+            bool moved = visible != element.Painted
+                || (visible
+                    && (left != element.PaintedLeft
+                        || top != element.PaintedTop
+                        || right != element.PaintedRight
+                        || bottom != element.PaintedBottom));
+
+            if (repaint || moved)
+            {
+                DamagePainted(element);
+
+                if (visible)
+                {
+                    _damage.Add(left, top, right - left, bottom - top);
+                }
+
+                if (filtered != null && filtered != element && filtered.Painted)
+                {
+                    _damage.Add(filtered.PaintedLeft, filtered.PaintedTop,
+                        filtered.PaintedRight - filtered.PaintedLeft,
+                        filtered.PaintedBottom - filtered.PaintedTop);
+                }
+            }
+
+            element.Painted = visible;
+            element.PaintedLeft = left;
+            element.PaintedTop = top;
+            element.PaintedRight = right;
+            element.PaintedBottom = bottom;
+        }
+
+        private void DamagePainted(VisualElement element)
+        {
+            if (element == null || !element.Painted)
+            {
+                return;
+            }
+
+            _damage.Add(element.PaintedLeft, element.PaintedTop,
+                element.PaintedRight - element.PaintedLeft,
+                element.PaintedBottom - element.PaintedTop);
+
+            element.Painted = false;
         }
 
         private void AddDamage(VisualElement element, float extra = 0)
@@ -1043,8 +1156,14 @@ namespace Ixen.Core
 
             if (clipped)
             {
-                _rendererContext.PushClip(_damage.Left, _damage.Top,
-                    _damage.Right - _damage.Left, _damage.Bottom - _damage.Top, null);
+                float pad = DAMAGE_PAD / Math.Min(1f, _scale);
+
+                float left = (float)Math.Floor(_damage.Left - pad);
+                float top = (float)Math.Floor(_damage.Top - pad);
+                float right = (float)Math.Ceiling(_damage.Right + pad);
+                float bottom = (float)Math.Ceiling(_damage.Bottom + pad);
+
+                _rendererContext.PushClip(left, top, right - left, bottom - top, null);
             }
 
             _rendererContext.Clear(_clearColor);
@@ -1077,6 +1196,8 @@ namespace Ixen.Core
                 SKBitmap bitmap = new SKBitmap(
                     (int)Math.Round(_viewPort.Width * _scale),
                     (int)Math.Round(_viewPort.Height * _scale));
+                _damage.SetWhole();
+
                 using (var canvas = new SKCanvas(bitmap))
                 {
                     Render(canvas);
