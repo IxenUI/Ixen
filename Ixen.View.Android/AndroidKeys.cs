@@ -24,6 +24,11 @@ namespace Ixen.View.Android
                 modifiers |= KeyModifiers.Alt;
             }
 
+            if ((state & MetaKeyStates.MetaOn) != 0)
+            {
+                modifiers |= KeyModifiers.Meta;
+            }
+
             return modifiers;
         }
 
@@ -111,6 +116,10 @@ namespace Ixen.View.Android
                 case Keycode.AltLeft:
                 case Keycode.AltRight:
                     return Key.Alt;
+
+                case Keycode.MetaLeft:
+                case Keycode.MetaRight:
+                    return Key.Meta;
 
                 case Keycode.Back:
                     return Key.Back;

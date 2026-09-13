@@ -410,7 +410,8 @@ namespace Ixen.Core
         }
 
         public Accessibility.AccessibleNode BuildAccessibilityTree()
-            => Accessibility.AccessibilityTree.Build(Root, _keyboardDispatcher.Focused);
+            => Accessibility.AccessibilityTree.Build(Root, _keyboardDispatcher.Focused,
+                AcceleratorModifier);
 
         public bool Perform(Accessibility.AccessibleNode node, Accessibility.AccessibleActions action,
             string value = null)
@@ -455,6 +456,8 @@ namespace Ixen.Core
         internal int LastMeasuredElements { get; private set; }
 
         public bool PreservesFrame { get; set; } = true;
+
+        public KeyModifiers AcceleratorModifier { get; set; } = KeyShortcut.DEFAULT_ACCELERATOR;
 
         private const float DAMAGE_PAD = 1f;
 
@@ -1037,7 +1040,8 @@ namespace Ixen.Core
         {
             VisualElement before = _keyboardDispatcher.Focused;
 
-            bool handled = _keyboardDispatcher.KeyDown(Root, key, modifiers, TrackStates, isRepeat);
+            bool handled = _keyboardDispatcher.KeyDown(Root, key, modifiers, TrackStates, isRepeat,
+                AcceleratorModifier);
 
             DamageFocusChange(before);
 

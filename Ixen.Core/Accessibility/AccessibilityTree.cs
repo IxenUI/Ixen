@@ -1,3 +1,4 @@
+using Ixen.Core.Input;
 using Ixen.Core.Visual;
 using System.Collections.Generic;
 using System.Text;
@@ -6,13 +7,14 @@ namespace Ixen.Core.Accessibility
 {
     internal static class AccessibilityTree
     {
-        internal static AccessibleNode Build(VisualElement root, VisualElement focused)
+        internal static AccessibleNode Build(VisualElement root, VisualElement focused,
+            KeyModifiers accelerator = KeyShortcut.DEFAULT_ACCELERATOR)
         {
-            return root == null ? null : NodeFor(root, focused, LiveRegionKind.None);
+            return root == null ? null : NodeFor(root, focused, LiveRegionKind.None, accelerator);
         }
 
         private static AccessibleNode NodeFor(VisualElement element, VisualElement focused,
-            LiveRegionKind inherited)
+            LiveRegionKind inherited, KeyModifiers accelerator)
         {
             AccessibleRole role = RoleOf(element);
             LiveRegionKind live = element.LiveRegion == LiveRegionKind.None
@@ -26,7 +28,7 @@ namespace Ixen.Core.Accessibility
                 Name = NameOf(element),
                 Description = DescriptionOf(element),
                 Value = ValueOf(element),
-                Shortcut = element.Shortcut,
+                Shortcut = KeyShortcut.Describe(element.Shortcut, accelerator),
                 States = StatesOf(element, focused),
                 Live = live,
                 Actions = ActionsOf(element, role),
@@ -38,14 +40,14 @@ namespace Ixen.Core.Accessibility
 
             if (!TakesNameFromContent(node.Role))
             {
-                Collect(element, focused, node.ChildList, live);
+                Collect(element, focused, node.ChildList, live, accelerator);
             }
 
             return node;
         }
 
         private static void Collect(VisualElement element, VisualElement focused,
-            List<AccessibleNode> into, LiveRegionKind inherited)
+            List<AccessibleNode> into, LiveRegionKind inherited, KeyModifiers accelerator)
         {
             foreach (VisualElement child in element.Children)
             {
@@ -60,11 +62,11 @@ namespace Ixen.Core.Accessibility
 
                 if (IsExposed(child))
                 {
-                    into.Add(NodeFor(child, focused, inherited));
+                    into.Add(NodeFor(child, focused, inherited, accelerator));
                 }
                 else
                 {
-                    Collect(child, focused, into, live);
+                    Collect(child, focused, into, live, accelerator);
                 }
             }
         }

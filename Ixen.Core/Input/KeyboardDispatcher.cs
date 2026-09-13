@@ -155,7 +155,7 @@ namespace Ixen.Core.Input
         }
 
         internal bool KeyDown(VisualElement root, Key key, KeyModifiers modifiers, bool trackStates,
-            bool? isRepeat = null)
+            bool? isRepeat = null, KeyModifiers accelerator = KeyShortcut.DEFAULT_ACCELERATOR)
         {
             _trackStates = trackStates;
 
@@ -180,7 +180,7 @@ namespace Ixen.Core.Input
                 }
             }
 
-            if (TryShortcut(root, key, modifiers))
+            if (TryShortcut(root, key, modifiers, accelerator))
             {
                 return true;
             }
@@ -194,7 +194,8 @@ namespace Ixen.Core.Input
             return ScrollBy(target, root, key);
         }
 
-        private static bool TryShortcut(VisualElement root, Key key, KeyModifiers modifiers)
+        private static bool TryShortcut(VisualElement root, Key key, KeyModifiers modifiers,
+            KeyModifiers accelerator)
         {
             if (root == null || !root.HasShortcuts)
             {
@@ -203,7 +204,7 @@ namespace Ixen.Core.Input
 
             foreach (VisualElement element in root.Shortcuts)
             {
-                if (!element.MatchesShortcut(key, modifiers))
+                if (!element.MatchesShortcut(key, modifiers, accelerator))
                 {
                     continue;
                 }

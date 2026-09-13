@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Ixen.Platform.Windows
+namespace Ixen.Platform
 {
-    internal class PixelBuffer : IDisposable
+    public class PixelBuffer : IDisposable
     {
         private int _width;
         private int _height;

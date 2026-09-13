@@ -41,6 +41,7 @@ namespace Ixen.Core.UT.Native
             { "IXEN_MOD_SHIFT", "MOD_SHIFT" },
             { "IXEN_MOD_CONTROL", "MOD_CONTROL" },
             { "IXEN_MOD_ALT", "MOD_ALT" },
+            { "IXEN_MOD_META", "MOD_META" },
 
             { "IXEN_CURSOR_DEFAULT", "Default" },
             { "IXEN_CURSOR_HAND", "Hand" },

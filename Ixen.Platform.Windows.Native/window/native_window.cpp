@@ -26,6 +26,7 @@
 #define IXEN_MOD_SHIFT 1
 #define IXEN_MOD_CONTROL 2
 #define IXEN_MOD_ALT 4
+#define IXEN_MOD_META 8
 
 #define IXEN_CURSOR_DEFAULT 0
 #define IXEN_CURSOR_HAND 1
@@ -559,6 +560,11 @@ int NativeWindow::GetModifiers()
     if (GetKeyState(VK_MENU) & 0x8000)
     {
         modifiers |= IXEN_MOD_ALT;
+    }
+
+    if ((GetKeyState(VK_LWIN) | GetKeyState(VK_RWIN)) & 0x8000)
+    {
+        modifiers |= IXEN_MOD_META;
     }
 
     return modifiers;

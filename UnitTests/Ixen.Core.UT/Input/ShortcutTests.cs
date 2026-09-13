@@ -289,5 +289,151 @@ namespace Ixen.Core.UT.Input
                 "a command with no role is still something a client has to be able to find");
             Assert.AreEqual("Ctrl+S", node.Children[0].Shortcut);
         }
+
+        [TestMethod]
+        public void TheCommandKeyIsAModifierOfItsOwn()
+        {
+            Save("Cmd+S");
+
+            Press(Key.S, KeyModifiers.Control);
+
+            Assert.AreEqual(0, _hits, "Cmd+S is not Ctrl+S, which is the whole reason Meta exists");
+
+            Press(Key.S, KeyModifiers.Meta);
+
+            Assert.AreEqual(1, _hits);
+        }
+
+        [TestMethod]
+        public void TheCommandKeyAnswersToEveryPlatformsNameForIt()
+        {
+            Assert.IsTrue(KeyShortcut.TryParse("Cmd+S", out KeyShortcut cmd));
+            Assert.IsTrue(KeyShortcut.TryParse("Command+S", out KeyShortcut command));
+            Assert.IsTrue(KeyShortcut.TryParse("Meta+S", out KeyShortcut meta));
+            Assert.IsTrue(KeyShortcut.TryParse("Super+S", out KeyShortcut super));
+            Assert.IsTrue(KeyShortcut.TryParse("Win+S", out KeyShortcut win));
+
+            Assert.IsTrue(cmd.Matches(Key.S, KeyModifiers.Meta));
+            Assert.IsTrue(command.Matches(Key.S, KeyModifiers.Meta));
+            Assert.IsTrue(meta.Matches(Key.S, KeyModifiers.Meta),
+                "one key, four platforms, four words for it");
+            Assert.IsTrue(super.Matches(Key.S, KeyModifiers.Meta));
+            Assert.IsTrue(win.Matches(Key.S, KeyModifiers.Meta));
+        }
+
+        [TestMethod]
+        public void HoldingCommandIsNotACommand()
+        {
+            Assert.IsFalse(KeyShortcut.TryParse("Cmd", out _));
+            Assert.IsFalse(KeyShortcut.TryParse("Cmd+Meta", out _),
+                "Meta is refused as the key for the same reason Shift, Control and Alt are");
+            Assert.IsFalse(KeyShortcut.TryParse("Cmd+Cmd+S", out _));
+        }
+
+        [TestMethod]
+        public void CommandCombinesWithTheOtherThree()
+        {
+            Assert.IsTrue(KeyShortcut.TryParse("Cmd+Shift+Z", out KeyShortcut redo));
+
+            Assert.IsTrue(redo.Matches(Key.Z, KeyModifiers.Meta | KeyModifiers.Shift));
+            Assert.IsFalse(redo.Matches(Key.Z, KeyModifiers.Meta),
+                "the modifiers still have to match exactly");
+        }
+
+        [TestMethod]
+        public void AnAcceleratorIsControlUntilAHostSaysOtherwise()
+        {
+            Save("Accel+S");
+
+            Press(Key.S, KeyModifiers.Control);
+
+            Assert.AreEqual(1, _hits, "every host but macOS leaves the default alone");
+        }
+
+        [TestMethod]
+        public void AnAcceleratorFollowsTheHostsChoice()
+        {
+            _surface.AcceleratorModifier = KeyModifiers.Meta;
+
+            Save("Accel+S");
+
+            Press(Key.S, KeyModifiers.Control);
+
+            Assert.AreEqual(0, _hits, "the same declaration is no longer Ctrl+S on this host");
+
+            Press(Key.S, KeyModifiers.Meta);
+
+            Assert.AreEqual(1, _hits);
+        }
+
+        [TestMethod]
+        public void AnAcceleratorCombinesWithTheOtherModifiers()
+        {
+            _surface.AcceleratorModifier = KeyModifiers.Meta;
+
+            Save("Accel+Shift+Z");
+
+            Press(Key.Z, KeyModifiers.Meta);
+
+            Assert.AreEqual(0, _hits, "the modifiers still have to match exactly");
+
+            Press(Key.Z, KeyModifiers.Meta | KeyModifiers.Shift);
+
+            Assert.AreEqual(1, _hits);
+        }
+
+        [TestMethod]
+        public void AnAcceleratorBesideItsOwnLiteralIsRefused()
+        {
+            Assert.IsFalse(KeyShortcut.TryParse("Accel+Ctrl+S", out _),
+                "on Windows that collapses to one modifier, which is not what it reads as");
+            Assert.IsFalse(KeyShortcut.TryParse("Accel+Cmd+S", out _),
+                "and on macOS it collapses the other way");
+            Assert.IsFalse(KeyShortcut.TryParse("Accel+Accel+S", out _));
+
+            Assert.IsTrue(KeyShortcut.TryParse("Accel+Alt+S", out _),
+                "Alt is nobody's accelerator, so it composes");
+        }
+
+        [TestMethod]
+        public void AScreenReaderHearsTheKeyItWouldActuallyPress()
+        {
+            VisualElement save = Save("Accel+S");
+
+            Assert.AreEqual("Ctrl+S", Node(save).Shortcut);
+
+            _surface.AcceleratorModifier = KeyModifiers.Meta;
+
+            Assert.AreEqual("Cmd+S", Node(save).Shortcut,
+                "announcing 'Accel+S' would name a key no keyboard has");
+        }
+
+        [TestMethod]
+        public void ALiteralShortcutIsAnnouncedExactlyAsItWasWritten()
+        {
+            VisualElement save = Save("Ctrl+Shift+S");
+
+            _surface.AcceleratorModifier = KeyModifiers.Meta;
+
+            Assert.AreEqual("Ctrl+Shift+S", Node(save).Shortcut,
+                "only the accel token is resolved, never a modifier the author named");
+        }
+
+        private AccessibleNode Node(VisualElement element)
+        {
+            AccessibleNode root = _surface.BuildAccessibilityTree();
+
+            foreach (AccessibleNode child in root.Children)
+            {
+                if (child.Element == element)
+                {
+                    return child;
+                }
+            }
+
+            Assert.Fail("the element is not in the accessibility tree");
+
+            return null;
+        }
     }
 }

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<Nullable>disable</Nullable>
+		<Copyright>©2026 by kipy</Copyright>
+		<AssemblyVersion>0.0.1</AssemblyVersion>
+		<FileVersion>0.0.1</FileVersion>
+		<PackageId>Ixen.Platform.Mac</PackageId>
+		<Version>0.0.1</Version>
+		<Authors>kipy</Authors>
+		<Description>The macOS host for Ixen. Reference this from a macOS application; it carries the native window library.</Description>
+		<PackageTags>ixen;ui;macos</PackageTags>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="SkiaSharp" Version="4.151.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Ixen.Core\Ixen.Core.csproj" />
+		<ProjectReference Include="..\Ixen.Platform\Ixen.Platform.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\Ixen.Platform.Mac.Native\bin\libixen.dylib"
+			  Condition="Exists('..\Ixen.Platform.Mac.Native\bin\libixen.dylib')"
+			  Pack="true"
+			  PackagePath="runtimes/osx-arm64/native/libixen.dylib"
+			  CopyToOutputDirectory="PreserveNewest"
+			  Link="libixen.dylib" />
+	</ItemGroup>
+
+</Project>

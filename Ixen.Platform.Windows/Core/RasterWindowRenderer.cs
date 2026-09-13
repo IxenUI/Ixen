@@ -1,3 +1,4 @@
+using Ixen.Platform;
 using Ixen.Platform.Windows.NativeApi;
 using SkiaSharp;
 using System;

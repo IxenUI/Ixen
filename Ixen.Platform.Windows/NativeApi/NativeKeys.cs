@@ -45,6 +45,7 @@ namespace Ixen.Platform.Windows.NativeApi
         private const int MOD_SHIFT = 1;
         private const int MOD_CONTROL = 2;
         private const int MOD_ALT = 4;
+        private const int MOD_META = 8;
 
         internal static KeyModifiers ToModifiers(int modifiers)
         {
@@ -63,6 +64,11 @@ namespace Ixen.Platform.Windows.NativeApi
             if ((modifiers & MOD_ALT) != 0)
             {
                 result |= KeyModifiers.Alt;
+            }
+
+            if ((modifiers & MOD_META) != 0)
+            {
+                result |= KeyModifiers.Meta;
             }
 
             return result;
@@ -107,6 +113,8 @@ namespace Ixen.Platform.Windows.NativeApi
                 case 0x10: return Key.Shift;
                 case 0x11: return Key.Control;
                 case 0x12: return Key.Alt;
+                case 0x5B: return Key.Meta;
+                case 0x5C: return Key.Meta;
 
                 default: return Key.None;
             }

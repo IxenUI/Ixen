@@ -235,8 +235,9 @@ namespace Ixen.Core.Visual
 
         internal bool HasShortcut => _shortcut != null;
 
-        internal bool MatchesShortcut(Input.Key key, Input.KeyModifiers modifiers)
-            => _shortcut != null && _parsedShortcut.Matches(key, modifiers);
+        internal bool MatchesShortcut(Input.Key key, Input.KeyModifiers modifiers,
+            Input.KeyModifiers accelerator)
+            => _shortcut != null && _parsedShortcut.Matches(key, modifiers, accelerator);
 
         public Accessibility.AccessibleRole Role { get; set; }
         public string Label { get; set; }

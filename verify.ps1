@@ -150,7 +150,8 @@ else
     if ($code -eq 0)
     {
         $built = $true
-        Record 'OK' 'solution, warning-free' '10 projects, C++ and Android included'
+        $count = @(Select-String -Path (Join-Path $framework 'Ixen.sln') -Pattern '^Project\(').Count
+        Record 'OK' 'solution, warning-free' ("$count projects, C++ and Android included")
     }
     else
     {
