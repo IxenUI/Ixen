@@ -24,13 +24,24 @@
 		<ProjectReference Include="..\Ixen.Platform\Ixen.Platform.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<None Include="..\Ixen.Platform.Mac.Native\bin\libixen.dylib"
-			  Condition="Exists('..\Ixen.Platform.Mac.Native\bin\libixen.dylib')"
-			  Pack="true"
-			  PackagePath="runtimes/osx-arm64/native/libixen.dylib"
-			  CopyToOutputDirectory="PreserveNewest"
-			  Link="libixen.dylib" />
-	</ItemGroup>
+	<PropertyGroup>
+		<IxenMacRuntime Condition="'$(IxenMacRuntime)' == ''">osx-arm64</IxenMacRuntime>
+		<IxenMacDylib>$(MSBuildThisFileDirectory)..\Ixen.Platform.Mac.Native\bin\libixen.dylib</IxenMacDylib>
+	</PropertyGroup>
+
+	<Target Name="IxenIncludeMacLibrary" BeforeTargets="AssignTargetPaths">
+		<Warning Condition="!Exists('$(IxenMacDylib)') And $([MSBuild]::IsOSPlatform('OSX'))"
+				 Code="IXEN002"
+				 Text="libixen.dylib was not found at $(IxenMacDylib), so it will not be copied next to the application and every window call will fail with DllNotFoundException. Build it on macOS with Ixen.Platform.Mac.Native/build-mac-native.sh - no MSBuild target can produce it." />
+		<ItemGroup Condition="Exists('$(IxenMacDylib)')">
+			<Content Include="$(IxenMacDylib)">
+				<Link>libixen.dylib</Link>
+				<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+				<Visible>false</Visible>
+				<Pack>true</Pack>
+				<PackagePath>runtimes/$(IxenMacRuntime)/native</PackagePath>
+			</Content>
+		</ItemGroup>
+	</Target>
 
 </Project>

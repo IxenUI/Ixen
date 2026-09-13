@@ -1,6 +1,7 @@
 #import "native_window.h"
 
 #include <map>
+#include <string>
 
 #define IXEN_POINTER_MOVE 0
 #define IXEN_POINTER_DOWN 1
@@ -543,6 +544,8 @@ namespace IxenMacNative
         [cursor set];
     }
 
+    static std::string _pasteboardText;
+
     const char* GetPasteboardText()
     {
         NSPasteboard* board = [NSPasteboard generalPasteboard];
@@ -550,10 +553,14 @@ namespace IxenMacNative
 
         if (value == nil)
         {
+            _pasteboardText.clear();
+
             return nullptr;
         }
 
-        return [value UTF8String];
+        _pasteboardText.assign([value UTF8String]);
+
+        return _pasteboardText.c_str();
     }
 
     void SetPasteboardText(const char* text)

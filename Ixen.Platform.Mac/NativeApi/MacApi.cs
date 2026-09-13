@@ -53,8 +53,7 @@ namespace Ixen.Platform.Mac.NativeApi
         public static extern void RegisterWheelCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnWheelCallBack callback);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_GetClipboardText", CallingConvention = CallingConvention.Cdecl)]
-        [return: MarshalAs(UnmanagedType.LPUTF8Str)]
-        public static extern string GetClipboardText();
+        public static extern IntPtr GetClipboardText();
 
         [DllImport(LIB_NAME, EntryPoint = "WA_SetClipboardText", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetClipboardText([MarshalAs(UnmanagedType.LPUTF8Str)] string text);

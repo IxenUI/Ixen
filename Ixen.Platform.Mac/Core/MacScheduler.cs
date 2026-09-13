@@ -7,48 +7,64 @@ namespace Ixen.Platform.Mac
 {
     public class MacScheduler : IScheduler
     {
-        private static readonly Dictionary<long, Action> _callbacks = new Dictionary<long, Action>();
+        private static readonly Dictionary<long, Subscription> _subscriptions = new Dictionary<long, Subscription>();
         private static readonly MacApi.OnTimerCallBack _onTimer = OnTimer;
 
         public IDisposable Schedule(int delayMilliseconds, bool repeat, Action callback)
         {
-            if (callback == null)
-            {
-                return null;
-            }
-
-            long id = MacApi.Schedule(delayMilliseconds, repeat ? 1 : 0, _onTimer);
+            long id = MacApi.Schedule(Math.Max(1, delayMilliseconds), repeat ? 1 : 0, _onTimer);
 
             if (id == 0)
             {
-                return null;
+                return new Subscription(0, false, null);
             }
 
-            _callbacks[id] = callback;
+            var subscription = new Subscription(id, repeat, callback);
+            _subscriptions[id] = subscription;
 
-            return new Entry(id, repeat);
+            return subscription;
         }
 
         private static void OnTimer(long id)
         {
-            if (!_callbacks.TryGetValue(id, out Action callback))
+            if (!_subscriptions.TryGetValue(id, out Subscription subscription))
             {
+                MacApi.Cancel(id);
                 return;
             }
 
-            callback();
+            subscription.Tick();
         }
 
-        private sealed class Entry : IDisposable
+        private sealed class Subscription : IDisposable
         {
             private readonly long _id;
             private readonly bool _repeat;
+            private readonly Action _callback;
+
             private bool _disposed;
 
-            internal Entry(long id, bool repeat)
+            internal Subscription(long id, bool repeat, Action callback)
             {
                 _id = id;
                 _repeat = repeat;
+                _callback = callback;
+                _disposed = callback == null;
+            }
+
+            internal void Tick()
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                if (!_repeat)
+                {
+                    Dispose();
+                }
+
+                _callback();
             }
 
             public void Dispose()
@@ -59,13 +75,9 @@ namespace Ixen.Platform.Mac
                 }
 
                 _disposed = true;
+                _subscriptions.Remove(_id);
 
-                _callbacks.Remove(_id);
-
-                if (_repeat)
-                {
-                    MacApi.Cancel(_id);
-                }
+                MacApi.Cancel(_id);
             }
         }
     }
