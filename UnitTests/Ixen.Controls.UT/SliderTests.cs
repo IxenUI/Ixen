@@ -5,6 +5,8 @@ using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SkiaSharp;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Ixen.Controls.UT
@@ -200,6 +202,82 @@ namespace Ixen.Controls.UT
             Assert.AreEqual(40f, _slider.ContentX,
                 "the fixture offsets it on purpose - with the slider at x 0 every one of these "
                 + "tests passes whether the pointer is made local to it or not");
+        }
+        private VisualElement Thumb()
+            => _slider.ChildElements.Single(part => part.TypeName == Slider.THUMB);
+
+        private float PaintedThumbCentre()
+        {
+            VisualElement thumb = Thumb();
+
+            thumb.Styles.Background = new BackgroundStyleDescriptor { Color = "#FF00FF00" };
+            thumb.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 16 };
+            thumb.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 16 };
+            thumb.Invalidate();
+
+            Layout();
+
+            using (SKBitmap frame = _surface.RenderToBitmap())
+            {
+                int row = (int)(thumb.Y + (thumb.ActualHeight / 2));
+                int left = -1;
+                int right = -1;
+
+                for (int x = 0; x < frame.Width; x++)
+                {
+                    SKColor pixel = frame.GetPixel(x, row);
+
+                    if (pixel.Green < 200 || pixel.Red > 80 || pixel.Blue > 80)
+                    {
+                        continue;
+                    }
+
+                    if (left < 0)
+                    {
+                        left = x;
+                    }
+
+                    right = x;
+                }
+
+                Assert.IsTrue(left >= 0, "the thumb has to be on the frame at all");
+
+                return (left + right + 1) / 2f;
+            }
+        }
+
+        [TestMethod]
+        public void TheThumbIsPaintedCentredOnThePointerRatherThanBesideIt()
+        {
+            float pressed = _slider.ContentX + 60;
+
+            _surface.PointerDown(pressed, _slider.Y + 10, PointerButton.Left);
+
+            Assert.AreEqual(pressed, PaintedThumbCentre(), 1f,
+                "the ink has to sit on the pointer - placing the thumb's left edge at the value "
+                + "put it half a thumb to the right, which is what Kevin saw");
+        }
+
+        [TestMethod]
+        public void DraggingKeepsThePaintedThumbUnderTheFinger()
+        {
+            _surface.PointerDown(_slider.ContentX + 20, _slider.Y + 10, PointerButton.Left);
+            _surface.PointerMove(_slider.ContentX + 140, _slider.Y + 10);
+
+            Assert.AreEqual(_slider.ContentX + 140, PaintedThumbCentre(), 1f,
+                "and it must not drift away while you drag");
+        }
+
+        [TestMethod]
+        public void TheThumbCarriesTheHalfWidthShiftItselfRatherThanLeavingItToATheme()
+        {
+            List<TransformOperation> operations = Thumb().Styles.Transform.Operations;
+
+            Assert.AreEqual(1, operations.Count);
+            Assert.AreEqual(TransformKind.Translate, operations[0].Kind);
+            Assert.AreEqual(SizeUnit.Percents, operations[0].XUnit);
+            Assert.AreEqual(-50f, operations[0].X,
+                "the shift is the control's own structure, so every theme gets it right");
         }
     }
 }

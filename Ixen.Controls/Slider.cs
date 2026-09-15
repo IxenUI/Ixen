@@ -46,6 +46,18 @@ namespace Ixen.Controls
             _fill.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 };
 
             _thumb.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 };
+            _thumb.Styles.Transform = new TransformStyleDescriptor
+            {
+                Operations =
+                {
+                    new TransformOperation
+                    {
+                        Kind = TransformKind.Translate,
+                        XUnit = SizeUnit.Percents,
+                        X = -50
+                    }
+                }
+            };
 
             AddChildren(track, _fill, _thumb);
 

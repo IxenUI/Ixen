@@ -245,7 +245,7 @@ $focus:        #4C6EF5
 #Slider {
     width: 176px
     height: 18px
-    padding: 0px 16px 0px 0px
+    padding: 0px 8px 0px 8px
     cursor: hand
 }
 

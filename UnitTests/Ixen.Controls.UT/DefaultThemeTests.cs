@@ -237,7 +237,7 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
-        public void ASliderKeepsItsThumbInsideAtTheMaximum()
+        public void ASliderKeepsItsThumbInsideAtBothEnds()
         {
             Slider slider = Add<Slider>("volume");
             slider.Value = slider.Maximum;
@@ -255,9 +255,19 @@ namespace Ixen.Controls.UT
             }
 
             Assert.IsNotNull(thumb);
-            Assert.IsTrue(thumb.X + thumb.ActualWidth <= slider.X + slider.ActualWidth,
-                "the thumb is placed at left: 100% of the CONTENT box, so the theme has to "
-                + "reserve a gutter of one thumb width or the thumb hangs over the right edge");
+
+            float half = thumb.ActualWidth / 2;
+
+            Assert.IsTrue(thumb.X + half <= slider.X + slider.ActualWidth,
+                "the thumb is drawn centred on its own X by translateX(-50%), so what has to "
+                + "stay inside is the painted half, and the theme reserves half a thumb a side");
+
+            slider.Value = slider.Minimum;
+
+            Layout();
+
+            Assert.IsTrue(thumb.X - half >= slider.X,
+                "and the other end too, which the one-sided gutter could not do");
         }
 
         [TestMethod]
