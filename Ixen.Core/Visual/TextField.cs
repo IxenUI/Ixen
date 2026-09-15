@@ -533,6 +533,9 @@ namespace Ixen.Core.Visual
             args.Handled = true;
         }
 
+        private KeyModifiers Accelerator
+            => Host == null ? KeyShortcut.DEFAULT_ACCELERATOR : Host.AcceleratorModifier;
+
         private void OnKeyDown(object sender, KeyEventArgs args)
         {
             bool extend = args.HasModifier(KeyModifiers.Shift);
@@ -593,7 +596,7 @@ namespace Ixen.Core.Visual
                     break;
 
                 case Key.A:
-                    if (!args.HasModifier(KeyModifiers.Control))
+                    if (!args.HasModifier(Accelerator))
                     {
                         return;
                     }
@@ -602,7 +605,7 @@ namespace Ixen.Core.Visual
                     break;
 
                 case Key.C:
-                    if (!args.HasModifier(KeyModifiers.Control))
+                    if (!args.HasModifier(Accelerator))
                     {
                         return;
                     }
@@ -611,7 +614,7 @@ namespace Ixen.Core.Visual
                     break;
 
                 case Key.X:
-                    if (!args.HasModifier(KeyModifiers.Control))
+                    if (!args.HasModifier(Accelerator))
                     {
                         return;
                     }
@@ -620,7 +623,7 @@ namespace Ixen.Core.Visual
                     break;
 
                 case Key.V:
-                    if (!args.HasModifier(KeyModifiers.Control))
+                    if (!args.HasModifier(Accelerator))
                     {
                         return;
                     }
@@ -629,7 +632,7 @@ namespace Ixen.Core.Visual
                     break;
 
                 case Key.Z:
-                    if (!args.HasModifier(KeyModifiers.Control))
+                    if (!args.HasModifier(Accelerator))
                     {
                         return;
                     }
@@ -646,7 +649,7 @@ namespace Ixen.Core.Visual
                     break;
 
                 case Key.Y:
-                    if (!args.HasModifier(KeyModifiers.Control))
+                    if (!args.HasModifier(Accelerator))
                     {
                         return;
                     }

@@ -10,7 +10,9 @@ namespace IxenMacNative
     typedef void (*PaintCallBack)(int width, int height);
     typedef void (*PointerCallBack)(int kind, int x, int y, int button);
     typedef void (*KeyCallBack)(int kind, int keyCode, int modifiers, int repeat);
+    typedef void (*ImeCallBack)(int kind, const char* text, int caret);
     typedef void (*WheelCallBack)(int x, int y, int deltaX, int deltaY, int modifiers);
+    typedef void (*DropCallBack)(int x, int y, const char* paths);
     typedef void (*TimerCallBack)(long id);
 
     struct NativeWindow
@@ -26,7 +28,9 @@ namespace IxenMacNative
         PaintCallBack paintCallBack;
         PointerCallBack pointerCallBack;
         KeyCallBack keyCallBack;
+        ImeCallBack imeCallBack;
         WheelCallBack wheelCallBack;
+        DropCallBack dropCallBack;
     };
 
     NativeWindow* CreateNativeWindow(const char* title, int width, int height);
@@ -38,6 +42,7 @@ namespace IxenMacNative
     unsigned int GetNativeWindowDpi(NativeWindow* window);
     int IsNativeWindowPresentable(NativeWindow* window);
     void SetNativeWindowCursor(NativeWindow* window, int kind);
+    void SetNativeWindowAcceptsFiles(NativeWindow* window, int accepts);
 
     const char* GetPasteboardText();
     void SetPasteboardText(const char* text);

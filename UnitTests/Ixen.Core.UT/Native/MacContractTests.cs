@@ -32,6 +32,11 @@ namespace Ixen.Core.UT.Native
             { "IXEN_KEY_UP", "Up" },
             { "IXEN_KEY_CHAR", "Char" },
 
+            { "IXEN_IME_UPDATE", "Update" },
+            { "IXEN_IME_COMMIT", "Commit" },
+            { "IXEN_IME_CANCEL", "Cancel" },
+            { "IXEN_IME_FINISH", "Finish" },
+
             { "IXEN_MOD_SHIFT", "MOD_SHIFT" },
             { "IXEN_MOD_CONTROL", "MOD_CONTROL" },
             { "IXEN_MOD_ALT", "MOD_ALT" },
@@ -117,6 +122,11 @@ namespace Ixen.Core.UT.Native
                 return "MacKeyKind." + name;
             }
 
+            if (define.StartsWith("IXEN_IME_"))
+            {
+                return "MacImeKind." + name;
+            }
+
             return name;
         }
 
@@ -130,6 +140,7 @@ namespace Ixen.Core.UT.Native
             ReadEnum(kinds, "MacPointerKind", found);
             ReadEnum(kinds, "MacPointerButton", found);
             ReadEnum(kinds, "MacKeyKind", found);
+            ReadEnum(kinds, "MacImeKind", found);
 
             foreach (Match match in Regex.Matches(keys, @"const int (MOD_[A-Z]+)\s*=\s*(\d+)"))
             {
@@ -315,6 +326,44 @@ namespace Ixen.Core.UT.Native
                     $"{entry} takes a different number of arguments on each side. Widening one "
                         + "alone is a compile error on neither, so the managed delegate would "
                         + "read whatever the Objective-C++ never pushed.");
+            }
+        }
+
+        [TestMethod]
+        public void TheLetterCodesAgreeWithTheKeycodeTable()
+        {
+            Match body = Regex.Match(Read(NATIVE),
+                @"static const int LetterCodes\[26\]\s*=\s*\{([^}]*)\}");
+
+            Assert.IsTrue(body.Success,
+                "no LetterCodes table to read; the parser needs updating");
+
+            MatchCollection codes = Regex.Matches(body.Groups[1].Value, @"0x([0-9A-Fa-f]{2})");
+
+            Assert.AreEqual(26, codes.Count, "the table is one entry per letter");
+
+            var table = new Dictionary<int, string>();
+
+            foreach (Match match in Regex.Matches(Read(KEYS),
+                @"case 0x([0-9A-Fa-f]{2}): return Key\.([A-Z]);"))
+            {
+                table[Convert.ToInt32(match.Groups[1].Value, 16)] = match.Groups[2].Value;
+            }
+
+            for (int index = 0; index < 26; index++)
+            {
+                string letter = ((char)('A' + index)).ToString();
+                int code = Convert.ToInt32(codes[index].Groups[1].Value, 16);
+
+                Assert.IsTrue(table.TryGetValue(code, out string mapped),
+                    $"native_window.mm says {letter} is keycode 0x{code:X2}, which MacKeys "
+                        + "maps to nothing at all");
+
+                Assert.AreEqual(letter, mapped,
+                    $"native_window.mm says {letter} is keycode 0x{code:X2} while MacKeys "
+                        + $"reads that as {mapped}. A letter key would then run the wrong "
+                        + "command on any keyboard whose layout is not the one the table "
+                        + "was written against.");
             }
         }
     }

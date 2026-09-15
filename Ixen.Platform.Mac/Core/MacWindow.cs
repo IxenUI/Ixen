@@ -23,7 +23,9 @@ namespace Ixen.Platform.Mac
         private readonly MacApi.OnPaintCallBack _onPaint;
         private readonly MacApi.OnPointerCallBack _onPointer;
         private readonly MacApi.OnKeyCallBack _onKey;
+        private readonly MacApi.OnImeCallBack _onIme;
         private readonly MacApi.OnWheelCallBack _onWheel;
+        private readonly MacApi.OnDropCallBack _onDrop;
 
         private readonly IxenSurface _ixenSurface;
         private readonly IxenHost _host;
@@ -43,7 +45,9 @@ namespace Ixen.Platform.Mac
             _onPaint = OnPaint;
             _onPointer = OnPointer;
             _onKey = OnKey;
+            _onIme = OnIme;
             _onWheel = OnWheel;
+            _onDrop = OnDrop;
 
             _windowPtr = MacApi.CreateWindow(_ixenSurface.InitOptions.Title,
                 _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
@@ -59,7 +63,9 @@ namespace Ixen.Platform.Mac
             MacApi.RegisterPaintCallBack(_windowPtr, _onPaint);
             MacApi.RegisterPointerCallBack(_windowPtr, _onPointer);
             MacApi.RegisterKeyCallBack(_windowPtr, _onKey);
+            MacApi.RegisterImeCallBack(_windowPtr, _onIme);
             MacApi.RegisterWheelCallBack(_windowPtr, _onWheel);
+            MacApi.RegisterDropCallBack(_windowPtr, _onDrop);
 
             return MacApi.ShowWindow(_windowPtr);
         }
@@ -87,6 +93,8 @@ namespace Ixen.Platform.Mac
 
             MacApi.SetWindowPixelsBuffer(_windowPtr, _pixelBuffer.Ptr, width, height,
                 _pixelBuffer.RowBytes);
+
+            SyncAcceptsFiles();
         }
 
         private SKSurface Surface(int width, int height)
@@ -166,7 +174,7 @@ namespace Ixen.Platform.Mac
                     break;
 
                 case MacKeyKind.Char:
-                    _host.TextInput(char.ConvertFromUtf32(keyCode));
+                    _host.TextInput(((char)keyCode).ToString());
                     break;
             }
         }
@@ -174,6 +182,56 @@ namespace Ixen.Platform.Mac
         private void OnWheel(int x, int y, int deltaX, int deltaY, int modifiers)
             => _host.PointerWheel(x, y, deltaX / WHEEL_DELTA, deltaY / WHEEL_DELTA,
                 MacKeys.ToModifiers(modifiers));
+
+        private void OnIme(int kind, string text, int caret)
+        {
+            switch ((MacImeKind)kind)
+            {
+                case MacImeKind.Update:
+                    _host.Composition(text, caret);
+                    break;
+
+                case MacImeKind.Commit:
+                    _host.CommitComposition(text);
+                    break;
+
+                case MacImeKind.Cancel:
+                    _host.CancelComposition();
+                    break;
+
+                case MacImeKind.Finish:
+                    _host.FinishComposition();
+                    break;
+            }
+        }
+
+        private static readonly char[] _dropSeparator = { '\n' };
+
+        private void OnDrop(int x, int y, string paths)
+        {
+            if (string.IsNullOrEmpty(paths))
+            {
+                return;
+            }
+
+            _host.PointerDrop(x, y, paths.Split(_dropSeparator));
+        }
+
+        private bool _acceptsFiles;
+
+        private void SyncAcceptsFiles()
+        {
+            bool wanted = _ixenSurface.AcceptsDrops;
+
+            if (wanted == _acceptsFiles)
+            {
+                return;
+            }
+
+            _acceptsFiles = wanted;
+
+            MacApi.SetWindowAcceptsFiles(_windowPtr, wanted ? 1 : 0);
+        }
 
         private void RequestRepaint() => MacApi.InvalidateWindow(_windowPtr);
 

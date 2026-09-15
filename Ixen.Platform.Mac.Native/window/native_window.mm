@@ -18,6 +18,11 @@
 #define IXEN_KEY_UP 1
 #define IXEN_KEY_CHAR 2
 
+#define IXEN_IME_UPDATE 0
+#define IXEN_IME_COMMIT 1
+#define IXEN_IME_CANCEL 2
+#define IXEN_IME_FINISH 3
+
 #define IXEN_MOD_SHIFT 1
 #define IXEN_MOD_CONTROL 2
 #define IXEN_MOD_ALT 4
@@ -70,11 +75,41 @@ static int ModifiersOf(NSEventModifierFlags flags)
     return modifiers;
 }
 
-@interface IxenContentView : NSView
+static const int LetterCodes[26] =
+{
+    0x00, 0x0B, 0x08, 0x02, 0x0E, 0x03, 0x05, 0x04, 0x22, 0x26, 0x28, 0x25, 0x2E,
+    0x2D, 0x1F, 0x23, 0x0C, 0x0F, 0x01, 0x11, 0x20, 0x09, 0x0D, 0x07, 0x10, 0x06
+};
+
+static int KeyCodeOf(NSEvent* event)
+{
+    NSString* plain = [event charactersIgnoringModifiers];
+
+    if (plain != nil && [plain length] == 1)
+    {
+        unichar unit = [plain characterAtIndex:0];
+
+        if (unit >= 'A' && unit <= 'Z')
+        {
+            return LetterCodes[unit - 'A'];
+        }
+
+        if (unit >= 'a' && unit <= 'z')
+        {
+            return LetterCodes[unit - 'a'];
+        }
+    }
+
+    return (int)[event keyCode];
+}
+
+@interface IxenContentView : NSView <NSTextInputClient>
 {
 @public
     NativeWindow* owner;
     NSTrackingArea* tracking;
+    NSString* marked;
+    NSRange markedSelection;
 }
 @end
 
@@ -293,12 +328,19 @@ static int ModifiersOf(NSEventModifierFlags flags)
 
 - (void)keyDown:(NSEvent*)event
 {
+    NSEventModifierFlags flags = [event modifierFlags];
+
     if (owner != nullptr && owner->keyCallBack != nullptr)
     {
         owner->keyCallBack(IXEN_KEY_DOWN,
-                           (int)[event keyCode],
-                           ModifiersOf([event modifierFlags]),
+                           KeyCodeOf(event),
+                           ModifiersOf(flags),
                            [event isARepeat] ? 1 : 0);
+    }
+
+    if ((flags & NSEventModifierFlagCommand) != 0)
+    {
+        return;
     }
 
     [self interpretKeyEvents:@[ event ]];
@@ -309,7 +351,7 @@ static int ModifiersOf(NSEventModifierFlags flags)
     if (owner != nullptr && owner->keyCallBack != nullptr)
     {
         owner->keyCallBack(IXEN_KEY_UP,
-                           (int)[event keyCode],
+                           KeyCodeOf(event),
                            ModifiersOf([event modifierFlags]),
                            0);
     }
@@ -328,16 +370,30 @@ static int ModifiersOf(NSEventModifierFlags flags)
                        0);
 }
 
-- (void)insertText:(id)text replacementRange:(NSRange)range
+- (void)insertText:(id)string replacementRange:(NSRange)replacement
 {
-    if (owner == nullptr || owner->keyCallBack == nullptr)
+    NSString* value = [string isKindOfClass:[NSAttributedString class]] ? [string string] : (NSString*)string;
+
+    if (value == nil || owner == nullptr)
     {
         return;
     }
 
-    NSString* value = [text isKindOfClass:[NSAttributedString class]] ? [text string] : (NSString*)text;
+    BOOL composing = marked != nil;
 
-    if (value == nil)
+    marked = nil;
+
+    if (composing)
+    {
+        if (owner->imeCallBack != nullptr)
+        {
+            owner->imeCallBack(IXEN_IME_COMMIT, [value UTF8String], 0);
+        }
+
+        return;
+    }
+
+    if (owner->keyCallBack == nullptr)
     {
         return;
     }
@@ -352,8 +408,157 @@ static int ModifiersOf(NSEventModifierFlags flags)
     }
 }
 
+- (void)setMarkedText:(id)string selectedRange:(NSRange)selected replacementRange:(NSRange)replacement
+{
+    NSString* value = [string isKindOfClass:[NSAttributedString class]] ? [string string] : (NSString*)string;
+
+    if (value == nil)
+    {
+        value = @"";
+    }
+
+    marked = [value length] > 0 ? value : nil;
+    markedSelection = selected;
+
+    if (owner == nullptr || owner->imeCallBack == nullptr)
+    {
+        return;
+    }
+
+    if (marked == nil)
+    {
+        owner->imeCallBack(IXEN_IME_CANCEL, "", 0);
+
+        return;
+    }
+
+    int caret = selected.location == NSNotFound
+        ? (int)[value length]
+        : (int)selected.location;
+
+    owner->imeCallBack(IXEN_IME_UPDATE, [value UTF8String], caret);
+}
+
+- (void)unmarkText
+{
+    if (marked == nil)
+    {
+        return;
+    }
+
+    marked = nil;
+
+    if (owner != nullptr && owner->imeCallBack != nullptr)
+    {
+        owner->imeCallBack(IXEN_IME_FINISH, "", 0);
+    }
+}
+
+- (BOOL)hasMarkedText
+{
+    return marked != nil;
+}
+
+- (NSRange)markedRange
+{
+    return marked == nil ? NSMakeRange(NSNotFound, 0) : NSMakeRange(0, [marked length]);
+}
+
+- (NSRange)selectedRange
+{
+    return marked == nil ? NSMakeRange(NSNotFound, 0) : markedSelection;
+}
+
+- (NSAttributedString*)attributedSubstringForProposedRange:(NSRange)range actualRange:(NSRangePointer)actual
+{
+    return nil;
+}
+
+- (NSArray<NSAttributedStringKey>*)validAttributesForMarkedText
+{
+    return @[];
+}
+
+- (NSRect)firstRectForCharacterRange:(NSRange)range actualRange:(NSRangePointer)actual
+{
+    NSRect bounds = [self bounds];
+    NSRect local = NSMakeRect(0, bounds.size.height, 0, 0);
+    NSWindow* host = [self window];
+
+    if (host == nil)
+    {
+        return local;
+    }
+
+    return [host convertRectToScreen:[self convertRect:local toView:nil]];
+}
+
+- (NSUInteger)characterIndexForPoint:(NSPoint)point
+{
+    return NSNotFound;
+}
+
 - (void)doCommandBySelector:(SEL)selector
 {
+}
+
+- (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender
+{
+    return NSDragOperationCopy;
+}
+
+- (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender
+{
+    return NSDragOperationCopy;
+}
+
+- (BOOL)performDragOperation:(id<NSDraggingInfo>)sender
+{
+    if (owner == nullptr || owner->dropCallBack == nullptr)
+    {
+        return NO;
+    }
+
+    NSDictionary* options = @{ NSPasteboardURLReadingFileURLsOnlyKey: @YES };
+
+    NSArray* urls = [[sender draggingPasteboard] readObjectsForClasses:@[ [NSURL class] ]
+                                                               options:options];
+
+    if (urls == nil || [urls count] == 0)
+    {
+        return NO;
+    }
+
+    NSMutableString* paths = [NSMutableString string];
+
+    for (NSURL* url in urls)
+    {
+        NSString* path = [url path];
+
+        if (path == nil)
+        {
+            continue;
+        }
+
+        if ([paths length] > 0)
+        {
+            [paths appendString:@"\n"];
+        }
+
+        [paths appendString:path];
+    }
+
+    if ([paths length] == 0)
+    {
+        return NO;
+    }
+
+    NSPoint point = [self convertPoint:[sender draggingLocation] fromView:nil];
+    CGFloat scale = [self scale];
+
+    owner->dropCallBack((int)(point.x * scale), (int)(point.y * scale), [paths UTF8String]);
+
+    return YES;
 }
 
 @end
@@ -379,7 +584,9 @@ namespace IxenMacNative
         result->paintCallBack = nullptr;
         result->pointerCallBack = nullptr;
         result->keyCallBack = nullptr;
+        result->imeCallBack = nullptr;
         result->wheelCallBack = nullptr;
+        result->dropCallBack = nullptr;
 
         NSRect frame = NSMakeRect(0, 0, width, height);
 
@@ -542,6 +749,25 @@ namespace IxenMacNative
         }
 
         [cursor set];
+    }
+
+    void SetNativeWindowAcceptsFiles(NativeWindow* window, int accepts)
+    {
+        if (window == nullptr || window->view == nullptr)
+        {
+            return;
+        }
+
+        IxenContentView* view = (__bridge IxenContentView*)window->view;
+
+        if (accepts != 0)
+        {
+            [view registerForDraggedTypes:@[ NSPasteboardTypeFileURL ]];
+        }
+        else
+        {
+            [view unregisterDraggedTypes];
+        }
     }
 
     static std::string _pasteboardText;

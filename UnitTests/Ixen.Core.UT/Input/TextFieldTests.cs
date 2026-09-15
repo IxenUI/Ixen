@@ -342,6 +342,44 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void TheEditingCommandsFollowTheHostsAcceleratorRatherThanControl()
+        {
+            var clipboard = new FakeClipboard();
+            _surface.Clipboard = clipboard;
+            _surface.AcceleratorModifier = KeyModifiers.Meta;
+            _surface.Focus(_field);
+
+            _field.Text = "hello world";
+            _field.Select(5, 0);
+            Layout();
+
+            Press(Key.C, KeyModifiers.Control);
+
+            Assert.IsNull(clipboard.Text,
+                "Ctrl is not the accelerator on a host that says the accelerator is Cmd");
+
+            Press(Key.C, KeyModifiers.Meta);
+
+            Assert.AreEqual("hello", clipboard.Text);
+
+            Press(Key.A, KeyModifiers.Meta);
+
+            Assert.AreEqual(11, _field.SelectionLength,
+                "the six commands share one expression, so select all follows it too");
+        }
+
+        [TestMethod]
+        public void AFieldWithNoHostFallsBackToControl()
+        {
+            var field = new TextField { Text = "hello" };
+
+            field.RaiseKeyDown(new KeyEventArgs(Key.A, KeyModifiers.Control, field));
+
+            Assert.AreEqual(5, field.SelectionLength,
+                "a field built before it joins a tree has no host to ask");
+        }
+
+        [TestMethod]
         public void CutCopiesAndRemoves()
         {
             var clipboard = new FakeClipboard();

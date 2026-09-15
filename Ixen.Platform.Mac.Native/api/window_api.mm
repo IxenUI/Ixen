@@ -45,6 +45,11 @@ void WA_SetWindowCursor(NativeWindow* window, int kind)
     SetNativeWindowCursor(window, kind);
 }
 
+void WA_SetWindowAcceptsFiles(NativeWindow* window, int accepts)
+{
+    SetNativeWindowAcceptsFiles(window, accepts);
+}
+
 void WA_RegisterPaintCallBack(NativeWindow* window, void callBack(int, int))
 {
     if (window != nullptr)
@@ -69,11 +74,27 @@ void WA_RegisterKeyCallBack(NativeWindow* window, void callBack(int, int, int, i
     }
 }
 
+void WA_RegisterImeCallBack(NativeWindow* window, void callBack(int, const char*, int))
+{
+    if (window != nullptr)
+    {
+        window->imeCallBack = callBack;
+    }
+}
+
 void WA_RegisterWheelCallBack(NativeWindow* window, void callBack(int, int, int, int, int))
 {
     if (window != nullptr)
     {
         window->wheelCallBack = callBack;
+    }
+}
+
+void WA_RegisterDropCallBack(NativeWindow* window, void callBack(int, int, const char*))
+{
+    if (window != nullptr)
+    {
+        window->dropCallBack = callBack;
     }
 }
 

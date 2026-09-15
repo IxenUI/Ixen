@@ -20,6 +20,14 @@ namespace Ixen.Platform.Mac.NativeApi
         Right = 3
     }
 
+    internal enum MacImeKind
+    {
+        Update = 0,
+        Commit = 1,
+        Cancel = 2,
+        Finish = 3
+    }
+
     internal enum MacKeyKind
     {
         Down = 0,

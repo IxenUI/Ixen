@@ -10,7 +10,9 @@ namespace Ixen.Platform.Mac.NativeApi
         public delegate void OnPaintCallBack(int width, int height);
         public delegate void OnPointerCallBack(int kind, int x, int y, int button);
         public delegate void OnKeyCallBack(int kind, int keyCode, int modifiers, int repeat);
+        public delegate void OnImeCallBack(int kind, [MarshalAs(UnmanagedType.LPUTF8Str)] string text, int caret);
         public delegate void OnWheelCallBack(int x, int y, int deltaX, int deltaY, int modifiers);
+        public delegate void OnDropCallBack(int x, int y, [MarshalAs(UnmanagedType.LPUTF8Str)] string paths);
         public delegate void OnTimerCallBack(long id);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateWindow", CallingConvention = CallingConvention.Cdecl)]
@@ -40,6 +42,9 @@ namespace Ixen.Platform.Mac.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowCursor", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetWindowCursor(IntPtr windowPtr, int kind);
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowAcceptsFiles", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetWindowAcceptsFiles(IntPtr windowPtr, int accepts);
+
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterPaintCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterPaintCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnPaintCallBack callback);
 
@@ -49,8 +54,14 @@ namespace Ixen.Platform.Mac.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterKeyCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterKeyCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnKeyCallBack callback);
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterImeCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterImeCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnImeCallBack callback);
+
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterWheelCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterWheelCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnWheelCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterDropCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterDropCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnDropCallBack callback);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_GetClipboardText", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr GetClipboardText();
