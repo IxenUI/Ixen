@@ -399,7 +399,10 @@ namespace Ixen.Core
         internal VisualElement CapturedElement => _pointerDispatcher.Captured;
 
         internal void PointerCaptureLost()
-            => _pointerDispatcher.ReleaseCapture();
+        {
+            _pointerDispatcher.ReleaseCapture();
+            SyncCursor();
+        }
 
         public void ElementDetached(VisualElement element)
         {
@@ -874,7 +877,8 @@ namespace Ixen.Core
 
         private void SyncCursor()
         {
-            CursorKind resolved = CursorAt(_pointerDispatcher.Hovered, out CursorImage image);
+            VisualElement target = _pointerDispatcher.Captured ?? _pointerDispatcher.Hovered;
+            CursorKind resolved = CursorAt(target, out CursorImage image);
 
             if (resolved == _cursor && ReferenceEquals(image, _cursorImage))
             {
@@ -1131,7 +1135,10 @@ namespace Ixen.Core
 
         internal void PointerUp(float x, float y, PointerButton button,
             PointerKind kind = PointerKind.Mouse, int pointerId = 0)
-            => _pointerDispatcher.Up(Root, ToLogical(x), ToLogical(y), button, TrackStates, kind, pointerId);
+        {
+            _pointerDispatcher.Up(Root, ToLogical(x), ToLogical(y), button, TrackStates, kind, pointerId);
+            SyncCursor();
+        }
 
         internal ITimeSource TimeSource
         {

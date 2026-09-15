@@ -225,5 +225,91 @@ namespace Ixen.Core.UT.Input
 
             Assert.AreEqual(CursorKind.Hand, surface.Cursor, "the surface still knows, it just tells nobody");
         }
+        private void PressedRefusesThePointer()
+        {
+            var registry = new StyleRegistry();
+
+            registry.Add(new StyleClass(StyleClassTarget.ElementName, null, null, "button", new()
+            {
+                new CursorStyleDescriptor { Value = CursorKind.Hand }
+            }));
+
+            registry.Add(new StyleClass(StyleClassTarget.ElementName, null, null, "button:pressed", new()
+            {
+                new PointerEventsStyleDescriptor { Value = PointerEvents.None }
+            }));
+
+            registry.Add(new StyleClass(StyleClassTarget.ElementName, null, null, "root", new()
+            {
+                new CursorStyleDescriptor { Value = CursorKind.Crosshair }
+            }));
+
+            _surface.Styles = registry;
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+        }
+
+        [TestMethod]
+        public void ADraggedElementKeepsItsCursorEvenWhenItRefusesThePointer()
+        {
+            PressedRefusesThePointer();
+
+            _surface.PointerMove(10, 10);
+            _surface.PointerDown(10, 10, PointerButton.Left);
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+            _surface.PointerMove(30, 20);
+
+            Assert.AreEqual(CursorKind.Hand, _surface.Cursor,
+                "the press made it refuse the pointer, and the shape must not fall through to what is behind");
+        }
+
+        [TestMethod]
+        public void ReleasingGivesTheCursorBackToWhatIsUnderThePointer()
+        {
+            PressedRefusesThePointer();
+
+            _surface.PointerMove(10, 10);
+            _surface.PointerDown(10, 10, PointerButton.Left);
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+            _surface.PointerMove(10, 180);
+
+            Assert.AreEqual(CursorKind.Hand, _surface.Cursor, "still dragging");
+
+            _surface.PointerUp(10, 180, PointerButton.Left);
+
+            Assert.AreEqual(CursorKind.Crosshair, _surface.Cursor,
+                "the capture is over, so the pointer is answered by whatever is under it");
+        }
+
+        [TestMethod]
+        public void ADragOutsideTheCapturedElementStillShowsItsCursor()
+        {
+            _root.Styles.Cursor = new CursorStyleDescriptor { Value = CursorKind.Crosshair };
+            _root.Invalidate();
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            _surface.PointerMove(10, 10);
+            _surface.PointerDown(10, 10, PointerButton.Left);
+            _surface.PointerMove(10, 180);
+
+            Assert.AreEqual(CursorKind.Hand, _surface.Cursor,
+                "dragging off the element does not change what is being dragged");
+        }
+        [TestMethod]
+        public void ACaptureStolenMidDragGivesTheCursorBack()
+        {
+            PressedRefusesThePointer();
+
+            _surface.PointerMove(10, 10);
+            _surface.PointerDown(10, 10, PointerButton.Left);
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+            _surface.PointerMove(10, 180);
+
+            Assert.AreEqual(CursorKind.Hand, _surface.Cursor, "still dragging");
+
+            _surface.PointerCaptureLost();
+
+            Assert.AreEqual(CursorKind.Crosshair, _surface.Cursor,
+                "a capture taken by another window must not leave the shape stuck");
+        }
     }
 }
