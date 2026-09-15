@@ -110,7 +110,12 @@ static int KeyCodeOf(NSEvent* event)
     NSTrackingArea* tracking;
     NSString* marked;
     NSRange markedSelection;
+    NSCursor* current;
 }
+
+- (void)useCursor:(NSCursor*)cursor;
+- (void)applyCursor;
+
 @end
 
 @implementation IxenContentView
@@ -134,6 +139,7 @@ static int KeyCodeOf(NSEvent* event)
 
     NSTrackingAreaOptions options = NSTrackingMouseMoved
         | NSTrackingMouseEnteredAndExited
+        | NSTrackingCursorUpdate
         | NSTrackingActiveInKeyWindow
         | NSTrackingInVisibleRect;
 
@@ -152,6 +158,36 @@ static int KeyCodeOf(NSEvent* event)
     NSWindow* window = [self window];
 
     return window == nil ? 1.0 : [window backingScaleFactor];
+}
+
+- (void)useCursor:(NSCursor*)cursor
+{
+    current = cursor;
+
+    [self applyCursor];
+
+    [[self window] invalidateCursorRects:self];
+}
+
+- (void)applyCursor
+{
+    if (current != nil)
+    {
+        [current set];
+    }
+}
+
+- (void)cursorUpdate:(NSEvent*)event
+{
+    [self applyCursor];
+}
+
+- (void)resetCursorRects
+{
+    if (current != nil)
+    {
+        [self addCursorRect:[self bounds] cursor:current];
+    }
 }
 
 - (void)drawRect:(NSRect)dirty
@@ -235,6 +271,8 @@ static int KeyCodeOf(NSEvent* event)
     CGFloat scale = [self scale];
 
     owner->pointerCallBack(kind, (int)(point.x * scale), (int)(point.y * scale), button);
+
+    [self applyCursor];
 }
 
 - (void)mouseMoved:(NSEvent*)event
@@ -723,16 +761,47 @@ namespace IxenMacNative
         return ([handle isMiniaturized] || ![handle isVisible]) ? 0 : 1;
     }
 
-    void SetNativeWindowCursor(NativeWindow* window, int kind)
-    {
-        if (kind == IXEN_CURSOR_HIDDEN)
-        {
-            [NSCursor hide];
+    static bool _cursorHidden = false;
 
+    static IxenContentView* ViewOf(NativeWindow* window)
+    {
+        if (window == nullptr || window->view == nullptr)
+        {
+            return nil;
+        }
+
+        return (__bridge IxenContentView*)window->view;
+    }
+
+    static void ShowCursorAgain()
+    {
+        if (!_cursorHidden)
+        {
             return;
         }
 
         [NSCursor unhide];
+
+        _cursorHidden = false;
+    }
+
+    void SetNativeWindowCursor(NativeWindow* window, int kind)
+    {
+        IxenContentView* view = ViewOf(window);
+
+        if (kind == IXEN_CURSOR_HIDDEN)
+        {
+            if (!_cursorHidden)
+            {
+                [NSCursor hide];
+
+                _cursorHidden = true;
+            }
+
+            return;
+        }
+
+        ShowCursorAgain();
 
         NSCursor* cursor = nil;
 
@@ -743,12 +812,45 @@ namespace IxenMacNative
         case IXEN_CURSOR_CROSSHAIR: cursor = [NSCursor crosshairCursor]; break;
         case IXEN_CURSOR_RESIZE_H: cursor = [NSCursor resizeLeftRightCursor]; break;
         case IXEN_CURSOR_RESIZE_V: cursor = [NSCursor resizeUpDownCursor]; break;
-        case IXEN_CURSOR_MOVE: cursor = [NSCursor closedHandCursor]; break;
+        case IXEN_CURSOR_MOVE: cursor = [NSCursor openHandCursor]; break;
         case IXEN_CURSOR_NOT_ALLOWED: cursor = [NSCursor operationNotAllowedCursor]; break;
         default: cursor = [NSCursor arrowCursor]; break;
         }
 
-        [cursor set];
+        if (view == nil)
+        {
+            [cursor set];
+
+            return;
+        }
+
+        [view useCursor:cursor];
+    }
+
+    void SetNativeWindowCursorImage(NativeWindow* window, const void* bytes, int length,
+        int hotspotX, int hotspotY)
+    {
+        IxenContentView* view = ViewOf(window);
+
+        if (view == nil || bytes == nullptr || length <= 0)
+        {
+            return;
+        }
+
+        NSData* data = [NSData dataWithBytes:bytes length:(NSUInteger)length];
+        NSImage* image = [[NSImage alloc] initWithData:data];
+
+        if (image == nil)
+        {
+            return;
+        }
+
+        ShowCursorAgain();
+
+        NSCursor* cursor = [[NSCursor alloc] initWithImage:image
+                                                   hotSpot:NSMakePoint(hotspotX, hotspotY)];
+
+        [view useCursor:cursor];
     }
 
     void SetNativeWindowAcceptsFiles(NativeWindow* window, int accepts)

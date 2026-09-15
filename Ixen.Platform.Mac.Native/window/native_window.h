@@ -42,6 +42,7 @@ namespace IxenMacNative
     unsigned int GetNativeWindowDpi(NativeWindow* window);
     int IsNativeWindowPresentable(NativeWindow* window);
     void SetNativeWindowCursor(NativeWindow* window, int kind);
+    void SetNativeWindowCursorImage(NativeWindow* window, const void* bytes, int length, int hotspotX, int hotspotY);
     void SetNativeWindowAcceptsFiles(NativeWindow* window, int accepts);
 
     const char* GetPasteboardText();

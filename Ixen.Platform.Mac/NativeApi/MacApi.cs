@@ -42,6 +42,9 @@ namespace Ixen.Platform.Mac.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowCursor", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetWindowCursor(IntPtr windowPtr, int kind);
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowCursorImage", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetWindowCursorImage(IntPtr windowPtr, byte[] bytes, int length, int hotspotX, int hotspotY);
+
         [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowAcceptsFiles", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetWindowAcceptsFiles(IntPtr windowPtr, int accepts);
 

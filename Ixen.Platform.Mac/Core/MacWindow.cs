@@ -20,6 +20,7 @@ namespace Ixen.Platform.Mac
         private int _width;
         private int _height;
 
+        private readonly MacCursorImages _cursorImages = new();
         private readonly MacApi.OnPaintCallBack _onPaint;
         private readonly MacApi.OnPointerCallBack _onPointer;
         private readonly MacApi.OnKeyCallBack _onKey;
@@ -238,10 +239,23 @@ namespace Ixen.Platform.Mac
         private bool CanPresent() => MacApi.IsWindowPresentable(_windowPtr) != 0;
 
         private void SetCursor(CursorKind kind, CursorImage image)
-            => MacApi.SetWindowCursor(_windowPtr, MacCursors.ToNative(kind));
+        {
+            byte[] bytes = _cursorImages.Get(image);
+
+            if (bytes != null && bytes.Length > 0)
+            {
+                MacApi.SetWindowCursorImage(_windowPtr, bytes, bytes.Length,
+                    image.HotspotX, image.HotspotY);
+
+                return;
+            }
+
+            MacApi.SetWindowCursor(_windowPtr, MacCursors.ToNative(kind));
+        }
 
         public void Dispose()
         {
+            _cursorImages.Clear();
             _surface?.Dispose();
             _surface = null;
             _pixelBuffer.Dispose();

@@ -45,6 +45,12 @@ void WA_SetWindowCursor(NativeWindow* window, int kind)
     SetNativeWindowCursor(window, kind);
 }
 
+void WA_SetWindowCursorImage(NativeWindow* window, const void* bytes, int length,
+    int hotspotX, int hotspotY)
+{
+    SetNativeWindowCursorImage(window, bytes, length, hotspotX, hotspotY);
+}
+
 void WA_SetWindowAcceptsFiles(NativeWindow* window, int accepts)
 {
     SetNativeWindowAcceptsFiles(window, accepts);
