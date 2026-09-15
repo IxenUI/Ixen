@@ -166,7 +166,7 @@ static int KeyCodeOf(NSEvent* event)
 
     [self applyCursor];
 
-    [[self window] invalidateCursorRects:self];
+    [[self window] invalidateCursorRectsForView:self];
 }
 
 - (void)applyCursor
