@@ -128,3 +128,34 @@ int WA_PrefersReducedMotion()
 {
     return PrefersReducedMotion();
 }
+
+void WA_RegisterAccessibilityCallBack(NativeWindow* window, int callBack(int, int, const char*))
+{
+    if (window != nullptr)
+    {
+        window->accessibilityCallBack = callBack;
+    }
+}
+
+int WA_AccessibilityIsActive(NativeWindow* window)
+{
+    return IsAccessibilityActive(window);
+}
+
+void WA_AccessibilityUpdateNode(NativeWindow* window, int identifier, int parent, const char* role,
+    int states, int actions, int toggle, int x, int y, int width, int height,
+    const char* name, const char* value, const char* help)
+{
+    UpdateAccessibilityNode(window, identifier, parent, role, states, actions, toggle,
+        x, y, width, height, name, value, help);
+}
+
+void WA_AccessibilityCommit(NativeWindow* window, int root, const int* order, int count)
+{
+    CommitAccessibility(window, root, order, count);
+}
+
+void WA_AccessibilityNotify(NativeWindow* window, int identifier, int kind, const char* text)
+{
+    NotifyAccessibility(window, identifier, kind, text);
+}

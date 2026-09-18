@@ -1,6 +1,7 @@
 using Ixen.Core;
 using Ixen.Core.Input;
 using Ixen.Core.Visual.Styles.Descriptors;
+using Ixen.Platform.Mac.Accessibility;
 using Ixen.Platform.Mac.NativeApi;
 using SkiaSharp;
 using System;
@@ -30,6 +31,7 @@ namespace Ixen.Platform.Mac
 
         private readonly IxenSurface _ixenSurface;
         private readonly IxenHost _host;
+        private readonly MacAccessibility _accessibility;
 
         public MacWindow(IxenSurface ixenSurface)
         {
@@ -42,6 +44,8 @@ namespace Ixen.Platform.Mac
                 SetCursor, new MacImageSource(), null, CanPresent);
 
             IxenSynchronizationContext.Install(ixenSurface);
+
+            _accessibility = new MacAccessibility(ixenSurface, () => _windowPtr);
 
             _onPaint = OnPaint;
             _onPointer = OnPointer;
@@ -67,6 +71,8 @@ namespace Ixen.Platform.Mac
             MacApi.RegisterImeCallBack(_windowPtr, _onIme);
             MacApi.RegisterWheelCallBack(_windowPtr, _onWheel);
             MacApi.RegisterDropCallBack(_windowPtr, _onDrop);
+
+            _accessibility.Register();
 
             return MacApi.ShowWindow(_windowPtr);
         }
@@ -94,6 +100,8 @@ namespace Ixen.Platform.Mac
 
             MacApi.SetWindowPixelsBuffer(_windowPtr, _pixelBuffer.Ptr, width, height,
                 _pixelBuffer.RowBytes);
+
+            _accessibility.Sync();
 
             SyncAcceptsFiles();
         }

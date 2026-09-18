@@ -1,3 +1,4 @@
+using Ixen.Core.Accessibility;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ namespace Ixen.Core.UT.Native
         private const string KINDS = @"Ixen.Platform.Mac\NativeApi\MacKinds.cs";
         private const string KEYS = @"Ixen.Platform.Mac\NativeApi\MacKeys.cs";
         private const string API = @"Ixen.Platform.Mac\NativeApi\MacApi.cs";
+        private const string ROLES = @"Ixen.Platform.Mac\NativeApi\MacRoles.cs";
 
         private static readonly Dictionary<string, string> _pairs = new Dictionary<string, string>
         {
@@ -55,7 +57,22 @@ namespace Ixen.Core.UT.Native
             { "IXEN_CURSOR_NOT_ALLOWED", "Cursor.NotAllowed" },
             { "IXEN_CURSOR_HELP", "Cursor.Help" },
             { "IXEN_CURSOR_PROGRESS", "Cursor.Progress" },
-            { "IXEN_CURSOR_HIDDEN", "Cursor.Hidden" }
+            { "IXEN_CURSOR_HIDDEN", "Cursor.Hidden" },
+
+            { "IXEN_AXA_INVOKE", "Invoke" },
+            { "IXEN_AXA_FOCUS", "Focus" },
+            { "IXEN_AXA_SETVALUE", "SetValue" },
+
+            { "IXEN_AXS_FOCUSED", "Focused" },
+            { "IXEN_AXS_DISABLED", "Disabled" },
+            { "IXEN_AXS_SELECTED", "Selected" },
+
+            { "IXEN_AXN_VALUE", "Value" },
+            { "IXEN_AXN_TITLE", "Title" },
+            { "IXEN_AXN_FOCUS", "Focus" },
+            { "IXEN_AXN_LAYOUT", "Layout" },
+            { "IXEN_AXN_ANNOUNCE", "Announce" },
+            { "IXEN_AXN_ANNOUNCE_URGENT", "AnnounceUrgent" }
         };
 
         private static string Read(string relative)
@@ -127,6 +144,21 @@ namespace Ixen.Core.UT.Native
                 return "MacImeKind." + name;
             }
 
+            if (define.StartsWith("IXEN_AXA_"))
+            {
+                return "MacAccessibilityAction." + name;
+            }
+
+            if (define.StartsWith("IXEN_AXS_"))
+            {
+                return "MacAccessibilityState." + name;
+            }
+
+            if (define.StartsWith("IXEN_AXN_"))
+            {
+                return "MacAccessibilityNotice." + name;
+            }
+
             return name;
         }
 
@@ -141,6 +173,9 @@ namespace Ixen.Core.UT.Native
             ReadEnum(kinds, "MacPointerButton", found);
             ReadEnum(kinds, "MacKeyKind", found);
             ReadEnum(kinds, "MacImeKind", found);
+            ReadEnum(kinds, "MacAccessibilityAction", found);
+            ReadEnum(kinds, "MacAccessibilityState", found);
+            ReadEnum(kinds, "MacAccessibilityNotice", found);
 
             foreach (Match match in Regex.Matches(keys, @"const int (MOD_[A-Z]+)\s*=\s*(\d+)"))
             {
@@ -364,6 +399,77 @@ namespace Ixen.Core.UT.Native
                         + $"reads that as {mapped}. A letter key would then run the wrong "
                         + "command on any keyboard whose layout is not the one the table "
                         + "was written against.");
+            }
+        }
+
+        [TestMethod]
+        public void EveryRoleHasAMacRole()
+        {
+            var mapped = new HashSet<string>();
+
+            foreach (Match match in Regex.Matches(Read(ROLES), @"case AccessibleRole\.(\w+):"))
+            {
+                mapped.Add(match.Groups[1].Value);
+            }
+
+            Assert.AreNotEqual(0, mapped.Count, "MacRoles.cs could not be parsed at all");
+
+            var missing = new List<string>();
+
+            foreach (string name in Enum.GetNames(typeof(AccessibleRole)))
+            {
+                if (!mapped.Contains(name))
+                {
+                    missing.Add(name);
+                }
+            }
+
+            Assert.AreEqual(0, missing.Count,
+                "a role with no case of its own falls through to AXUnknown, which VoiceOver "
+                    + "reads as nothing rather than as a defect: " + string.Join(", ", missing));
+        }
+
+        [TestMethod]
+        public void EveryMacRoleIsAnAXRole()
+        {
+            MatchCollection roles = Regex.Matches(Read(ROLES), @"return ""([^""]*)"";");
+
+            Assert.AreNotEqual(0, roles.Count, "MacRoles.cs could not be parsed at all");
+
+            foreach (Match match in roles)
+            {
+                StringAssert.StartsWith(match.Groups[1].Value, "AX",
+                    "everything handed to setAccessibilityRole: has to be an NSAccessibility "
+                        + "role name, and a wrong one is silently read as unknown");
+            }
+        }
+
+        [TestMethod]
+        public void TheAccessibilityBitsAgreeWithTheCoreFlags()
+        {
+            var managed = new Dictionary<string, int>();
+
+            ReadEnum(Read(KINDS), "MacAccessibilityAction", managed);
+            ReadEnum(Read(KINDS), "MacAccessibilityState", managed);
+
+            Assert.AreNotEqual(0, managed.Count, "MacKinds.cs could not be parsed at all");
+
+            foreach (KeyValuePair<string, int> entry in managed)
+            {
+                int dot = entry.Key.IndexOf('.');
+                string name = entry.Key.Substring(dot + 1);
+
+                Type flags = entry.Key.StartsWith("MacAccessibilityAction")
+                    ? typeof(AccessibleActions)
+                    : typeof(AccessibleStates);
+
+                Assert.IsTrue(Enum.IsDefined(flags, name),
+                    $"{entry.Key} names {name}, which {flags.Name} does not have");
+
+                Assert.AreEqual((int)Enum.Parse(flags, name), entry.Value,
+                    $"{entry.Key} is {entry.Value} while {flags.Name}.{name} is "
+                        + $"{(int)Enum.Parse(flags, name)}. The mask travels to the .mm as a "
+                        + "raw number, so a drift silently offers the wrong action.");
             }
         }
     }

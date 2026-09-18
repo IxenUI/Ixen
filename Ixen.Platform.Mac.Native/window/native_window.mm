@@ -43,6 +43,21 @@
 #define IXEN_CURSOR_PROGRESS 12
 #define IXEN_CURSOR_HIDDEN 13
 
+#define IXEN_AXA_INVOKE 1
+#define IXEN_AXA_FOCUS 2
+#define IXEN_AXA_SETVALUE 4
+
+#define IXEN_AXS_FOCUSED 2
+#define IXEN_AXS_DISABLED 64
+#define IXEN_AXS_SELECTED 256
+
+#define IXEN_AXN_VALUE 0
+#define IXEN_AXN_TITLE 1
+#define IXEN_AXN_FOCUS 2
+#define IXEN_AXN_LAYOUT 3
+#define IXEN_AXN_ANNOUNCE 4
+#define IXEN_AXN_ANNOUNCE_URGENT 5
+
 #define NOTCH_PER_POINT 1
 #define NOTCH_PER_LINE 10
 
@@ -101,6 +116,142 @@ static int KeyCodeOf(NSEvent* event)
     }
 
     return (int)[event keyCode];
+}
+
+@interface IxenAccessibleElement : NSAccessibilityElement
+{
+@public
+    NativeWindow* owner;
+    int identifier;
+    int parent;
+    int actions;
+    int toggle;
+    BOOL focused;
+    NSString* text;
+}
+
+- (BOOL)send:(int)action value:(const char*)value;
+
+@end
+
+@implementation IxenAccessibleElement
+
+- (BOOL)send:(int)action value:(const char*)value
+{
+    if (owner == nullptr || owner->accessibilityCallBack == nullptr)
+    {
+        return NO;
+    }
+
+    return owner->accessibilityCallBack(identifier, action, value) != 0;
+}
+
+- (id)accessibilityValue
+{
+    if (toggle >= 0)
+    {
+        return [NSNumber numberWithInt:toggle];
+    }
+
+    return text;
+}
+
+- (BOOL)isAccessibilityFocused
+{
+    return focused;
+}
+
+- (void)setAccessibilityFocused:(BOOL)value
+{
+    if (value)
+    {
+        [self send:IXEN_AXA_FOCUS value:nullptr];
+    }
+}
+
+- (void)setAccessibilityValue:(id)value
+{
+    NSString* written = [value isKindOfClass:[NSString class]]
+        ? (NSString*)value
+        : [value description];
+
+    [self send:IXEN_AXA_SETVALUE value:written == nil ? "" : [written UTF8String]];
+}
+
+- (BOOL)accessibilityPerformPress
+{
+    return [self send:IXEN_AXA_INVOKE value:nullptr];
+}
+
+- (BOOL)isAccessibilitySelectorAllowed:(SEL)selector
+{
+    if (selector == @selector(accessibilityPerformPress))
+    {
+        return (actions & IXEN_AXA_INVOKE) != 0;
+    }
+
+    if (selector == @selector(setAccessibilityFocused:))
+    {
+        return (actions & IXEN_AXA_FOCUS) != 0;
+    }
+
+    if (selector == @selector(setAccessibilityValue:))
+    {
+        return (actions & IXEN_AXA_SETVALUE) != 0;
+    }
+
+    return [super isAccessibilitySelectorAllowed:selector];
+}
+
+@end
+
+static NSMutableDictionary* AccessibilityNodes(NativeWindow* window, bool create)
+{
+    if (window == nullptr)
+    {
+        return nil;
+    }
+
+    if (window->accessibilityNodes == nullptr)
+    {
+        if (!create)
+        {
+            return nil;
+        }
+
+        window->accessibilityNodes = (void*)CFBridgingRetain([NSMutableDictionary dictionary]);
+    }
+
+    return (__bridge NSMutableDictionary*)window->accessibilityNodes;
+}
+
+static IxenAccessibleElement* AccessibilityElement(NativeWindow* window, int identifier)
+{
+    NSMutableDictionary* nodes = AccessibilityNodes(window, false);
+
+    return nodes == nil ? nil : [nodes objectForKey:[NSNumber numberWithInt:identifier]];
+}
+
+static IxenAccessibleElement* AccessibilityFocus(NativeWindow* window)
+{
+    NSMutableDictionary* nodes = AccessibilityNodes(window, false);
+
+    if (nodes == nil)
+    {
+        return nil;
+    }
+
+    for (NSNumber* key in nodes)
+    {
+        IxenAccessibleElement* element = [nodes objectForKey:key];
+
+        if (element->focused)
+        {
+            return element;
+        }
+    }
+
+    return nil;
 }
 
 @interface IxenContentView : NSView <NSTextInputClient>
@@ -599,6 +750,42 @@ static int KeyCodeOf(NSEvent* event)
     return YES;
 }
 
+- (BOOL)isAccessibilityElement
+{
+    return NO;
+}
+
+- (NSAccessibilityRole)accessibilityRole
+{
+    return NSAccessibilityGroupRole;
+}
+
+- (NSArray*)accessibilityChildren
+{
+    if (owner == nullptr)
+    {
+        return @[];
+    }
+
+    if (owner->accessibilityAsked == 0)
+    {
+        owner->accessibilityAsked = 1;
+
+        [self setNeedsDisplay:YES];
+    }
+
+    IxenAccessibleElement* root = AccessibilityElement(owner, owner->accessibilityRoot);
+
+    return root == nil ? @[] : @[ root ];
+}
+
+- (id)accessibilityFocusedUIElement
+{
+    IxenAccessibleElement* focus = AccessibilityFocus(owner);
+
+    return focus == nil ? (id)self : (id)focus;
+}
+
 @end
 
 namespace IxenMacNative
@@ -625,6 +812,10 @@ namespace IxenMacNative
         result->imeCallBack = nullptr;
         result->wheelCallBack = nullptr;
         result->dropCallBack = nullptr;
+        result->accessibilityCallBack = nullptr;
+        result->accessibilityNodes = nullptr;
+        result->accessibilityRoot = -1;
+        result->accessibilityAsked = 0;
 
         NSRect frame = NSMakeRect(0, 0, width, height);
 
@@ -687,6 +878,12 @@ namespace IxenMacNative
 
             view->owner = nullptr;
             window->view = nullptr;
+        }
+
+        if (window->accessibilityNodes != nullptr)
+        {
+            CFBridgingRelease(window->accessibilityNodes);
+            window->accessibilityNodes = nullptr;
         }
 
         if (window->window != nullptr)
@@ -950,5 +1147,209 @@ namespace IxenMacNative
     int PrefersReducedMotion()
     {
         return [[NSWorkspace sharedWorkspace] accessibilityDisplayShouldReduceMotion] ? 1 : 0;
+    }
+
+    static NSRect AccessibilityFrameOf(IxenContentView* view, int x, int y, int width, int height)
+    {
+        NSWindow* handle = [view window];
+
+        if (handle == nil)
+        {
+            return NSZeroRect;
+        }
+
+        CGFloat scale = [handle backingScaleFactor];
+
+        if (scale <= 0)
+        {
+            scale = 1.0;
+        }
+
+        NSRect local = NSMakeRect(x / scale, y / scale, width / scale, height / scale);
+
+        return [handle convertRectToScreen:[view convertRect:local toView:nil]];
+    }
+
+    int IsAccessibilityActive(NativeWindow* window)
+    {
+        if (window == nullptr)
+        {
+            return 0;
+        }
+
+        if (window->accessibilityAsked != 0)
+        {
+            return 1;
+        }
+
+        return [[NSWorkspace sharedWorkspace] isVoiceOverEnabled] ? 1 : 0;
+    }
+
+    void UpdateAccessibilityNode(NativeWindow* window, int identifier, int parent, const char* role,
+        int states, int actions, int toggle, int x, int y, int width, int height,
+        const char* name, const char* value, const char* help)
+    {
+        NSMutableDictionary* nodes = AccessibilityNodes(window, true);
+        IxenContentView* view = ViewOf(window);
+
+        if (nodes == nil || view == nil)
+        {
+            return;
+        }
+
+        NSNumber* key = [NSNumber numberWithInt:identifier];
+        IxenAccessibleElement* element = [nodes objectForKey:key];
+
+        if (element == nil)
+        {
+            element = [[IxenAccessibleElement alloc] init];
+
+            element->owner = window;
+            element->identifier = identifier;
+
+            [nodes setObject:element forKey:key];
+        }
+
+        element->parent = parent;
+        element->actions = actions;
+        element->toggle = toggle;
+        element->focused = (states & IXEN_AXS_FOCUSED) != 0;
+        element->text = value == nullptr ? nil : [NSString stringWithUTF8String:value];
+
+        [element setAccessibilityElement:YES];
+        [element setAccessibilityRole:(role == nullptr
+            ? NSAccessibilityUnknownRole
+            : (NSAccessibilityRole)[NSString stringWithUTF8String:role])];
+        [element setAccessibilityLabel:(name == nullptr
+            ? nil
+            : [NSString stringWithUTF8String:name])];
+        [element setAccessibilityHelp:(help == nullptr
+            ? nil
+            : [NSString stringWithUTF8String:help])];
+        [element setAccessibilityEnabled:(states & IXEN_AXS_DISABLED) == 0];
+        [element setAccessibilitySelected:(states & IXEN_AXS_SELECTED) != 0];
+        [element setAccessibilityFrame:AccessibilityFrameOf(view, x, y, width, height)];
+    }
+
+    void CommitAccessibility(NativeWindow* window, int root, const int* order, int count)
+    {
+        NSMutableDictionary* nodes = AccessibilityNodes(window, false);
+        IxenContentView* view = ViewOf(window);
+
+        if (nodes == nil || view == nil || order == nullptr)
+        {
+            return;
+        }
+
+        NSMutableDictionary* kept = [NSMutableDictionary dictionary];
+        NSMutableDictionary* children = [NSMutableDictionary dictionary];
+
+        for (int index = 0; index < count; index++)
+        {
+            NSNumber* key = [NSNumber numberWithInt:order[index]];
+            IxenAccessibleElement* element = [nodes objectForKey:key];
+
+            if (element != nil)
+            {
+                [kept setObject:element forKey:key];
+                [children setObject:[NSMutableArray array] forKey:key];
+            }
+        }
+
+        for (int index = 0; index < count; index++)
+        {
+            NSNumber* key = [NSNumber numberWithInt:order[index]];
+            IxenAccessibleElement* element = [kept objectForKey:key];
+
+            if (element == nil)
+            {
+                continue;
+            }
+
+            NSNumber* above = [NSNumber numberWithInt:element->parent];
+            NSMutableArray* siblings = [children objectForKey:above];
+
+            if (siblings == nil)
+            {
+                [element setAccessibilityParent:view];
+                continue;
+            }
+
+            [element setAccessibilityParent:[kept objectForKey:above]];
+            [siblings addObject:element];
+        }
+
+        for (NSNumber* key in kept)
+        {
+            IxenAccessibleElement* element = [kept objectForKey:key];
+
+            [element setAccessibilityChildren:[children objectForKey:key]];
+        }
+
+        void* previous = window->accessibilityNodes;
+
+        window->accessibilityNodes = (void*)CFBridgingRetain(kept);
+        window->accessibilityRoot = root;
+
+        if (previous != nullptr)
+        {
+            CFBridgingRelease(previous);
+        }
+    }
+
+    void NotifyAccessibility(NativeWindow* window, int identifier, int kind, const char* text)
+    {
+        IxenAccessibleElement* element = AccessibilityElement(window, identifier);
+
+        if (element == nil)
+        {
+            return;
+        }
+
+        switch (kind)
+        {
+            case IXEN_AXN_VALUE:
+                NSAccessibilityPostNotification(element, NSAccessibilityValueChangedNotification);
+                break;
+
+            case IXEN_AXN_TITLE:
+                NSAccessibilityPostNotification(element, NSAccessibilityTitleChangedNotification);
+                break;
+
+            case IXEN_AXN_FOCUS:
+                NSAccessibilityPostNotification(element,
+                    NSAccessibilityFocusedUIElementChangedNotification);
+                break;
+
+            case IXEN_AXN_LAYOUT:
+                NSAccessibilityPostNotification(element, NSAccessibilityLayoutChangedNotification);
+                break;
+
+            case IXEN_AXN_ANNOUNCE:
+            case IXEN_AXN_ANNOUNCE_URGENT:
+            {
+                if (text == nullptr)
+                {
+                    break;
+                }
+
+                NSString* spoken = [NSString stringWithUTF8String:text];
+
+                if (spoken == nil || [spoken length] == 0)
+                {
+                    break;
+                }
+
+                NSAccessibilityPriorityLevel priority = kind == IXEN_AXN_ANNOUNCE_URGENT
+                    ? NSAccessibilityPriorityHigh
+                    : NSAccessibilityPriorityMedium;
+
+                NSAccessibilityPostNotificationWithUserInfo(NSApp,
+                    NSAccessibilityAnnouncementRequestedNotification,
+                    @{ NSAccessibilityAnnouncementKey: spoken,
+                       NSAccessibilityPriorityKey: [NSNumber numberWithInteger:priority] });
+                break;
+            }
+        }
     }
 }

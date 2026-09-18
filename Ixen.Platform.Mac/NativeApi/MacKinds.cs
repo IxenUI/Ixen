@@ -58,4 +58,28 @@ namespace Ixen.Platform.Mac.NativeApi
             }
         }
     }
+
+    internal enum MacAccessibilityAction
+    {
+        Invoke = 1,
+        Focus = 2,
+        SetValue = 4
+    }
+
+    internal enum MacAccessibilityState
+    {
+        Focused = 2,
+        Disabled = 64,
+        Selected = 256
+    }
+
+    internal enum MacAccessibilityNotice
+    {
+        Value = 0,
+        Title = 1,
+        Focus = 2,
+        Layout = 3,
+        Announce = 4,
+        AnnounceUrgent = 5
+    }
 }

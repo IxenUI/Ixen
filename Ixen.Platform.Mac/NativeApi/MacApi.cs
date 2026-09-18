@@ -14,6 +14,7 @@ namespace Ixen.Platform.Mac.NativeApi
         public delegate void OnWheelCallBack(int x, int y, int deltaX, int deltaY, int modifiers);
         public delegate void OnDropCallBack(int x, int y, [MarshalAs(UnmanagedType.LPUTF8Str)] string paths);
         public delegate void OnTimerCallBack(long id);
+        public delegate int OnAccessibilityCallBack(int identifier, int action, [MarshalAs(UnmanagedType.LPUTF8Str)] string value);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr CreateWindow([MarshalAs(UnmanagedType.LPUTF8Str)] string title, int width, int height);
@@ -80,5 +81,20 @@ namespace Ixen.Platform.Mac.NativeApi
 
         [DllImport(LIB_NAME, EntryPoint = "WA_PrefersReducedMotion", CallingConvention = CallingConvention.Cdecl)]
         public static extern int PrefersReducedMotion();
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterAccessibilityCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterAccessibilityCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnAccessibilityCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_AccessibilityIsActive", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int AccessibilityIsActive(IntPtr windowPtr);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_AccessibilityUpdateNode", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void AccessibilityUpdateNode(IntPtr windowPtr, int identifier, int parent, [MarshalAs(UnmanagedType.LPUTF8Str)] string role, int states, int actions, int toggle, int x, int y, int width, int height, [MarshalAs(UnmanagedType.LPUTF8Str)] string name, [MarshalAs(UnmanagedType.LPUTF8Str)] string value, [MarshalAs(UnmanagedType.LPUTF8Str)] string help);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_AccessibilityCommit", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void AccessibilityCommit(IntPtr windowPtr, int root, int[] order, int count);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_AccessibilityNotify", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void AccessibilityNotify(IntPtr windowPtr, int identifier, int kind, [MarshalAs(UnmanagedType.LPUTF8Str)] string text);
     }
 }
