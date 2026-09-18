@@ -49,6 +49,8 @@ namespace Ixen.Core.Visual
         private readonly List<Instance> _instances = new List<Instance>();
 
         private AnimationStyleDescriptor _started;
+        private StyleTokens _tokens;
+        private int _tokensVersion;
 
         internal KeyframeAnimation(VisualElement element)
         {
@@ -63,11 +65,33 @@ namespace Ixen.Core.Visual
         internal bool StartedWith(AnimationStyleDescriptor spec)
             => ReferenceEquals(_started, spec) || (_started != null && _started.Matches(spec));
 
+        internal void Refresh(StyleTokens tokens)
+        {
+            if (_instances.Count == 0)
+            {
+                return;
+            }
+
+            int version = StyleColors.VersionOf(tokens);
+
+            if (ReferenceEquals(_tokens, tokens) && _tokensVersion == version)
+            {
+                return;
+            }
+
+            _tokens = tokens;
+            _tokensVersion = version;
+
+            Apply();
+        }
+
         internal void Start(AnimationStyleDescriptor declaration, StyleRegistry registry)
         {
             Release();
 
             _started = declaration;
+            _tokens = registry?.Tokens;
+            _tokensVersion = StyleColors.VersionOf(_tokens);
             _instances.Clear();
 
             if (declaration == null || registry == null)
@@ -285,7 +309,7 @@ namespace Ixen.Core.Visual
             {
                 string identifier = properties[index];
 
-                ColorStop[] colors = instance.Set.ColorTrack(identifier);
+                ColorStop[] colors = instance.Set.ColorTrack(identifier, _tokens);
 
                 if (colors != null)
                 {

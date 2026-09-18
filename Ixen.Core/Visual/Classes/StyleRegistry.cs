@@ -39,6 +39,7 @@ namespace Ixen.Core.Visual.Classes
         private readonly List<MediaQuery> _queries = new();
         private readonly List<MediaQuery> _containerQueries = new();
         private readonly List<NthFormula> _nth = new();
+        private readonly StyleTokens _tokens = new();
 
         private int _count;
         private bool _hasStateClasses;
@@ -49,6 +50,8 @@ namespace Ixen.Core.Visual.Classes
         public static StyleRegistry Default => _default.Value;
 
         public int Count => _count;
+
+        public StyleTokens Tokens => _tokens;
 
         internal bool HasScopedClasses => _scoped.Count > 0;
 
@@ -344,6 +347,8 @@ namespace Ixen.Core.Visual.Classes
 
         public void AddDefaults(ClassesSet set)
         {
+            AddTokens(set?.Tokens, true);
+
             if (set?.Classes != null)
             {
                 foreach (StyleClass styleClass in set.Classes)
@@ -406,8 +411,22 @@ namespace Ixen.Core.Visual.Classes
 
         public void Add(ClassesSet set)
         {
+            AddTokens(set?.Tokens, false);
             AddRange(set?.Classes);
             AddRange(set?.Keyframes);
+        }
+
+        private void AddTokens(Dictionary<string, string> tokens, bool defaults)
+        {
+            if (tokens == null)
+            {
+                return;
+            }
+
+            foreach (KeyValuePair<string, string> token in tokens)
+            {
+                _tokens.Declare(token.Key, token.Value, defaults);
+            }
         }
 
         private void AddRange(List<StyleClass> classes)

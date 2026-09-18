@@ -1,4 +1,5 @@
 using Ixen.Core.Rendering;
+using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles.Descriptors;
 
 namespace Ixen.Core.Visual.Styles.Handlers
@@ -11,12 +12,13 @@ namespace Ixen.Core.Visual.Styles.Handlers
         public Brush Brush { get; private set; }
 
         private readonly string _valueSource;
+        private readonly int _tokens;
 
         public ColorStyleHandler()
-            : this(new())
+            : this(new(), null)
         { }
 
-        public ColorStyleHandler(ColorStyleDescriptor descriptor)
+        public ColorStyleHandler(ColorStyleDescriptor descriptor, StyleTokens tokens)
             : base()
         {
             Descriptor = descriptor;
@@ -25,20 +27,22 @@ namespace Ixen.Core.Visual.Styles.Handlers
                 ? DEFAULT_COLOR
                 : descriptor.Value;
 
-            Brush = new Brush(new Color(value), true);
+            Brush = new Brush(new Color(StyleColors.Resolve(tokens, value)), true);
 
             _valueSource = descriptor.Value;
+            _tokens = StyleColors.VersionOf(tokens);
         }
 
-        internal static ColorStyleHandler For(ColorStyleDescriptor descriptor)
+        internal static ColorStyleHandler For(ColorStyleDescriptor descriptor, StyleTokens tokens)
         {
             if (descriptor.Handler is ColorStyleHandler handler
-                && handler._valueSource == descriptor.Value)
+                && handler._valueSource == descriptor.Value
+                && handler._tokens == StyleColors.VersionOf(tokens))
             {
                 return handler;
             }
 
-            handler = new ColorStyleHandler(descriptor);
+            handler = new ColorStyleHandler(descriptor, tokens);
 
             descriptor.Handler = handler;
 

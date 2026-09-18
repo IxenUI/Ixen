@@ -22,8 +22,19 @@ namespace Ixen.Core.UT.Xns
             return set;
         }
 
+        private static StyleDescriptor Single(ClassesSet set)
+            => set.Classes.Single().Styles.Single();
+
         private static StyleDescriptor Single(string xns)
-            => Compile(xns).Classes.Single().Styles.Single();
+            => Single(Compile(xns));
+
+        private static string Resolved(ClassesSet set, string token)
+        {
+            var registry = new StyleRegistry();
+            registry.Add(set);
+
+            return registry.Tokens.ValueOf(token);
+        }
 
         private static void AssertRejected(string xns, string expected)
         {
@@ -38,21 +49,34 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void AVariableStandsInForAWholeValue()
         {
-            var background = (BackgroundStyleDescriptor)Single(
-                "$accent: #4C6EF5\r\nbox {\r\n    background: $accent\r\n}");
+            ClassesSet set = Compile("$accent: #4C6EF5\r\nbox {\r\n    background: $accent\r\n}");
+            var background = (BackgroundStyleDescriptor)Single(set);
 
-            Assert.AreEqual("#4C6EF5", background.Color);
+            Assert.AreEqual("$accent", background.Color,
+                "a colour variable stays a token so a palette can override it");
+            Assert.AreEqual("#4C6EF5", Resolved(set, "accent"));
         }
 
         [TestMethod]
         public void AVariableWorksInsideACompoundValue()
         {
-            var border = (BorderStyleDescriptor)Single(
-                "$line: #3C424E\r\nbox {\r\n    border: $line 1px inner\r\n}");
+            ClassesSet set = Compile("$line: #3C424E\r\nbox {\r\n    border: $line 1px inner\r\n}");
+            var border = (BorderStyleDescriptor)Single(set);
 
-            Assert.AreEqual("#3C424E", border.Color);
+            Assert.AreEqual("$line", border.Color);
             Assert.AreEqual(1, border.Thickness);
             Assert.AreEqual(BorderType.Inner, border.Type);
+            Assert.AreEqual("#3C424E", Resolved(set, "line"));
+        }
+
+        [TestMethod]
+        public void AVariableThatIsNotAColorIsStillExpanded()
+        {
+            var margin = (MarginStyleDescriptor)Single(
+                "$gutter: 14px\r\nbox {\r\n    margin: $gutter\r\n}");
+
+            Assert.AreEqual(14, margin.Top.Value,
+                "only a colour survives to runtime, everything else folds at build time");
         }
 
         [TestMethod]
@@ -82,44 +106,59 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void AVariableMayReferAnother()
         {
-            var background = (BackgroundStyleDescriptor)Single(
+            ClassesSet set = Compile(
                 "$blue: #4C6EF5\r\n$accent: $blue\r\nbox {\r\n    background: $accent\r\n}");
+            var background = (BackgroundStyleDescriptor)Single(set);
 
-            Assert.AreEqual("#4C6EF5", background.Color);
+            Assert.AreEqual("$accent", background.Color);
+            Assert.AreEqual("#4C6EF5", Resolved(set, "accent"));
+            Assert.AreEqual("#4C6EF5", Resolved(set, "blue"),
+                "both ends of the chain are tokens of their own");
         }
 
         [TestMethod]
         public void DeclarationOrderDoesNotMatter()
         {
-            var background = (BackgroundStyleDescriptor)Single(
-                "box {\r\n    background: $accent\r\n}\r\n$accent: #4C6EF5");
+            ClassesSet set = Compile("box {\r\n    background: $accent\r\n}\r\n$accent: #4C6EF5");
+            var background = (BackgroundStyleDescriptor)Single(set);
 
-            Assert.AreEqual("#4C6EF5", background.Color,
+            Assert.AreEqual("$accent", background.Color);
+            Assert.AreEqual("#4C6EF5", Resolved(set, "accent"),
                 "every declaration is collected before anything is compiled");
         }
 
         [TestMethod]
         public void ADashOrUnderscoreIsLegalInAName()
         {
-            var background = (BackgroundStyleDescriptor)Single(
-                "$surface-2: #2E3138\r\nbox {\r\n    background: $surface-2\r\n}");
+            ClassesSet set = Compile("$surface-2: #2E3138\r\nbox {\r\n    background: $surface-2\r\n}");
+            var background = (BackgroundStyleDescriptor)Single(set);
 
-            Assert.AreEqual("#2E3138", background.Color);
+            Assert.AreEqual("$surface-2", background.Color);
+            Assert.AreEqual("#2E3138", Resolved(set, "surface-2"));
         }
 
         [TestMethod]
         public void ATrailingCommentIsNotPartOfTheValue()
         {
-            var background = (BackgroundStyleDescriptor)Single(
+            ClassesSet set = Compile(
                 "$accent: #4C6EF5  // the brand blue\r\nbox {\r\n    background: $accent\r\n}");
+            var background = (BackgroundStyleDescriptor)Single(set);
 
-            Assert.AreEqual("#4C6EF5", background.Color);
+            Assert.AreEqual("$accent", background.Color);
+            Assert.AreEqual("#4C6EF5", Resolved(set, "accent"));
         }
 
         [TestMethod]
         public void AnUndeclaredNameIsReported()
         {
             AssertRejected("box {\r\n    background: $missing\r\n}", "$missing");
+        }
+
+        [TestMethod]
+        public void AnUndeclaredNameIsReportedBesideDeclaredOnes()
+        {
+            AssertRejected(
+                "$accent: #4C6EF5\r\nbox {\r\n    background: $missing\r\n}", "$missing");
         }
 
         [TestMethod]
@@ -187,12 +226,12 @@ namespace Ixen.Core.UT.Xns
             box.Invalidate();
             surface.ComputeLayout(500, 800);
 
-            Assert.AreEqual("#4C6EF5", box.StylesHandlers.Background.Descriptor?.Color,
+            Assert.AreEqual("#4C6EF5", box.StylesHandlers.Background.Color.ToRGBHexColor(),
                 "a variable and a breakpoint together, end to end");
 
             surface.ComputeLayout(900, 800);
 
-            Assert.AreEqual("#111111", box.StylesHandlers.Background.Descriptor?.Color);
+            Assert.AreEqual("#111111", box.StylesHandlers.Background.Color.ToRGBHexColor());
         }
     }
 }

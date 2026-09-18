@@ -1,3 +1,5 @@
+using Ixen.Core.Visual.Classes;
+using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using SkiaSharp;
 using System;
@@ -8,13 +10,15 @@ namespace Ixen.Core.Rendering
     internal sealed class FilterChain
     {
         private readonly FilterStyleDescriptor _descriptor;
+        private readonly StyleTokens _tokens;
 
         private SKPaint _paint;
         private bool _built;
 
-        internal FilterChain(FilterStyleDescriptor descriptor)
+        internal FilterChain(FilterStyleDescriptor descriptor, StyleTokens tokens)
         {
             _descriptor = descriptor;
+            _tokens = tokens;
         }
 
         private const float SIGMAS = 3f;
@@ -94,7 +98,7 @@ namespace Ixen.Core.Rendering
                     filter = SKImageFilter.CreateDropShadow(
                         shadow.OffsetX, shadow.OffsetY,
                         Sigma(shadow.Blur), Sigma(shadow.Blur),
-                        new Color(shadow.Color).SKColor, filter);
+                        new Color(StyleColors.Resolve(_tokens, shadow.Color)).SKColor, filter);
 
                     continue;
                 }

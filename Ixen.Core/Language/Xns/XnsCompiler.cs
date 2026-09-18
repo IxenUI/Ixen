@@ -52,6 +52,8 @@ namespace Ixen.Core.Language.Xns
 
             _variables = XnsVariables.Resolve(node?.Variables, errors);
 
+            set.Tokens = _variables.Tokens;
+
             _mixins.Clear();
             CollectMixins(node);
 
@@ -543,9 +545,12 @@ namespace Ixen.Core.Language.Xns
 
             return Validated(definition, xnsStyle, errors);
         }
+        private static bool NamesAVariable(string value)
+            => value != null && value.IndexOf(XnsTokenizer.VARIABLE_MARKER) >= 0;
+
         private StyleDescriptor Validated(StyleDefinition definition, XnsStyle xnsStyle, List<LanguageError> errors)
         {
-            if (!_variables.IsEmpty)
+            if (!_variables.IsEmpty || NamesAVariable(xnsStyle.Value))
             {
                 xnsStyle.Value = _variables.Substitute(xnsStyle.Value, xnsStyle.ValueIndex, errors);
             }

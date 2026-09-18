@@ -22,12 +22,14 @@ namespace Ixen.Core.Visual.Computers
 
         private float _viewportWidth;
         private float _viewportHeight;
+        private StyleTokens _tokens;
 
         internal void Compute(VisualElement element, StyleRegistry registry,
             float viewportWidth = 0, float viewportHeight = 0)
         {
             _viewportWidth = viewportWidth;
             _viewportHeight = viewportHeight;
+            _tokens = registry?.Tokens;
 
             ComputeTree(element, registry);
         }
@@ -458,6 +460,7 @@ namespace Ixen.Core.Visual.Computers
 
             if (animation.StartedWith(spec))
             {
+                animation.Refresh(registry?.Tokens);
                 return;
             }
 
@@ -576,31 +579,31 @@ namespace Ixen.Core.Visual.Computers
             VisualElementStylesHandlers handlers = element.StylesHandlers;
 
             handlers.Background = IsPainting(styles.Background)
-                ? BackgroundStyleHandler.For(styles.Background)
+                ? BackgroundStyleHandler.For(styles.Background, _tokens)
                 : VisualElementStylesHandlers.DefaultBackground;
 
             handlers.Border = IsPainting(styles.Border)
-                ? BorderStyleHandler.For(styles.Border)
+                ? BorderStyleHandler.For(styles.Border, _tokens)
                 : VisualElementStylesHandlers.DefaultBorder;
 
             if (handlers.Color.Descriptor != styles.Color)
             {
                 handlers.Color = styles.Color != null && styles.Color.Value != null
-                    ? ColorStyleHandler.For(styles.Color)
+                    ? ColorStyleHandler.For(styles.Color, _tokens)
                     : VisualElementStylesHandlers.DefaultColor;
             }
 
             if (handlers.Filter.Descriptor != styles.Filter)
             {
                 handlers.Filter = styles.Filter != null && styles.Filter.IsDeclared
-                    ? FilterStyleHandler.For(styles.Filter)
+                    ? FilterStyleHandler.For(styles.Filter, _tokens)
                     : VisualElementStylesHandlers.DefaultFilter;
             }
 
             if (handlers.BackdropFilter.Descriptor != styles.BackdropFilter)
             {
                 handlers.BackdropFilter = styles.BackdropFilter != null && styles.BackdropFilter.IsDeclared
-                    ? FilterStyleHandler.For(styles.BackdropFilter)
+                    ? FilterStyleHandler.For(styles.BackdropFilter, _tokens)
                     : VisualElementStylesHandlers.DefaultBackdropFilter;
             }
 
@@ -988,19 +991,19 @@ namespace Ixen.Core.Visual.Computers
                 case StyleIdentifier.BACKGROUND:
                     var background = (BackgroundStyleDescriptor)style;
                     handlers.Background = IsPainting(background)
-                        ? BackgroundStyleHandler.For(background)
+                        ? BackgroundStyleHandler.For(background, _tokens)
                         : VisualElementStylesHandlers.DefaultBackground;
                     break;
 
                 case StyleIdentifier.BORDER:
                     var border = (BorderStyleDescriptor)style;
                     handlers.Border = IsPainting(border)
-                        ? BorderStyleHandler.For(border)
+                        ? BorderStyleHandler.For(border, _tokens)
                         : VisualElementStylesHandlers.DefaultBorder;
                     break;
 
                 case StyleIdentifier.COLOR:
-                    handlers.Color = ColorStyleHandler.For((ColorStyleDescriptor)style);
+                    handlers.Color = ColorStyleHandler.For((ColorStyleDescriptor)style, _tokens);
                     break;
 
                 case StyleIdentifier.COLUMN_TEMPLATE:
@@ -1012,11 +1015,11 @@ namespace Ixen.Core.Visual.Computers
                     break;
 
                 case StyleIdentifier.FILTER:
-                    handlers.Filter = FilterStyleHandler.For((FilterStyleDescriptor)style);
+                    handlers.Filter = FilterStyleHandler.For((FilterStyleDescriptor)style, _tokens);
                     break;
 
                 case StyleIdentifier.BACKDROP_FILTER:
-                    handlers.BackdropFilter = FilterStyleHandler.For((FilterStyleDescriptor)style);
+                    handlers.BackdropFilter = FilterStyleHandler.For((FilterStyleDescriptor)style, _tokens);
                     break;
 
                 case StyleIdentifier.FONT_FAMILY:

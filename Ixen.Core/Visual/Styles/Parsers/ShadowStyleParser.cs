@@ -9,7 +9,6 @@ namespace Ixen.Core.Visual.Styles.Parsers
     {
         private static Regex _splitter = new Regex(@"[^ \t]+");
         private static Regex _length = new Regex(@"^(-?[0-9]+(?:\.[0-9]+)?)(px)?$");
-        private static Regex _color = new Regex(@"^#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6})$");
 
         internal const string INSET = "inset";
 
@@ -63,7 +62,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
                     continue;
                 }
 
-                if (_color.IsMatch(part.Value))
+                if (StyleColors.IsValue(part.Value))
                 {
                     if (color != null)
                     {

@@ -175,6 +175,16 @@ namespace Ixen.Generators.Xns
                 sb.AppendLine($"\t\tpublic {name}_StyleSheet() ");
                 sb.AppendLine("\t\t{");
 
+                if (sheet.Tokens != null && sheet.Tokens.Count > 0)
+                {
+                    foreach (var token in sheet.Tokens)
+                    {
+                        sb.AppendLine($"\t\t\tAddToken(\"{token.Key}\", \"{token.Value}\");");
+                    }
+
+                    sb.AppendLine();
+                }
+
                 for (int batch = 0; batch < batches; batch++)
                 {
                     sb.AppendLine($"\t\t\tAddClasses{batch}();");

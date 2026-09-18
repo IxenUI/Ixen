@@ -36,7 +36,7 @@ namespace Ixen.Core.Rendering
                     element.ActualHeight + spread * 2,
                     radius,
                     shadow.Blur,
-                    new Color(shadow.Color));
+                    context.ColorOf(shadow.Color));
             }
         }
 
@@ -71,7 +71,7 @@ namespace Ixen.Core.Rendering
                     shadow.OffsetY,
                     shadow.Blur,
                     shadow.Spread,
-                    new Color(shadow.Color));
+                    context.ColorOf(shadow.Color));
             }
         }
     }

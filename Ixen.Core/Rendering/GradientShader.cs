@@ -1,3 +1,5 @@
+using Ixen.Core.Visual.Classes;
+using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using SkiaSharp;
 using System;
@@ -14,7 +16,7 @@ namespace Ixen.Core.Rendering
         private float _width = -1;
         private float _height = -1;
 
-        internal GradientShader(Gradient gradient)
+        internal GradientShader(Gradient gradient, StyleTokens tokens)
         {
             _gradient = gradient;
             _colors = new SKColor[gradient.Stops.Count];
@@ -24,7 +26,7 @@ namespace Ixen.Core.Rendering
             {
                 GradientStop stop = gradient.Stops[i];
 
-                _colors[i] = new Color(stop.Color).SKColor;
+                _colors[i] = new Color(StyleColors.Resolve(tokens, stop.Color)).SKColor;
                 _offsets[i] = stop.HasOffset
                     ? stop.Offset
                     : (gradient.Stops.Count == 1 ? 0 : (float)i / (gradient.Stops.Count - 1));

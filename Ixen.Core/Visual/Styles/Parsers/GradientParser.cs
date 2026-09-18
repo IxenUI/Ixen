@@ -9,7 +9,6 @@ namespace Ixen.Core.Visual.Styles.Parsers
         internal const string LINEAR = "linear-gradient";
         internal const string RADIAL = "radial-gradient";
 
-        private static Regex _color = new Regex(@"^#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6})$");
         private static Regex _offset = new Regex(@"^([0-9]+(?:\.[0-9]+)?)%$");
         private static Regex _angle = new Regex(@"^(-?[0-9]+(?:\.[0-9]+)?)deg$");
 
@@ -56,7 +55,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
             foreach (string part in parts)
             {
-                if (_color.IsMatch(part))
+                if (StyleColors.IsValue(part))
                 {
                     gradient.Stops.Add(new GradientStop { Color = part });
                     continue;

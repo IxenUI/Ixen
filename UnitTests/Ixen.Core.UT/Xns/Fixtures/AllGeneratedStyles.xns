@@ -203,3 +203,20 @@ generated_areas {
 generated_area {
     grid-area: main
 }
+
+generated_tokens {
+    background: $generated_accent
+    border: $generated_accent 1px inner
+    color: $generated_accent
+    box-shadow: 0px 1px 2px $generated_accent
+    text-shadow: 0px 1px 2px $generated_accent
+
+    generated_token_gradient {
+        background: linear-gradient(to bottom $generated_accent #445566)
+    }
+}
+
+@keyframes generated_token_pulse {
+    0%   { background: $generated_accent }
+    100% { background: #0000FF }
+}

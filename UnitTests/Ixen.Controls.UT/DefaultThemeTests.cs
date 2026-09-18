@@ -40,7 +40,7 @@ namespace Ixen.Controls.UT
             _surface.ComputeLayout(VIEWPORT, VIEWPORT);
         }
 
-        private string Background() => _button.StylesHandlers.Background.Descriptor.Color;
+        private string Background() => _button.StylesHandlers.Background.Color.ToRGBHexColor();
 
         private void App(string source)
         {
@@ -159,7 +159,7 @@ namespace Ixen.Controls.UT
             _button.AddState("focus");
             Layout();
 
-            Assert.AreEqual("#4C6EF5", _button.StylesHandlers.Border.Descriptor.Color,
+            Assert.AreEqual("#4C6EF5", _button.StylesHandlers.Border.Color.ToRGBHexColor(),
                 "focus moves the border rather than the fill, so it reads on any background");
         }
 
@@ -199,7 +199,7 @@ namespace Ixen.Controls.UT
                 + "registry is keyed on the selector and last-wins takes the whole list, so "
                 + "two rules for one selector do NOT merge.");
 
-            Assert.AreEqual("#4C6EF5", toggle.StylesHandlers.Background.Descriptor.Color,
+            Assert.AreEqual("#4C6EF5", toggle.StylesHandlers.Background.Color.ToRGBHexColor(),
                 "and the block that replaced it still does its own job");
         }
 
@@ -309,6 +309,34 @@ namespace Ixen.Controls.UT
                 "in a BAR the width is the main axis, so an item with no width takes a share of "
                 + "the row and every menu comes out the same size - the fill that a panel wants "
                 + "is exactly wrong here");
+        }
+
+        [TestMethod]
+        public void TheThemeDoesNotSquatTheApplicationsPaletteNames()
+        {
+            var sheet = new DefaultTheme_StyleSheet();
+
+            Assert.AreNotEqual(0, sheet.Tokens.Count, "the theme is what this is about");
+
+            foreach (string name in sheet.Tokens.Keys)
+            {
+                Assert.IsTrue(name.StartsWith("control_"),
+                    $"'${name}' is a global palette name. A token table is one namespace for the "
+                    + "whole application, so a control library prefixes what it declares - "
+                    + "$surface here and $surface in an application are the same token, and "
+                    + "whichever assembly loaded last would silently decide its colour.");
+            }
+        }
+
+        [TestMethod]
+        public void AnApplicationCanRecolourTheThemeThroughItsOwnNames()
+        {
+            _registry.Tokens.Set("control_surface", "#2E3138");
+
+            Layout();
+
+            Assert.AreEqual("#2E3138", Background(),
+                "a theme's palette is overridable like any other, under the names it declares");
         }
     }
 }

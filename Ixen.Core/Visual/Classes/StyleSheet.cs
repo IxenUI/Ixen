@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace Ixen.Core.Visual.Classes
 {
@@ -7,6 +7,7 @@ namespace Ixen.Core.Visual.Classes
         public string Scope { get; set; }
         public List<StyleClass> Classes { get; set; }
         public List<KeyframesSet> Keyframes { get; set; }
+        public Dictionary<string, string> Tokens { get; set; }
     }
 
     public static class StyleFormat
@@ -20,6 +21,7 @@ namespace Ixen.Core.Visual.Classes
         {
             Classes = new List<StyleClass>();
             Keyframes = new List<KeyframesSet>();
+            Tokens = new Dictionary<string, string>();
         }
 
         public virtual int FormatVersion => StyleFormat.VERSION;
@@ -32,6 +34,11 @@ namespace Ixen.Core.Visual.Classes
         protected void AddKeyframes(KeyframesSet keyframes)
         {
             Keyframes.Add(keyframes);
+        }
+
+        protected void AddToken(string name, string color)
+        {
+            Tokens[name] = color;
         }
     }
 }

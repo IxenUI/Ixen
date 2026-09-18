@@ -35,7 +35,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
             {
                 string value = part.Value;
 
-                if (value[0] == '#')
+                if (StyleColors.IsValue(value))
                 {
                     var colorParser = new ColorStyleParser(value);
 

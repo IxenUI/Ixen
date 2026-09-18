@@ -24,6 +24,7 @@ namespace Ixen.Core.Visual.Classes
     internal struct ColorStop
     {
         internal float Offset;
+        internal string Source;
         internal Color Value;
     }
 
@@ -46,6 +47,9 @@ namespace Ixen.Core.Visual.Classes
         private Dictionary<string, SizeStop[]> _sizeTracks;
         private Dictionary<string, TransformStop[]> _transformTracks;
         private List<string> _properties;
+        private bool _hasTokens;
+        private StyleTokens _tokens;
+        private int _tokensVersion = -1;
 
         public string Name { get; set; }
         public List<Keyframe> Frames { get; set; }
@@ -70,9 +74,10 @@ namespace Ixen.Core.Visual.Classes
             }
         }
 
-        internal ColorStop[] ColorTrack(string identifier)
+        internal ColorStop[] ColorTrack(string identifier, StyleTokens tokens)
         {
             Prepare();
+            Resolve(tokens);
             return _colorTracks.TryGetValue(identifier, out ColorStop[] track) ? track : null;
         }
 
@@ -138,9 +143,15 @@ namespace Ixen.Core.Visual.Classes
                             continue;
                         }
 
+                        if (StyleColors.IsToken(text))
+                        {
+                            _hasTokens = true;
+                        }
+
                         Track(colors, identifier).Add(new ColorStop
                         {
                             Offset = frame.Offset,
+                            Source = text,
                             Value = new Color(text)
                         });
 
@@ -206,6 +217,34 @@ namespace Ixen.Core.Visual.Classes
 
                 _transformTracks[entry.Key] = entry.Value.ToArray();
                 _properties.Add(entry.Key);
+            }
+        }
+
+        private void Resolve(StyleTokens tokens)
+        {
+            if (!_hasTokens)
+            {
+                return;
+            }
+
+            int version = StyleColors.VersionOf(tokens);
+
+            if (ReferenceEquals(_tokens, tokens) && _tokensVersion == version)
+            {
+                return;
+            }
+
+            _tokens = tokens;
+            _tokensVersion = version;
+
+            foreach (KeyValuePair<string, ColorStop[]> entry in _colorTracks)
+            {
+                ColorStop[] track = entry.Value;
+
+                for (int index = 0; index < track.Length; index++)
+                {
+                    track[index].Value = new Color(StyleColors.Resolve(tokens, track[index].Source));
+                }
             }
         }
 

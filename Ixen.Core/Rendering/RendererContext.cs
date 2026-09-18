@@ -1,4 +1,6 @@
 ﻿using Ixen.Core.Visual;
+using Ixen.Core.Visual.Classes;
+using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using SkiaSharp;
 using System;
@@ -39,9 +41,15 @@ namespace Ixen.Core.Rendering
 
         internal float Scale { get; private set; } = 1;
 
-        internal void BeginFrame(SKCanvas canvas, float scale)
+        private StyleTokens _tokens;
+
+        internal Color ColorOf(string value)
+            => new Color(StyleColors.Resolve(_tokens, value));
+
+        internal void BeginFrame(SKCanvas canvas, float scale, StyleTokens tokens = null)
         {
             SKCanvas = canvas;
+            _tokens = tokens;
             Scale = scale <= 0 ? 1 : scale;
             _clipDepth = 0;
             _transformDepths.Clear();
@@ -339,7 +347,7 @@ namespace Ixen.Core.Rendering
                 _textShadowBlur = shadow.Blur;
             }
 
-            _textShadowPaint.Color = new Color(shadow.Color).SKColor;
+            _textShadowPaint.Color = ColorOf(shadow.Color).SKColor;
 
             float shadowBaseline = Baseline(top + shadow.OffsetY, fontSpec, font);
 

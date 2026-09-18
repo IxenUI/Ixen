@@ -19,6 +19,10 @@ namespace Ixen.Core
 
         Input.KeyModifiers AcceleratorModifier { get; }
 
+        void SetToken(string name, string color);
+        void ResetToken(string name);
+        void ResetTokens();
+
         void ElementDetached(Visual.VisualElement element);
     }
 }

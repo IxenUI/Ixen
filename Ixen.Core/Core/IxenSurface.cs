@@ -114,6 +114,26 @@ namespace Ixen.Core
             }
         }
 
+        public StyleTokens Tokens => Styles.Tokens;
+
+        public void SetToken(string name, string color)
+        {
+            Styles.Tokens.Set(name, color);
+            Root?.Invalidate();
+        }
+
+        public void ResetToken(string name)
+        {
+            Styles.Tokens.Reset(name);
+            Root?.Invalidate();
+        }
+
+        public void ResetTokens()
+        {
+            Styles.Tokens.ResetAll();
+            Root?.Invalidate();
+        }
+
         public VisualElement Root
         {
             get => _root;
@@ -1161,7 +1181,7 @@ namespace Ixen.Core
         internal void Render(SKCanvas canvas)
         {
             _visualDirty = false;
-            _rendererContext.BeginFrame(canvas, _scale);
+            _rendererContext.BeginFrame(canvas, _scale, Styles?.Tokens);
 
             bool clipped = PreservesFrame && !_damage.IsWhole && !_damage.IsEmpty;
 

@@ -94,7 +94,7 @@ namespace Ixen.Core.Visual.Styles.Parsers
                     continue;
                 }
 
-                if (part[0] == '#')
+                if (StyleColors.IsValue(part))
                 {
                     var color = new ColorStyleParser(part);
 

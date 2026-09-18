@@ -1,21 +1,21 @@
-$surface:      #F4F5F8
-$surface_over: #E8EAF0
-$surface_down: #DCDFE8
-$surface_off:  #F0F1F4
-$line:         #C3C8D4
-$line_off:     #DDE0E8
-$text:         #1F2430
-$text_off:     #A0A6B4
-$focus:        #4C6EF5
+$control_surface:      #F4F5F8
+$control_surface_over: #E8EAF0
+$control_surface_down: #DCDFE8
+$control_surface_off:  #F0F1F4
+$control_line:         #C3C8D4
+$control_line_off:     #DDE0E8
+$control_text:         #1F2430
+$control_text_off:     #A0A6B4
+$control_focus:        #4C6EF5
 
 #Button {
     width: ?
     height: ?
-    background: $surface
-    border: $line 1px inner
+    background: $control_surface
+    border: $control_line 1px inner
     corner-radius: 5px
     padding: 7px 14px
-    color: $text
+    color: $control_text
     font-size: 13px
     text-align: center middle
     cursor: hand
@@ -32,11 +32,11 @@ $focus:        #4C6EF5
 #DatePickerPrevious:hover,
 #DatePickerNext:hover,
 #DatePickerDay:hover {
-    background: $surface_over
+    background: $control_surface_over
 }
 
 #Button:pressed {
-    background: $surface_down
+    background: $control_surface_down
 }
 
 #Button:focus,
@@ -53,7 +53,7 @@ $focus:        #4C6EF5
 #DataGrid:focus,
 #DatePicker:focus,
 #DatePickerDay:today {
-    border: $focus 1px inner
+    border: $control_focus 1px inner
 }
 
 #Button:disabled,
@@ -61,9 +61,9 @@ $focus:        #4C6EF5
 #RadioButton:disabled,
 #ComboBox:disabled,
 #DatePicker:disabled {
-    background: $surface_off
-    border: $line_off 1px inner
-    color: $text_off
+    background: $control_surface_off
+    border: $control_line_off 1px inner
+    color: $control_text_off
     cursor: not-allowed
 }
 
@@ -71,7 +71,7 @@ $focus:        #4C6EF5
     width: 18px
     height: 18px
     background: #FFFFFF
-    border: $line 1px inner
+    border: $control_line 1px inner
     corner-radius: 3px
     content-align: center middle
     cursor: hand
@@ -81,7 +81,7 @@ $focus:        #4C6EF5
 #CheckBoxMark {
     width: 10px
     height: 10px
-    background: $focus
+    background: $control_focus
     corner-radius: 2px
     visibility: hidden
 }
@@ -95,14 +95,14 @@ $focus:        #4C6EF5
 
 #CheckBox:checked {
     background: #EEF1FE
-    border: $focus 1px inner
+    border: $control_focus 1px inner
 }
 
 #RadioButton {
     width: 18px
     height: 18px
     background: #FFFFFF
-    border: $line 1px inner
+    border: $control_line 1px inner
     corner-radius: 9px
     content-align: center middle
     cursor: hand
@@ -112,7 +112,7 @@ $focus:        #4C6EF5
 #RadioButtonMark {
     width: 8px
     height: 8px
-    background: $focus
+    background: $control_focus
     corner-radius: 4px
     visibility: hidden
 }
@@ -120,8 +120,8 @@ $focus:        #4C6EF5
 #Switch {
     width: 34px
     height: 18px
-    background: $surface_down
-    border: $line 1px inner
+    background: $control_surface_down
+    border: $control_line 1px inner
     corner-radius: 9px
     padding: 2px
     content-align: left middle
@@ -137,14 +137,14 @@ $focus:        #4C6EF5
 }
 
 #Switch:checked {
-    background: $focus
-    border: $focus 1px inner
+    background: $control_focus
+    border: $control_focus 1px inner
     content-align: right middle
 }
 
 #Switch:disabled {
-    background: $surface_off
-    border: $line_off 1px inner
+    background: $control_surface_off
+    border: $control_line_off 1px inner
     cursor: not-allowed
 }
 
@@ -154,7 +154,7 @@ $focus:        #4C6EF5
 
 #MenuPanel {
     background: #FFFFFF
-    border: $line 1px inner
+    border: $control_line 1px inner
     corner-radius: 6px
     padding: 4px
     box-shadow: 0px 6px 18px #30000000
@@ -164,7 +164,7 @@ $focus:        #4C6EF5
     height: ?
     padding: 6px 14px
     corner-radius: 4px
-    color: $text
+    color: $control_text
     font-size: 13px
     text-align: left middle
     cursor: hand
@@ -179,7 +179,7 @@ $focus:        #4C6EF5
 }
 
 #MenuItem:disabled {
-    color: $text_off
+    color: $control_text_off
     cursor: not-allowed
 }
 
@@ -188,10 +188,10 @@ $focus:        #4C6EF5
     width: ?
     height: ?
     background: #FFFFFF
-    border: $line 1px inner
+    border: $control_line 1px inner
     corner-radius: 5px
     padding: 7px 12px
-    color: $text
+    color: $control_text
     font-size: 13px
     content-align: middle
     cursor: hand
@@ -205,7 +205,7 @@ $focus:        #4C6EF5
 }
 
 #ComboBox:open {
-    border: $focus 1px inner
+    border: $control_focus 1px inner
     background: #FCFCFE
 }
 
@@ -213,7 +213,7 @@ $focus:        #4C6EF5
     width: ?
     height: ?
     margin: 0px 0px 0px 10px
-    color: $text_off
+    color: $control_text_off
     font-size: 9px
     text-align: center middle
 }
@@ -225,8 +225,8 @@ $focus:        #4C6EF5
 #MenuBar {
     width: 1*
     height: ?
-    background: $surface
-    border: $line 0px 0px 1px 0px inner
+    background: $control_surface
+    border: $control_line 0px 0px 1px 0px inner
     padding: 2px 6px
     gap: 2px
 }
@@ -256,14 +256,14 @@ $focus:        #4C6EF5
 #SliderTrack {
     top: 7px
     height: 4px
-    background: $surface_down
+    background: $control_surface_down
     corner-radius: 2px
 }
 
 #SliderFill {
     top: 7px
     height: 4px
-    background: $focus
+    background: $control_focus
     corner-radius: 2px
 }
 
@@ -272,7 +272,7 @@ $focus:        #4C6EF5
     width: 16px
     height: 16px
     background: #FFFFFF
-    border: $focus 2px inner
+    border: $control_focus 2px inner
     corner-radius: 8px
     transition: border 120ms ease-out
 }
@@ -280,14 +280,14 @@ $focus:        #4C6EF5
 #ProgressBar {
     width: 160px
     height: 6px
-    background: $surface_down
+    background: $control_surface_down
     corner-radius: 3px
 }
 
 #ProgressBarFill {
     top: 0px
     height: 6px
-    background: $focus
+    background: $control_focus
     corner-radius: 3px
 }
 
@@ -306,7 +306,7 @@ $focus:        #4C6EF5
     top: 0px
     width: 4px
     height: 4px
-    background: $focus
+    background: $control_focus
     corner-radius: 2px
 }
 
@@ -319,7 +319,7 @@ $focus:        #4C6EF5
 #TabStrip {
     width: 1*
     height: ?
-    border: $line 0px 0px 1px 0px inner
+    border: $control_line 0px 0px 1px 0px inner
     gap: 2px
     padding: 0px 4px
 }
@@ -328,7 +328,7 @@ $focus:        #4C6EF5
     width: ?
     height: ?
     padding: 8px 16px
-    color: $text_off
+    color: $control_text_off
     font-size: 13px
     text-align: center middle
     corner-radius: 6px 6px 0px 0px
@@ -337,19 +337,19 @@ $focus:        #4C6EF5
 }
 
 #TabHeader:hover {
-    background: $surface_over
-    color: $text
+    background: $control_surface_over
+    color: $control_text
 }
 
 #TabHeader:selected {
-    background: $surface
-    border: $focus 0px 0px 2px 0px inner
-    color: $text
+    background: $control_surface
+    border: $control_focus 0px 0px 2px 0px inner
+    color: $control_text
 }
 
 #TabHeader:disabled,
 #DatePickerDay:disabled {
-    color: $line_off
+    color: $control_line_off
     cursor: not-allowed
 }
 
@@ -386,11 +386,11 @@ $focus:        #4C6EF5
     min-width: 280px
     max-width: 460px
     background: #FFFFFF
-    border: $line 1px inner
+    border: $control_line 1px inner
     corner-radius: 10px
     padding: 20px
     gap: 12px
-    color: $text
+    color: $control_text
     box-shadow: 0px 12px 36px #50000000
 }
 
@@ -399,7 +399,7 @@ $focus:        #4C6EF5
     width: 1*
     height: 1*
     background: #FFFFFF
-    border: $line 1px inner
+    border: $control_line 1px inner
     corner-radius: 5px
 }
 
@@ -411,7 +411,7 @@ $focus:        #4C6EF5
 
 #TreeRow {
     text-align: left middle
-    color: $text
+    color: $control_text
     font-size: 13px
     corner-radius: 4px
     cursor: hand
@@ -421,7 +421,7 @@ $focus:        #4C6EF5
 #TreeRow:selected,
 #DataGridRow:selected,
 #DatePickerDay:selected {
-    background: $focus
+    background: $control_focus
     color: #FFFFFF
 }
 
@@ -444,21 +444,21 @@ $focus:        #4C6EF5
     width: 1*
     height: 30px
     padding: 0px 14px 0px 0px
-    background: $surface
-    border: $line 0px 0px 1px 0px inner
+    background: $control_surface
+    border: $control_line 0px 0px 1px 0px inner
 }
 
 #DataGridHeaderCell {
     height: 1*
     padding: 0px 10px
-    color: $text_off
+    color: $control_text_off
     font-size: 12px
     cursor: hand
     transition: background 100ms ease-out
 }
 
 #DataGridHeaderCell:sorted {
-    color: $text
+    color: $control_text
 }
 
 #DataGridHeaderLabel {
@@ -478,7 +478,7 @@ $focus:        #4C6EF5
 }
 
 #DataGridRow {
-    color: $text
+    color: $control_text
     font-size: 13px
     cursor: hand
 }
@@ -493,10 +493,10 @@ $focus:        #4C6EF5
     width: ?
     height: ?
     background: #FFFFFF
-    border: $line 1px inner
+    border: $control_line 1px inner
     corner-radius: 5px
     padding: 7px 12px
-    color: $text
+    color: $control_text
     font-size: 13px
     content-align: middle
     gap: 10px
@@ -504,7 +504,7 @@ $focus:        #4C6EF5
 }
 
 #DatePicker:hover {
-    background: $surface
+    background: $control_surface
 }
 
 #DatePickerLabel {
@@ -531,7 +531,7 @@ $focus:        #4C6EF5
 #DatePickerTitle {
     width: 1*
     height: 1*
-    color: $text
+    color: $control_text
     font-size: 13px
     font-weight: bold
     text-align: center middle
@@ -542,7 +542,7 @@ $focus:        #4C6EF5
     height: 1*
     font-size: 7px
     text-align: center middle
-    color: $text_off
+    color: $control_text_off
     corner-radius: 4px
     cursor: hand
     transform: rotate(90deg)
@@ -553,7 +553,7 @@ $focus:        #4C6EF5
     height: 1*
     font-size: 7px
     text-align: center middle
-    color: $text_off
+    color: $control_text_off
     corner-radius: 4px
     cursor: hand
     transform: rotate(-90deg)
@@ -567,7 +567,7 @@ $focus:        #4C6EF5
 #DatePickerWeekday {
     width: 1*
     height: 1*
-    color: $text_off
+    color: $control_text_off
     font-size: 11px
     text-align: center middle
 }
@@ -581,7 +581,7 @@ $focus:        #4C6EF5
 #DatePickerDay {
     width: 1*
     height: 28px
-    color: $text
+    color: $control_text
     font-size: 12px
     text-align: center middle
     corner-radius: 4px
@@ -590,6 +590,6 @@ $focus:        #4C6EF5
 }
 
 #DatePickerDay:outside {
-    color: $line_off
+    color: $control_line_off
 }
 

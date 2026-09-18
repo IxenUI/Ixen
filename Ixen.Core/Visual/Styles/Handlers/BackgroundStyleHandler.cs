@@ -1,4 +1,5 @@
-﻿using Ixen.Core.Rendering;
+using Ixen.Core.Rendering;
+using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles.Descriptors;
 
 namespace Ixen.Core.Visual.Styles.Handlers
@@ -13,18 +14,20 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
         private readonly string _colorSource;
         private readonly Gradient[] _gradientSnapshots;
+        private readonly int _tokens;
 
         public BackgroundStyleHandler()
-            : this(new())
+            : this(new(), null)
         { }
 
-        public BackgroundStyleHandler(BackgroundStyleDescriptor descriptor)
+        public BackgroundStyleHandler(BackgroundStyleDescriptor descriptor, StyleTokens tokens)
         {
             Descriptor = descriptor;
-            _color = new Color(descriptor.Color);
+            _color = new Color(StyleColors.Resolve(tokens, descriptor.Color));
             _brush = new Brush(_color);
 
             _colorSource = descriptor.Color;
+            _tokens = StyleColors.VersionOf(tokens);
 
             int count = descriptor.Layers.Count;
 
@@ -41,64 +44,66 @@ namespace Ixen.Core.Visual.Styles.Handlers
                 }
 
                 _gradientSnapshots[index] = gradient.Snapshot();
-                _gradients[index] = new GradientShader(gradient);
+                _gradients[index] = new GradientShader(gradient, tokens);
             }
         }
 
         internal GradientShader GradientFor(int index)
             => index >= 0 && index < _gradients.Length ? _gradients[index] : null;
 
-        internal static BackgroundStyleHandler For(BackgroundStyleDescriptor descriptor)
+        internal static BackgroundStyleHandler For(BackgroundStyleDescriptor descriptor, StyleTokens tokens)
         {
-            if (descriptor.Handler is BackgroundStyleHandler handler && handler.IsCurrent)
+            if (descriptor.Handler is BackgroundStyleHandler handler && handler.IsCurrent(tokens))
             {
                 return handler;
             }
 
-            handler = new BackgroundStyleHandler(descriptor);
+            handler = new BackgroundStyleHandler(descriptor, tokens);
 
             descriptor.Handler = handler;
 
             return handler;
         }
 
-        private bool IsCurrent
+        private bool IsCurrent(StyleTokens tokens)
         {
-            get
+            if (_colorSource != Descriptor.Color)
             {
-                if (_colorSource != Descriptor.Color)
+                return false;
+            }
+
+            if (_tokens != StyleColors.VersionOf(tokens))
+            {
+                return false;
+            }
+
+            if (_gradientSnapshots.Length != Descriptor.Layers.Count)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < _gradientSnapshots.Length; index++)
+            {
+                Gradient gradient = Descriptor.Layers[index].Gradient;
+                Gradient snapshot = _gradientSnapshots[index];
+
+                if (snapshot == null || gradient == null)
                 {
-                    return false;
-                }
-
-                if (_gradientSnapshots.Length != Descriptor.Layers.Count)
-                {
-                    return false;
-                }
-
-                for (int index = 0; index < _gradientSnapshots.Length; index++)
-                {
-                    Gradient gradient = Descriptor.Layers[index].Gradient;
-                    Gradient snapshot = _gradientSnapshots[index];
-
-                    if (snapshot == null || gradient == null)
-                    {
-                        if (snapshot != null || gradient != null)
-                        {
-                            return false;
-                        }
-
-                        continue;
-                    }
-
-                    if (!snapshot.SameAs(gradient))
+                    if (snapshot != null || gradient != null)
                     {
                         return false;
                     }
+
+                    continue;
                 }
 
-                return true;
+                if (!snapshot.SameAs(gradient))
+                {
+                    return false;
+                }
             }
+
+            return true;
         }
 
         internal Color Color => _color;

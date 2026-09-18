@@ -1,4 +1,5 @@
 using Ixen.Core.Language.Base;
+using Ixen.Core.Visual.Styles;
 using System.Collections.Generic;
 using System.Text;
 
@@ -9,8 +10,11 @@ namespace Ixen.Core.Language.Xns
         private const int MAX_DEPTH = 16;
 
         private readonly Dictionary<string, string> _values = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _tokens = new Dictionary<string, string>();
 
         internal bool IsEmpty => _values.Count == 0;
+
+        internal Dictionary<string, string> Tokens => _tokens;
 
         internal static XnsVariables Resolve(List<XnsVariable> declarations, List<LanguageError> errors)
         {
@@ -36,6 +40,14 @@ namespace Ixen.Core.Language.Xns
                     Expand(declaration.Value, declaration.ValueIndex, raw, seen, 0, errors),
                     declaration.ValueIndex,
                     errors);
+            }
+
+            foreach (KeyValuePair<string, string> value in variables._values)
+            {
+                if (StyleColors.IsLiteral(value.Value))
+                {
+                    variables._tokens[value.Key] = value.Value.Trim();
+                }
             }
 
             return variables;
@@ -161,6 +173,13 @@ namespace Ixen.Core.Language.Xns
                 {
                     result.Append(c);
                     position++;
+                    continue;
+                }
+
+                if (_tokens.ContainsKey(name))
+                {
+                    result.Append(XnsTokenizer.VARIABLE_MARKER).Append(name);
+                    position = end;
                     continue;
                 }
 

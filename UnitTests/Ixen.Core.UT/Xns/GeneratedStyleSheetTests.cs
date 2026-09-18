@@ -200,7 +200,15 @@ namespace Ixen.Core.UT.Xns
         [TestMethod]
         public void TheColorStyleIsNotDropped()
         {
-            Assert.AreEqual("#123456", Style<ColorStyleDescriptor>().Value);
+            Assert.AreEqual("$generated_accent", Style<ColorStyleDescriptor>().Value,
+                "a colour variable stays a token in the generated sheet");
+        }
+
+        [TestMethod]
+        public void TheGeneratedSheetCarriesItsOwnTokens()
+        {
+            Assert.AreEqual("#123456", StyleRegistry.Default.Tokens.ValueOf("generated_accent"),
+                "the generator has to emit AddToken, or a compiled sheet has no palette");
         }
 
         [TestMethod]

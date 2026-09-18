@@ -1,4 +1,5 @@
 using Ixen.Core.Rendering;
+using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles.Descriptors;
 
 namespace Ixen.Core.Visual.Styles.Handlers
@@ -21,23 +22,24 @@ namespace Ixen.Core.Visual.Styles.Handlers
         private readonly string _bottomSource;
         private readonly string _leftSource;
         private readonly float _thickness;
+        private readonly int _tokens;
         private readonly BorderStyle _style;
 
         public BorderStyleHandler()
-            : this(new())
+            : this(new(), null)
         { }
 
-        public BorderStyleHandler(BorderStyleDescriptor descriptor)
+        public BorderStyleHandler(BorderStyleDescriptor descriptor, StyleTokens tokens)
         {
             Descriptor = descriptor;
 
-            _color = new Color(descriptor.Color);
+            _color = new Color(StyleColors.Resolve(tokens, descriptor.Color));
             _pen = new Pen(_color, descriptor.Top, descriptor.Style);
 
-            _top = new Color(descriptor.ColorTop);
-            _right = new Color(descriptor.ColorRight);
-            _bottom = new Color(descriptor.ColorBottom);
-            _left = new Color(descriptor.ColorLeft);
+            _top = new Color(StyleColors.Resolve(tokens, descriptor.ColorTop));
+            _right = new Color(StyleColors.Resolve(tokens, descriptor.ColorRight));
+            _bottom = new Color(StyleColors.Resolve(tokens, descriptor.ColorBottom));
+            _left = new Color(StyleColors.Resolve(tokens, descriptor.ColorLeft));
 
             _colorSource = descriptor.Color;
             _topSource = descriptor.TopColor;
@@ -46,23 +48,25 @@ namespace Ixen.Core.Visual.Styles.Handlers
             _leftSource = descriptor.LeftColor;
             _thickness = descriptor.Top;
             _style = descriptor.Style;
+            _tokens = StyleColors.VersionOf(tokens);
         }
 
-        internal static BorderStyleHandler For(BorderStyleDescriptor descriptor)
+        internal static BorderStyleHandler For(BorderStyleDescriptor descriptor, StyleTokens tokens)
         {
-            if (descriptor.Handler is BorderStyleHandler handler && handler.IsCurrent)
+            if (descriptor.Handler is BorderStyleHandler handler && handler.IsCurrent(tokens))
             {
                 return handler;
             }
 
-            handler = new BorderStyleHandler(descriptor);
+            handler = new BorderStyleHandler(descriptor, tokens);
 
             descriptor.Handler = handler;
 
             return handler;
         }
 
-        private bool IsCurrent => _colorSource == Descriptor.Color
+        private bool IsCurrent(StyleTokens tokens) => _tokens == StyleColors.VersionOf(tokens)
+            && _colorSource == Descriptor.Color
             && _thickness == Descriptor.Top
             && _topSource == Descriptor.TopColor
             && _rightSource == Descriptor.RightColor
