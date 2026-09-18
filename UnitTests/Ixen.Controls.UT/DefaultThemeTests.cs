@@ -5,6 +5,8 @@ using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Ixen.StyleSheets;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Ixen.Controls.UT
 {
@@ -337,6 +339,143 @@ namespace Ixen.Controls.UT
 
             Assert.AreEqual("#2E3138", Background(),
                 "a theme's palette is overridable like any other, under the names it declares");
+        }
+
+        private static readonly string[] DARK = [
+            "control_surface",      "#2E3138",
+            "control_surface_over", "#363A43",
+            "control_surface_down", "#3A3F4A",
+            "control_surface_off",  "#26282E",
+            "control_field",        "#22242A",
+            "control_panel",        "#2E3138",
+            "control_line",         "#3C424E",
+            "control_line_off",     "#2C3038",
+            "control_text",         "#E8ECF5",
+            "control_text_off",     "#5A6273",
+            "control_inverse",      "#E8ECF5",
+            "control_inverse_text", "#1F2430",
+            "control_focus",        "#4C6EF5",
+            "control_focus_soft",   "#232A44"
+        ];
+
+        private void Dark()
+        {
+            for (int index = 0; index < DARK.Length; index += 2)
+            {
+                _registry.Tokens.Set(DARK[index], DARK[index + 1]);
+            }
+        }
+
+        private static void AssertGround(VisualElement element, string expected, string because)
+        {
+            Assert.AreEqual(expected, element.StylesHandlers.Background.Color.ToRGBHexColor(), because);
+        }
+
+        [TestMethod]
+        public void TheWholeThemeGoesDarkThroughSetTokenAlone()
+        {
+            CheckBox box = Add<CheckBox>("agree");
+            ComboBox combo = Add<ComboBox>("theme");
+
+            var menu = new Menu { Name = "menu" };
+
+            menu.AddChild(new MenuItem { Name = "one", Text = "One" });
+            _root.AddChild(menu);
+
+            menu.Open = true;
+
+            Dark();
+            Layout();
+
+            AssertGround(_button, "#2E3138",
+                "a button has always taken $control_surface");
+            AssertGround(box, "#22242A",
+                "a check box used to carry a #FFFFFF literal, so it stayed white on a dark "
+                + "screen whatever the application set");
+            AssertGround(combo, "#22242A", "and so did a combo box");
+            AssertGround(menu.Panel, "#2E3138", "and a menu panel");
+
+            Assert.AreEqual("#E8ECF5", _button.StylesHandlers.Color.Brush.Color.ToRGBHexColor(),
+                "the text follows too, which is what makes the pair legible rather than each "
+                + "half of it right on its own");
+
+            box.Checked = true;
+            Layout();
+
+            AssertGround(box, "#232A44",
+                "a checked box is a faint tint of the accent - #EEF1FE, which is an interaction "
+                + "shade rather than a colour any variable named");
+        }
+
+        [TestMethod]
+        public void TheOnlyLiteralColoursLeftAreTheOnesThatReadOnEitherGround()
+        {
+            var allowed = new HashSet<string>
+            {
+                "SwitchKnob #FFFFFF",
+                "SliderThumb #FFFFFF",
+                "TreeRow:selected #FFFFFF",
+                "DataGridRow:selected #FFFFFF",
+                "DatePickerDay:selected #FFFFFF",
+                "MenuPanel #30000000",
+                "TooltipPanel #40000000",
+                "DialogSheet #50000000",
+                "DialogScrim #99101216"
+            };
+
+            var sheet = new DefaultTheme_StyleSheet();
+            var seen = new HashSet<string>();
+            int examined = 0;
+
+            foreach (StyleClass rule in sheet.Classes)
+            {
+                Collect(rule.Name, rule.Styles, allowed, seen, ref examined);
+            }
+
+            foreach (KeyframesSet set in sheet.Keyframes)
+            {
+                foreach (Keyframe frame in set.Frames)
+                {
+                    Collect(set.Name, frame.Styles, allowed, seen, ref examined);
+                }
+            }
+
+            Assert.IsTrue(examined > 100,
+                $"the walk only read {examined} declarations, so it is finding nothing rather "
+                + "than finding nothing wrong - a scan over compiled source is brittle by "
+                + "nature and has to fail loudly when its shape changes");
+
+            foreach (string exemption in allowed)
+            {
+                Assert.IsTrue(seen.Contains(exemption),
+                    $"{exemption} is exempted and no longer appears, so the exemption is stale - "
+                    + "an allow-list nobody uses is how a literal creeps back in unnoticed");
+            }
+        }
+
+        private static void Collect(string rule, List<StyleDescriptor> styles, HashSet<string> allowed,
+            HashSet<string> seen, ref int examined)
+        {
+            foreach (StyleDescriptor style in styles)
+            {
+                if (!style.CanGenerateSource)
+                {
+                    continue;
+                }
+
+                examined++;
+
+                foreach (Match match in Regex.Matches(style.ToSource(), "#[0-9A-Fa-f]{6,8}"))
+                {
+                    seen.Add($"{rule} {match.Value}");
+
+                    Assert.IsTrue(allowed.Contains($"{rule} {match.Value}"),
+                        $"'{rule}' paints {match.Value} outright, so an application cannot reach "
+                        + "it through SetToken. A literal is exempted PER RULE, and only when it reads on "
+                        + "either ground - a translucent shadow, the scrim, or a white knob on a "
+                        + "ground that is itself a token.");
+                }
+            }
         }
     }
 }

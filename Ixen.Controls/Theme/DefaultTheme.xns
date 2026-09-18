@@ -2,11 +2,16 @@ $control_surface:      #F4F5F8
 $control_surface_over: #E8EAF0
 $control_surface_down: #DCDFE8
 $control_surface_off:  #F0F1F4
+$control_field:        #FFFFFF
+$control_panel:        #FFFFFF
 $control_line:         #C3C8D4
 $control_line_off:     #DDE0E8
 $control_text:         #1F2430
 $control_text_off:     #A0A6B4
+$control_inverse:      #1F2430
+$control_inverse_text: #FFFFFF
 $control_focus:        #4C6EF5
+$control_focus_soft:   #EEF1FE
 
 #Button {
     width: ?
@@ -70,7 +75,7 @@ $control_focus:        #4C6EF5
 #CheckBox {
     width: 18px
     height: 18px
-    background: #FFFFFF
+    background: $control_field
     border: $control_line 1px inner
     corner-radius: 3px
     content-align: center middle
@@ -94,14 +99,14 @@ $control_focus:        #4C6EF5
 }
 
 #CheckBox:checked {
-    background: #EEF1FE
+    background: $control_focus_soft
     border: $control_focus 1px inner
 }
 
 #RadioButton {
     width: 18px
     height: 18px
-    background: #FFFFFF
+    background: $control_field
     border: $control_line 1px inner
     corner-radius: 9px
     content-align: center middle
@@ -153,7 +158,7 @@ $control_focus:        #4C6EF5
 }
 
 #MenuPanel {
-    background: #FFFFFF
+    background: $control_panel
     border: $control_line 1px inner
     corner-radius: 6px
     padding: 4px
@@ -175,7 +180,7 @@ $control_focus:        #4C6EF5
 }
 
 #MenuItem:focus {
-    background: #EEF1FE
+    background: $control_focus_soft
 }
 
 #MenuItem:disabled {
@@ -187,7 +192,7 @@ $control_focus:        #4C6EF5
     layout: row
     width: ?
     height: ?
-    background: #FFFFFF
+    background: $control_field
     border: $control_line 1px inner
     corner-radius: 5px
     padding: 7px 12px
@@ -206,7 +211,7 @@ $control_focus:        #4C6EF5
 
 #ComboBox:open {
     border: $control_focus 1px inner
-    background: #FCFCFE
+    background: $control_field
 }
 
 #ComboBoxChevron {
@@ -219,7 +224,7 @@ $control_focus:        #4C6EF5
 }
 
 #MenuItem:submenu {
-    background: #F2F4FE
+    background: $control_focus_soft
 }
 
 #MenuBar {
@@ -368,11 +373,11 @@ $control_focus:        #4C6EF5
     width: ?
     height: ?
     max-width: 260px
-    background: #1F2430
+    background: $control_inverse
     corner-radius: 5px
     padding: 6px 10px
     margin: 0px 0px 6px 0px
-    color: #FFFFFF
+    color: $control_inverse_text
     font-size: 12px
     box-shadow: 0px 4px 14px #40000000
 }
@@ -385,7 +390,7 @@ $control_focus:        #4C6EF5
 #DialogSheet {
     min-width: 280px
     max-width: 460px
-    background: #FFFFFF
+    background: $control_panel
     border: $control_line 1px inner
     corner-radius: 10px
     padding: 20px
@@ -398,7 +403,7 @@ $control_focus:        #4C6EF5
 #DataGrid {
     width: 1*
     height: 1*
-    background: #FFFFFF
+    background: $control_field
     border: $control_line 1px inner
     corner-radius: 5px
 }
@@ -492,7 +497,7 @@ $control_focus:        #4C6EF5
 #DatePicker {
     width: ?
     height: ?
-    background: #FFFFFF
+    background: $control_field
     border: $control_line 1px inner
     corner-radius: 5px
     padding: 7px 12px
