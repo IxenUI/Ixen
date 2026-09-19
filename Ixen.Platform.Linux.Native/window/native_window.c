@@ -1,5 +1,7 @@
 #include "native_window.h"
 
+#include "../accessibility/atspi.h"
+
 #include <X11/Xatom.h>
 #include <X11/Xresource.h>
 #include <X11/XKBlib.h>
@@ -83,6 +85,8 @@ struct NativeWindow
     void (*keyCallBack)(int, int, int, int);
     void (*textCallBack)(const char*);
     void (*wheelCallBack)(int, int, int, int, int);
+
+    AtspiBridge* accessibility;
 };
 
 static const char* CURSOR_NAMES[CURSOR_COUNT] =
@@ -209,6 +213,23 @@ static unsigned int ReadDpi(NativeWindow* window)
     return DEFAULT_DPI;
 }
 
+static void SyncOrigin(NativeWindow* window)
+{
+    if (window->accessibility == NULL)
+    {
+        return;
+    }
+
+    int x = 0;
+    int y = 0;
+    Window child = 0;
+
+    if (XTranslateCoordinates(window->display, window->window, window->root, 0, 0, &x, &y, &child))
+    {
+        Atspi_SetOrigin(window->accessibility, x, y);
+    }
+}
+
 static void ApplyTitle(NativeWindow* window, const char* title)
 {
     if (title == NULL)
@@ -217,6 +238,8 @@ static void ApplyTitle(NativeWindow* window, const char* title)
     }
 
     Atom name = XInternAtom(window->display, "_NET_WM_NAME", False);
+
+    Atspi_SetTitle(window->accessibility, title);
 
     XStoreName(window->display, window->window, title);
     XChangeProperty(window->display, window->window, name, window->utf8, 8, PropModeReplace,
@@ -309,6 +332,10 @@ NativeWindow* NW_Create(const char* title, int width, int height)
     window->dpi = ReadDpi(window);
 
     XkbSetDetectableAutoRepeat(display, True, NULL);
+
+    window->accessibility = Atspi_Create();
+
+    Atspi_SetTitle(window->accessibility, title);
 
     window->inputMethod = XOpenIM(display, NULL, NULL, NULL);
 
@@ -1006,6 +1033,8 @@ static void Dispatch(NativeWindow* window, XEvent* event)
                 window->height = event->xconfigure.height;
                 window->dirty = 1;
             }
+
+            SyncOrigin(window);
             break;
 
         case MapNotify:
@@ -1141,7 +1170,7 @@ int NW_Run(NativeWindow* window)
     XMapWindow(window->display, window->window);
     XFlush(window->display);
 
-    struct pollfd watched[2];
+    struct pollfd watched[2 + ATSPI_MAX_FDS];
 
     watched[0].fd = ConnectionNumber(window->display);
     watched[0].events = POLLIN;
@@ -1170,6 +1199,7 @@ int NW_Run(NativeWindow* window)
         }
 
         FireTimers(window);
+        Atspi_Pump(window->accessibility);
 
         if (window->dirty)
         {
@@ -1190,12 +1220,24 @@ int NW_Run(NativeWindow* window)
             continue;
         }
 
-        watched[0].revents = 0;
-        watched[1].revents = 0;
+        int fds[ATSPI_MAX_FDS];
+        int count = 2 + Atspi_Fds(window->accessibility, fds, ATSPI_MAX_FDS);
 
-        poll(watched, 2, NextTimeout(window));
+        for (int index = 2; index < count; index++)
+        {
+            watched[index].fd = fds[index - 2];
+            watched[index].events = POLLIN;
+        }
+
+        for (int index = 0; index < count; index++)
+        {
+            watched[index].revents = 0;
+        }
+
+        poll(watched, (nfds_t)count, NextTimeout(window));
 
         Drain(window);
+        Atspi_Pump(window->accessibility);
     }
 
     return 0;
@@ -1207,6 +1249,10 @@ void NW_Destroy(NativeWindow* window)
     {
         return;
     }
+
+    Atspi_Destroy(window->accessibility);
+
+    window->accessibility = NULL;
 
     if (window->image != NULL)
     {
@@ -1323,5 +1369,46 @@ void NW_RegisterWheelCallBack(NativeWindow* window, void callBack(int, int, int,
     if (window != NULL)
     {
         window->wheelCallBack = callBack;
+    }
+}
+
+void NW_RegisterAccessibilityCallBack(NativeWindow* window, int callBack(int, int, const char*))
+{
+    if (window != NULL)
+    {
+        Atspi_RegisterCallBack(window->accessibility, callBack);
+    }
+}
+
+int NW_AccessibilityIsActive(NativeWindow* window)
+{
+    return window == NULL ? 0 : Atspi_IsActive(window->accessibility);
+}
+
+void NW_AccessibilityUpdateNode(NativeWindow* window, int identifier, int parent, int role,
+    long long states, int actions, int x, int y, int width, int height,
+    const char* name, const char* description, const char* value, const char* shortcut)
+{
+    if (window != NULL)
+    {
+        Atspi_UpdateNode(window->accessibility, identifier, parent, role, states, actions,
+            x, y, width, height, name, description, value, shortcut);
+    }
+}
+
+void NW_AccessibilityCommit(NativeWindow* window, int root, const int* order, int count)
+{
+    if (window != NULL)
+    {
+        SyncOrigin(window);
+        Atspi_Commit(window->accessibility, root, order, count);
+    }
+}
+
+void NW_AccessibilityNotify(NativeWindow* window, int identifier, int kind, const char* text)
+{
+    if (window != NULL)
+    {
+        Atspi_Notify(window->accessibility, identifier, kind, text);
     }
 }

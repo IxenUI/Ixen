@@ -1,6 +1,7 @@
 using Ixen.Core;
 using Ixen.Core.Input;
 using Ixen.Core.Visual.Styles.Descriptors;
+using Ixen.Platform.Linux.Accessibility;
 using Ixen.Platform.Linux.NativeApi;
 using SkiaSharp;
 using System;
@@ -30,6 +31,7 @@ namespace Ixen.Platform.Linux
 
         private readonly IxenSurface _ixenSurface;
         private readonly IxenHost _host;
+        private readonly LinuxAccessibility _accessibility;
 
         public LinuxWindow(IxenSurface ixenSurface)
         {
@@ -42,6 +44,8 @@ namespace Ixen.Platform.Linux
                 CanPresent);
 
             IxenSynchronizationContext.Install(ixenSurface);
+
+            _accessibility = new LinuxAccessibility(ixenSurface, () => _windowPtr);
 
             _onPaint = OnPaint;
             _onPointer = OnPointer;
@@ -65,6 +69,8 @@ namespace Ixen.Platform.Linux
             LinuxApi.RegisterKeyCallBack(_windowPtr, _onKey);
             LinuxApi.RegisterTextCallBack(_windowPtr, _onText);
             LinuxApi.RegisterWheelCallBack(_windowPtr, _onWheel);
+
+            _accessibility.Register();
 
             return LinuxApi.ShowWindow(_windowPtr);
         }
@@ -92,6 +98,8 @@ namespace Ixen.Platform.Linux
 
             LinuxApi.SetWindowPixelsBuffer(_windowPtr, _pixelBuffer.Ptr, width, height,
                 _pixelBuffer.RowBytes);
+
+            _accessibility.Sync();
 
             _paints++;
 

@@ -23,6 +23,12 @@ IXEN_API_ENTRY void WA_RegisterTextCallBack(NativeWindow* window, void callBack(
 IXEN_API_ENTRY void WA_RegisterWheelCallBack(NativeWindow* window, void callBack(int, int, int, int, int));
 IXEN_API_ENTRY const char* WA_GetClipboardText(NativeWindow* window);
 IXEN_API_ENTRY void WA_SetClipboardText(NativeWindow* window, const char* text);
+IXEN_API_ENTRY void WA_RegisterAccessibilityCallBack(NativeWindow* window, int callBack(int, int, const char*));
+IXEN_API_ENTRY int WA_AccessibilityIsActive(NativeWindow* window);
+IXEN_API_ENTRY void WA_AccessibilityUpdateNode(NativeWindow* window, int identifier, int parent, int role, long long states, int actions, int x, int y, int width, int height, const char* name, const char* description, const char* value, const char* shortcut);
+IXEN_API_ENTRY void WA_AccessibilityCommit(NativeWindow* window, int root, const int* order, int count);
+IXEN_API_ENTRY void WA_AccessibilityNotify(NativeWindow* window, int identifier, int kind, const char* text);
+
 IXEN_API_ENTRY long WA_Schedule(int delayMilliseconds, int repeat, void callBack(long));
 IXEN_API_ENTRY void WA_Cancel(long identifier);
 IXEN_API_ENTRY int WA_PrefersReducedMotion(void);

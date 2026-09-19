@@ -104,3 +104,31 @@ int WA_PrefersReducedMotion(void)
 {
     return NW_PrefersReducedMotion();
 }
+
+void WA_RegisterAccessibilityCallBack(NativeWindow* window, int callBack(int, int, const char*))
+{
+    NW_RegisterAccessibilityCallBack(window, callBack);
+}
+
+int WA_AccessibilityIsActive(NativeWindow* window)
+{
+    return NW_AccessibilityIsActive(window);
+}
+
+void WA_AccessibilityUpdateNode(NativeWindow* window, int identifier, int parent, int role,
+    long long states, int actions, int x, int y, int width, int height,
+    const char* name, const char* description, const char* value, const char* shortcut)
+{
+    NW_AccessibilityUpdateNode(window, identifier, parent, role, states, actions,
+        x, y, width, height, name, description, value, shortcut);
+}
+
+void WA_AccessibilityCommit(NativeWindow* window, int root, const int* order, int count)
+{
+    NW_AccessibilityCommit(window, root, order, count);
+}
+
+void WA_AccessibilityNotify(NativeWindow* window, int identifier, int kind, const char* text)
+{
+    NW_AccessibilityNotify(window, identifier, kind, text);
+}

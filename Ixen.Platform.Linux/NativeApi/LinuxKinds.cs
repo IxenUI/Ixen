@@ -25,6 +25,24 @@ namespace Ixen.Platform.Linux.NativeApi
         Up = 1
     }
 
+    internal enum LinuxAccessibilityAction
+    {
+        Invoke = 1,
+        Focus = 2,
+        SetValue = 4,
+        ScrollIntoView = 8
+    }
+
+    internal enum LinuxAccessibilityNotice
+    {
+        Name = 0,
+        Value = 1,
+        Focus = 2,
+        Structure = 3,
+        Announce = 4,
+        AnnounceUrgent = 5
+    }
+
     internal static class LinuxCursors
     {
         internal static int ToNative(CursorKind kind)
