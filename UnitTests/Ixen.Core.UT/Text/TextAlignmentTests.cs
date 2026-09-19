@@ -4,6 +4,8 @@ using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SkiaSharp;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Ixen.Core.UT.Text
@@ -12,6 +14,8 @@ namespace Ixen.Core.UT.Text
     public class TextAlignmentTests
     {
         private const int SIZE = 200;
+        private const int BEARING = 4;
+        private const int LINE_HEIGHT = 30;
 
         private static VisualElement Label(string text, TextAlign align)
         {
@@ -137,13 +141,67 @@ namespace Ixen.Core.UT.Text
         {
             VisualElement centered = Label("the quick brown fox jumps over the lazy dog", TextAlign.Center);
 
+            centered.Styles.LineHeight = new LineHeightStyleDescriptor
+            {
+                Kind = LineHeightKind.Pixels,
+                Value = LINE_HEIGHT
+            };
+
             using (SKBitmap bitmap = Render(centered))
             {
-                PaintedColumns(bitmap, out int start, out int end);
+                int lines = centered.TextLines.Count;
 
-                Assert.IsTrue(centered.TextLines.Count > 1, "the text should have wrapped");
-                Assert.IsTrue(start > 2, $"a centred block should not touch the left edge, started at {start}");
-                Assert.IsTrue(end < SIZE - 2, $"nor the right edge, ended at {end}");
+                Assert.IsTrue(lines > 1, "the text should have wrapped");
+
+                var starts = new List<int>();
+
+                for (int line = 0; line < lines; line++)
+                {
+                    PaintedBand(bitmap, line * LINE_HEIGHT, (line + 1) * LINE_HEIGHT,
+                        out int start, out int end);
+
+                    Assert.IsTrue(start >= 0, $"line {line} should be painted");
+
+                    starts.Add(start);
+
+                    int drift = Math.Abs(start + end - (SIZE - 1));
+
+                    Assert.IsTrue(drift <= BEARING, $"line {line} runs from {start} to {end}, "
+                        + "which is not centred on its own within the box (drift "
+                        + $"{drift}): \"{centered.TextLines[line]}\"");
+                }
+
+                Assert.IsTrue(starts.Distinct().Count() > 1, "lines of different widths must not "
+                    + "start at the same column, which is what centring the block as one whole "
+                    + "would do");
+            }
+        }
+
+        private static void PaintedBand(SKBitmap bitmap, int from, int to, out int leftmost,
+            out int rightmost)
+        {
+            leftmost = -1;
+            rightmost = -1;
+
+            for (int y = from; y < to && y < bitmap.Height; y++)
+            {
+                for (int x = 0; x < bitmap.Width; x++)
+                {
+                    if (bitmap.GetPixel(x, y).Alpha == 0)
+                    {
+                        continue;
+                    }
+
+                    if (leftmost < 0 || x < leftmost)
+                    {
+                        leftmost = x;
+                    }
+
+                    if (x > rightmost)
+                    {
+                        rightmost = x;
+                    }
+                }
             }
         }
 

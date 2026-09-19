@@ -1,4 +1,5 @@
 using Ixen.Core.Language.Xns;
+using Ixen.Core.Rendering;
 using Ixen.Core.UT.Layout.Geometry;
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
@@ -12,7 +13,7 @@ namespace Ixen.Core.UT.Text
     [TestClass]
     public class FontFaceTests : BaseGeometryTests
     {
-        private const string FAMILY = "Verdana";
+        private static readonly string FAMILY = SKTypeface.Default.FamilyName;
 
         private static VisualElement Label(FontWeight weight = FontWeight.Normal,
             FontStyle style = FontStyle.Normal, string text = "Handgloves")
@@ -42,16 +43,16 @@ namespace Ixen.Core.UT.Text
         [TestMethod]
         public void TheWeightAndStyleAreIndependent()
         {
-            VisualElement boldOnly = Label(FontWeight.Bold, FontStyle.Normal);
-            VisualElement italicOnly = Label(FontWeight.Normal, FontStyle.Italic);
-            VisualElement both = Label(FontWeight.Bold, FontStyle.Italic);
+            Assert.IsTrue(Measured(FontWeight.Bold, FontStyle.Normal)
+                > Measured(FontWeight.Normal, FontStyle.Normal),
+                "bold widens upright text");
 
-            Layout(boldOnly);
-            Layout(italicOnly);
-            Layout(both);
-
-            Assert.AreNotEqual(boldOnly.Width, italicOnly.Width, "bold and italic are different faces");
-            Assert.AreNotEqual(boldOnly.Width, both.Width, "bold italic is its own face");
+            Assert.IsTrue(Measured(FontWeight.Bold, FontStyle.Italic)
+                > Measured(FontWeight.Normal, FontStyle.Italic),
+                "and it widens italic text, which is what the two being independent means. "
+                + "Comparing bold against italic instead would be asserting a property of the "
+                + "installed family rather than of Ixen: a synthesised oblique advances exactly "
+                + "like its upright, which is what DejaVu does.");
         }
 
         [TestMethod]
@@ -76,18 +77,26 @@ namespace Ixen.Core.UT.Text
         [TestMethod]
         public void EveryCombinationIsCachedSeparately()
         {
-            var widths = new[]
+            var fonts = new[]
             {
-                Measured(FontWeight.Normal, FontStyle.Normal),
-                Measured(FontWeight.Bold, FontStyle.Normal),
-                Measured(FontWeight.Normal, FontStyle.Italic),
-                Measured(FontWeight.Bold, FontStyle.Italic)
+                Cached(FontWeight.Normal, FontStyle.Normal),
+                Cached(FontWeight.Bold, FontStyle.Normal),
+                Cached(FontWeight.Normal, FontStyle.Italic),
+                Cached(FontWeight.Bold, FontStyle.Italic)
             };
 
-            Assert.AreEqual(4, widths.Length);
-            Assert.IsTrue(widths.All(w => w > 0), "every combination should measure");
-            Assert.IsTrue(widths.Distinct().Count() >= 3,
-                $"the four faces should not collapse onto one another: {string.Join(", ", widths)}");
+            Assert.IsTrue(fonts.All(f => f != null), "every combination should resolve a face");
+
+            Assert.AreEqual(4, fonts.Distinct().Count(),
+                "the cache key must carry the weight and the slant, or one combination hands "
+                + "back another's font. Comparing measured widths instead would only work where "
+                + "the family has four real faces, which is a property of the host.");
+        }
+
+        private static SKFont Cached(FontWeight weight, FontStyle style)
+        {
+            return FontCache.Get(new FontSpec(FAMILY, 24, weight == FontWeight.Bold,
+                style == FontStyle.Italic), "Handgloves");
         }
 
         private static float Measured(FontWeight weight, FontStyle style)

@@ -1,7 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.RegularExpressions;
 
 namespace Ixen.Core.UT.Native
@@ -200,26 +199,10 @@ namespace Ixen.Core.UT.Native
 
         private static string Read(string relative)
         {
-            var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-            while (directory != null)
-            {
-                string candidate = Path.Combine(directory.FullName, relative);
-
-                if (File.Exists(candidate))
-                {
-                    return File.ReadAllText(candidate);
-                }
-
-                directory = directory.Parent;
-            }
-
-            Assert.Fail($"could not find {relative} by walking up from {AppContext.BaseDirectory}. "
-                + "This test reads the sources as text on purpose: referencing "
-                + "Ixen.Platform.Windows would pull in the .vcxproj, which the dotnet CLI cannot "
-                + "build, so dotnet test would stop working.");
-
-            return null;
+            return NativeSources.Read(relative,
+                "This test reads the sources as text on purpose: referencing Ixen.Platform.Windows "
+                    + "would pull in the .vcxproj, which the dotnet CLI cannot build, so dotnet test "
+                    + "would stop working.");
         }
 
         private static Dictionary<string, int> NativeDefines()

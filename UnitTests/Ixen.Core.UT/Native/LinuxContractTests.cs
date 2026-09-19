@@ -3,7 +3,6 @@ using Ixen.Core.Input;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.RegularExpressions;
 
 namespace Ixen.Core.UT.Native
@@ -89,25 +88,9 @@ namespace Ixen.Core.UT.Native
 
         private static string Read(string relative)
         {
-            var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-            while (directory != null)
-            {
-                string candidate = Path.Combine(directory.FullName, relative);
-
-                if (File.Exists(candidate))
-                {
-                    return File.ReadAllText(candidate);
-                }
-
-                directory = directory.Parent;
-            }
-
-            Assert.Fail($"could not find {relative} by walking up from {AppContext.BaseDirectory}. "
-                + "The Linux sources are read as text because a Windows machine builds the managed "
-                + "half and never the .so, so this is the only guard the wire format has here.");
-
-            return null;
+            return NativeSources.Read(relative,
+                "The Linux sources are read as text because a Windows machine builds the managed "
+                    + "half and never the .so, so this is the only guard the wire format has here.");
         }
 
         private static Dictionary<string, int> NativeDefines()

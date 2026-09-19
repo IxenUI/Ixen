@@ -150,7 +150,7 @@ namespace Ixen.Core.UT.Text
             VisualElement kept = Sized("short", SizeUnit.Content, 0, SizeUnit.Pixels, 20);
             VisualElement both = Sized("both", SizeUnit.Content, 0, SizeUnit.Pixels, 400);
 
-            kept.Text = "short\nan altogether very much longer second line indeed";
+            kept.Text = "short\nan altogether longer second line";
             both.Text = kept.Text;
 
             Layout(kept);

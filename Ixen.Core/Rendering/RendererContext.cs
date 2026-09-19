@@ -248,9 +248,10 @@ namespace Ixen.Core.Rendering
             SKFont font, SKPaint paint)
         {
             float spacing = fontSpec.LetterSpacing;
+            bool wanted = spacing != 0 || Transformed;
+            bool mapped = wanted && !string.IsNullOrEmpty(text) && font.CountGlyphs(text) == text.Length;
 
-            if (spacing != 0 && !string.IsNullOrEmpty(text)
-                && font.CountGlyphs(text) != text.Length)
+            if (spacing != 0 && !mapped && !string.IsNullOrEmpty(text))
             {
                 DrawSpacedOneByOne(text, x, baseline, fontSpec, font, paint);
                 return;
@@ -259,7 +260,7 @@ namespace Ixen.Core.Rendering
             if (!_blobs.TryGet(text, font, spacing, out SKTextBlob blob))
             {
                 blob = string.IsNullOrEmpty(text) ? null
-                    : spacing != 0 ? Positioned(text, font, spacing)
+                    : wanted && mapped ? Positioned(text, font, Metrics(fontSpec, text, font), spacing)
                     : SKTextBlob.Create(text, font, SKPoint.Empty);
 
                 _blobs.Add(text, font, spacing, blob);
@@ -274,7 +275,12 @@ namespace Ixen.Core.Rendering
             SKCanvas.DrawText(blob, x, baseline, paint);
         }
 
-        private SKTextBlob Positioned(string text, SKFont font, float spacing)
+        private SKFont Metrics(FontSpec fontSpec, string text, SKFont font)
+        {
+            return Transformed ? FontCache.Get(fontSpec, text, false) : font;
+        }
+
+        private SKTextBlob Positioned(string text, SKFont font, SKFont metrics, float spacing)
         {
             if (_spacedAdvances.Length < text.Length)
             {
@@ -282,7 +288,7 @@ namespace Ixen.Core.Rendering
                 _spacedPositions = new SKPoint[text.Length];
             }
 
-            font.GetGlyphWidths(text, new Span<float>(_spacedAdvances, 0, text.Length),
+            metrics.GetGlyphWidths(text, new Span<float>(_spacedAdvances, 0, text.Length),
                 Span<SKRect>.Empty, null);
 
             float offset = 0;

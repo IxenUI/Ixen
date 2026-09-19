@@ -9,7 +9,7 @@ namespace Ixen.Core.UT.Rendering
     public class TransformedTextTests
     {
         private static FontSpec Spec()
-            => new FontSpec("Verdana", 15, false, false);
+            => new FontSpec("", 15, false, false);
 
         [TestMethod]
         public void TheSmoothVariantIsADifferentFontAndTheHintedOneIsUntouched()
@@ -29,17 +29,58 @@ namespace Ixen.Core.UT.Rendering
         }
 
         [TestMethod]
-        public void BothVariantsAdvanceIdentically()
+        public void TransformedTextIsPlacedByTheAdvancesThatWereMeasured()
         {
-            SKFont hinted = FontCache.Get(Spec(), false);
-            SKFont smooth = FontCache.Get(Spec(), true);
+            const string TEXT = "wobble wobble wobble wobble wobble wobble wobble wobble wobble";
 
-            Assert.AreEqual(hinted.MeasureText("wobble wobble"),
-                smooth.MeasureText("wobble wobble"), 0.001f,
-                "measuring goes through the hinted font while a transformed draw goes through the "
-                + "smooth one, so their advances have to agree or the caret would drift from the ink");
+            Assert.AreEqual(Extent(TEXT, false), Extent(TEXT, true), 2f,
+                "a transformed draw goes through the smooth font while everything that decided "
+                + "the layout was measured on the hinted one, so the run has to be positioned "
+                + "from the hinted advances. Without that the ink drifts from the caret wherever "
+                + "the rasteriser quantises a hinted advance, which FreeType does and DirectWrite "
+                + "does not - so only a run on a FreeType host can falsify this.");
 
-            Assert.AreEqual(hinted.Spacing, smooth.Spacing, 0.001f);
+            Assert.AreEqual(FontCache.Get(Spec(), false).Spacing,
+                FontCache.Get(Spec(), true).Spacing, 0.001f,
+                "the line height must not depend on the variant, or a transformed paragraph "
+                + "would not line up with the layout that placed it");
+        }
+
+        private static float Extent(string text, bool transformed)
+        {
+            using var bitmap = new SKBitmap(1000, 40);
+            using var canvas = new SKCanvas(bitmap);
+
+            RendererContext context = Context(canvas);
+
+            if (transformed)
+            {
+                context.PushTransform(Matrix2D.Identity);
+            }
+
+            context.DrawText(text, 5, 5, Spec(), new Brush(Color.Black));
+
+            if (transformed)
+            {
+                context.PopClip();
+            }
+
+            context.EndFrame();
+
+            for (int x = bitmap.Width - 1; x >= 0; x--)
+            {
+                for (int y = 0; y < bitmap.Height; y++)
+                {
+                    if (bitmap.GetPixel(x, y).Alpha != 0)
+                    {
+                        return x;
+                    }
+                }
+            }
+
+            Assert.Fail("the text should be painted");
+
+            return 0;
         }
 
         private static RendererContext Context(SKCanvas canvas)

@@ -28,3 +28,20 @@ jobs:
       - name: verify
         shell: powershell
         run: .\verify.ps1
+
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: install what the native library needs
+        run: sudo apt-get update && sudo apt-get install -y libx11-dev libxcursor-dev libdbus-1-dev
+
+      - name: verify
+        run: bash ./verify-linux.sh --skip-host-frame
