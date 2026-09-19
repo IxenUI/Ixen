@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<Nullable>disable</Nullable>
+		<Copyright>©2026 by kipy</Copyright>
+		<AssemblyVersion>0.0.1</AssemblyVersion>
+		<FileVersion>0.0.1</FileVersion>
+		<PackageId>Ixen.Platform.Linux</PackageId>
+		<Version>0.0.1</Version>
+		<Authors>kipy</Authors>
+		<Description>The Linux host for Ixen. Reference this from a Linux application; it carries the native window library.</Description>
+		<PackageTags>ixen;ui;linux</PackageTags>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="SkiaSharp" Version="4.151.1" />
+		<PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.151.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Ixen.Core\Ixen.Core.csproj" />
+		<ProjectReference Include="..\Ixen.Platform\Ixen.Platform.csproj" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<IxenLinuxRuntime Condition="'$(IxenLinuxRuntime)' == ''">linux-x64</IxenLinuxRuntime>
+		<IxenLinuxLibrary>$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)', '..', 'Ixen.Platform.Linux.Native', 'bin', 'libixen.so'))</IxenLinuxLibrary>
+	</PropertyGroup>
+
+	<Target Name="IxenIncludeLinuxLibrary" BeforeTargets="AssignTargetPaths">
+		<Warning Condition="!Exists('$(IxenLinuxLibrary)') And $([MSBuild]::IsOSPlatform('Linux'))"
+				 Code="IXEN003"
+				 Text="libixen.so was not found at $(IxenLinuxLibrary), so it will not be copied next to the application and every window call will fail with DllNotFoundException. Build it on Linux with Ixen.Platform.Linux.Native/build-linux-native.sh - no MSBuild target can produce it." />
+		<ItemGroup Condition="Exists('$(IxenLinuxLibrary)')">
+			<Content Include="$(IxenLinuxLibrary)">
+				<Link>libixen.so</Link>
+				<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+				<Visible>false</Visible>
+				<Pack>true</Pack>
+				<PackagePath>runtimes/$(IxenLinuxRuntime)/native</PackagePath>
+			</Content>
+		</ItemGroup>
+	</Target>
+
+</Project>

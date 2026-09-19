@@ -1,4 +1,5 @@
 using Ixen.Core;
+using Ixen.Platform.Linux;
 using Ixen.Platform.Mac;
 using Ixen.Platform.Windows;
 using System;
@@ -20,6 +21,11 @@ namespace Ixen.Platform.Desktop
                 return IxenMacApplication.CreateWindow(surface);
             }
 
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return IxenLinuxApplication.CreateWindow(surface);
+            }
+
             throw Unsupported();
         }
 
@@ -30,11 +36,16 @@ namespace Ixen.Platform.Desktop
                 return IxenWindowsApplication.CaptureWindow(surface, path, paints);
             }
 
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return IxenLinuxApplication.CaptureWindow(surface, path, paints);
+            }
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 throw new PlatformNotSupportedException(
                     "The macOS host cannot hand over the frame it drew yet, so there is nothing to "
-                        + "capture. Only the Windows host implements it.");
+                        + "capture. Windows and Linux both implement it.");
             }
 
             throw Unsupported();
@@ -43,8 +54,8 @@ namespace Ixen.Platform.Desktop
         private static PlatformNotSupportedException Unsupported()
         {
             return new PlatformNotSupportedException(
-                $"Ixen has no desktop host for {RuntimeInformation.OSDescription}. Windows and "
-                    + "macOS are the two that exist; a Linux host would join them here.");
+                $"Ixen has no desktop host for {RuntimeInformation.OSDescription}. Windows, macOS "
+                    + "and Linux are the three that exist.");
         }
     }
 }

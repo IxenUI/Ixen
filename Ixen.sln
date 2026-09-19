@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ixen.Platform.Mac", "Ixen.P
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ixen.Platform.Desktop", "Ixen.Platform.Desktop\Ixen.Platform.Desktop.csproj", "{F0604115-D896-4598-81D5-5BA9DDE7678D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ixen.Platform.Linux", "Ixen.Platform.Linux\Ixen.Platform.Linux.csproj", "{78D3CFF3-25BA-4A69-AD98-FBF563037FB7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -169,6 +171,18 @@ Global
 		{F0604115-D896-4598-81D5-5BA9DDE7678D}.Release|x64.Build.0 = Release|Any CPU
 		{F0604115-D896-4598-81D5-5BA9DDE7678D}.Release|x86.ActiveCfg = Release|Any CPU
 		{F0604115-D896-4598-81D5-5BA9DDE7678D}.Release|x86.Build.0 = Release|Any CPU
+		{78D3CFF3-25BA-4A69-AD98-FBF563037FB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78D3CFF3-25BA-4A69-AD98-FBF563037FB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78D3CFF3-25BA-4A69-AD98-FBF563037FB7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{78D3CFF3-25BA-4A69-AD98-FBF563037FB7}.Debug|x64.Build.0 = Debug|Any CPU
+		{78D3CFF3-25BA-4A69-AD98-FBF563037FB7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{78D3CFF3-25BA-4A69-AD98-FBF563037FB7}.Debug|x86.Build.0 = Debug|Any CPU
+		{78D3CFF3-25BA-4A69-AD98-FBF563037FB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78D3CFF3-25BA-4A69-AD98-FBF563037FB7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78D3CFF3-25BA-4A69-AD98-FBF563037FB7}.Release|x64.ActiveCfg = Release|Any CPU
+		{78D3CFF3-25BA-4A69-AD98-FBF563037FB7}.Release|x64.Build.0 = Release|Any CPU
+		{78D3CFF3-25BA-4A69-AD98-FBF563037FB7}.Release|x86.ActiveCfg = Release|Any CPU
+		{78D3CFF3-25BA-4A69-AD98-FBF563037FB7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

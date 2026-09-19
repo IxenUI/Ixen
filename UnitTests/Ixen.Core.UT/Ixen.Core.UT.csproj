@@ -86,6 +86,7 @@
     <ProjectReference Include="..\..\Ixen.Core\Ixen.Core.csproj" />
     <ProjectReference Include="..\..\Ixen.Platform\Ixen.Platform.csproj" />
     <ProjectReference Include="..\..\Ixen.Platform.Mac\Ixen.Platform.Mac.csproj" />
+    <ProjectReference Include="..\..\Ixen.Platform.Linux\Ixen.Platform.Linux.csproj" />
 	<ProjectReference Include="..\..\Ixen.Generators\Ixen.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 

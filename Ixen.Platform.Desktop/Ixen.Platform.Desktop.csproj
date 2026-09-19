@@ -20,6 +20,7 @@
 		<ProjectReference Include="..\Ixen.Platform\Ixen.Platform.csproj" />
 		<ProjectReference Include="..\Ixen.Platform.Windows\Ixen.Platform.Windows.csproj" />
 		<ProjectReference Include="..\Ixen.Platform.Mac\Ixen.Platform.Mac.csproj" />
+		<ProjectReference Include="..\Ixen.Platform.Linux\Ixen.Platform.Linux.csproj" />
 	</ItemGroup>
 
 </Project>
