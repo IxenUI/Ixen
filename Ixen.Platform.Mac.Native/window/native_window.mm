@@ -1149,6 +1149,11 @@ namespace IxenMacNative
         return [[NSWorkspace sharedWorkspace] accessibilityDisplayShouldReduceMotion] ? 1 : 0;
     }
 
+    int PrefersHighContrast()
+    {
+        return [[NSWorkspace sharedWorkspace] accessibilityDisplayShouldIncreaseContrast] ? 1 : 0;
+    }
+
     static NSRect AccessibilityFrameOf(IxenContentView* view, int x, int y, int width, int height)
     {
         NSWindow* handle = [view window];

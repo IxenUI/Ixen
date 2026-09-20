@@ -41,16 +41,19 @@ namespace Ixen.Core.Rendering
 
         internal float Scale { get; private set; } = 1;
 
+        internal float FontScale { get; private set; } = 1;
+
         private StyleTokens _tokens;
 
         internal Color ColorOf(string value)
             => new Color(StyleColors.Resolve(_tokens, value));
 
-        internal void BeginFrame(SKCanvas canvas, float scale, StyleTokens tokens = null)
+        internal void BeginFrame(SKCanvas canvas, float scale, StyleTokens tokens = null, float fontScale = 1)
         {
             SKCanvas = canvas;
             _tokens = tokens;
             Scale = scale <= 0 ? 1 : scale;
+            FontScale = fontScale <= 0 ? 1 : fontScale;
             _clipDepth = 0;
             _transformDepths.Clear();
             _filtered = false;

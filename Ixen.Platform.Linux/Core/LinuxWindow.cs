@@ -13,6 +13,7 @@ namespace Ixen.Platform.Linux
     {
         private const float DEFAULT_DPI = 96f;
         private const float WHEEL_DELTA = 120f;
+        private const float PERCENT = 100f;
 
         private IntPtr _windowPtr;
 
@@ -37,6 +38,8 @@ namespace Ixen.Platform.Linux
         {
             _ixenSurface = ixenSurface;
             _ixenSurface.ReducedMotion = LinuxApi.PrefersReducedMotion() != 0;
+            _ixenSurface.HighContrast = LinuxApi.PrefersHighContrast() != 0;
+            _ixenSurface.FontScale = LinuxApi.TextScale() / (float)PERCENT;
             _ixenSurface.PreservesFrame = true;
 
             _host = new IxenHost(ixenSurface, RequestRepaint, new LinuxScheduler(),

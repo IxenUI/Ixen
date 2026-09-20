@@ -18,6 +18,8 @@ namespace Ixen.Core.Visual.Computers
 
         internal int Measured;
 
+        internal float FontScale = 1;
+
         private float _viewportWidth;
         private float _viewportHeight;
 
@@ -311,7 +313,7 @@ namespace Ixen.Core.Visual.Computers
                 return;
             }
 
-            FontSpec fontSpec = FontSpec.From(element.StylesHandlers);
+            FontSpec fontSpec = FontSpec.From(element.StylesHandlers, FontScale);
             TextWrap wrap = element.StylesHandlers.TextWrap.Descriptor.Value;
             bool wraps = wrap != TextWrap.NoWrap;
             bool breakWord = wrap == TextWrap.BreakWord;
@@ -357,7 +359,7 @@ namespace Ixen.Core.Visual.Computers
             }
 
             string value = field.DisplayText;
-            FontSpec fontSpec = FontSpec.From(field.StylesHandlers);
+            FontSpec fontSpec = FontSpec.From(field.StylesHandlers, FontScale);
 
             bool breaks = field.Multiline;
             bool wraps = breaks

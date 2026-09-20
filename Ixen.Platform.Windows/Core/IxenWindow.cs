@@ -34,6 +34,9 @@ namespace Ixen.Platform.Windows
         {
             _ixenSurface = ixenSurface;
             _ixenSurface.ReducedMotion = SystemPreferences.PrefersReducedMotion();
+            _ixenSurface.FontScale = SystemPreferences.TextScale();
+            _ixenSurface.HighContrast = SystemPreferences.PrefersHighContrast();
+            _ixenSurface.SystemColors = SystemPreferences.SystemColors();
             _host = new IxenHost(ixenSurface, RequestRepaint, new MessageScheduler(), new WindowsClipboard(),
                 SetCursor, new WindowsImageSource(), null, CanPresent);
 

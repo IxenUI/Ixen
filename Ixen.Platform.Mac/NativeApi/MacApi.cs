@@ -82,6 +82,9 @@ namespace Ixen.Platform.Mac.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_PrefersReducedMotion", CallingConvention = CallingConvention.Cdecl)]
         public static extern int PrefersReducedMotion();
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_PrefersHighContrast", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int PrefersHighContrast();
+
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterAccessibilityCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterAccessibilityCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnAccessibilityCallBack callback);
 

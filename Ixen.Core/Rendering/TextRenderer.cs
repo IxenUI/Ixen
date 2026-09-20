@@ -53,7 +53,7 @@ namespace Ixen.Core.Rendering
             }
 
             VisualElementStylesHandlers handlers = element.StylesHandlers;
-            FontSpec fontSpec = FontSpec.From(handlers);
+            FontSpec fontSpec = FontSpec.From(handlers, context.FontScale);
 
             if (fontSpec.Size <= 0)
             {

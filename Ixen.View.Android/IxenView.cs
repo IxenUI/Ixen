@@ -65,6 +65,7 @@ namespace Ixen.View.Android
             IxenSynchronizationContext.Install(_host.Surface);
 
             _host.Surface.ReducedMotion = PrefersReducedMotion();
+            _host.Surface.HighContrast = PrefersHighContrast();
 
             _skCanvasView.PaintSurface += OnPaintSurface;
             _skCanvasView.Touch += OnTouch;
@@ -92,13 +93,36 @@ namespace Ixen.View.Android
             }
         }
 
+        private const string HIGH_TEXT_CONTRAST = "high_text_contrast_enabled";
+
+        private bool PrefersHighContrast()
+        {
+            ContentResolver resolver = Context?.ContentResolver;
+
+            if (resolver == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                return global::Android.Provider.Settings.Secure.GetInt(resolver, HIGH_TEXT_CONTRAST, 0) != 0;
+            }
+            catch (Java.Lang.Exception)
+            {
+                return false;
+            }
+        }
+
         private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
         {
             _host.Surface.Presentable = IsShown;
 
             float density = Context?.Resources?.DisplayMetrics?.Density ?? 1f;
+            float fontScale = Context?.Resources?.Configuration?.FontScale ?? 1f;
 
             _host.Surface.Scale = density > 0 ? density : 1f;
+            _host.Surface.FontScale = fontScale > 0 ? fontScale : 1f;
             _host.Paint(e.Surface.Canvas, e.Info.Width, e.Info.Height);
             _accessibility?.Sync();
         }

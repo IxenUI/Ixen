@@ -1320,9 +1320,9 @@ void NW_Destroy(NativeWindow* window)
     free(window);
 }
 
-int NW_PrefersReducedMotion(void)
+static int NW_ReadFlag(const char* name)
 {
-    const char* preference = getenv("IXEN_REDUCED_MOTION");
+    const char* preference = getenv(name);
 
     if (preference == NULL)
     {
@@ -1330,6 +1330,37 @@ int NW_PrefersReducedMotion(void)
     }
 
     return preference[0] == '1' || preference[0] == 't' || preference[0] == 'T' ? 1 : 0;
+}
+
+int NW_PrefersReducedMotion(void)
+{
+    return NW_ReadFlag("IXEN_REDUCED_MOTION");
+}
+
+int NW_PrefersHighContrast(void)
+{
+    return NW_ReadFlag("IXEN_HIGH_CONTRAST");
+}
+
+int NW_TextScale(void)
+{
+    const char* preference = getenv("IXEN_FONT_SCALE");
+    char* end = NULL;
+    long percent;
+
+    if (preference == NULL)
+    {
+        return 100;
+    }
+
+    percent = strtol(preference, &end, 10);
+
+    if (end == preference || percent < 50 || percent > 400)
+    {
+        return 100;
+    }
+
+    return (int)percent;
 }
 
 void NW_RegisterPaintCallBack(NativeWindow* window, void callBack(int, int))

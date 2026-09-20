@@ -129,6 +129,11 @@ int WA_PrefersReducedMotion()
     return PrefersReducedMotion();
 }
 
+int WA_PrefersHighContrast()
+{
+    return PrefersHighContrast();
+}
+
 void WA_RegisterAccessibilityCallBack(NativeWindow* window, int callBack(int, int, const char*))
 {
     if (window != nullptr)

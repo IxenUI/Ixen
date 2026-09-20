@@ -37,13 +37,18 @@ namespace Ixen.Core.Visual
                 ? 0
                 : LetterSpacing * text.Length;
 
-        internal static FontSpec From(VisualElementStylesHandlers handlers)
+        internal static FontSpec From(VisualElementStylesHandlers handlers, float scale = 1)
         {
             float size = handlers.FontSize.Descriptor.Value;
 
             if (size <= 0)
             {
                 size = FontSizeStyleDescriptor.DEFAULT_SIZE;
+            }
+
+            if (scale > 0 && scale != 1)
+            {
+                size *= scale;
             }
 
             return new FontSpec(

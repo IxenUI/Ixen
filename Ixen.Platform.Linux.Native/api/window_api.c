@@ -105,6 +105,16 @@ int WA_PrefersReducedMotion(void)
     return NW_PrefersReducedMotion();
 }
 
+int WA_PrefersHighContrast(void)
+{
+    return NW_PrefersHighContrast();
+}
+
+int WA_TextScale(void)
+{
+    return NW_TextScale();
+}
+
 void WA_RegisterAccessibilityCallBack(NativeWindow* window, int callBack(int, int, const char*))
 {
     NW_RegisterAccessibilityCallBack(window, callBack);

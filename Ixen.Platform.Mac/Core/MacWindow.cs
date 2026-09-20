@@ -37,6 +37,7 @@ namespace Ixen.Platform.Mac
         {
             _ixenSurface = ixenSurface;
             _ixenSurface.ReducedMotion = MacApi.PrefersReducedMotion() != 0;
+            _ixenSurface.HighContrast = MacApi.PrefersHighContrast() != 0;
             _ixenSurface.PreservesFrame = true;
             _ixenSurface.AcceleratorModifier = KeyModifiers.Meta;
 

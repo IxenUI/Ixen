@@ -70,5 +70,7 @@ void NW_AccessibilityNotify(NativeWindow* window, int identifier, int kind, cons
 long NW_Schedule(int delayMilliseconds, int repeat, void callBack(long));
 void NW_Cancel(long identifier);
 int NW_PrefersReducedMotion(void);
+int NW_PrefersHighContrast(void);
+int NW_TextScale(void);
 
 #endif

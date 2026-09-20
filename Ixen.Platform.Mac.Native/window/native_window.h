@@ -58,6 +58,7 @@ namespace IxenMacNative
     void CancelCallBack(long id);
 
     int PrefersReducedMotion();
+    int PrefersHighContrast();
 
     int IsAccessibilityActive(NativeWindow* window);
     void UpdateAccessibilityNode(NativeWindow* window, int identifier, int parent, const char* role, int states, int actions, int toggle, int x, int y, int width, int height, const char* name, const char* value, const char* help);

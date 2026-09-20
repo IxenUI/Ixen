@@ -19,6 +19,10 @@ namespace Ixen.Core
 
         Input.KeyModifiers AcceleratorModifier { get; }
 
+        bool HighContrast { get; }
+        float FontScale { get; }
+        Visual.Classes.SystemPalette SystemColors { get; }
+
         void SetToken(string name, string color);
         void ResetToken(string name);
         void ResetTokens();

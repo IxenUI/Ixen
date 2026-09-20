@@ -32,5 +32,7 @@ IXEN_API_ENTRY void WA_AccessibilityNotify(NativeWindow* window, int identifier,
 IXEN_API_ENTRY long WA_Schedule(int delayMilliseconds, int repeat, void callBack(long));
 IXEN_API_ENTRY void WA_Cancel(long identifier);
 IXEN_API_ENTRY int WA_PrefersReducedMotion(void);
+IXEN_API_ENTRY int WA_PrefersHighContrast(void);
+IXEN_API_ENTRY int WA_TextScale(void);
 
 #endif

@@ -31,6 +31,7 @@ namespace Ixen.Core
 
         private VisualElement _root;
         private float _scale = 1;
+        private float _fontScale = 1;
         private bool _visualDirty;
         private Dictionary<string, Dictionary<string, string>> _pendingState;
 
@@ -91,6 +92,23 @@ namespace Ixen.Core
 
                 _scale = scale;
                 Root?.InvalidateLayout();
+            }
+        }
+
+        public float FontScale
+        {
+            get => _fontScale;
+            set
+            {
+                float scale = value <= 0 ? 1 : value;
+
+                if (_fontScale == scale)
+                {
+                    return;
+                }
+
+                _fontScale = scale;
+                Root?.InvalidateLayoutTree();
             }
         }
 
@@ -203,6 +221,7 @@ namespace Ixen.Core
             }
 
             _measureComputer.Measured = 0;
+            _measureComputer.FontScale = _fontScale;
 
             for (int pass = 0; pass < CONTAINER_PASSES; pass++)
             {
@@ -721,6 +740,41 @@ namespace Ixen.Core
             }
         }
 
+        private bool _highContrast;
+
+        public bool HighContrast
+        {
+            get => _highContrast;
+            set
+            {
+                if (_highContrast == value)
+                {
+                    return;
+                }
+
+                _highContrast = value;
+                Root?.Invalidate();
+            }
+        }
+
+        private SystemPalette _systemColors;
+
+        public SystemPalette SystemColors
+        {
+            get => _systemColors;
+            set
+            {
+                if (_systemColors == value)
+                {
+                    return;
+                }
+
+                _systemColors = value;
+                value?.Publish(Styles?.Tokens);
+                Root?.Invalidate();
+            }
+        }
+
         public void StartAnimating(VisualElement element)
         {
             if (element == null)
@@ -1181,7 +1235,7 @@ namespace Ixen.Core
         internal void Render(SKCanvas canvas)
         {
             _visualDirty = false;
-            _rendererContext.BeginFrame(canvas, _scale, Styles?.Tokens);
+            _rendererContext.BeginFrame(canvas, _scale, Styles?.Tokens, _fontScale);
 
             bool clipped = PreservesFrame && !_damage.IsWhole && !_damage.IsEmpty;
 
