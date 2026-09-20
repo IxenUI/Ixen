@@ -78,10 +78,18 @@ Suite()
     if dotnet test "$2" -c "$configuration" --no-build > "$work/test.txt" 2>&1
     then
         local count
+        local skipped
 
         count="$(grep -oE 'Passed:[[:space:]]+[0-9]+' "$work/test.txt" | grep -oE '[0-9]+' | head -1)"
+        skipped="$(grep -oE 'Skipped:[[:space:]]+[0-9]+' "$work/test.txt" | grep -oE '[0-9]+' | head -1)"
 
-        Record OK "$1" "${count:-?} passed"
+        if [ "${skipped:-0}" -gt 0 ]
+        then
+            Record OK "$1" "${count:-?} passed, ${skipped} skipped"
+        else
+            Record OK "$1" "${count:-?} passed"
+        fi
+
         return 0
     fi
 

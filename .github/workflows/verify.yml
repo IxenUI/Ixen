@@ -40,8 +40,8 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: install what the native library needs
-        run: sudo apt-get update && sudo apt-get install -y libx11-dev libxcursor-dev libdbus-1-dev
+      - name: install what the native library and the font fallback need
+        run: sudo apt-get update && sudo apt-get install -y libx11-dev libxcursor-dev libdbus-1-dev fonts-droid-fallback
 
       - name: verify
         run: bash ./verify-linux.sh --skip-host-frame

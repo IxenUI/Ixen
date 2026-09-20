@@ -86,6 +86,23 @@ function TestCount([object[]] $lines)
     return -1
 }
 
+function SkippedCount([object[]] $lines)
+{
+    $line = @($lines | Where-Object { $_ -match 'Skipped:\s+(\d+)' })
+
+    if ($line.Count -eq 0)
+    {
+        return 0
+    }
+
+    if ($line[$line.Count - 1] -match 'Skipped:\s+(\d+)')
+    {
+        return [int] $Matches[1]
+    }
+
+    return 0
+}
+
 function RunSuite([string] $name, [string] $project)
 {
     $out = @(& dotnet test (Join-Path $framework $project) --no-build --nologo -c $Configuration 2>&1)
@@ -94,7 +111,17 @@ function RunSuite([string] $name, [string] $project)
 
     if ($code -eq 0)
     {
-        Record 'OK' $name ('{0} tests' -f $count)
+        $skipped = SkippedCount $out
+
+        if ($skipped -gt 0)
+        {
+            Record 'OK' $name ('{0} tests, {1} skipped' -f $count, $skipped)
+        }
+        else
+        {
+            Record 'OK' $name ('{0} tests' -f $count)
+        }
+
         return
     }
 
