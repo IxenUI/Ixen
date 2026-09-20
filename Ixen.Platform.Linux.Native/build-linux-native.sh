@@ -13,8 +13,9 @@ while [ $# -gt 0 ]; do
             echo
             echo "  --debug  -O0 -g instead of -O2"
             echo
-            echo "It needs gcc or clang plus the X11 development packages:"
-            echo "  libx11-dev libxcursor-dev libdbus-1-dev"
+            echo "It needs gcc or clang plus the development packages:"
+            echo "  libx11-dev libxcursor-dev libdbus-1-dev libwayland-dev"
+            echo "  libwayland-bin wayland-protocols libxkbcommon-dev"
             exit 0
             ;;
         *) echo "unknown flag: $1"; exit 2 ;;
