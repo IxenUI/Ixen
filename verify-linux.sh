@@ -206,8 +206,9 @@ else
         Show "$work/capture.txt" 6
         Record FAIL "host frame matches library" "the host produced no frame, exit $code - a runner with no X server needs --skip-host-frame"
     else
-        read -r device_w device_h scale fonts < "$said"
+        read -r device_w device_h scale fonts backend < "$said"
         fonts="${fonts:-1}"
+        backend="${backend:-unknown}"
 
         if dotnet run --project "$tools" -c "$configuration" --no-build -- --render "$library" "$device_w" "$device_h" "$rendered" --component MainComponent --scale "$scale" --font-scale "$fonts" > "$work/render.txt" 2>&1 && [ -s "$rendered" ]
         then
@@ -216,10 +217,10 @@ else
 
             if [ "$one" = "$two" ]
             then
-                Record OK "host frame matches library" "$device_w x $device_h at scale $scale, font scale $fonts, $one, $moved"
+                Record OK "host frame matches library" "$backend, $device_w x $device_h at scale $scale, font scale $fonts, $one, $moved"
             else
                 dotnet run --project "$tools" -c "$configuration" --no-build -- --diff "$shot" "$rendered" 2>&1 | grep '^difference' | sed 's/^/     /'
-                Record FAIL "host frame matches library" "the X11 path and the library disagree at $device_w x $device_h scale $scale font scale $fonts ($moved)"
+                Record FAIL "host frame matches library" "the $backend path and the library disagree at $device_w x $device_h scale $scale font scale $fonts ($moved)"
             fi
         else
             Show "$work/render.txt" 6

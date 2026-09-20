@@ -5,6 +5,11 @@ NativeWindow* WA_CreateWindow(const char* title, int width, int height)
     return NW_Create(title, width, height);
 }
 
+const char* WA_GetWindowBackend(NativeWindow* window)
+{
+    return NW_Backend(window);
+}
+
 int WA_ShowWindow(NativeWindow* window)
 {
     return NW_Run(window);

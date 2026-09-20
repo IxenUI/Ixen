@@ -9,6 +9,29 @@ namespace Ixen.Platform.Desktop
 {
     public static class IxenDesktopApplication
     {
+        public static string Backend
+        {
+            get
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    return "Win32";
+                }
+
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    return "macOS";
+                }
+
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    return IxenLinuxApplication.Backend;
+                }
+
+                return null;
+            }
+        }
+
         public static int CreateWindow(IxenSurface surface)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

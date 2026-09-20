@@ -4,10 +4,14 @@ namespace Ixen.Platform.Linux
 {
     public static class IxenLinuxApplication
     {
+        public static string Backend { get; private set; }
+
         public static int CreateWindow(IxenSurface surface)
         {
             using (var window = new LinuxWindow(surface))
             {
+                Backend = window.Backend;
+
                 return window.Show();
             }
         }
@@ -16,6 +20,8 @@ namespace Ixen.Platform.Linux
         {
             using (var window = new LinuxWindow(surface))
             {
+                Backend = window.Backend;
+
                 surface.ReducedMotion = true;
 
                 window.CaptureAfter(path, paints);

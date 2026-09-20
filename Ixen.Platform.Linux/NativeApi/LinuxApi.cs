@@ -19,6 +19,9 @@ namespace Ixen.Platform.Linux.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr CreateWindow([MarshalAs(UnmanagedType.LPUTF8Str)] string title, int width, int height);
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_GetWindowBackend", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr GetWindowBackend(IntPtr windowPtr);
+
         [DllImport(LIB_NAME, EntryPoint = "WA_ShowWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern int ShowWindow(IntPtr windowPtr);
 

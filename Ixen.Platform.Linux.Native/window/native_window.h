@@ -1,9 +1,6 @@
 #ifndef _NATIVE_WINDOW_H_
 #define _NATIVE_WINDOW_H_
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-
 #define IXEN_POINTER_MOVE 0
 #define IXEN_POINTER_DOWN 1
 #define IXEN_POINTER_UP 2
@@ -41,6 +38,7 @@
 typedef struct NativeWindow NativeWindow;
 
 NativeWindow* NW_Create(const char* title, int width, int height);
+const char* NW_Backend(NativeWindow* window);
 int NW_Run(NativeWindow* window);
 void NW_Destroy(NativeWindow* window);
 void NW_SetTitle(NativeWindow* window, const char* title);

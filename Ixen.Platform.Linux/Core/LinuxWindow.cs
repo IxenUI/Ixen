@@ -6,6 +6,7 @@ using Ixen.Platform.Linux.NativeApi;
 using SkiaSharp;
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Ixen.Platform.Linux
 {
@@ -61,9 +62,13 @@ namespace Ixen.Platform.Linux
 
             if (_windowPtr == IntPtr.Zero)
             {
-                throw new Exception("Could not initialize the X11 window");
+                throw new Exception("Could not initialize the Linux window");
             }
+
+            Backend = Marshal.PtrToStringUTF8(LinuxApi.GetWindowBackend(_windowPtr));
         }
+
+        public string Backend { get; }
 
         public int Show()
         {

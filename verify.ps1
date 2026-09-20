@@ -472,6 +472,7 @@ else
         $device_h = $geometry[1]
         $scale = $geometry[2]
         $fonts = if ($geometry.Count -gt 3) { $geometry[3] } else { '1' }
+        $backend = if ($geometry.Count -gt 4) { $geometry[4] } else { 'unknown' }
         $dll = Join-Path $workspace ('Demo App\Ixen.DemoApp\bin\' + $Configuration + '\net10.0\Ixen.DemoApp.dll')
 
         $out = @(& dotnet run --project $tools -c $Configuration --no-build -- --render $dll $device_w $device_h $lib --component MainComponent --scale $scale --font-scale $fonts 2>&1)
@@ -489,14 +490,14 @@ else
 
             if ($one -eq $two)
             {
-                Record 'OK' 'host frame matches library' ('{0} x {1} at scale {2}, font scale {3}, {4}' -f $device_w, $device_h, $scale, $fonts, $one)
+                Record 'OK' 'host frame matches library' ('{0}, {1} x {2} at scale {3}, font scale {4}, {5}' -f $backend, $device_w, $device_h, $scale, $fonts, $one)
             }
             else
             {
                 $out = @(& dotnet run --project $tools -c $Configuration --no-build -- --diff $shot $lib 2>&1)
 
                 Show @($out | Where-Object { $_ -match '^difference' }) 2
-                Record 'FAIL' 'host frame matches library' ('the native path and the library disagree at {0} x {1} scale {2} font scale {3}' -f $device_w, $device_h, $scale, $fonts)
+                Record 'FAIL' 'host frame matches library' ('the {0} path and the library disagree at {1} x {2} scale {3} font scale {4}' -f $backend, $device_w, $device_h, $scale, $fonts)
             }
 
             Remove-Item $lib -ErrorAction SilentlyContinue
