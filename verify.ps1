@@ -191,11 +191,13 @@ if ($built)
 {
     RunSuite 'core tests' 'UnitTests\Ixen.Core.UT\Ixen.Core.UT.csproj'
     RunSuite 'controls tests' 'UnitTests\Ixen.Controls.UT\Ixen.Controls.UT.csproj'
+    RunSuite 'language server tests' 'UnitTests\Ixen.LanguageServer.UT\Ixen.LanguageServer.UT.csproj'
 }
 else
 {
     Record 'SKIP' 'core tests' 'the solution did not build'
     Record 'SKIP' 'controls tests' 'the solution did not build'
+    Record 'SKIP' 'language server tests' 'the solution did not build'
 }
 
 $harness = @(Get-ChildItem -Path $framework -Filter *.cs -Recurse |

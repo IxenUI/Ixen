@@ -120,10 +120,12 @@ fi
 hosts_built=0
 core_built=0
 controls_built=0
+lsp_built=0
 
 Build "hosts, warning-free" "$framework/Ixen.Platform.Desktop/Ixen.Platform.Desktop.csproj" "the three desktop hosts" && hosts_built=1
 Build "core tests, warning-free" "$framework/UnitTests/Ixen.Core.UT/Ixen.Core.UT.csproj" "Ixen.Core.UT" && core_built=1
 Build "controls tests, warning-free" "$framework/UnitTests/Ixen.Controls.UT/Ixen.Controls.UT.csproj" "Ixen.Controls.UT" && controls_built=1
+Build "language server, warning-free" "$framework/UnitTests/Ixen.LanguageServer.UT/Ixen.LanguageServer.UT.csproj" "Ixen.LanguageServer and its tests" && lsp_built=1
 
 if [ "$core_built" = "1" ]
 then
@@ -137,6 +139,13 @@ then
     Suite "controls tests" "$framework/UnitTests/Ixen.Controls.UT/Ixen.Controls.UT.csproj"
 else
     Record SKIP "controls tests" "the test project did not build"
+fi
+
+if [ "$lsp_built" = "1" ]
+then
+    Suite "language server tests" "$framework/UnitTests/Ixen.LanguageServer.UT/Ixen.LanguageServer.UT.csproj"
+else
+    Record SKIP "language server tests" "the test project did not build"
 fi
 
 harnesses="$(grep -rl 'GetAllocatedBytesForCurrentThread' "$framework/UnitTests" --include='*.cs' | wc -l)"

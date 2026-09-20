@@ -1,0 +1,60 @@
+{
+  "name": "ixen",
+  "displayName": "Ixen",
+  "description": "XNL and XNS support through the Ixen language server",
+  "version": "0.0.1",
+  "publisher": "ixen",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:xnl",
+    "onLanguage:xns"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "xnl",
+        "aliases": [
+          "XNL"
+        ],
+        "extensions": [
+          ".xnl"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "xns",
+        "aliases": [
+          "XNS"
+        ],
+        "extensions": [
+          ".xns"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "configuration": {
+      "title": "Ixen",
+      "properties": {
+        "ixen.server.path": {
+          "type": "string",
+          "default": "",
+          "description": "Path to Ixen.LanguageServer.dll. Empty means the copy shipped beside this extension."
+        },
+        "ixen.server.dotnet": {
+          "type": "string",
+          "default": "dotnet",
+          "description": "The dotnet command used to run the server."
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}
