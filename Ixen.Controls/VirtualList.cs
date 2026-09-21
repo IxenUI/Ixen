@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Ixen.Controls
 {
-    public class VirtualList : VisualElement
+    public class VirtualList : VisualElement, IRegionHost
     {
         public const string SPACER = "VirtualListSpacer";
 
@@ -15,10 +15,11 @@ namespace Ixen.Controls
 
         private readonly VisualElement _spacer;
         private readonly List<VisualElement> _rows = new();
+        private readonly List<IRegionRow> _owners = new();
 
-        private IList _items;
-        private Func<VisualElement> _create;
-        private Action<VisualElement, int> _bind;
+        private Func<int> _count;
+        private Func<IRegionRow> _create;
+        private Action<IRegionRow, int> _bind;
 
         private float _itemHeight = DEFAULT_ITEM_HEIGHT;
         private int _first = -1;
@@ -64,7 +65,7 @@ namespace Ixen.Controls
 
         public int Overscan { get; set; } = 1;
 
-        public int Count => _items == null ? 0 : _items.Count;
+        public int Count => _count == null ? 0 : _count();
 
         public int RealisedCount => _realised;
 
@@ -90,7 +91,15 @@ namespace Ixen.Controls
 
         public void SetItems(IList items, Func<VisualElement> create, Action<VisualElement, int> bind)
         {
-            _items = items;
+            SetRegion(
+                () => items == null ? 0 : items.Count,
+                create == null ? null : new Func<IRegionRow>(() => new ElementRow(create())),
+                bind == null ? null : new Action<IRegionRow, int>((row, index) => bind(row.ElementAt(0), index)));
+        }
+
+        public void SetRegion(Func<int> count, Func<IRegionRow> create, Action<IRegionRow, int> bind)
+        {
+            _count = count;
             _create = create;
             _bind = bind;
 
@@ -140,7 +149,7 @@ namespace Ixen.Controls
 
         protected override void OnPrepass(float viewportWidth, float viewportHeight)
         {
-            if (_create == null || _bind == null)
+            if (_count == null || _create == null || _bind == null)
             {
                 return;
             }
@@ -189,7 +198,7 @@ namespace Ixen.Controls
                 row.Styles.Top.Value = index * _itemHeight;
                 row.Styles.Height.Value = _itemHeight;
 
-                _bind(row, index);
+                _bind(_owners[i], index);
 
                 row.Invalidate();
             }
@@ -199,13 +208,23 @@ namespace Ixen.Controls
         {
             while (_rows.Count < visible)
             {
-                VisualElement row = _create();
+                IRegionRow owner = _create();
+
+                if (owner == null || owner.ElementCount != 1)
+                {
+                    throw new InvalidOperationException(
+                        "a virtualised row is one element, and this one holds "
+                            + (owner == null ? 0 : owner.ElementCount) + ".");
+                }
+
+                VisualElement row = owner.ElementAt(0);
 
                 row.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
                 row.Styles.Right = new RightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
                 row.Styles.Top = new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
                 row.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = _itemHeight };
 
+                _owners.Add(owner);
                 _rows.Add(row);
                 AddChild(row);
             }
@@ -227,6 +246,20 @@ namespace Ixen.Controls
             }
 
             _realised = visible;
+        }
+
+        private sealed class ElementRow : IRegionRow
+        {
+            private readonly VisualElement _element;
+
+            internal ElementRow(VisualElement element)
+            {
+                _element = element;
+            }
+
+            public int ElementCount => 1;
+
+            public VisualElement ElementAt(int index) => _element;
         }
     }
 }

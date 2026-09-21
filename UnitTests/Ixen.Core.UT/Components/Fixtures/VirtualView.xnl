@@ -1,0 +1,43 @@
+virtual_root {} [
+	virtual_before { text: "before" }
+	host<RecordingHost> {} [
+		@foreach (var word in Words) {
+			word_row { text: "{word}" click: "{Pick(word)}" } [
+				@if (word == Picked) {
+					word_mark { text: "picked" }
+				@}
+			]
+		@}
+	]
+	virtual_after { text: "after" }
+	plain {} [
+		@foreach (var word in Words) {
+			plain_row { text: "{word}" }
+		@}
+	]
+	outer {} [
+		@foreach (var group in Groups) {
+			card {} [
+				inner<RecordingHost> {} [
+					@foreach (var item in group) {
+						item_row { text: "{item}" }
+					@}
+				]
+			]
+		@}
+	]
+	nested {} [
+		@foreach (var group in Groups) {
+			nested_card {} [
+				@foreach (var item in group) {
+					nested_item { text: "{item}" }
+				@}
+			]
+		@}
+	]
+	gate<RecordingHost> {} [
+		@if (Flag) {
+			gate_row { text: "on" }
+		@}
+	]
+]

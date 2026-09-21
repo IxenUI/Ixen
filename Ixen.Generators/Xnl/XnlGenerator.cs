@@ -21,6 +21,7 @@ namespace Ixen.Generators.Xnl
         private const string COMPONENT_METADATA_NAME = "Ixen.Core.Components.Component";
         private const string COMPONENT_TYPE_NAME = "Component";
         private const string BOUND_MODEL_METADATA_NAME = "Ixen.Core.Components.IBoundModel";
+        private const string REGION_HOST_METADATA_NAME = "Ixen.Core.Visual.IRegionHost";
         private const string IF_KEYWORD = "if";
         private const string FOREACH_KEYWORD = "foreach";
         private const string IN_KEYWORD = "in";
@@ -57,6 +58,7 @@ namespace Ixen.Generators.Xnl
 
             INamedTypeSymbol visualElementSymbol = compilation.GetTypeByMetadataName(VISUAL_ELEMENT_METADATA_NAME);
             INamedTypeSymbol componentSymbol = compilation.GetTypeByMetadataName(COMPONENT_METADATA_NAME);
+            INamedTypeSymbol regionHostSymbol = compilation.GetTypeByMetadataName(REGION_HOST_METADATA_NAME);
 
             foreach ((string name, string content, string path) in texts)
             {
@@ -71,7 +73,7 @@ namespace Ixen.Generators.Xnl
                     continue;
                 }
 
-                var resolver = new TypeResolver(compilation, visualElementSymbol, componentSymbol);
+                var resolver = new TypeResolver(compilation, visualElementSymbol, componentSymbol, regionHostSymbol);
                 var file = new FileContext(resolver, diagnostics);
 
                 CollectBoundNodes(node, file);
@@ -84,7 +86,7 @@ namespace Ixen.Generators.Xnl
 
                 var body = new StringBuilder();
 
-                AddChildren(body, node, "this", 3, file);
+                AddChildren(body, node, "this", 3, file, null);
 
                 var members = new StringBuilder();
 
@@ -173,7 +175,14 @@ namespace Ixen.Generators.Xnl
             internal string Key;
             internal string Loop;
 
+            internal bool Virtual;
+
             internal bool IsLoop => Kind != RegionKind.If;
+        }
+
+        class HostContext
+        {
+            internal bool Taken;
         }
 
         class Emit
@@ -245,6 +254,12 @@ namespace Ixen.Generators.Xnl
 
         static void AddRegionBinding(StringBuilder sb, Region region, FileContext file, string ownerRow, int tabLevel)
         {
+            if (region.Virtual)
+            {
+                AddVirtualBinding(sb, region, file, ownerRow, tabLevel);
+                return;
+            }
+
             string prefix = region.Owner == null ? string.Empty : $"{ownerRow}.";
             string tabs = new string('\t', tabLevel);
             string inner = new string('\t', tabLevel + 1);
@@ -254,6 +269,7 @@ namespace Ixen.Generators.Xnl
             string factory = $"_ => new {region.RowType}()";
             string offset = OffsetOf(region, prefix);
             string counter = $"{region.Prefix}_count";
+            string at = $"{region.Prefix}_at";
 
             sb.AppendLine();
 
@@ -301,9 +317,9 @@ namespace Ixen.Generators.Xnl
             {
                 sb.AppendLine($"{tabs}{prefix}{region.Prefix}_next.Clear();");
                 sb.AppendLine();
-                sb.AppendLine($"{tabs}for (int i = 0; i < {counter}; i++)");
+                sb.AppendLine($"{tabs}for (int {at} = 0; {at} < {counter}; {at}++)");
                 sb.AppendLine($"{tabs}{{");
-                sb.AppendLine($"{inner}{region.Declaration} = {region.Prefix}_source[i];");
+                sb.AppendLine($"{inner}{region.Declaration} = {region.Prefix}_source[{at}];");
                 sb.AppendLine($"{inner}{prefix}{region.Prefix}_next.Add(" +
                     $"{XnlBindings.Qualify(region.Key, file.ModelMembers)});");
                 sb.AppendLine($"{tabs}}}");
@@ -322,12 +338,46 @@ namespace Ixen.Generators.Xnl
             }
 
             sb.AppendLine();
-            sb.AppendLine($"{tabs}for (int i = 0; i < {counter}; i++)");
+            sb.AppendLine($"{tabs}for (int {at} = 0; {at} < {counter}; {at}++)");
             sb.AppendLine($"{tabs}{{");
-            sb.AppendLine($"{inner}{region.Declaration} = {region.Prefix}_source[i];");
-            sb.AppendLine($"{inner}var {rowVar} = {rows}[i];");
+            sb.AppendLine($"{inner}{region.Declaration} = {region.Prefix}_source[{at}];");
+            sb.AppendLine($"{inner}var {rowVar} = {rows}[{at}];");
             sb.Append(loop);
             sb.AppendLine($"{tabs}}}");
+        }
+
+        static void AddVirtualBinding(StringBuilder sb, Region region, FileContext file, string ownerRow, int tabLevel)
+        {
+            string prefix = region.Owner == null ? string.Empty : $"{ownerRow}.";
+            string tabs = new string('\t', tabLevel);
+            string inner = new string('\t', tabLevel + 1);
+            string body = new string('\t', tabLevel + 2);
+            string source = $"{region.Prefix}_source";
+            string slot = $"{region.Prefix}_slot";
+            string rowVar = $"{region.Prefix}_row";
+            string at = $"{region.Prefix}_at";
+
+            var block = new StringBuilder();
+
+            AddRowBindings(block, region, rowVar, file, tabLevel + 2);
+
+            sb.AppendLine();
+            sb.AppendLine($"{tabs}var {source} = {XnlBindings.Qualify(region.Source, file.ModelMembers)};");
+            sb.AppendLine();
+            sb.AppendLine($"{tabs}{prefix}{region.ParentId}.SetRegion(");
+            sb.AppendLine($"{inner}() => {source} == null ? 0 : {source}.Count,");
+            sb.AppendLine($"{inner}() => new {region.RowType}(),");
+            sb.AppendLine($"{inner}({slot}, {at}) =>");
+            sb.AppendLine($"{inner}{{");
+
+            if (block.Length > 0)
+            {
+                sb.AppendLine($"{body}var {rowVar} = ({region.RowType}){slot};");
+                sb.AppendLine($"{body}{region.Declaration} = {source}[{at}];");
+                sb.Append(block);
+            }
+
+            sb.AppendLine($"{inner}}});");
         }
 
         static void AddRowBindings(StringBuilder sb, Region region, string rowVar, FileContext file, int tabLevel)
@@ -681,7 +731,8 @@ namespace Ixen.Generators.Xnl
                 sb.AppendLine();
             }
 
-            AddChildren(sb, node, ContentParent(resolved, nodeId), tabLevel, file);
+            AddChildren(sb, node, ContentParent(resolved, nodeId), tabLevel, file,
+                resolved.IsComponent ? null : resolved.Symbol);
 
             sb.AppendLine();
         }
@@ -705,11 +756,14 @@ namespace Ixen.Generators.Xnl
             return null;
         }
 
-        static void AddChildren(StringBuilder sb, XnlNode node, string parentId, int tabLevel, FileContext file)
+        static void AddChildren(StringBuilder sb, XnlNode node, string parentId, int tabLevel, FileContext file,
+            INamedTypeSymbol parentSymbol)
         {
             string tabs = new string('\t', tabLevel);
             var regions = new List<string>();
             int statics = 0;
+
+            HostContext host = file.Resolver.IsRegionHost(parentSymbol) ? new HostContext() : null;
 
             bool projects = parentId.EndsWith(".Content");
             string owner = projects ? parentId.Substring(0, parentId.Length - ".Content".Length) : null;
@@ -727,7 +781,7 @@ namespace Ixen.Generators.Xnl
 
                 if (child.IsRegion)
                 {
-                    chain = AddRegion(child, parentId, statics, regions, file, chain);
+                    chain = AddRegion(child, parentId, statics, regions, file, chain, host);
                     continue;
                 }
 
@@ -809,7 +863,7 @@ namespace Ixen.Generators.Xnl
         }
 
         static Region AddRegion(XnlNode node, string parentId, int statics, List<string> regions, FileContext file,
-            Region chain)
+            Region chain, HostContext host)
         {
             string instances = $"{Identifier(node)}_region";
 
@@ -829,6 +883,23 @@ namespace Ixen.Generators.Xnl
             if (!ParseHeader(node, region, file, chain))
             {
                 return null;
+            }
+
+            if (host != null && region.Kind == RegionKind.ForEach)
+            {
+                if (host.Taken)
+                {
+                    file.Diagnostics.Add(new LanguageError(
+                        LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                        "a region host drives one region, so it cannot hold a second one.",
+                        node.CodeIndex,
+                        node.Code.Length + 1));
+                }
+                else
+                {
+                    host.Taken = true;
+                    region.Virtual = true;
+                }
             }
 
             foreach (XnlNode body in node.Children)
@@ -860,8 +931,36 @@ namespace Ixen.Generators.Xnl
                 region.Body.Add(body);
             }
 
+            if (region.Virtual && region.Body.Count != 1)
+            {
+                file.Diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                    "a virtualised row is one element, and this region declares "
+                        + region.Body.Count + ".",
+                    node.CodeIndex,
+                    node.Code.Length + 1));
+
+                region.Virtual = false;
+            }
+
+            if (region.Virtual && region.Key != null)
+            {
+                file.Diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                    "a virtualised region reconciles by slot rather than by identity, so a key clause has "
+                        + "nothing to do here.",
+                    node.CodeIndex,
+                    node.Code.Length + 1));
+
+                region.Key = null;
+            }
+
             file.Regions.Add(region);
-            regions.Add(instances);
+
+            if (!region.Virtual)
+            {
+                regions.Add(instances);
+            }
 
             if (region.Owner == null)
             {
@@ -870,6 +969,11 @@ namespace Ixen.Generators.Xnl
             else
             {
                 region.Owner.Nested.Add(region);
+            }
+
+            if (region.Virtual)
+            {
+                return null;
             }
 
             file.Field("global::System.Collections.Generic.List<VisualElement>", instances,
@@ -1312,14 +1416,20 @@ namespace Ixen.Generators.Xnl
             private readonly Compilation _compilation;
             private readonly INamedTypeSymbol _visualElementSymbol;
             private readonly INamedTypeSymbol _componentSymbol;
+            private readonly INamedTypeSymbol _regionHostSymbol;
 
             internal TypeResolver(Compilation compilation, INamedTypeSymbol visualElementSymbol,
-                INamedTypeSymbol componentSymbol)
+                INamedTypeSymbol componentSymbol, INamedTypeSymbol regionHostSymbol)
             {
                 _compilation = compilation;
                 _visualElementSymbol = visualElementSymbol;
                 _componentSymbol = componentSymbol;
+                _regionHostSymbol = regionHostSymbol;
             }
+
+            internal bool IsRegionHost(INamedTypeSymbol symbol)
+                => _regionHostSymbol != null && symbol != null
+                    && symbol.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(i, _regionHostSymbol));
 
             internal ResolvedType Resolve(XnlNode node, List<LanguageError> diagnostics)
             {
