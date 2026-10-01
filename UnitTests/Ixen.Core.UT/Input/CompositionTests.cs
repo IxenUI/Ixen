@@ -239,5 +239,23 @@ namespace Ixen.Core.UT.Input
 
             Assert.AreEqual("ab", _field.Text);
         }
+
+        [TestMethod]
+        public void AComposingRunHidesThePlaceholderRatherThanBeingHiddenByIt()
+        {
+            _field.Text = string.Empty;
+            _field.Placeholder = "your name";
+
+            Assert.IsTrue(_field.ShowsPlaceholder);
+
+            _field.SetComposition("mno", 3);
+
+            Assert.IsFalse(_field.ShowsPlaceholder, "the run is what is displayed");
+            Assert.AreEqual("mno", _field.DisplayText);
+
+            _field.CancelComposition();
+
+            Assert.IsTrue(_field.ShowsPlaceholder);
+        }
     }
 }

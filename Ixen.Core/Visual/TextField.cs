@@ -318,7 +318,7 @@ namespace Ixen.Core.Visual
         internal int DisplayCaret => _caret + _compositionCaret;
 
         internal bool ShowsPlaceholder
-            => Value.Length == 0 && !string.IsNullOrEmpty(_placeholder);
+            => Value.Length == 0 && !IsComposing && !string.IsNullOrEmpty(_placeholder);
 
         public bool CanUndo => _undo.Count > 0;
         public bool CanRedo => _redo.Count > 0;
