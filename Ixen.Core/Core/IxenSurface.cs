@@ -18,6 +18,8 @@ namespace Ixen.Core
         private static Color _clearColor = Color.Transparent;
 
         private ViewPort _viewPort = new();
+        private int _deviceWidth;
+        private int _deviceHeight;
         private readonly ImageStore _images = new();
 
         private StyleComputer _styleComputer = new();
@@ -186,6 +188,9 @@ namespace Ixen.Core
         {
             _images.Trim();
             DrainPosted();
+
+            _deviceWidth = width;
+            _deviceHeight = height;
 
             int logicalWidth = (int)(width / _scale);
             int logicalHeight = (int)(height / _scale);
@@ -1278,9 +1283,7 @@ namespace Ixen.Core
         {
             try
             {
-                SKBitmap bitmap = new SKBitmap(
-                    (int)Math.Round(_viewPort.Width * _scale),
-                    (int)Math.Round(_viewPort.Height * _scale));
+                SKBitmap bitmap = new SKBitmap(_deviceWidth, _deviceHeight);
                 _damage.SetWhole();
 
                 using (var canvas = new SKCanvas(bitmap))

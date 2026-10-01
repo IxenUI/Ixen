@@ -11,6 +11,7 @@ using Ixen.Core.Components;
 using Ixen.Core.Input;
 using Ixen.Core.Visual;
 using Ixen.Platform;
+using SkiaSharp;
 using SkiaSharp.Views.Android;
 
 namespace Ixen.View.Android
@@ -125,6 +126,13 @@ namespace Ixen.View.Android
             _host.Surface.FontScale = fontScale > 0 ? fontScale : 1f;
             _host.Paint(e.Surface.Canvas, e.Info.Width, e.Info.Height);
             _accessibility?.Sync();
+
+            _paints++;
+
+            if (_captured != null && _paints >= _capturePaints)
+            {
+                Capture(e.Surface, e.Info.Width, e.Info.Height);
+            }
         }
 
         private void OnTouch(object sender, TouchEventArgs e)
@@ -336,6 +344,51 @@ namespace Ixen.View.Android
             }
 
             manager.HideSoftInputFromWindow(WindowToken, HideSoftInputFlags.None);
+        }
+
+        private int _capturePaints;
+        private int _paints;
+        private System.Action<IxenFrameCapture> _captured;
+
+        public void CaptureAfter(int paints, System.Action<IxenFrameCapture> captured)
+        {
+            _capturePaints = paints < 1 ? 1 : paints;
+            _captured = captured;
+
+            _host.Surface.ReducedMotion = true;
+        }
+
+        private void Capture(SKSurface surface, int width, int height)
+        {
+            System.Action<IxenFrameCapture> captured = _captured;
+
+            _captured = null;
+
+            using SKBitmap host = ReadFrame(surface, width, height);
+            using SKBitmap library = _host.Surface.RenderToBitmap();
+            using var capture = new IxenFrameCapture(host, library, width, height,
+                _host.Surface.Scale, _host.Surface.FontScale);
+
+            captured(capture);
+        }
+
+        private static SKBitmap ReadFrame(SKSurface surface, int width, int height)
+        {
+            if (surface == null)
+            {
+                return null;
+            }
+
+            var bitmap = new SKBitmap(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul));
+
+            if (surface.ReadPixels(bitmap.Info, bitmap.GetPixels(), bitmap.RowBytes, 0, 0))
+            {
+                return bitmap;
+            }
+
+            bitmap.Dispose();
+
+            return null;
         }
 
         public VisualElement Root

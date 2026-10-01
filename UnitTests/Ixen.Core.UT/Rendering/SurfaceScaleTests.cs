@@ -212,6 +212,29 @@ namespace Ixen.Core.UT.Rendering
         }
 
         [TestMethod]
+        public void AtANonDividingScaleTheBitmapIsStillTheDeviceSize()
+        {
+            VisualElement root = Root();
+            root.AddChild(Box("box", 50, 50, "#FF0000"));
+
+            var surface = new IxenSurface(root)
+            {
+                Styles = new StyleRegistry(),
+                Scale = 2.625f
+            };
+
+            surface.ComputeLayout(1080, 2201);
+
+            using (SKBitmap bitmap = surface.RenderToBitmap())
+            {
+                Assert.AreEqual(1080, bitmap.Width,
+                    "1080 at 2.625 is 411.4 logical units, truncated to 411, and 411 times 2.625 "
+                        + "is 1079 - so a bitmap sized back from the viewport is a pixel short");
+                Assert.AreEqual(2201, bitmap.Height);
+            }
+        }
+
+        [TestMethod]
         public void ChangingTheScaleRelaysOut()
         {
             VisualElement root = Root();
