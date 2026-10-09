@@ -274,7 +274,7 @@ namespace Ixen.Core.Rendering
             SKCanvas.Restore();
         }
 
-        private static SKPath NativePath(PathGeometry geometry)
+        internal static SKPath NativePath(PathGeometry geometry)
         {
             if (geometry.Native is SKPath cached)
             {

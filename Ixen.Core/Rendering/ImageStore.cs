@@ -1,4 +1,5 @@
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Shapes;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,8 @@ namespace Ixen.Core.Rendering
             internal int NaturalHeight;
             internal int Divisor;
             internal bool Read;
+            internal SvgDocument Vector;
+            internal int RasterWidth;
         }
 
         private readonly Dictionary<string, Entry> _entries = new Dictionary<string, Entry>();
@@ -106,6 +109,13 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
+            if (entry.Vector != null)
+            {
+                Rasterise(entry, width, height);
+
+                return;
+            }
+
             int divisor = DivisorFor(entry, width, height);
 
             if (entry.Bitmap != null && entry.Divisor <= divisor)
@@ -130,6 +140,48 @@ namespace Ixen.Core.Rendering
             entry.Bitmap = decoded;
             entry.Divisor = divisor;
             entry.Bytes = decoded.ByteCount;
+
+            _bytes += entry.Bytes;
+        }
+
+        private void Rasterise(Entry entry, float width, float height)
+        {
+            int wanted = width <= 0 ? entry.NaturalWidth : (int)Math.Ceiling(width);
+
+            if (wanted < 1)
+            {
+                wanted = 1;
+            }
+
+            if (wanted > SvgRasteriser.MAX_SIDE)
+            {
+                wanted = SvgRasteriser.MAX_SIDE;
+            }
+
+            if (entry.Bitmap != null && entry.RasterWidth >= wanted)
+            {
+                return;
+            }
+
+            int tall = (int)Math.Ceiling(wanted * (double)entry.NaturalHeight / entry.NaturalWidth);
+
+            SKBitmap drawn = SvgRasteriser.Render(entry.Vector, wanted, tall < 1 ? 1 : tall);
+
+            if (drawn == null)
+            {
+                return;
+            }
+
+            _bytes -= entry.Bytes;
+
+            entry.Tile?.Shader?.Dispose();
+            entry.Tile?.Dispose();
+            entry.Tile = null;
+            entry.Bitmap?.Dispose();
+
+            entry.Bitmap = drawn;
+            entry.RasterWidth = wanted;
+            entry.Bytes = drawn.ByteCount;
 
             _bytes += entry.Bytes;
         }
@@ -291,8 +343,26 @@ namespace Ixen.Core.Rendering
             try
             {
                 using (Stream stream = finished.Result)
+                using (var buffer = new MemoryStream())
                 {
-                    return SKBitmap.Decode(stream);
+                    stream.CopyTo(buffer);
+                    buffer.Position = 0;
+
+                    SKBitmap decoded = SKBitmap.Decode(buffer);
+
+                    if (decoded != null)
+                    {
+                        return decoded;
+                    }
+
+                    buffer.Position = 0;
+
+                    SvgDocument document = SvgDocument.Parse(buffer);
+
+                    return document == null
+                        ? null
+                        : SvgRasteriser.Render(document,
+                            (int)Math.Ceiling(document.Width), (int)Math.Ceiling(document.Height));
                 }
             }
             catch
@@ -399,18 +469,37 @@ namespace Ixen.Core.Rendering
 
                     using (SKCodec codec = SKCodec.Create(stream))
                     {
-                        if (codec == null)
+                        if (codec != null)
                         {
+                            entry.NaturalWidth = codec.Info.Width;
+                            entry.NaturalHeight = codec.Info.Height;
+
                             return;
                         }
-
-                        entry.NaturalWidth = codec.Info.Width;
-                        entry.NaturalHeight = codec.Info.Height;
                     }
                 }
+
+                Vector(source, name, entry);
             }
             catch
             {
+            }
+        }
+
+        private static void Vector(IImageSource source, string name, Entry entry)
+        {
+            using (Stream stream = source.Open(name))
+            {
+                SvgDocument document = SvgDocument.Parse(stream);
+
+                if (document == null)
+                {
+                    return;
+                }
+
+                entry.Vector = document;
+                entry.NaturalWidth = (int)Math.Ceiling(document.Width);
+                entry.NaturalHeight = (int)Math.Ceiling(document.Height);
             }
         }
     }

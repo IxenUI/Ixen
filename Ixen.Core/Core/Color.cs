@@ -1,5 +1,7 @@
 ﻿using SkiaSharp;
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Ixen.Core
 {
@@ -37,6 +39,50 @@ namespace Ixen.Core
 
         public Color WithAlpha(byte alpha)
             => new Color(SKColor.Red, SKColor.Green, SKColor.Blue, alpha);
+
+        private static Dictionary<string, Color> _named;
+
+        internal static bool TryParse(string value, out Color color)
+        {
+            color = Transparent;
+
+            if (string.IsNullOrEmpty(value))
+            {
+                return false;
+            }
+
+            if (SKColor.TryParse(value, out SKColor parsed))
+            {
+                color = new Color(parsed.Red, parsed.Green, parsed.Blue, parsed.Alpha);
+
+                return true;
+            }
+
+            return Named().TryGetValue(value, out color);
+        }
+
+        private static Dictionary<string, Color> Named()
+        {
+            if (_named != null)
+            {
+                return _named;
+            }
+
+            var names = new Dictionary<string, Color>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (FieldInfo field in typeof(Color)
+                .GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                if (field.FieldType == typeof(Color))
+                {
+                    names[field.Name] = (Color)field.GetValue(null);
+                }
+            }
+
+            _named = names;
+
+            return _named;
+        }
 
         public string ToRGBHexColor()
         {
