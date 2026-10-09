@@ -1,6 +1,7 @@
 using Ixen.Core.Accessibility;
 using Ixen.Core.Input;
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Shapes;
 using Ixen.Core.Visual.Styles.Descriptors;
 using System;
 using System.Collections.Generic;
@@ -25,7 +26,6 @@ namespace Ixen.Controls
         public const int WEEKS = 6;
         public const int DAYS_IN_WEEK = 7;
 
-        private const string ARROW = "\u25BC";
         private const string DEFAULT_FORMAT = "d";
 
         public event EventHandler<EventArgs> ValueChanged;
@@ -55,9 +55,8 @@ namespace Ixen.Controls
 
             _label = Part(LABEL);
 
-            VisualElement chevron = Part(CHEVRON);
+            VisualElement chevron = Shape(CHEVRON);
 
-            chevron.Text = ARROW;
             chevron.Role = AccessibleRole.Presentation;
 
             _menu = new Menu { AnchorElement = this };
@@ -198,6 +197,16 @@ namespace Ixen.Controls
 
         private static DateTime Month(DateTime date) => new DateTime(date.Year, date.Month, 1);
 
+        private static Path Shape(string typeName)
+        {
+            var shape = new Path { TypeName = typeName, Data = Marks.DOWN };
+
+            shape.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Content };
+            shape.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Content };
+
+            return shape;
+        }
+
         private static VisualElement Part(string typeName)
         {
             var part = new VisualElement { TypeName = typeName };
@@ -218,18 +227,18 @@ namespace Ixen.Controls
 
             nav.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Row };
 
-            var previous = new VisualElement
+            var previous = new Path
             {
                 TypeName = PREVIOUS,
-                Text = ARROW,
+                Data = Marks.DOWN,
                 Focusable = true,
                 Role = AccessibleRole.Button
             };
 
-            var next = new VisualElement
+            var next = new Path
             {
                 TypeName = NEXT,
-                Text = ARROW,
+                Data = Marks.DOWN,
                 Focusable = true,
                 Role = AccessibleRole.Button
             };

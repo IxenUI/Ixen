@@ -1,4 +1,5 @@
 using Ixen.Core.Input;
+using Ixen.Core.Visual.Shapes;
 using Ixen.Core.Visual.Styles.Descriptors;
 using System;
 
@@ -25,23 +26,27 @@ namespace Ixen.Core.Visual
         }
     }
 
-    public class ScrollbarButton : VisualElement
+    public class ScrollbarButton : Path
     {
-        internal ScrollbarButton(string glyph)
+        private const float INSET = 4;
+
+        internal ScrollbarButton(string shape)
         {
             TypeName = nameof(ScrollbarButton);
-            Text = glyph;
+            Data = shape;
 
             Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
             Styles.Top = new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
             Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
             Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
             Styles.Color = new ColorStyleDescriptor { Value = "#90707070" };
-            Styles.FontSize = new FontSizeStyleDescriptor { Value = 7 };
-            Styles.TextAlign = new TextAlignStyleDescriptor
+            Styles.ObjectFit = new ObjectFitStyleDescriptor { Value = ObjectFit.Contain };
+            Styles.Padding = new PaddingStyleDescriptor
             {
-                Horizontal = TextAlign.Center,
-                Vertical = TextVAlign.Middle
+                Top = new SizeStyleDescriptor { Unit = SizeUnit.Pixels, Value = INSET },
+                Right = new SizeStyleDescriptor { Unit = SizeUnit.Pixels, Value = INSET },
+                Bottom = new SizeStyleDescriptor { Unit = SizeUnit.Pixels, Value = INSET },
+                Left = new SizeStyleDescriptor { Unit = SizeUnit.Pixels, Value = INSET }
             };
         }
     }
@@ -54,10 +59,10 @@ namespace Ixen.Core.Visual
 
         private const float THUMB_INSET = 3.5f;
 
-        private const string UP = "\u25B2";
-        private const string DOWN = "\u25BC";
-        private const string LEFT = "\u25C0";
-        private const string RIGHT = "\u25B6";
+        private const string UP = "M 0 8 L 10 8 L 5 0 Z";
+        private const string DOWN = "M 0 0 L 10 0 L 5 8 Z";
+        private const string LEFT = "M 8 0 L 8 10 L 0 5 Z";
+        private const string RIGHT = "M 0 0 L 0 10 L 8 5 Z";
 
         internal bool IsVertical { get; private set; }
         internal ScrollbarThumb Thumb { get; private set; }

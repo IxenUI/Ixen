@@ -1,5 +1,6 @@
 using Ixen.Core.Accessibility;
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Shapes;
 using Ixen.Core.Visual.Styles.Descriptors;
 
 namespace Ixen.Controls
@@ -11,7 +12,6 @@ namespace Ixen.Controls
         public const string SELECTED = "selected";
         public const string LEAF = "leaf";
 
-        private const string GLYPH = "\u25BC";
 
         private readonly VisualElement _expander;
 
@@ -24,11 +24,11 @@ namespace Ixen.Controls
 
             Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Row };
 
-            _expander = new VisualElement
+            _expander = new Path
             {
                 TypeName = EXPANDER,
                 Role = AccessibleRole.Presentation,
-                Text = GLYPH
+                Data = Marks.DOWN
             };
 
             AddChild(_expander);

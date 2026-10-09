@@ -1,6 +1,7 @@
 using Ixen.Core.Accessibility;
 using Ixen.Core.Input;
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Shapes;
 using Ixen.Core.Visual.Styles.Descriptors;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,6 @@ namespace Ixen.Controls
         public const string CHEVRON = "ComboBoxChevron";
         public const string OPEN = "open";
 
-        private const string ARROW = "\u25BC";
 
         public event EventHandler<EventArgs> SelectedIndexChanged;
 
@@ -33,9 +33,8 @@ namespace Ixen.Controls
             Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Row };
 
             var label = Part(LABEL);
-            var chevron = Part(CHEVRON);
+            var chevron = Shape(CHEVRON);
 
-            chevron.Text = ARROW;
             chevron.Role = AccessibleRole.Presentation;
 
             var menu = new Menu();
@@ -50,6 +49,16 @@ namespace Ixen.Controls
 
             PointerClick += OnPointerClick;
             KeyDown += OnKeyDown;
+        }
+
+        private static Path Shape(string typeName)
+        {
+            var shape = new Path { TypeName = typeName, Data = Marks.DOWN };
+
+            shape.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Content };
+            shape.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Content };
+
+            return shape;
         }
 
         private static VisualElement Part(string typeName)

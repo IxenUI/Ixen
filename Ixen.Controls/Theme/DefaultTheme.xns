@@ -214,12 +214,10 @@ $control_focus_soft:   #EEF1FE
 }
 
 #ComboBoxChevron {
-    width: ?
+    width: 7px
     height: ?
     margin: 0px 0px 0px 10px
     color: $control_text_off
-    font-size: 9px
-    text-align: center middle
 }
 
 #MenuItem:submenu {
@@ -432,8 +430,8 @@ $control_focus_soft:   #EEF1FE
 #TreeExpander {
     width: 14px
     height: 1*
-    font-size: 7px
-    text-align: center middle
+    padding: 0px 4px
+    object-fit: contain
     opacity: 0.6
     transform: rotate(-90deg)
     transition: transform 120ms ease-out
@@ -474,8 +472,8 @@ $control_focus_soft:   #EEF1FE
 #DataGridSortMark {
     width: 10px
     height: 1*
-    font-size: 7px
-    text-align: center middle
+    padding: 0px 2px
+    object-fit: contain
     opacity: 0.6
     visibility: hidden
     transform: rotate(180deg)
@@ -517,7 +515,8 @@ $control_focus_soft:   #EEF1FE
 }
 
 #DatePickerChevron {
-    font-size: 7px
+    width: 7px
+    height: ?
     opacity: 0.6
 }
 
@@ -544,8 +543,8 @@ $control_focus_soft:   #EEF1FE
 #DatePickerPrevious {
     width: 24px
     height: 1*
-    font-size: 7px
-    text-align: center middle
+    padding: 0px 9px
+    object-fit: contain
     color: $control_text_off
     corner-radius: 4px
     cursor: hand
@@ -555,8 +554,8 @@ $control_focus_soft:   #EEF1FE
 #DatePickerNext {
     width: 24px
     height: 1*
-    font-size: 7px
-    text-align: center middle
+    padding: 0px 9px
+    object-fit: contain
     color: $control_text_off
     corner-radius: 4px
     cursor: hand

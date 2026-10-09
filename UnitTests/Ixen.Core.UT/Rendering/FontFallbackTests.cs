@@ -109,7 +109,7 @@ namespace Ixen.Core.UT.Rendering
         private static string Text(int codepoint) => char.ConvertFromUtf32(codepoint);
 
         [TestMethod]
-        public void EveryScrollbarArrowEndsUpOnAFaceThatHasIt()
+        public void EveryGeometricShapeEndsUpOnAFaceThatHasIt()
         {
             foreach (int codepoint in new[] { 0x25B2, 0x25BC, 0x25C0, 0x25B6 })
             {
@@ -118,8 +118,10 @@ namespace Ixen.Core.UT.Rendering
                 Assert.IsTrue(font.ContainsGlyph(codepoint),
                     $"U+{codepoint:X4} came back on a face that does not have it. This machine's "
                     + "default face has the up and down triangles but NOT the left and right ones, "
-                    + "so the horizontal scrollbar arrows were invisible on Windows too - not just "
-                    + "on Android. Probing one glyph and assuming its neighbours is what hid that.");
+                    + "which is how the horizontal scrollbar arrows were invisible on Windows too "
+                    + "- not just on Android. The scrollbar draws a <Path> now and no longer "
+                    + "depends on this, but these four are still the cheapest witness there is "
+                    + "that the fallback works for a character a face may lack.");
             }
         }
 

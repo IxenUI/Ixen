@@ -358,5 +358,58 @@ namespace Ixen.Core.UT.Input
             Assert.IsNotNull(bar.StylesHandlers.Background.Descriptor.Color,
                 "it paints without the app declaring anything");
         }
+
+        [TestMethod]
+        public void TheArrowsAreShapesAndTheyReachTheScreen()
+        {
+            Scrollbar bar = Bar();
+
+            Assert.IsInstanceOfType<Ixen.Core.Visual.Shapes.Path>(bar.Start,
+                "an arrow used to be a character, and a face either has that character or draws "
+                + "nothing - which is how the two horizontal ones were invisible on Windows");
+
+            Assert.IsTrue(string.IsNullOrEmpty(bar.Start.Text));
+
+            using (SkiaSharp.SKBitmap frame = _surface.RenderToBitmap())
+            {
+                Assert.IsTrue(Inked(frame, bar.Start, out _, out _), "the up arrow is painted");
+                Assert.IsTrue(Inked(frame, bar.End, out _, out _), "and so is the down one");
+            }
+        }
+
+        private static bool Inked(SkiaSharp.SKBitmap frame, VisualElement element,
+            out int width, out int height)
+        {
+            int left = int.MaxValue;
+            int top = int.MaxValue;
+            int right = int.MinValue;
+            int bottom = int.MinValue;
+
+            for (int y = (int)element.Y; y < (int)(element.Y + element.ActualHeight); y++)
+            {
+                for (int x = (int)element.X; x < (int)(element.X + element.ActualWidth); x++)
+                {
+                    if (x < 0 || y < 0 || x >= frame.Width || y >= frame.Height)
+                    {
+                        continue;
+                    }
+
+                    if (frame.GetPixel(x, y).Alpha <= 0x30)
+                    {
+                        continue;
+                    }
+
+                    left = System.Math.Min(left, x);
+                    top = System.Math.Min(top, y);
+                    right = System.Math.Max(right, x);
+                    bottom = System.Math.Max(bottom, y);
+                }
+            }
+
+            width = right - left + 1;
+            height = bottom - top + 1;
+
+            return right >= left;
+        }
     }
 }
