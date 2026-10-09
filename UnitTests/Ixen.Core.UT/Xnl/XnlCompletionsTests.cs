@@ -259,6 +259,20 @@ namespace Ixen.Core.UT.Xnl
         }
 
         [TestMethod]
+        public void AShapeIsProposedWithTheFourThingsAnIconSetGives()
+        {
+            CollectionAssert.Contains(XnlCompletions.ElementTypes.ToArray(), "Path");
+
+            string[] items = XnlTypes.PropertiesOf(XnlTypes.Find("Path")).ToArray();
+
+            CollectionAssert.IsSubsetOf(
+                new[] { "data", "fill-rule", "stroke-width", "view-box" },
+                items,
+                "pasting an icon means copying its d, its viewBox and the two attributes beside "
+                + "them, so XNL names them the way SVG does: " + string.Join(", ", items));
+        }
+
+        [TestMethod]
         public void EveryProposedTypeIsInstantiable()
         {
             foreach (string typeName in XnlCompletions.ElementTypes)

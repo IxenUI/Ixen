@@ -157,7 +157,8 @@ namespace Ixen.Core.Language.Xnl
                     continue;
                 }
 
-                if (type.Namespace != "Ixen.Core.Visual" && type.Namespace != "Ixen.Core")
+                if (type.Namespace != "Ixen.Core.Visual" && type.Namespace != "Ixen.Core.Visual.Shapes"
+                    && type.Namespace != "Ixen.Core")
                 {
                     continue;
                 }

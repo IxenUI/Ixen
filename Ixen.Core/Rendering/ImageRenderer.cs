@@ -222,7 +222,7 @@ namespace Ixen.Core.Rendering
             }
         }
 
-        private static void Resolve(ObjectFit fit, float naturalWidth, float naturalHeight,
+        internal static void Resolve(ObjectFit fit, float naturalWidth, float naturalHeight,
             float boxWidth, float boxHeight, out float width, out float height)
         {
             switch (fit)

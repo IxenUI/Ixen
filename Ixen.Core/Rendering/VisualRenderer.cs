@@ -7,6 +7,7 @@ namespace Ixen.Core.Rendering
     internal class VisualRenderer
     {
         private TextRenderer _textRenderer = new();
+        private readonly PathRenderer _pathRenderer = new();
         private readonly ImageRenderer _imageRenderer;
 
         internal VisualRenderer(ImageStore images = null)
@@ -163,6 +164,7 @@ namespace Ixen.Core.Rendering
             ShadowRenderer.Render(element, context);
             styles.Background?.Render(element, context);
             _imageRenderer.Render(element, context);
+            _pathRenderer.Render(element, context);
             ShadowRenderer.RenderInset(element, context);
             styles.Border?.Render(element, context);
             _textRenderer.Render(element, context);

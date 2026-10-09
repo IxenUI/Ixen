@@ -1,3 +1,4 @@
+using Ixen.Core.Visual.Shapes;
 using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Ixen.Core.Visual.Styles.Parsers;
@@ -208,6 +209,40 @@ namespace Ixen.Core.Visual.Computers
                 MeasureImage(image, contentWidth, contentHeight, widthIsDefinite, heightIsDefinite,
                     ref intrinsicWidth, ref intrinsicHeight);
             }
+            else if (element is Path path)
+            {
+                MeasurePath(path, contentWidth, contentHeight, widthIsDefinite, heightIsDefinite,
+                    ref intrinsicWidth, ref intrinsicHeight);
+            }
+        }
+
+        private static void MeasurePath(Path path, float contentWidth, float contentHeight,
+            bool widthIsDefinite, bool heightIsDefinite, ref float intrinsicWidth, ref float intrinsicHeight)
+        {
+            float natural = path.ViewWidth;
+            float naturalHeight = path.ViewHeight;
+
+            if (natural <= 0 || naturalHeight <= 0)
+            {
+                return;
+            }
+
+            float width = natural;
+            float height = naturalHeight;
+
+            if (widthIsDefinite && !heightIsDefinite)
+            {
+                width = contentWidth;
+                height = naturalHeight * (contentWidth / natural);
+            }
+            else if (heightIsDefinite && !widthIsDefinite)
+            {
+                height = contentHeight;
+                width = natural * (contentHeight / naturalHeight);
+            }
+
+            intrinsicWidth = Math.Max(intrinsicWidth, width);
+            intrinsicHeight = Math.Max(intrinsicHeight, height);
         }
 
         private void MeasureImage(Image image, float contentWidth, float contentHeight,

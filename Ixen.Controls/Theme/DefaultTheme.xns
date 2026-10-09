@@ -84,10 +84,9 @@ $control_focus_soft:   #EEF1FE
 }
 
 #CheckBoxMark {
-    width: 10px
-    height: 10px
-    background: $control_focus
-    corner-radius: 2px
+    width: 12px
+    height: 12px
+    color: $control_focus
     visibility: hidden
 }
 

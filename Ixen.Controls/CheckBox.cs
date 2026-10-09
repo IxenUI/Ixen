@@ -1,6 +1,7 @@
 using Ixen.Core.Accessibility;
 using Ixen.Core.Input;
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Shapes;
 using System;
 
 namespace Ixen.Controls
@@ -22,10 +23,13 @@ namespace Ixen.Controls
             Focusable = true;
             Role = AccessibleRole.CheckBox;
 
-            _mark = new VisualElement
+            _mark = new Path
             {
                 TypeName = MarkTypeName,
-                Role = AccessibleRole.Presentation
+                Role = AccessibleRole.Presentation,
+                Data = MarkData,
+                ViewBox = MarkViewBox,
+                StrokeWidth = MarkStrokeWidth
             };
 
             AddChild(_mark);
@@ -35,6 +39,12 @@ namespace Ixen.Controls
         }
 
         protected virtual string MarkTypeName => "CheckBoxMark";
+
+        protected virtual string MarkData => "M 20 6 L 9 17 L 4 12";
+
+        protected virtual string MarkViewBox => "0 0 24 24";
+
+        protected virtual float MarkStrokeWidth => 3;
 
         public VisualElement Mark => _mark;
 

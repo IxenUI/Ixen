@@ -16,6 +16,8 @@ namespace Ixen.Controls
 
         protected override string MarkTypeName => "RadioButtonMark";
 
+        protected override string MarkData => null;
+
         protected override void OnActivated()
         {
             if (Checked)

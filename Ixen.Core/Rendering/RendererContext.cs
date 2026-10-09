@@ -1,5 +1,6 @@
 ﻿using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
+using Ixen.Core.Visual.Shapes;
 using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using SkiaSharp;
@@ -34,6 +35,16 @@ namespace Ixen.Core.Rendering
         private readonly SKPaint _textShadowPaint = new SKPaint { IsStroke = false, IsAntialias = true };
         private float _textShadowBlur = -1;
         private readonly SKPaint _gradientPaint = new SKPaint { IsStroke = false, IsAntialias = true };
+        private readonly SKPaint _pathPaint = new SKPaint { IsStroke = false, IsAntialias = true };
+
+        private readonly SKPaint _pathStrokePaint = new SKPaint
+        {
+            IsStroke = true,
+            IsAntialias = true,
+            StrokeCap = SKStrokeCap.Round,
+            StrokeJoin = SKStrokeJoin.Round
+        };
+
         private readonly SKPaint _layerPaint = new SKPaint { Color = SKColors.Black };
 
         private readonly SKSamplingOptions _sampling =
@@ -223,6 +234,99 @@ namespace Ixen.Core.Rendering
             SKCanvas.Translate(x, y);
             SKCanvas.DrawRect(new SKRect(0, 0, width, height), tile);
             SKCanvas.Restore();
+        }
+
+        internal void DrawPath(PathGeometry geometry, float x, float y,
+            float scaleX, float scaleY, float viewLeft, float viewTop,
+            float strokeWidth, Color color)
+        {
+            if (geometry == null || geometry.IsEmpty || scaleX <= 0 || scaleY <= 0)
+            {
+                return;
+            }
+
+            SKPath path = NativePath(geometry);
+
+            if (path == null)
+            {
+                return;
+            }
+
+            SKPaint paint;
+
+            if (strokeWidth > 0)
+            {
+                _pathStrokePaint.StrokeWidth = strokeWidth;
+                paint = _pathStrokePaint;
+            }
+            else
+            {
+                paint = _pathPaint;
+            }
+
+            paint.Color = color.SKColor;
+
+            SKCanvas.Save();
+            SKCanvas.Translate(x, y);
+            SKCanvas.Scale(scaleX, scaleY);
+            SKCanvas.Translate(-viewLeft, -viewTop);
+            SKCanvas.DrawPath(path, paint);
+            SKCanvas.Restore();
+        }
+
+        private static SKPath NativePath(PathGeometry geometry)
+        {
+            if (geometry.Native is SKPath cached)
+            {
+                return cached;
+            }
+
+            var builder = new SKPathBuilder
+            {
+                FillType = geometry.EvenOdd ? SKPathFillType.EvenOdd : SKPathFillType.Winding
+            };
+
+            float[] points = geometry.Points;
+            int offset = 0;
+
+            for (int index = 0; index < geometry.Verbs.Length; index++)
+            {
+                switch (geometry.Verbs[index])
+                {
+                    case PathVerb.Move:
+                        builder.MoveTo(points[offset], points[offset + 1]);
+                        offset += 2;
+                        break;
+
+                    case PathVerb.Line:
+                        builder.LineTo(points[offset], points[offset + 1]);
+                        offset += 2;
+                        break;
+
+                    case PathVerb.Quad:
+                        builder.QuadTo(points[offset], points[offset + 1],
+                            points[offset + 2], points[offset + 3]);
+                        offset += 4;
+                        break;
+
+                    case PathVerb.Cubic:
+                        builder.CubicTo(points[offset], points[offset + 1],
+                            points[offset + 2], points[offset + 3],
+                            points[offset + 4], points[offset + 5]);
+                        offset += 6;
+                        break;
+
+                    default:
+                        builder.Close();
+                        break;
+                }
+            }
+
+            SKPath native = builder.Detach();
+
+            geometry.Native = native;
+
+            return native;
         }
 
         internal float GetLineHeight(FontSpec fontSpec)

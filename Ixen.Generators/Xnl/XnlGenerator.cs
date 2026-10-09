@@ -1450,6 +1450,17 @@ namespace Ixen.Generators.Xnl
                         : new ResolvedType();
                 }
 
+                INamedTypeSymbol shape = symbol != null
+                    ? null
+                    : _compilation.GetTypeByMetadataName($"Ixen.Core.Visual.Shapes.{node.Type}");
+
+                if (shape != null && IsVisualElement(shape))
+                {
+                    return Instantiable(node, shape, diagnostics)
+                        ? new ResolvedType { Symbol = shape, UseDeclaredType = true, Qualified = true }
+                        : new ResolvedType();
+                }
+
                 if (symbol == null)
                 {
                     INamedTypeSymbol found = FindVisualElement(node, diagnostics);
