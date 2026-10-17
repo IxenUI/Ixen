@@ -179,6 +179,8 @@ namespace Ixen.Core.Visual.Computers
         {
             element.SetPosition(x, y);
 
+            ResetTextSlot(element);
+
             ArrangeChrome(element);
 
             LayoutType type = MeasureComputer.LayoutTypeOf(element);
@@ -219,10 +221,27 @@ namespace Ixen.Core.Visual.Computers
             ContentAlignStyleDescriptor align = element.StylesHandlers.ContentAlign.Descriptor;
             bool aligned = align.IsDeclared;
 
-            if (aligned)
-            {
-                float slack = MainSlack(element, isRow, gap);
+            float slack = aligned || element.TextInFlow ? MainSlack(element, isRow, gap) : 0;
 
+            if (element.TextInFlow)
+            {
+                float extent = element.TextExtent + (slack > 0 ? slack : 0);
+
+                if (isRow)
+                {
+                    element.TextSlotX = childX;
+                    element.TextSlotWidth = extent;
+                    childX += extent + gap;
+                }
+                else
+                {
+                    element.TextSlotY = childY;
+                    element.TextSlotHeight = extent;
+                    childY += extent + gap;
+                }
+            }
+            else if (aligned)
+            {
                 if (isRow)
                 {
                     childX += Slide(slack, align.Horizontal);
@@ -274,12 +293,26 @@ namespace Ixen.Core.Visual.Computers
                 count++;
             }
 
+            if (element.TextInFlow)
+            {
+                used += element.TextExtent;
+                count++;
+            }
+
             if (count > 1)
             {
                 used += gap * (count - 1);
             }
 
             return (isRow ? element.ContentWidth : element.ContentHeight) - used;
+        }
+
+        private static void ResetTextSlot(VisualElement element)
+        {
+            element.TextSlotX = element.X + element.PaddingLeft + element.BorderInsideLeft;
+            element.TextSlotY = element.Y + element.PaddingTop + element.BorderInsideTop;
+            element.TextSlotWidth = element.ContentWidth;
+            element.TextSlotHeight = element.ContentHeight;
         }
 
         private static float Slide(float slack, ContentAlign align)

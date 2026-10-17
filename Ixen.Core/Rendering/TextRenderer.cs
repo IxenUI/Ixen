@@ -70,13 +70,13 @@ namespace Ixen.Core.Rendering
             TextVAlign valign = handlers.TextAlign.Descriptor.Vertical;
 
             float lineHeight = context.GetLineHeight(fontSpec);
-            float contentLeft = element.X + element.PaddingLeft + element.BorderInsideLeft;
-            float contentWidth = element.ContentWidth;
-            float top = element.Y + element.PaddingTop + element.BorderInsideTop;
+            float contentLeft = element.TextSlotX;
+            float contentWidth = element.TextSlotWidth;
+            float top = element.TextSlotY;
 
             if (valign != TextVAlign.Top)
             {
-                float verticalSlack = element.ContentHeight - lineHeight * lines.Count;
+                float verticalSlack = element.TextSlotHeight - lineHeight * lines.Count;
 
                 if (verticalSlack > 0)
                 {

@@ -515,6 +515,18 @@ namespace Ixen.Core.Visual
             return _textLines;
         }
 
+        internal bool TextInFlow { get; set; }
+
+        internal float TextExtent { get; set; }
+
+        internal float TextSlotX { get; set; }
+
+        internal float TextSlotY { get; set; }
+
+        internal float TextSlotWidth { get; set; }
+
+        internal float TextSlotHeight { get; set; }
+
         private TextLayoutCache _textLayout;
 
         internal TextLayoutCache TextLayout => _textLayout;

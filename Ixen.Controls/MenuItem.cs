@@ -1,6 +1,7 @@
 using Ixen.Core.Accessibility;
 using Ixen.Core.Input;
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Shapes;
 using Ixen.Core.Visual.Styles.Descriptors;
 using System;
 
@@ -9,11 +10,13 @@ namespace Ixen.Controls
     public class MenuItem : VisualElement
     {
         public const string SUBMENU = "submenu";
+        public const string MARKER = "MenuItemMarker";
         public const string HORIZONTAL = "horizontal";
 
         public event EventHandler<EventArgs> Invoked;
 
         private Menu _submenu;
+        private Path _marker;
         private bool _looked;
 
         public MenuItem()
@@ -78,6 +81,22 @@ namespace Ixen.Controls
             _ = Submenu;
 
             ToggleState(HORIZONTAL, !Vertical);
+
+            SyncMarker();
+        }
+
+        private void SyncMarker()
+        {
+            if (_marker != null || !HasSubmenu || !Vertical)
+            {
+                return;
+            }
+
+            _marker = new Path { TypeName = MARKER, Data = Marks.RIGHT };
+            _marker.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Content };
+            _marker.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Content };
+
+            AddChild(_marker);
         }
 
         public void Activate()

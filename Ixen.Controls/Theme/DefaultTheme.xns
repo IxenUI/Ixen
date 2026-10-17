@@ -165,12 +165,14 @@ $control_focus_soft:   #EEF1FE
 }
 
 #MenuItem {
+    layout: row
     height: ?
     padding: 6px 14px
     corner-radius: 4px
     color: $control_text
     font-size: 13px
     text-align: left middle
+    content-align: middle
     cursor: hand
 }
 
@@ -220,8 +222,11 @@ $control_focus_soft:   #EEF1FE
     color: $control_text_off
 }
 
-#MenuItem:submenu {
-    background: $control_focus_soft
+#MenuItemMarker {
+    width: 8px
+    height: 10px
+    margin: 0px 0px 0px 24px
+    color: $control_text_off
 }
 
 #MenuBar {

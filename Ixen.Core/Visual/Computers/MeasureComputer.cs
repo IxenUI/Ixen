@@ -177,6 +177,11 @@ namespace Ixen.Core.Visual.Computers
         private void MeasureContent(VisualElement element, LayoutType type, float contentWidth, float contentHeight,
             bool widthIsDefinite, bool heightIsDefinite, out float intrinsicWidth, out float intrinsicHeight)
         {
+            LayoutText(element, contentWidth, heightIsDefinite ? contentHeight : 0,
+                out intrinsicWidth, out intrinsicHeight);
+
+            ResolveTextSlot(element, type, intrinsicWidth, intrinsicHeight);
+
             switch (type)
             {
                 case LayoutType.Grid:
@@ -201,9 +206,6 @@ namespace Ixen.Core.Visual.Computers
                     break;
             }
 
-            LayoutText(element, contentWidth, heightIsDefinite ? contentHeight : 0,
-                out intrinsicWidth, out intrinsicHeight);
-
             if (element is Image image)
             {
                 MeasureImage(image, contentWidth, contentHeight, widthIsDefinite, heightIsDefinite,
@@ -214,6 +216,19 @@ namespace Ixen.Core.Visual.Computers
                 MeasurePath(path, contentWidth, contentHeight, widthIsDefinite, heightIsDefinite,
                     ref intrinsicWidth, ref intrinsicHeight);
             }
+        }
+
+        private static void ResolveTextSlot(VisualElement element, LayoutType type,
+            float textWidth, float textHeight)
+        {
+            element.TextInFlow = (type == LayoutType.Row || type == LayoutType.Column)
+                && element.Children.Count > 0
+                && element.TextLines != null
+                && element.TextLines.Count > 0;
+
+            element.TextExtent = element.TextInFlow
+                ? (type == LayoutType.Row ? textWidth : textHeight)
+                : 0;
         }
 
         private static void MeasurePath(Path path, float contentWidth, float contentHeight,
@@ -807,7 +822,7 @@ namespace Ixen.Core.Visual.Computers
                 ResolveVerticalSpacing(child, contentHeight);
             }
 
-            float pool = (isRow ? contentWidth : contentHeight) - TotalGap(element, isRow);
+            float pool = (isRow ? contentWidth : contentHeight) - TotalGap(element, isRow) - element.TextExtent;
             float totalWeight = 0;
 
             foreach (VisualElement child in element.Children)
@@ -926,7 +941,7 @@ namespace Ixen.Core.Visual.Computers
 
         internal static float TotalGap(VisualElement element, bool isRow)
         {
-            int count = element.Children.Count;
+            int count = element.Children.Count + (element.TextInFlow ? 1 : 0);
 
             return count < 2 ? 0 : GapOf(element, isRow) * (count - 1);
         }
@@ -1604,7 +1619,7 @@ namespace Ixen.Core.Visual.Computers
                 }
             }
 
-            return isRow ? total + TotalGap(element, true) : total;
+            return isRow ? total + element.TextExtent + TotalGap(element, true) : total;
         }
 
         private float AggregateHeight(VisualElement element, LayoutType type)
@@ -1639,7 +1654,7 @@ namespace Ixen.Core.Visual.Computers
                 }
             }
 
-            return isRow ? total : total + TotalGap(element, false);
+            return isRow ? total : total + element.TextExtent + TotalGap(element, false);
         }
 
         private void MeasureAnchored(VisualElement element, float contentWidth, float contentHeight)
