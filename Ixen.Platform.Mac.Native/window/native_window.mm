@@ -381,7 +381,7 @@ static IxenAccessibleElement* AccessibilityFocus(NativeWindow* window)
     }
 
     CGColorSpaceRef space = CGColorSpaceCreateDeviceRGB();
-    CGBitmapInfo info = kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst;
+    CGBitmapInfo info = kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast;
 
     CGImageRef image = CGImageCreate((size_t)owner->pixelsWidth,
                                      (size_t)owner->pixelsHeight,
@@ -788,12 +788,71 @@ static IxenAccessibleElement* AccessibilityFocus(NativeWindow* window)
 
 @end
 
+static void StopRunLoop()
+{
+    [NSApp stop:nil];
+
+    NSEvent* wake = [NSEvent otherEventWithType:NSEventTypeApplicationDefined
+                                       location:NSZeroPoint
+                                  modifierFlags:0
+                                      timestamp:0
+                                   windowNumber:0
+                                        context:nil
+                                        subtype:0
+                                          data1:0
+                                          data2:0];
+
+    [NSApp postEvent:wake atStart:YES];
+}
+
+@interface IxenWindowDelegate : NSObject <NSWindowDelegate>
+@end
+
+@implementation IxenWindowDelegate
+
+- (void)windowWillClose:(NSNotification*)notification
+{
+    StopRunLoop();
+}
+
+@end
+
+@interface IxenApplicationDelegate : NSObject <NSApplicationDelegate>
+@end
+
+@implementation IxenApplicationDelegate
+
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*)sender
+{
+    for (NSWindow* window in [[NSApp windows] copy])
+    {
+        if ([window isVisible])
+        {
+            [window close];
+        }
+    }
+
+    StopRunLoop();
+
+    return NSTerminateCancel;
+}
+
+@end
+
+static IxenApplicationDelegate* applicationDelegate = nil;
+
 namespace IxenMacNative
 {
     static void EnsureApplication()
     {
         [NSApplication sharedApplication];
         [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+
+        if (applicationDelegate == nil)
+        {
+            applicationDelegate = [[IxenApplicationDelegate alloc] init];
+            [NSApp setDelegate:applicationDelegate];
+        }
     }
 
     NativeWindow* CreateNativeWindow(const char* title, int width, int height)
@@ -816,6 +875,7 @@ namespace IxenMacNative
         result->accessibilityNodes = nullptr;
         result->accessibilityRoot = -1;
         result->accessibilityAsked = 0;
+        result->windowDelegate = nullptr;
 
         NSRect frame = NSMakeRect(0, 0, width, height);
 
@@ -836,6 +896,11 @@ namespace IxenMacNative
         [window setContentView:view];
         [window makeFirstResponder:view];
         [window setReleasedWhenClosed:NO];
+
+        IxenWindowDelegate* delegate = [[IxenWindowDelegate alloc] init];
+
+        [window setDelegate:delegate];
+        result->windowDelegate = (void*)CFBridgingRetain(delegate);
         [window center];
 
         if (title != nullptr)
@@ -888,11 +953,32 @@ namespace IxenMacNative
 
         if (window->window != nullptr)
         {
+            [(__bridge NSWindow*)window->window setDelegate:nil];
             CFBridgingRelease(window->window);
             window->window = nullptr;
         }
 
+        if (window->windowDelegate != nullptr)
+        {
+            CFBridgingRelease(window->windowDelegate);
+            window->windowDelegate = nullptr;
+        }
+
         delete window;
+    }
+
+    void CloseNativeWindow(NativeWindow* window)
+    {
+        if (window == nullptr || window->window == nullptr)
+        {
+            return;
+        }
+
+        NSWindow* handle = (__bridge NSWindow*)window->window;
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [handle close];
+        });
     }
 
     void SetNativeWindowTitle(NativeWindow* window, const char* title)

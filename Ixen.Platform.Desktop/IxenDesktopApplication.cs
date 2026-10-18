@@ -66,9 +66,7 @@ namespace Ixen.Platform.Desktop
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                throw new PlatformNotSupportedException(
-                    "The macOS host cannot hand over the frame it drew yet, so there is nothing to "
-                        + "capture. Windows and Linux both implement it.");
+                return IxenMacApplication.CaptureWindow(surface, path, paints);
             }
 
             throw Unsupported();

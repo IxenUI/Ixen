@@ -25,6 +25,9 @@ namespace Ixen.Platform.Mac.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_DestroyWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern void DestroyWindow(IntPtr windowPtr);
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_CloseWindow", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void CloseWindow(IntPtr windowPtr);
+
         [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowTitle", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetWindowTitle(IntPtr windowPtr, [MarshalAs(UnmanagedType.LPUTF8Str)] string title);
 

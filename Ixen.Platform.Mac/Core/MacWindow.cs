@@ -5,6 +5,7 @@ using Ixen.Platform.Mac.Accessibility;
 using Ixen.Platform.Mac.NativeApi;
 using SkiaSharp;
 using System;
+using System.IO;
 
 namespace Ixen.Platform.Mac
 {
@@ -105,6 +106,44 @@ namespace Ixen.Platform.Mac
             _accessibility.Sync();
 
             SyncAcceptsFiles();
+
+            _paints++;
+
+            if (_capturePath != null && _paints >= _capturePaints)
+            {
+                Capture();
+            }
+        }
+
+        private string _capturePath;
+        private int _capturePaints;
+        private int _paints;
+
+        internal void CaptureAfter(string path, int paints)
+        {
+            _capturePath = path;
+            _capturePaints = paints < 1 ? 1 : paints;
+        }
+
+        private void Capture()
+        {
+            string path = _capturePath;
+
+            _capturePath = null;
+
+            using (SKImage image = _surface?.Snapshot())
+            {
+                if (image != null)
+                {
+                    using (SKData data = image.Encode(SKEncodedImageFormat.Png, 100))
+                    using (FileStream file = File.Create(path))
+                    {
+                        data.SaveTo(file);
+                    }
+                }
+            }
+
+            MacApi.CloseWindow(_windowPtr);
         }
 
         private SKSurface Surface(int width, int height)
@@ -117,7 +156,7 @@ namespace Ixen.Platform.Mac
 
             _surface?.Dispose();
 
-            var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
+            var info = new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
 
             _surface = SKSurface.Create(info, _pixelBuffer.Ptr, _pixelBuffer.RowBytes);
             _pixels = _pixelBuffer.Ptr;
@@ -129,6 +168,11 @@ namespace Ixen.Platform.Mac
 
         private void OnPointer(int kind, int x, int y, int button)
         {
+            if (_capturePath != null)
+            {
+                return;
+            }
+
             switch ((MacPointerKind)kind)
             {
                 case MacPointerKind.Move:

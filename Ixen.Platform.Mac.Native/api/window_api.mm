@@ -15,6 +15,11 @@ void WA_DestroyWindow(NativeWindow* window)
     ReleaseNativeWindow(window);
 }
 
+void WA_CloseWindow(NativeWindow* window)
+{
+    CloseNativeWindow(window);
+}
+
 void WA_SetWindowTitle(NativeWindow* window, const char* title)
 {
     SetNativeWindowTitle(window, title);

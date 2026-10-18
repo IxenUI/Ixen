@@ -10,6 +10,7 @@ using namespace IxenMacNative;
 IXEN_API_ENTRY NativeWindow* WA_CreateWindow(const char* title, int width, int height);
 IXEN_API_ENTRY int WA_ShowWindow(NativeWindow* window);
 IXEN_API_ENTRY void WA_DestroyWindow(NativeWindow* window);
+IXEN_API_ENTRY void WA_CloseWindow(NativeWindow* window);
 IXEN_API_ENTRY void WA_SetWindowTitle(NativeWindow* window, const char* title);
 IXEN_API_ENTRY void WA_SetWindowPixelsBuffer(NativeWindow* window, void* buffer, int width, int height, int rowBytes);
 IXEN_API_ENTRY void WA_InvalidateWindow(NativeWindow* window);

@@ -37,11 +37,14 @@ namespace IxenMacNative
         void* accessibilityNodes;
         int accessibilityRoot;
         int accessibilityAsked;
+
+        void* windowDelegate;
     };
 
     NativeWindow* CreateNativeWindow(const char* title, int width, int height);
     int RunNativeWindow(NativeWindow* window);
     void ReleaseNativeWindow(NativeWindow* window);
+    void CloseNativeWindow(NativeWindow* window);
     void SetNativeWindowTitle(NativeWindow* window, const char* title);
     void SetNativeWindowPixels(NativeWindow* window, void* pixels, int width, int height, int rowBytes);
     void InvalidateNativeWindow(NativeWindow* window);

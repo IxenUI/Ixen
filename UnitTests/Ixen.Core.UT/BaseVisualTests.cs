@@ -27,7 +27,13 @@ namespace Ixen.Core.UT
             var surface = new IxenSurface(root);
             surface.ComputeLayout(width, height);
             SKBitmap bitmap = surface.RenderToBitmap();
-            byte[] md5hash = _md5.ComputeHash(bitmap.Bytes);
+            byte[] md5hash;
+
+            using (SKBitmap canonical = BitmapDifference.Normalized(bitmap))
+            {
+                md5hash = _md5.ComputeHash(canonical.Bytes);
+            }
+
             string hash = Convert.ToHexString(md5hash).ToLower();
 
             string fileExpectedPath = Path.Combine(_outputRendersDir, $"{testMethodName}_EXPECTED.png");
