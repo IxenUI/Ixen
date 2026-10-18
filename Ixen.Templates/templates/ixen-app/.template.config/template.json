@@ -13,7 +13,21 @@
     "language": "C#",
     "type": "project"
   },
+  "forms": {
+    "spaced": {
+      "identifier": "replace",
+      "pattern": "([a-z0-9])([A-Z])",
+      "replacement": "$1 $2"
+    }
+  },
   "symbols": {
+    "Title": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "spaced",
+      "replaces": "Ixen App",
+      "description": "The name shown in the window, the project name with a space before each capital."
+    },
     "IxenVersion": {
       "type": "parameter",
       "datatype": "string",

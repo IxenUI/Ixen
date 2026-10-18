@@ -1,5 +1,5 @@
 shell {} [
-	title { text: "IxenApp" }
+	title { text: "Ixen App" }
 	greeting { text: "{Greeting}" }
 	<Button> { text: "Press me" click: "{Press()}" }
 ]

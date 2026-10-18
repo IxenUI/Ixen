@@ -9,7 +9,7 @@ namespace IxenApp
         {
             var options = new IxenSurfaceInitOptions
             {
-                Title = "IxenApp",
+                Title = "Ixen App",
                 Width = 900,
                 Height = 600
             };
