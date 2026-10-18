@@ -115,6 +115,10 @@ namespace Ixen.Platform.Linux
             {
                 Capture();
             }
+            else if (_capturePath != null)
+            {
+                RequestRepaint();
+            }
         }
 
         private string _capturePath;

@@ -132,6 +132,10 @@ namespace Ixen.View.iOS
             {
                 Capture(e.Surface, e.Info.Width, e.Info.Height);
             }
+            else if (_captured != null)
+            {
+                BeginInvokeOnMainThread(_canvasView.SetNeedsDisplay);
+            }
         }
 
         private int PointerOf(UITouch touch, bool adding)

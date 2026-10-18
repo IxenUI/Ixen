@@ -161,6 +161,10 @@ namespace Ixen.Platform.Mac
             {
                 Capture();
             }
+            else if (_capturePath != null)
+            {
+                RequestRepaint();
+            }
         }
 
         private string _capturePath;

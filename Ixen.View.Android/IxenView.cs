@@ -133,6 +133,10 @@ namespace Ixen.View.Android
             {
                 Capture(e.Surface, e.Info.Width, e.Info.Height);
             }
+            else if (_captured != null)
+            {
+                _skCanvasView.PostInvalidate();
+            }
         }
 
         private void OnTouch(object sender, TouchEventArgs e)

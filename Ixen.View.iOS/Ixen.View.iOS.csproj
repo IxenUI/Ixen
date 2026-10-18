@@ -4,6 +4,14 @@
 		<SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
 		<Nullable>disable</Nullable>
 		<ImplicitUsings>disable</ImplicitUsings>
+		<Copyright>©2026 by kipy</Copyright>
+		<AssemblyVersion>0.0.1</AssemblyVersion>
+		<FileVersion>0.0.1</FileVersion>
+		<PackageId>Ixen.View.iOS</PackageId>
+		<Version>0.0.1</Version>
+		<Authors>kipy</Authors>
+		<Description>The iOS and Mac Catalyst view for Ixen: an IxenView to place in a UIKit hierarchy, with touch, both keyboards, composition, a pointer, drops and VoiceOver.</Description>
+		<PackageTags>ixen;ui;ios;maccatalyst</PackageTags>
 	</PropertyGroup>
 
 	<ItemGroup>

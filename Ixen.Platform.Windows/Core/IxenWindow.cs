@@ -244,6 +244,10 @@ namespace Ixen.Platform.Windows
             {
                 Capture();
             }
+            else if (_capturePath != null)
+            {
+                RequestRepaint();
+            }
         }
 
         private void Render(int width, int height)
