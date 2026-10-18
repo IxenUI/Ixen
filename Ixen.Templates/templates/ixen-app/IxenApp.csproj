@@ -3,6 +3,7 @@
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>net10.0</TargetFramework>
+		<IxenBundleTitle>Ixen App</IxenBundleTitle>
 	</PropertyGroup>
 
 	<ItemGroup>

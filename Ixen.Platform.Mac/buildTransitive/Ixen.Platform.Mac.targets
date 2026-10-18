@@ -1,0 +1,81 @@
+<Project>
+
+	<PropertyGroup>
+		<IxenMacBundle Condition="'$(IxenMacBundle)' == ''">true</IxenMacBundle>
+		<IxenBundleTitle Condition="'$(IxenBundleTitle)' == ''">$(AssemblyName)</IxenBundleTitle>
+		<IxenBundleIdentifier Condition="'$(IxenBundleIdentifier)' == ''">com.ixen.$(AssemblyName)</IxenBundleIdentifier>
+		<IxenBundleVersion Condition="'$(IxenBundleVersion)' == ''">$(Version)</IxenBundleVersion>
+		<IxenBundleVersion Condition="'$(IxenBundleVersion)' == ''">1.0.0</IxenBundleVersion>
+		<IxenBundleIcon Condition="'$(IxenBundleIcon)' == '' And Exists('$(MSBuildProjectDirectory)/icon.png')">$(MSBuildProjectDirectory)/icon.png</IxenBundleIcon>
+		<IxenBundleMinimumSystem Condition="'$(IxenBundleMinimumSystem)' == ''">11.0</IxenBundleMinimumSystem>
+	</PropertyGroup>
+
+	<Target Name="IxenMacBundle" AfterTargets="Publish"
+			Condition="'$(IxenMacBundle)' == 'true' And $(RuntimeIdentifier.StartsWith('osx'))">
+
+		<PropertyGroup>
+			<IxenBundleDir Condition="'$(IxenBundleDir)' == ''">$([MSBuild]::NormalizeDirectory('$(PublishDir)', '..', '$(IxenBundleTitle).app'))</IxenBundleDir>
+			<IxenBundleContents>$([MSBuild]::NormalizeDirectory('$(IxenBundleDir)', 'Contents'))</IxenBundleContents>
+			<IxenBundleIconName Condition="'$(IxenBundleIcon)' != ''">AppIcon</IxenBundleIconName>
+			<IxenBundleIconSet>$([MSBuild]::NormalizeDirectory('$(IntermediateOutputPath)', 'AppIcon.iconset'))</IxenBundleIconSet>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<IxenBundlePublished Include="$(PublishDir)**/*" />
+		</ItemGroup>
+
+		<RemoveDir Directories="$(IxenBundleDir)" />
+		<Copy SourceFiles="@(IxenBundlePublished)"
+			  DestinationFiles="@(IxenBundlePublished->'$(IxenBundleContents)MacOS/%(RecursiveDir)%(Filename)%(Extension)')" />
+
+		<ItemGroup>
+			<IxenBundlePlist Include="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;" />
+			<IxenBundlePlist Include="&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;" />
+			<IxenBundlePlist Include="&lt;plist version=&quot;1.0&quot;&gt;&lt;dict&gt;" />
+			<IxenBundlePlist Include="&lt;key&gt;CFBundleName&lt;/key&gt;&lt;string&gt;$(IxenBundleTitle)&lt;/string&gt;" />
+			<IxenBundlePlist Include="&lt;key&gt;CFBundleDisplayName&lt;/key&gt;&lt;string&gt;$(IxenBundleTitle)&lt;/string&gt;" />
+			<IxenBundlePlist Include="&lt;key&gt;CFBundleIdentifier&lt;/key&gt;&lt;string&gt;$(IxenBundleIdentifier)&lt;/string&gt;" />
+			<IxenBundlePlist Include="&lt;key&gt;CFBundleExecutable&lt;/key&gt;&lt;string&gt;$(AssemblyName)&lt;/string&gt;" />
+			<IxenBundlePlist Include="&lt;key&gt;CFBundlePackageType&lt;/key&gt;&lt;string&gt;APPL&lt;/string&gt;" />
+			<IxenBundlePlist Include="&lt;key&gt;CFBundleVersion&lt;/key&gt;&lt;string&gt;$(IxenBundleVersion)&lt;/string&gt;" />
+			<IxenBundlePlist Include="&lt;key&gt;CFBundleShortVersionString&lt;/key&gt;&lt;string&gt;$(IxenBundleVersion)&lt;/string&gt;" />
+			<IxenBundlePlist Include="&lt;key&gt;LSMinimumSystemVersion&lt;/key&gt;&lt;string&gt;$(IxenBundleMinimumSystem)&lt;/string&gt;" />
+			<IxenBundlePlist Include="&lt;key&gt;NSHighResolutionCapable&lt;/key&gt;&lt;true/&gt;" />
+			<IxenBundlePlist Include="&lt;key&gt;NSPrincipalClass&lt;/key&gt;&lt;string&gt;NSApplication&lt;/string&gt;" />
+			<IxenBundlePlist Condition="'$(IxenBundleIconName)' != ''" Include="&lt;key&gt;CFBundleIconFile&lt;/key&gt;&lt;string&gt;$(IxenBundleIconName)&lt;/string&gt;" />
+			<IxenBundlePlist Include="&lt;/dict&gt;&lt;/plist&gt;" />
+		</ItemGroup>
+
+		<WriteLinesToFile File="$(IxenBundleContents)Info.plist" Lines="@(IxenBundlePlist)" Overwrite="true" />
+
+		<MakeDir Directories="$(IxenBundleContents)Resources" />
+		<RemoveDir Condition="'$(IxenBundleIconName)' != ''" Directories="$(IxenBundleIconSet)" />
+		<MakeDir Condition="'$(IxenBundleIconName)' != ''" Directories="$(IxenBundleIconSet)" />
+		<Exec Condition="'$(IxenBundleIconName)' != '' And $([MSBuild]::IsOSPlatform('OSX'))"
+			  Command="for size in 16 32 128 256 512; do sips -z $size $size &quot;$(IxenBundleIcon)&quot; --out &quot;$(IxenBundleIconSet)icon_${size}x${size}.png&quot; &gt;/dev/null &amp;&amp; sips -z %24((size*2)) %24((size*2)) &quot;$(IxenBundleIcon)&quot; --out &quot;$(IxenBundleIconSet)icon_${size}x${size}@2x.png&quot; &gt;/dev/null || exit 1; done &amp;&amp; iconutil -c icns &quot;$(IxenBundleIconSet)&quot; -o &quot;$(IxenBundleContents)Resources/AppIcon.icns&quot;" />
+
+		<PropertyGroup Condition="'$(IxenBundleSignIdentity)' != '' And '$(IxenBundleEntitlements)' == ''">
+			<IxenBundleEntitlements>$(IntermediateOutputPath)Ixen.entitlements</IxenBundleEntitlements>
+			<IxenBundleWriteEntitlements>true</IxenBundleWriteEntitlements>
+		</PropertyGroup>
+
+		<ItemGroup Condition="'$(IxenBundleWriteEntitlements)' == 'true'">
+			<IxenBundleEntitlement Include="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;" />
+			<IxenBundleEntitlement Include="&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;" />
+			<IxenBundleEntitlement Include="&lt;plist version=&quot;1.0&quot;&gt;&lt;dict&gt;" />
+			<IxenBundleEntitlement Include="&lt;key&gt;com.apple.security.cs.allow-jit&lt;/key&gt;&lt;true/&gt;" />
+			<IxenBundleEntitlement Include="&lt;key&gt;com.apple.security.cs.allow-unsigned-executable-memory&lt;/key&gt;&lt;true/&gt;" />
+			<IxenBundleEntitlement Include="&lt;key&gt;com.apple.security.cs.disable-library-validation&lt;/key&gt;&lt;true/&gt;" />
+			<IxenBundleEntitlement Include="&lt;/dict&gt;&lt;/plist&gt;" />
+		</ItemGroup>
+
+		<WriteLinesToFile Condition="'$(IxenBundleWriteEntitlements)' == 'true'"
+						  File="$(IxenBundleEntitlements)" Lines="@(IxenBundleEntitlement)" Overwrite="true" />
+
+		<Exec Condition="'$(IxenBundleSignIdentity)' != '' And $([MSBuild]::IsOSPlatform('OSX'))"
+			  Command="codesign --force --deep --options runtime --entitlements &quot;$(IxenBundleEntitlements)&quot; -s &quot;$(IxenBundleSignIdentity)&quot; &quot;$(IxenBundleDir.TrimEnd('/'))&quot;" />
+
+		<Message Importance="high" Text="$(MSBuildProjectName) -&gt; $(IxenBundleDir)" />
+	</Target>
+
+</Project>

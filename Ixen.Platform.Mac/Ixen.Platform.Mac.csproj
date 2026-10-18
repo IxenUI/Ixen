@@ -29,6 +29,10 @@
 		<IxenMacDylib>$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)', '..', 'Ixen.Platform.Mac.Native', 'bin', 'libixen.dylib'))</IxenMacDylib>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<None Include="buildTransitive/Ixen.Platform.Mac.targets" Pack="true" PackagePath="buildTransitive" />
+	</ItemGroup>
+
 	<Target Name="IxenIncludeMacLibrary" BeforeTargets="AssignTargetPaths">
 		<Warning Condition="!Exists('$(IxenMacDylib)') And $([MSBuild]::IsOSPlatform('OSX'))"
 				 Code="IXEN002"
