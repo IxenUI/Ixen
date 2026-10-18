@@ -18,11 +18,13 @@ namespace Ixen.Platform.Mac
 
         private IntPtr _windowPtr;
 
-        private readonly PixelBuffer _pixelBuffer = new PixelBuffer();
+        private readonly SKSurface[] _surfaces = new SKSurface[2];
+        private readonly IntPtr[] _frames = new IntPtr[2];
+        private int _next;
         private SKSurface _surface;
-        private IntPtr _pixels;
         private int _width;
         private int _height;
+        private int _rowBytes;
 
         private readonly MacCursorImages _cursorImages = new();
         private readonly MacApi.OnPaintCallBack _onPaint;
@@ -136,9 +138,8 @@ namespace Ixen.Platform.Mac
             _ixenSurface.Presentable = CanPresent();
             _ixenSurface.Scale = MacApi.GetWindowDpi(_windowPtr) / DEFAULT_DPI;
 
-            _pixelBuffer.EnsureAlloc(width, height);
-
-            SKSurface surface = Surface(width, height);
+            IntPtr frame = MacApi.GetWindowFrame(_windowPtr, out int rowBytes);
+            SKSurface surface = Surface(frame, width, height, rowBytes);
 
             if (surface == null)
             {
@@ -146,9 +147,6 @@ namespace Ixen.Platform.Mac
             }
 
             _host.Paint(surface.Canvas, width, height);
-
-            MacApi.SetWindowPixelsBuffer(_windowPtr, _pixelBuffer.Ptr, width, height,
-                _pixelBuffer.RowBytes);
 
             _accessibility.Sync();
             SyncTextRect();
@@ -198,24 +196,56 @@ namespace Ixen.Platform.Mac
             MacApi.CloseWindow(_windowPtr);
         }
 
-        private SKSurface Surface(int width, int height)
+        private SKSurface Surface(IntPtr frame, int width, int height, int rowBytes)
         {
-            if (_surface != null && width == _width && height == _height
-                && _pixelBuffer.Ptr == _pixels)
+            if (frame == IntPtr.Zero)
             {
-                return _surface;
+                return null;
             }
 
-            _surface?.Dispose();
+            if (width != _width || height != _height || rowBytes != _rowBytes)
+            {
+                ReleaseSurfaces();
+
+                _width = width;
+                _height = height;
+                _rowBytes = rowBytes;
+            }
+
+            for (int index = 0; index < _surfaces.Length; index++)
+            {
+                if (_frames[index] == frame && _surfaces[index] != null)
+                {
+                    _surface = _surfaces[index];
+
+                    return _surface;
+                }
+            }
+
+            int slot = _next;
+
+            _next = 1 - _next;
+            _surfaces[slot]?.Dispose();
 
             var info = new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
 
-            _surface = SKSurface.Create(info, _pixelBuffer.Ptr, _pixelBuffer.RowBytes);
-            _pixels = _pixelBuffer.Ptr;
-            _width = width;
-            _height = height;
+            _surfaces[slot] = SKSurface.Create(info, frame, rowBytes);
+            _frames[slot] = frame;
+            _surface = _surfaces[slot];
 
             return _surface;
+        }
+
+        private void ReleaseSurfaces()
+        {
+            for (int index = 0; index < _surfaces.Length; index++)
+            {
+                _surfaces[index]?.Dispose();
+                _surfaces[index] = null;
+                _frames[index] = IntPtr.Zero;
+            }
+
+            _surface = null;
         }
 
         private void OnPointer(int kind, int x, int y, int button)
@@ -425,9 +455,7 @@ namespace Ixen.Platform.Mac
         public void Dispose()
         {
             _cursorImages.Clear();
-            _surface?.Dispose();
-            _surface = null;
-            _pixelBuffer.Dispose();
+            ReleaseSurfaces();
 
             if (_windowPtr != IntPtr.Zero)
             {

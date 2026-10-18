@@ -30,9 +30,9 @@ void WA_SetWindowTitle(NativeWindow* window, const char* title)
     SetNativeWindowTitle(window, title);
 }
 
-void WA_SetWindowPixelsBuffer(NativeWindow* window, void* buffer, int width, int height, int rowBytes)
+void* WA_GetWindowFrame(NativeWindow* window, int* rowBytes)
 {
-    SetNativeWindowPixels(window, buffer, width, height, rowBytes);
+    return GetNativeWindowFrame(window, rowBytes);
 }
 
 void WA_InvalidateWindow(NativeWindow* window)

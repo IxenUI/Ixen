@@ -37,8 +37,8 @@ namespace Ixen.Platform.Mac.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowTitle", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetWindowTitle(IntPtr windowPtr, [MarshalAs(UnmanagedType.LPUTF8Str)] string title);
 
-        [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowPixelsBuffer", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void SetWindowPixelsBuffer(IntPtr windowPtr, IntPtr pixelsBufferPtr, int width, int height, int rowBytes);
+        [DllImport(LIB_NAME, EntryPoint = "WA_GetWindowFrame", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr GetWindowFrame(IntPtr windowPtr, out int rowBytes);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_InvalidateWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern void InvalidateWindow(IntPtr windowPtr);

@@ -1,4 +1,6 @@
 #import "native_window.h"
+#import <IOSurface/IOSurface.h>
+#import <QuartzCore/QuartzCore.h>
 
 #include <map>
 #include <string>
@@ -354,7 +356,12 @@ static IxenAccessibleElement* AccessibilityFocus(NativeWindow* window)
     }
 }
 
-- (void)drawRect:(NSRect)dirty
+- (BOOL)wantsUpdateLayer
+{
+    return YES;
+}
+
+- (void)updateLayer
 {
     if (owner == nullptr)
     {
@@ -367,61 +374,44 @@ static IxenAccessibleElement* AccessibilityFocus(NativeWindow* window)
     int width = (int)(bounds.size.width * scale);
     int height = (int)(bounds.size.height * scale);
 
-    if (owner->paintCallBack != nullptr && width > 0 && height > 0)
-    {
-        owner->paintCallBack(width, height);
-    }
-
-    if (owner->pixels == nullptr || owner->pixelsWidth <= 0 || owner->pixelsHeight <= 0)
+    if (owner->paintCallBack == nullptr || width <= 0 || height <= 0)
     {
         return;
     }
 
-    CGContextRef context = (CGContextRef)[[NSGraphicsContext currentContext] CGContext];
+    IxenMacNative::EnsureSurfaces(owner, width, height);
 
-    if (context == nullptr)
+    int back = owner->front < 0 ? 0 : 1 - owner->front;
+    IOSurfaceRef target = (IOSurfaceRef)owner->surfaces[back];
+
+    if (target == nullptr)
     {
         return;
     }
 
-    size_t bytes = (size_t)owner->pixelsRowBytes * (size_t)owner->pixelsHeight;
+    IOSurfaceLock(target, 0, nullptr);
 
-    CGDataProviderRef provider = CGDataProviderCreateWithData(nullptr, owner->pixels, bytes, nullptr);
-
-    if (provider == nullptr)
+    if (owner->front >= 0)
     {
-        return;
+        IOSurfaceRef previous = (IOSurfaceRef)owner->surfaces[owner->front];
+
+        IOSurfaceLock(previous, kIOSurfaceLockReadOnly, nullptr);
+        memcpy(IOSurfaceGetBaseAddress(target), IOSurfaceGetBaseAddress(previous),
+            IOSurfaceGetBytesPerRow(target) * (size_t)height);
+        IOSurfaceUnlock(previous, kIOSurfaceLockReadOnly, nullptr);
     }
 
-    CGColorSpaceRef space = CGColorSpaceCreateDeviceRGB();
-    CGBitmapInfo info = kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast;
+    owner->frame = IOSurfaceGetBaseAddress(target);
+    owner->frameRowBytes = (int)IOSurfaceGetBytesPerRow(target);
 
-    CGImageRef image = CGImageCreate((size_t)owner->pixelsWidth,
-                                     (size_t)owner->pixelsHeight,
-                                     8,
-                                     32,
-                                     (size_t)owner->pixelsRowBytes,
-                                     space,
-                                     info,
-                                     provider,
-                                     nullptr,
-                                     false,
-                                     kCGRenderingIntentDefault);
+    owner->paintCallBack(width, height);
 
-    if (image != nullptr)
-    {
-        CGContextSaveGState(context);
-        CGContextTranslateCTM(context, 0, bounds.size.height);
-        CGContextScaleCTM(context, 1.0, -1.0);
-        CGContextSetInterpolationQuality(context, kCGInterpolationNone);
-        CGContextDrawImage(context, CGRectMake(0, 0, bounds.size.width, bounds.size.height), image);
-        CGContextRestoreGState(context);
+    owner->frame = nullptr;
+    IOSurfaceUnlock(target, 0, nullptr);
 
-        CGImageRelease(image);
-    }
-
-    CGColorSpaceRelease(space);
-    CGDataProviderRelease(provider);
+    self.layer.contentsScale = scale;
+    self.layer.contents = (__bridge id)target;
+    owner->front = back;
 }
 
 - (void)sendPointer:(NSEvent*)event kind:(int)kind button:(int)button
@@ -1092,10 +1082,13 @@ namespace IxenMacNative
 
         NativeWindow* result = new NativeWindow();
 
-        result->pixels = nullptr;
-        result->pixelsWidth = 0;
-        result->pixelsHeight = 0;
-        result->pixelsRowBytes = 0;
+        result->surfaces[0] = nullptr;
+        result->surfaces[1] = nullptr;
+        result->front = -1;
+        result->surfaceWidth = 0;
+        result->surfaceHeight = 0;
+        result->frame = nullptr;
+        result->frameRowBytes = 0;
         result->paintCallBack = nullptr;
         result->pointerCallBack = nullptr;
         result->keyCallBack = nullptr;
@@ -1125,6 +1118,10 @@ namespace IxenMacNative
                                                           defer:NO];
 
         IxenContentView* view = [[IxenContentView alloc] initWithFrame:frame];
+
+        view.wantsLayer = YES;
+        view.layerContentsRedrawPolicy = NSViewLayerContentsRedrawDuringViewResize;
+        view.layer.contentsGravity = kCAGravityTopLeft;
 
         view->owner = result;
 
@@ -1202,6 +1199,8 @@ namespace IxenMacNative
             window->windowDelegate = nullptr;
         }
 
+        ReleaseSurfaces(window);
+
         delete window;
     }
 
@@ -1249,17 +1248,63 @@ namespace IxenMacNative
         [handle setTitle:[NSString stringWithUTF8String:title]];
     }
 
-    void SetNativeWindowPixels(NativeWindow* window, void* pixels, int width, int height, int rowBytes)
+    void ReleaseSurfaces(NativeWindow* window)
     {
-        if (window == nullptr)
+        for (int index = 0; index < 2; index++)
+        {
+            if (window->surfaces[index] != nullptr)
+            {
+                CFRelease(window->surfaces[index]);
+                window->surfaces[index] = nullptr;
+            }
+        }
+
+        window->front = -1;
+        window->surfaceWidth = 0;
+        window->surfaceHeight = 0;
+    }
+
+    static IOSurfaceRef CreateSurface(int width, int height)
+    {
+        NSDictionary* properties = @{
+            (id)kIOSurfaceWidth: @(width),
+            (id)kIOSurfaceHeight: @(height),
+            (id)kIOSurfaceBytesPerElement: @4,
+            (id)kIOSurfacePixelFormat: @((unsigned int)'RGBA')
+        };
+
+        return IOSurfaceCreate((__bridge CFDictionaryRef)properties);
+    }
+
+    void EnsureSurfaces(NativeWindow* window, int width, int height)
+    {
+        if (window->surfaceWidth == width && window->surfaceHeight == height
+            && window->surfaces[0] != nullptr && window->surfaces[1] != nullptr)
         {
             return;
         }
 
-        window->pixels = pixels;
-        window->pixelsWidth = width;
-        window->pixelsHeight = height;
-        window->pixelsRowBytes = rowBytes;
+        ReleaseSurfaces(window);
+
+        window->surfaces[0] = (void*)CreateSurface(width, height);
+        window->surfaces[1] = (void*)CreateSurface(width, height);
+        window->surfaceWidth = width;
+        window->surfaceHeight = height;
+    }
+
+    void* GetNativeWindowFrame(NativeWindow* window, int* rowBytes)
+    {
+        if (window == nullptr || window->frame == nullptr)
+        {
+            return nullptr;
+        }
+
+        if (rowBytes != nullptr)
+        {
+            *rowBytes = window->frameRowBytes;
+        }
+
+        return window->frame;
     }
 
     void InvalidateNativeWindow(NativeWindow* window)

@@ -24,10 +24,12 @@ namespace IxenMacNative
         void* window;
         void* view;
 
-        void* pixels;
-        int pixelsWidth;
-        int pixelsHeight;
-        int pixelsRowBytes;
+        void* surfaces[2];
+        int front;
+        int surfaceWidth;
+        int surfaceHeight;
+        void* frame;
+        int frameRowBytes;
 
         PaintCallBack paintCallBack;
         PointerCallBack pointerCallBack;
@@ -59,7 +61,9 @@ namespace IxenMacNative
     void CloseNativeWindow(NativeWindow* window);
     void SetApplicationIcon(const void* bytes, int length);
     void SetNativeWindowTitle(NativeWindow* window, const char* title);
-    void SetNativeWindowPixels(NativeWindow* window, void* pixels, int width, int height, int rowBytes);
+    void* GetNativeWindowFrame(NativeWindow* window, int* rowBytes);
+    void EnsureSurfaces(NativeWindow* window, int width, int height);
+    void ReleaseSurfaces(NativeWindow* window);
     void InvalidateNativeWindow(NativeWindow* window);
     unsigned int GetNativeWindowDpi(NativeWindow* window);
     int IsNativeWindowPresentable(NativeWindow* window);

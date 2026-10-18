@@ -13,7 +13,7 @@ IXEN_API_ENTRY void WA_DestroyWindow(NativeWindow* window);
 IXEN_API_ENTRY void WA_CloseWindow(NativeWindow* window);
 IXEN_API_ENTRY void WA_SetApplicationIcon(const void* bytes, int length);
 IXEN_API_ENTRY void WA_SetWindowTitle(NativeWindow* window, const char* title);
-IXEN_API_ENTRY void WA_SetWindowPixelsBuffer(NativeWindow* window, void* buffer, int width, int height, int rowBytes);
+IXEN_API_ENTRY void* WA_GetWindowFrame(NativeWindow* window, int* rowBytes);
 IXEN_API_ENTRY void WA_InvalidateWindow(NativeWindow* window);
 IXEN_API_ENTRY unsigned int WA_GetWindowDpi(NativeWindow* window);
 IXEN_API_ENTRY int WA_IsWindowPresentable(NativeWindow* window);
