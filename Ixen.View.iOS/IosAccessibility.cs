@@ -2,6 +2,7 @@ using CoreGraphics;
 using Foundation;
 using Ixen.Core;
 using Ixen.Core.Accessibility;
+using System;
 using System.Collections.Generic;
 using UIKit;
 
@@ -30,7 +31,7 @@ namespace Ixen.View.iOS
         {
             get
             {
-                Refresh();
+                RefreshIfStale();
 
                 IxenAccessibilityElement root = ElementOf(_snapshot.RootId);
 
@@ -40,7 +41,7 @@ namespace Ixen.View.iOS
 
         internal void Sync()
         {
-            if (!UIAccessibility.IsVoiceOverRunning)
+            if (!UIAccessibility.IsVoiceOverRunning || !_stale)
             {
                 return;
             }
@@ -54,8 +55,21 @@ namespace Ixen.View.iOS
             Announce();
         }
 
+        private bool _stale = true;
+
+        internal void MarkStale() => _stale = true;
+
+        private void RefreshIfStale()
+        {
+            if (_stale)
+            {
+                Refresh();
+            }
+        }
+
         private void Refresh()
         {
+            _stale = false;
             _dropped.Clear();
             _snapshot = AccessibilitySnapshot.Take(_surface.BuildAccessibilityTree(), _ids, _dropped);
 
@@ -99,41 +113,31 @@ namespace Ixen.View.iOS
             }
 
             int parent = _snapshot.ParentOf(id);
-
-            element.AccessibilityContainer = parent == AccessibilitySnapshot.NONE
-                ? (NSObject)_view
-                : ElementOf(parent);
-
             IReadOnlyList<int> children = _snapshot.ChildrenOf(id);
-            bool container = children.Count > 0;
 
-            element.IsAccessibilityElement = !container;
-            element.AccessibilityLabel = node.Name;
-            element.AccessibilityValue = node.Value;
-            element.AccessibilityHint = node.Description;
-            element.AccessibilityTraits = (ulong)TraitsOf(node);
-            element.AccessibilityFrame = _view.ScreenFrame(new CGRect(node.X, node.Y, node.Width, node.Height));
+            element.Push(
+                parent == AccessibilitySnapshot.NONE ? (NSObject)_view : ElementOf(parent),
+                node,
+                (ulong)TraitsOf(node),
+                _view.ScreenFrame(new CGRect(node.X, node.Y, node.Width, node.Height)),
+                children,
+                ElementOf,
+                ContainerTypeOf(node));
+        }
 
-            if (container)
+        private static UIAccessibilityContainerType ContainerTypeOf(AccessibleNode node)
+        {
+            switch (node.Role)
             {
-                var elements = new NSObject[children.Count];
+                case AccessibleRole.List:
+                case AccessibleRole.Tree:
+                    return UIAccessibilityContainerType.List;
 
-                for (int index = 0; index < children.Count; index++)
-                {
-                    elements[index] = ElementOf(children[index]);
-                }
+                case AccessibleRole.Table:
+                    return UIAccessibilityContainerType.DataTable;
 
-                element.Children = elements;
-                element.ContainerType = node.Role == AccessibleRole.List || node.Role == AccessibleRole.Tree
-                    ? UIAccessibilityContainerType.List
-                    : node.Role == AccessibleRole.Table
-                        ? UIAccessibilityContainerType.DataTable
-                        : UIAccessibilityContainerType.SemanticGroup;
-            }
-            else
-            {
-                element.Children = null;
-                element.ContainerType = UIAccessibilityContainerType.None;
+                default:
+                    return UIAccessibilityContainerType.SemanticGroup;
             }
         }
 
@@ -245,7 +249,7 @@ namespace Ixen.View.iOS
 
         internal NSObject HitTest(CGPoint point)
         {
-            Refresh();
+            RefreshIfStale();
 
             int id = _snapshot.FindAt(point.X, point.Y);
 
@@ -295,15 +299,94 @@ namespace Ixen.View.iOS
             _id = id;
         }
 
-        internal NSObject[] Children { get; set; }
+        private NSObject[] _children;
+        private int[] _childIds;
+        private UIAccessibilityContainerType _containerType;
+        private NSObject _pushedContainer;
+        private bool _pushed;
 
-        internal UIAccessibilityContainerType ContainerType { get; set; }
+        internal void Push(NSObject container, AccessibleNode node, ulong traits, CGRect frame,
+            IReadOnlyList<int> childIds, Func<int, IxenAccessibilityElement> elementOf,
+            UIAccessibilityContainerType containerType)
+        {
+            bool isContainer = childIds.Count > 0;
+
+            if (!_pushed || !ReferenceEquals(_pushedContainer, container))
+            {
+                AccessibilityContainer = container;
+                _pushedContainer = container;
+            }
+
+            if (!_pushed || IsAccessibilityElement == isContainer)
+            {
+                IsAccessibilityElement = !isContainer;
+            }
+
+            if (!_pushed || AccessibilityLabel != node.Name)
+            {
+                AccessibilityLabel = node.Name;
+            }
+
+            if (!_pushed || AccessibilityValue != node.Value)
+            {
+                AccessibilityValue = node.Value;
+            }
+
+            if (!_pushed || AccessibilityHint != node.Description)
+            {
+                AccessibilityHint = node.Description;
+            }
+
+            if (!_pushed || AccessibilityTraits != traits)
+            {
+                AccessibilityTraits = traits;
+            }
+
+            if (!_pushed || AccessibilityFrame != frame)
+            {
+                AccessibilityFrame = frame;
+            }
+
+            _containerType = isContainer ? containerType : UIAccessibilityContainerType.None;
+
+            if (!SameIds(childIds))
+            {
+                _childIds = new int[childIds.Count];
+                _children = isContainer ? new NSObject[childIds.Count] : null;
+
+                for (int index = 0; index < childIds.Count; index++)
+                {
+                    _childIds[index] = childIds[index];
+                    _children[index] = elementOf(childIds[index]);
+                }
+            }
+
+            _pushed = true;
+        }
+
+        private bool SameIds(IReadOnlyList<int> ids)
+        {
+            if (_childIds == null || _childIds.Length != ids.Count)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < ids.Count; index++)
+            {
+                if (_childIds[index] != ids[index])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
 
         [Export("accessibilityElements")]
-        public NSArray ExposedElements => Children == null ? null : NSArray.FromNSObjects(Children);
+        public NSArray ExposedElements => _children == null ? null : NSArray.FromNSObjects(_children);
 
         [Export("accessibilityContainerType")]
-        public UIAccessibilityContainerType ExposedContainerType => ContainerType;
+        public UIAccessibilityContainerType ExposedContainerType => _containerType;
 
         [Export("accessibilityActivate")]
         public bool Activate()

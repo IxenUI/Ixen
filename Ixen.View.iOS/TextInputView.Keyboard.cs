@@ -6,53 +6,12 @@ using UIKit;
 
 namespace Ixen.View.iOS
 {
-    public partial class IxenView
+    internal sealed partial class TextInputView
     {
         private readonly UIView _noKeyboard = new UIView();
 
         private TextField _editing;
         private bool _syncPending;
-
-        private int _canvasHeight;
-
-        private TextField Field => _host.FocusedElement as TextField;
-
-        private void FollowKeyboard()
-        {
-            UIKeyboardLayoutGuide keyboard = KeyboardLayoutGuide;
-
-            if (OperatingSystem.IsIOSVersionAtLeast(17))
-            {
-                keyboard.UsesBottomSafeArea = false;
-            }
-
-            NSLayoutConstraint.ActivateConstraints(new[]
-            {
-                _canvasView.LeadingAnchor.ConstraintEqualTo(LeadingAnchor),
-                _canvasView.TrailingAnchor.ConstraintEqualTo(TrailingAnchor),
-                _canvasView.TopAnchor.ConstraintEqualTo(TopAnchor),
-                _canvasView.BottomAnchor.ConstraintEqualTo(keyboard.TopAnchor),
-            });
-        }
-
-        private void RevealFieldIfShrunk(int height)
-        {
-            bool shrunk = _canvasHeight > 0 && height < _canvasHeight;
-
-            _canvasHeight = height;
-
-            TextField field = Field;
-
-            if (!shrunk || field == null)
-            {
-                return;
-            }
-
-            if (ScrollNavigator.IntoView(field))
-            {
-                BeginInvokeOnMainThread(_canvasView.SetNeedsDisplay);
-            }
-        }
 
         public override bool CanBecomeFirstResponder => true;
 
@@ -69,7 +28,7 @@ namespace Ixen.View.iOS
             }
         }
 
-        private void RequestKeyboardSync()
+        internal void RequestKeyboardSync()
         {
             if (_syncPending || (Field == null && _editing == null))
             {

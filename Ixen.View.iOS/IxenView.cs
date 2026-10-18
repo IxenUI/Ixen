@@ -13,7 +13,7 @@ using UIKit;
 
 namespace Ixen.View.iOS
 {
-    public partial class IxenView : UIView, IUITextInput
+    public partial class IxenView : UIView
     {
         private const float BODY_SIZE = 17f;
 
@@ -22,6 +22,7 @@ namespace Ixen.View.iOS
         private SKCanvasView _canvasView;
         private IxenHost _host;
         private IosAccessibility _accessibility;
+        private TextInputView _input;
 
         public IxenView()
             : base()
@@ -69,6 +70,9 @@ namespace Ixen.View.iOS
             _canvasView.PaintSurface += OnPaintSurface;
 
             AddSubview(_canvasView);
+
+            _input = new TextInputView(_host, _canvasView.SetNeedsDisplay) { Frame = Bounds };
+            AddSubview(_input);
             FollowKeyboard();
         }
 
@@ -117,8 +121,9 @@ namespace Ixen.View.iOS
             _host.Surface.FontScale = ReadFontScale();
             _host.Paint(e.Surface.Canvas, e.Info.Width, e.Info.Height);
             RevealFieldIfShrunk(e.Info.Height);
+            _accessibility.MarkStale();
             _accessibility.Sync();
-            RequestKeyboardSync();
+            _input.RequestKeyboardSync();
 
             _paints++;
 
@@ -327,6 +332,47 @@ namespace Ixen.View.iOS
         internal void AccessibilityActed()
         {
             _canvasView.SetNeedsDisplay();
+        }
+
+        private int _canvasHeight;
+
+        private TextField Field => _host.FocusedElement as TextField;
+
+        private void FollowKeyboard()
+        {
+            UIKeyboardLayoutGuide keyboard = KeyboardLayoutGuide;
+
+            if (OperatingSystem.IsIOSVersionAtLeast(17))
+            {
+                keyboard.UsesBottomSafeArea = false;
+            }
+
+            NSLayoutConstraint.ActivateConstraints(new[]
+            {
+                _canvasView.LeadingAnchor.ConstraintEqualTo(LeadingAnchor),
+                _canvasView.TrailingAnchor.ConstraintEqualTo(TrailingAnchor),
+                _canvasView.TopAnchor.ConstraintEqualTo(TopAnchor),
+                _canvasView.BottomAnchor.ConstraintEqualTo(keyboard.TopAnchor),
+            });
+        }
+
+        private void RevealFieldIfShrunk(int height)
+        {
+            bool shrunk = _canvasHeight > 0 && height < _canvasHeight;
+
+            _canvasHeight = height;
+
+            TextField field = Field;
+
+            if (!shrunk || field == null)
+            {
+                return;
+            }
+
+            if (ScrollNavigator.IntoView(field))
+            {
+                BeginInvokeOnMainThread(_canvasView.SetNeedsDisplay);
+            }
         }
 
         public IxenHost Host => _host;

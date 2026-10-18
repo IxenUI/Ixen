@@ -109,7 +109,7 @@ echo
 view="$framework/Ixen.View.iOS/Ixen.View.iOS.csproj"
 head="$workspace/Demo App/Ixen.DemoApp.iOS"
 project="$head/Ixen.DemoApp.iOS.csproj"
-gates=("view, warning-free" "app, warning-free" "simulator ready" "app installed" "host frame matches library")
+gates=("view, warning-free" "app, warning-free" "catalyst, warning-free" "catalyst frame matches library" "simulator ready" "app installed" "host frame matches library")
 
 if [ "$(uname -s)" != "Darwin" ] || ! xcrun --find simctl > /dev/null 2>&1
 then
@@ -160,7 +160,7 @@ else
     built="incrementally, so a stale AOT image is possible"
 fi
 
-if dotnet build "$project" -c "$configuration" -p:RuntimeIdentifier="$rid" -warnaserror -v q --nologo \
+if dotnet build "$project" -c "$configuration" -f net10.0-ios -p:RuntimeIdentifier="$rid" -warnaserror -v q --nologo \
         > "$work/app.txt" 2>&1
 then
     Record OK "app, warning-free" "$package, $built"
@@ -172,13 +172,68 @@ else
     Summary
 fi
 
+catalyst_rid=maccatalyst-arm64
+
+if [ "$(uname -m)" != "arm64" ]
+then
+    catalyst_rid=maccatalyst-x64
+fi
+
+if dotnet build "$project" -c "$configuration" -f net10.0-maccatalyst -p:RuntimeIdentifier="$catalyst_rid" \
+        -warnaserror -v q --nologo > "$work/catalyst.txt" 2>&1
+then
+    Record OK "catalyst, warning-free" "$catalyst_rid"
+
+    executable="$(ls "$head/bin/$configuration/net10.0-maccatalyst/$catalyst_rid/"*.app/Contents/MacOS/* 2>/dev/null | head -1)"
+
+    if [ -z "$executable" ]
+    then
+        Record FAIL "catalyst frame matches library" "the build produced no Mac Catalyst executable"
+    else
+        "$executable" --ixen-capture > "$work/catalyst-console.txt" 2>&1 &
+        catalyst=$!
+        catalyst_verdict=
+        catalyst_deadline=$(( $(date +%s) + patience ))
+
+        while [ "$(date +%s)" -lt "$catalyst_deadline" ] && kill -0 "$catalyst" > /dev/null 2>&1
+        do
+            catalyst_verdict="$(grep -aoE 'IxenCapture: (match|mismatch) .*' "$work/catalyst-console.txt" | tail -1)"
+
+            if [ -n "$catalyst_verdict" ]
+            then
+                break
+            fi
+
+            sleep 1
+        done
+
+        kill "$catalyst" > /dev/null 2>&1
+        catalyst_verdict="${catalyst_verdict#IxenCapture: }"
+
+        if [ -z "$catalyst_verdict" ]
+        then
+            Show "$work/catalyst-console.txt" 6
+            Record FAIL "catalyst frame matches library" "the Mac Catalyst app produced no frame"
+        elif [ "${catalyst_verdict%% *}" = "match" ]
+        then
+            Record OK "catalyst frame matches library" "${catalyst_verdict#match }"
+        else
+            Record FAIL "catalyst frame matches library" "${catalyst_verdict#mismatch }"
+        fi
+    fi
+else
+    Show "$work/catalyst.txt" 8
+    Record FAIL "catalyst, warning-free" "the demo did not build for Mac Catalyst, or warned"
+    Record SKIP "catalyst frame matches library" "the Mac Catalyst app did not build"
+fi
+
 app="$(ls -d "$head/bin/$configuration/net10.0-ios/$rid/"*.app 2>/dev/null | head -1)"
 
 if [ -z "$app" ]
 then
     Record FAIL "simulator ready" "the build produced no .app under bin/$configuration/net10.0-ios/$rid"
     reason="no app bundle"
-    Rest "${gates[@]:3}"
+    Rest "${gates[@]:5}"
     Summary
 fi
 
@@ -195,7 +250,7 @@ fi
 if [ -z "$udid" ]
 then
     reason="Xcode knows no iPhone simulator, so add one in Xcode's device list"
-    Rest "${gates[@]:2}"
+    Rest "${gates[@]:4}"
     Summary
 fi
 
@@ -213,7 +268,7 @@ then
         Show "$work/boot.txt" 4
         Record FAIL "simulator ready" "$name would not boot"
         reason="no simulator"
-        Rest "${gates[@]:3}"
+        Rest "${gates[@]:5}"
         Summary
     fi
 
@@ -231,7 +286,7 @@ then
 else
     Record FAIL "simulator ready" "$name did not finish booting"
     reason="no simulator"
-    Rest "${gates[@]:3}"
+    Rest "${gates[@]:5}"
     Summary
 fi
 
@@ -242,7 +297,7 @@ else
     Show "$work/install.txt" 6
     Record FAIL "app installed" "the simulator refused the bundle"
     reason="nothing was installed"
-    Rest "${gates[@]:4}"
+    Rest "${gates[@]:6}"
     Summary
 fi
 

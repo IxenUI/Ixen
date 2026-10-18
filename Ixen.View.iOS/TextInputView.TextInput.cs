@@ -6,7 +6,7 @@ using UIKit;
 
 namespace Ixen.View.iOS
 {
-    public partial class IxenView
+    internal sealed partial class TextInputView
     {
         private const float CARET_WIDTH = 2f;
 
@@ -385,7 +385,7 @@ namespace Ixen.View.iOS
         private void Edited()
         {
             _known = Snapshot();
-            _canvasView.SetNeedsDisplay();
+            _repaint();
         }
 
         private void TellInputAboutOutsideChanges()
