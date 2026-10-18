@@ -529,6 +529,8 @@ namespace Ixen.Core.Input
 
         private void Scroll(VisualElement hit, float deltaX, float deltaY, KeyModifiers modifiers)
         {
+            StopFling();
+
             bool sideways = (modifiers & KeyModifiers.Shift) == KeyModifiers.Shift;
 
             float offsetX = (deltaX - (sideways ? deltaY : 0)) * WHEEL_STEP;
@@ -547,6 +549,24 @@ namespace Ixen.Core.Input
             _scrollLatch = target;
 
             target.RequestScroll(offsetX, offsetY);
+        }
+
+        internal void WheelFling(float notchesPerSecondX, float notchesPerSecondY)
+        {
+            StopFling();
+
+            VisualElement target = Latched(TimeSource.Milliseconds);
+
+            if (target == null)
+            {
+                return;
+            }
+
+            _velocityX = Limit(notchesPerSecondX * WHEEL_STEP / 1000f);
+            _velocityY = Limit(-notchesPerSecondY * WHEEL_STEP / 1000f);
+            _panHorizontal = ScrollNavigator.Horizontal(_velocityX, _velocityY);
+
+            StartFling(target);
         }
 
         private VisualElement Latched(long now)
@@ -1038,14 +1058,17 @@ namespace Ixen.Core.Input
 
         private static float Blend(float carried, float sample)
         {
-            float blended = carried * (1f - VELOCITY_WEIGHT) + sample * VELOCITY_WEIGHT;
+            return Limit(carried * (1f - VELOCITY_WEIGHT) + sample * VELOCITY_WEIGHT);
+        }
 
-            if (blended > FLING_MAX_VELOCITY)
+        private static float Limit(float velocity)
+        {
+            if (velocity > FLING_MAX_VELOCITY)
             {
                 return FLING_MAX_VELOCITY;
             }
 
-            return blended < -FLING_MAX_VELOCITY ? -FLING_MAX_VELOCITY : blended;
+            return velocity < -FLING_MAX_VELOCITY ? -FLING_MAX_VELOCITY : velocity;
         }
 
         private bool Overscrolled => _overscrollX != 0f || _overscrollY != 0f;

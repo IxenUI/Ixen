@@ -1237,6 +1237,9 @@ namespace Ixen.Core
             KeyModifiers modifiers = KeyModifiers.None)
             => _pointerDispatcher.Wheel(Root, ToLogical(x), ToLogical(y), deltaX, deltaY, modifiers);
 
+        internal void PointerWheelFling(float notchesPerSecondX, float notchesPerSecondY)
+            => _pointerDispatcher.WheelFling(notchesPerSecondX, notchesPerSecondY);
+
         internal void Render(SKCanvas canvas)
         {
             _visualDirty = false;

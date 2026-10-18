@@ -196,6 +196,22 @@ namespace Ixen.Platform
             }
         }
 
+        public void PointerWheelFling(float notchesPerSecondX, float notchesPerSecondY)
+        {
+            try
+            {
+                _surface.PointerWheelFling(notchesPerSecondX, notchesPerSecondY);
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Pointer, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
+        }
+
         public void PointerDrop(float x, float y, object data)
         {
             try

@@ -65,6 +65,15 @@ namespace Ixen.View.iOS
             if (recognizer.State == UIGestureRecognizerState.Began)
             {
                 _lastScroll = CGPoint.Empty;
+                _host.PointerWheelFling(0, 0);
+            }
+
+            if (recognizer.State == UIGestureRecognizerState.Ended)
+            {
+                CGPoint velocity = recognizer.VelocityInView(this);
+
+                _host.PointerWheelFling(-(float)velocity.X / WHEEL_NOTCH, (float)velocity.Y / WHEEL_NOTCH);
+                return;
             }
 
             if (recognizer.State != UIGestureRecognizerState.Began
