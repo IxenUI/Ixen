@@ -13,6 +13,7 @@ namespace Ixen.Platform.Mac.NativeApi
         public delegate void OnImeCallBack(int kind, [MarshalAs(UnmanagedType.LPUTF8Str)] string text, int caret);
         public delegate void OnWheelCallBack(int x, int y, int deltaX, int deltaY, int modifiers);
         public delegate void OnDropCallBack(int x, int y, [MarshalAs(UnmanagedType.LPUTF8Str)] string paths);
+        public delegate void OnSuspendCallBack();
         public delegate void OnTimerCallBack(long id);
         public delegate int OnAccessibilityCallBack(int identifier, int action, [MarshalAs(UnmanagedType.LPUTF8Str)] string value);
 
@@ -72,6 +73,9 @@ namespace Ixen.Platform.Mac.NativeApi
 
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterDropCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterDropCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnDropCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterSuspendCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterSuspendCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnSuspendCallBack callback);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_GetClipboardText", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr GetClipboardText();

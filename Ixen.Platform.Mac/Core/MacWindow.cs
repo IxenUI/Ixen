@@ -29,6 +29,7 @@ namespace Ixen.Platform.Mac
         private readonly MacApi.OnImeCallBack _onIme;
         private readonly MacApi.OnWheelCallBack _onWheel;
         private readonly MacApi.OnDropCallBack _onDrop;
+        private readonly MacApi.OnSuspendCallBack _onSuspend;
 
         private readonly IxenSurface _ixenSurface;
         private readonly IxenHost _host;
@@ -55,6 +56,7 @@ namespace Ixen.Platform.Mac
             _onIme = OnIme;
             _onWheel = OnWheel;
             _onDrop = OnDrop;
+            _onSuspend = OnSuspend;
 
             _windowPtr = MacApi.CreateWindow(_ixenSurface.InitOptions.Title,
                 _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
@@ -110,6 +112,7 @@ namespace Ixen.Platform.Mac
             MacApi.RegisterImeCallBack(_windowPtr, _onIme);
             MacApi.RegisterWheelCallBack(_windowPtr, _onWheel);
             MacApi.RegisterDropCallBack(_windowPtr, _onDrop);
+            MacApi.RegisterSuspendCallBack(_windowPtr, _onSuspend);
 
             _accessibility.Register();
 
@@ -297,6 +300,8 @@ namespace Ixen.Platform.Mac
         }
 
         private static readonly char[] _dropSeparator = { '\n' };
+
+        private void OnSuspend() => _host.ReleaseCaches();
 
         private void OnDrop(int x, int y, string paths)
         {

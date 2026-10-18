@@ -114,6 +114,14 @@ void WA_RegisterDropCallBack(NativeWindow* window, void callBack(int, int, const
     }
 }
 
+void WA_RegisterSuspendCallBack(NativeWindow* window, void callBack())
+{
+    if (window != nullptr)
+    {
+        window->suspendCallBack = callBack;
+    }
+}
+
 const char* WA_GetClipboardText()
 {
     return GetPasteboardText();

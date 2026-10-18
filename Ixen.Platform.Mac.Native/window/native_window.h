@@ -15,6 +15,7 @@ namespace IxenMacNative
     typedef void (*DropCallBack)(int x, int y, const char* paths);
     typedef void (*TimerCallBack)(long id);
     typedef int (*AccessibilityCallBack)(int identifier, int action, const char* value);
+    typedef void (*SuspendCallBack)();
 
     struct NativeWindow
     {
@@ -33,6 +34,7 @@ namespace IxenMacNative
         WheelCallBack wheelCallBack;
         DropCallBack dropCallBack;
         AccessibilityCallBack accessibilityCallBack;
+        SuspendCallBack suspendCallBack;
 
         void* accessibilityNodes;
         int accessibilityRoot;

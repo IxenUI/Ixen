@@ -805,14 +805,168 @@ static void StopRunLoop()
     [NSApp postEvent:wake atStart:YES];
 }
 
+static CGFloat IxenDistance(NSRect frame, NSRect screen)
+{
+    CGFloat dx = MAX(0, MAX(NSMinX(screen) - NSMaxX(frame), NSMinX(frame) - NSMaxX(screen)));
+    CGFloat dy = MAX(0, MAX(NSMinY(screen) - NSMaxY(frame), NSMinY(frame) - NSMaxY(screen)));
+
+    return dx * dx + dy * dy;
+}
+
+static NSScreen* IxenNearestScreen(NSRect frame)
+{
+    NSScreen* best = nil;
+    CGFloat bestArea = 0;
+
+    for (NSScreen* screen in [NSScreen screens])
+    {
+        NSRect overlap = NSIntersectionRect(frame, [screen frame]);
+        CGFloat area = overlap.size.width * overlap.size.height;
+
+        if (area > bestArea)
+        {
+            best = screen;
+            bestArea = area;
+        }
+    }
+
+    if (best != nil)
+    {
+        return best;
+    }
+
+    CGFloat bestDistance = CGFLOAT_MAX;
+
+    for (NSScreen* screen in [NSScreen screens])
+    {
+        CGFloat distance = IxenDistance(frame, [screen frame]);
+
+        if (distance < bestDistance)
+        {
+            best = screen;
+            bestDistance = distance;
+        }
+    }
+
+    return best;
+}
+
+static NSRect IxenClampFrame(NSRect frame, NSRect area)
+{
+    CGFloat width = MIN(frame.size.width, area.size.width);
+    CGFloat height = MIN(frame.size.height, area.size.height);
+    CGFloat top = MIN(NSMaxY(frame), NSMaxY(area));
+    CGFloat x = MAX(NSMinX(area), MIN(NSMinX(frame), NSMaxX(area) - width));
+    CGFloat y = MAX(NSMinY(area), top - height);
+
+    return NSMakeRect(x, y, width, height);
+}
+
 @interface IxenWindowDelegate : NSObject <NSWindowDelegate>
+{
+@public
+    IxenMacNative::NativeWindow* owner;
+}
+- (void)observe;
+- (void)forget;
 @end
 
 @implementation IxenWindowDelegate
 
+- (void)observe
+{
+    NSNotificationCenter* workspace = [[NSWorkspace sharedWorkspace] notificationCenter];
+
+    [workspace addObserver:self
+                  selector:@selector(workspaceWillSleep:)
+                      name:NSWorkspaceWillSleepNotification
+                    object:nil];
+    [workspace addObserver:self
+                  selector:@selector(workspaceDidWake:)
+                      name:NSWorkspaceDidWakeNotification
+                    object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(screensDidChange:)
+                                                 name:NSApplicationDidChangeScreenParametersNotification
+                                               object:nil];
+}
+
+- (void)forget
+{
+    [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    owner = nullptr;
+}
+
+- (void)repaint
+{
+    if (owner != nullptr && owner->view != nullptr)
+    {
+        [(__bridge NSView*)owner->view setNeedsDisplay:YES];
+    }
+}
+
 - (void)windowWillClose:(NSNotification*)notification
 {
     StopRunLoop();
+}
+
+- (void)windowDidChangeOcclusionState:(NSNotification*)notification
+{
+    [self repaint];
+}
+
+- (void)windowDidDeminiaturize:(NSNotification*)notification
+{
+    [self repaint];
+}
+
+- (void)windowDidChangeBackingProperties:(NSNotification*)notification
+{
+    [self repaint];
+}
+
+- (void)workspaceWillSleep:(NSNotification*)notification
+{
+    if (owner != nullptr && owner->suspendCallBack != nullptr)
+    {
+        owner->suspendCallBack();
+    }
+}
+
+- (void)workspaceDidWake:(NSNotification*)notification
+{
+    [self repaint];
+}
+
+- (void)screensDidChange:(NSNotification*)notification
+{
+    if (owner == nullptr || owner->window == nullptr)
+    {
+        return;
+    }
+
+    NSWindow* window = (__bridge NSWindow*)owner->window;
+
+    if ([window isMiniaturized] || [window isZoomed])
+    {
+        return;
+    }
+
+    NSRect frame = [window frame];
+    NSScreen* screen = IxenNearestScreen(frame);
+
+    if (screen != nil)
+    {
+        NSRect clamped = IxenClampFrame(frame, [screen visibleFrame]);
+
+        if (!NSEqualRects(clamped, frame))
+        {
+            [window setFrame:clamped display:YES];
+        }
+    }
+
+    [self repaint];
 }
 
 @end
@@ -872,6 +1026,7 @@ namespace IxenMacNative
         result->wheelCallBack = nullptr;
         result->dropCallBack = nullptr;
         result->accessibilityCallBack = nullptr;
+        result->suspendCallBack = nullptr;
         result->accessibilityNodes = nullptr;
         result->accessibilityRoot = -1;
         result->accessibilityAsked = 0;
@@ -899,6 +1054,8 @@ namespace IxenMacNative
 
         IxenWindowDelegate* delegate = [[IxenWindowDelegate alloc] init];
 
+        delegate->owner = result;
+        [delegate observe];
         [window setDelegate:delegate];
         result->windowDelegate = (void*)CFBridgingRetain(delegate);
         [window center];
@@ -960,6 +1117,7 @@ namespace IxenMacNative
 
         if (window->windowDelegate != nullptr)
         {
+            [(__bridge IxenWindowDelegate*)window->windowDelegate forget];
             CFBridgingRelease(window->windowDelegate);
             window->windowDelegate = nullptr;
         }
@@ -1059,7 +1217,12 @@ namespace IxenMacNative
 
         NSWindow* handle = (__bridge NSWindow*)window->window;
 
-        return ([handle isMiniaturized] || ![handle isVisible]) ? 0 : 1;
+        if ([handle isMiniaturized] || ![handle isVisible])
+        {
+            return 0;
+        }
+
+        return ([handle occlusionState] & NSWindowOcclusionStateVisible) != 0 ? 1 : 0;
     }
 
     static bool _cursorHidden = false;
