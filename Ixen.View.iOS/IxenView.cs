@@ -53,7 +53,7 @@ namespace Ixen.View.iOS
             };
 
             _host = new IxenHost(new IxenSurface(), _canvasView.SetNeedsDisplay,
-                new IosScheduler(), new IosClipboard(), null,
+                new IosScheduler(), new IosClipboard(), SetCursor,
                 BundleImageSource.ForMainBundle(), Wake, CanPresent);
 
             IxenSynchronizationContext.Install(_host.Surface);
@@ -62,6 +62,7 @@ namespace Ixen.View.iOS
             _host.Surface.HighContrast = UIAccessibility.DarkerSystemColorsEnabled;
             _host.Surface.AcceleratorModifier = KeyModifiers.Meta;
 
+            AttachPointer();
             _accessibility = new IosAccessibility(this, _host.Surface);
             IsAccessibilityElement = false;
 
@@ -161,14 +162,36 @@ namespace Ixen.View.iOS
             return new CGPoint(point.X * scale, point.Y * scale);
         }
 
+        private readonly Dictionary<IntPtr, (PointerKind Kind, PointerButton Button)> _touches
+            = new Dictionary<IntPtr, (PointerKind Kind, PointerButton Button)>();
+
+        private static (PointerKind Kind, PointerButton Button) Describe(UITouch touch, UIEvent evt)
+        {
+            if (touch.Type != UITouchType.IndirectPointer)
+            {
+                return (PointerKind.Touch, PointerButton.Left);
+            }
+
+            UIEventButtonMask buttons = evt?.ButtonMask ?? UIEventButtonMask.Primary;
+
+            return (PointerKind.Mouse, (buttons & UIEventButtonMask.Secondary) != 0
+                ? PointerButton.Right
+                : PointerButton.Left);
+        }
+
+        private (PointerKind Kind, PointerButton Button) Described(UITouch touch)
+            => _touches.TryGetValue(touch.Handle, out var described) ? described : (PointerKind.Touch, PointerButton.Left);
+
         public override void TouchesBegan(NSSet touches, UIEvent evt)
         {
             foreach (UITouch touch in touches.ToArray<UITouch>())
             {
                 CGPoint point = DevicePoint(touch);
+                var described = Describe(touch, evt);
 
-                _host.PointerDown((float)point.X, (float)point.Y, PointerButton.Left,
-                    PointerKind.Touch, PointerOf(touch, true));
+                _touches[touch.Handle] = described;
+                _host.PointerDown((float)point.X, (float)point.Y, described.Button,
+                    described.Kind, PointerOf(touch, true));
             }
         }
 
@@ -185,12 +208,14 @@ namespace Ixen.View.iOS
 
                 CGPoint point = DevicePoint(touch);
 
-                _host.PointerMove((float)point.X, (float)point.Y, PointerKind.Touch, id);
+                _host.PointerMove((float)point.X, (float)point.Y, Described(touch).Kind, id);
             }
         }
 
         public override void TouchesEnded(NSSet touches, UIEvent evt)
         {
+            bool finger = false;
+
             foreach (UITouch touch in touches.ToArray<UITouch>())
             {
                 int id = PointerOf(touch, false);
@@ -201,12 +226,16 @@ namespace Ixen.View.iOS
                 }
 
                 CGPoint point = DevicePoint(touch);
+                var described = Described(touch);
+
+                finger |= described.Kind == PointerKind.Touch;
 
                 _pointers.Remove(touch.Handle);
-                _host.PointerUp((float)point.X, (float)point.Y, PointerButton.Left, PointerKind.Touch, id);
+                _touches.Remove(touch.Handle);
+                _host.PointerUp((float)point.X, (float)point.Y, described.Button, described.Kind, id);
             }
 
-            if (_pointers.Count == 0)
+            if (_pointers.Count == 0 && finger)
             {
                 _host.PointerLeave();
             }
@@ -217,6 +246,7 @@ namespace Ixen.View.iOS
             foreach (UITouch touch in touches.ToArray<UITouch>())
             {
                 _pointers.Remove(touch.Handle);
+                _touches.Remove(touch.Handle);
             }
 
             if (_pointers.Count == 0)

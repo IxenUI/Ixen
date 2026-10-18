@@ -64,6 +64,7 @@ namespace Ixen.View.iOS
 
             if (Window != null)
             {
+                QuietAssistant(Field == null);
                 BecomeFirstResponder();
             }
         }
@@ -100,7 +101,30 @@ namespace Ixen.View.iOS
                 BecomeFirstResponder();
             }
 
+            QuietAssistant(field == null);
             ReloadInputViews();
+        }
+
+        private UIBarButtonItemGroup[] _leading;
+        private UIBarButtonItemGroup[] _trailing;
+
+        private void QuietAssistant(bool quiet)
+        {
+            UITextInputAssistantItem assistant = InputAssistantItem;
+
+            if (assistant == null)
+            {
+                return;
+            }
+
+            if (_leading == null)
+            {
+                _leading = assistant.LeadingBarButtonGroups ?? new UIBarButtonItemGroup[0];
+                _trailing = assistant.TrailingBarButtonGroups ?? new UIBarButtonItemGroup[0];
+            }
+
+            assistant.LeadingBarButtonGroups = quiet ? new UIBarButtonItemGroup[0] : _leading;
+            assistant.TrailingBarButtonGroups = quiet ? new UIBarButtonItemGroup[0] : _trailing;
         }
 
         [Export("hasText")]
@@ -146,10 +170,10 @@ namespace Ixen.View.iOS
             _host.KeyUp(key, KeyModifiers.None);
         }
 
-        private bool Masked => Field?.IsMasked ?? false;
+        private bool Masked => Field == null || Field.IsMasked;
 
         [Export("secureTextEntry")]
-        public bool SecureTextEntry => Masked;
+        public bool SecureTextEntry => Field?.IsMasked ?? false;
 
         [Export("autocorrectionType")]
         public UITextAutocorrectionType AutocorrectionType
