@@ -29,6 +29,16 @@ namespace Ixen.Core.Visual.Classes
                 && StyleColors.IsLiteral(AccentText)
                 && StyleColors.IsLiteral(Disabled);
 
+        public bool SameAs(SystemPalette other)
+            => other != null
+                && Surface == other.Surface
+                && Text == other.Text
+                && Control == other.Control
+                && ControlText == other.ControlText
+                && Accent == other.Accent
+                && AccentText == other.AccentText
+                && Disabled == other.Disabled;
+
         internal void Publish(StyleTokens tokens)
         {
             if (tokens == null)

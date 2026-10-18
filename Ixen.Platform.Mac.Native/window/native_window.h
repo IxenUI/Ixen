@@ -16,6 +16,7 @@ namespace IxenMacNative
     typedef void (*TimerCallBack)(long id);
     typedef int (*AccessibilityCallBack)(int identifier, int action, const char* value);
     typedef void (*SuspendCallBack)();
+    typedef void (*PreferencesCallBack)();
 
     struct NativeWindow
     {
@@ -35,6 +36,7 @@ namespace IxenMacNative
         DropCallBack dropCallBack;
         AccessibilityCallBack accessibilityCallBack;
         SuspendCallBack suspendCallBack;
+        PreferencesCallBack preferencesCallBack;
 
         void* accessibilityNodes;
         int accessibilityRoot;
@@ -65,6 +67,7 @@ namespace IxenMacNative
 
     int PrefersReducedMotion();
     int PrefersHighContrast();
+    void GetSystemColors(int* colors, int count);
 
     int IsAccessibilityActive(NativeWindow* window);
     void UpdateAccessibilityNode(NativeWindow* window, int identifier, int parent, const char* role, int states, int actions, int toggle, int x, int y, int width, int height, const char* name, const char* value, const char* help);

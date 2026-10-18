@@ -23,6 +23,8 @@ namespace Ixen.Core
         float FontScale { get; }
         Visual.Classes.SystemPalette SystemColors { get; }
 
+        event System.EventHandler PreferencesChanged;
+
         void SetToken(string name, string color);
         void ResetToken(string name);
         void ResetTokens();

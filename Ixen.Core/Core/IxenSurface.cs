@@ -110,6 +110,7 @@ namespace Ixen.Core
                 }
 
                 _fontScale = scale;
+                _preferencesChanged = true;
                 Root?.InvalidateLayoutTree();
             }
         }
@@ -188,6 +189,7 @@ namespace Ixen.Core
         {
             _images.Trim();
             DrainPosted();
+            RaisePreferencesChanged();
 
             _deviceWidth = width;
             _deviceHeight = height;
@@ -728,6 +730,7 @@ namespace Ixen.Core
                 }
 
                 _reducedMotion = value;
+                _preferencesChanged = true;
 
                 if (!value)
                 {
@@ -745,6 +748,21 @@ namespace Ixen.Core
             }
         }
 
+        private bool _preferencesChanged;
+
+        public event EventHandler PreferencesChanged;
+
+        private void RaisePreferencesChanged()
+        {
+            if (!_preferencesChanged)
+            {
+                return;
+            }
+
+            _preferencesChanged = false;
+            PreferencesChanged?.Invoke(this, EventArgs.Empty);
+        }
+
         private bool _highContrast;
 
         public bool HighContrast
@@ -758,6 +776,7 @@ namespace Ixen.Core
                 }
 
                 _highContrast = value;
+                _preferencesChanged = true;
                 Root?.Invalidate();
             }
         }
@@ -769,12 +788,13 @@ namespace Ixen.Core
             get => _systemColors;
             set
             {
-                if (_systemColors == value)
+                if (_systemColors == value || (value != null && value.SameAs(_systemColors)))
                 {
                     return;
                 }
 
                 _systemColors = value;
+                _preferencesChanged = true;
                 value?.Publish(Styles?.Tokens);
                 Root?.Invalidate();
             }

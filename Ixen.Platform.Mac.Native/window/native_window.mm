@@ -271,6 +271,16 @@ static IxenAccessibleElement* AccessibilityFocus(NativeWindow* window)
 
 @implementation IxenContentView
 
+- (void)viewDidChangeEffectiveAppearance
+{
+    [super viewDidChangeEffectiveAppearance];
+
+    if (owner != nullptr && owner->preferencesCallBack != nullptr)
+    {
+        owner->preferencesCallBack();
+    }
+}
+
 - (BOOL)isFlipped
 {
     return YES;
@@ -889,6 +899,14 @@ static NSRect IxenClampFrame(NSRect frame, NSRect area)
                                              selector:@selector(screensDidChange:)
                                                  name:NSApplicationDidChangeScreenParametersNotification
                                                object:nil];
+    [workspace addObserver:self
+                  selector:@selector(preferencesDidChange:)
+                      name:NSWorkspaceAccessibilityDisplayOptionsDidChangeNotification
+                    object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(preferencesDidChange:)
+                                                 name:NSSystemColorsDidChangeNotification
+                                               object:nil];
 }
 
 - (void)forget
@@ -931,6 +949,14 @@ static NSRect IxenClampFrame(NSRect frame, NSRect area)
     if (owner != nullptr && owner->suspendCallBack != nullptr)
     {
         owner->suspendCallBack();
+    }
+}
+
+- (void)preferencesDidChange:(NSNotification*)notification
+{
+    if (owner != nullptr && owner->preferencesCallBack != nullptr)
+    {
+        owner->preferencesCallBack();
     }
 }
 
@@ -1027,6 +1053,7 @@ namespace IxenMacNative
         result->dropCallBack = nullptr;
         result->accessibilityCallBack = nullptr;
         result->suspendCallBack = nullptr;
+        result->preferencesCallBack = nullptr;
         result->accessibilityNodes = nullptr;
         result->accessibilityRoot = -1;
         result->accessibilityAsked = 0;
@@ -1419,6 +1446,73 @@ namespace IxenMacNative
     int PrefersHighContrast()
     {
         return [[NSWorkspace sharedWorkspace] accessibilityDisplayShouldIncreaseContrast] ? 1 : 0;
+    }
+
+    static int Flatten(NSColor* color, NSColor* ground)
+    {
+        NSColorSpace* space = [NSColorSpace sRGBColorSpace];
+        NSColor* top = [color colorUsingColorSpace:space];
+        NSColor* under = [ground colorUsingColorSpace:space];
+
+        if (top == nil)
+        {
+            return -1;
+        }
+
+        CGFloat alpha = [top alphaComponent];
+        CGFloat red = [top redComponent] * alpha;
+        CGFloat green = [top greenComponent] * alpha;
+        CGFloat blue = [top blueComponent] * alpha;
+
+        if (under != nil && alpha < 1)
+        {
+            red += [under redComponent] * (1 - alpha);
+            green += [under greenComponent] * (1 - alpha);
+            blue += [under blueComponent] * (1 - alpha);
+        }
+
+        int r = (int)lround(MIN(1, MAX(0, red)) * 255);
+        int g = (int)lround(MIN(1, MAX(0, green)) * 255);
+        int b = (int)lround(MIN(1, MAX(0, blue)) * 255);
+
+        return (r << 16) | (g << 8) | b;
+    }
+
+    void GetSystemColors(int* colors, int count)
+    {
+        if (colors == nullptr || count <= 0)
+        {
+            return;
+        }
+
+        for (int index = 0; index < count; index++)
+        {
+            colors[index] = -1;
+        }
+
+        [NSApplication sharedApplication];
+
+        void (^read)(void) = ^{
+            NSColor* ground = [NSColor windowBackgroundColor];
+            NSArray<NSColor*>* list = @[
+                ground,
+                [NSColor labelColor],
+                [NSColor controlColor],
+                [NSColor controlTextColor],
+                [NSColor selectedContentBackgroundColor],
+                [NSColor alternateSelectedControlTextColor],
+                [NSColor disabledControlTextColor]
+            ];
+
+            for (int index = 0; index < count && index < (int)[list count]; index++)
+            {
+                NSColor* under = index == 5 ? [NSColor selectedContentBackgroundColor] : ground;
+
+                colors[index] = Flatten(list[index], under);
+            }
+        };
+
+        [[NSApp effectiveAppearance] performAsCurrentDrawingAppearance:read];
     }
 
     static NSRect AccessibilityFrameOf(IxenContentView* view, int x, int y, int width, int height)

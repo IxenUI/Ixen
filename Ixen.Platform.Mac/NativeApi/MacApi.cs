@@ -14,6 +14,7 @@ namespace Ixen.Platform.Mac.NativeApi
         public delegate void OnWheelCallBack(int x, int y, int deltaX, int deltaY, int modifiers);
         public delegate void OnDropCallBack(int x, int y, [MarshalAs(UnmanagedType.LPUTF8Str)] string paths);
         public delegate void OnSuspendCallBack();
+        public delegate void OnPreferencesCallBack();
         public delegate void OnTimerCallBack(long id);
         public delegate int OnAccessibilityCallBack(int identifier, int action, [MarshalAs(UnmanagedType.LPUTF8Str)] string value);
 
@@ -77,6 +78,9 @@ namespace Ixen.Platform.Mac.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterSuspendCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterSuspendCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnSuspendCallBack callback);
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterPreferencesCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterPreferencesCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnPreferencesCallBack callback);
+
         [DllImport(LIB_NAME, EntryPoint = "WA_GetClipboardText", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr GetClipboardText();
 
@@ -94,6 +98,9 @@ namespace Ixen.Platform.Mac.NativeApi
 
         [DllImport(LIB_NAME, EntryPoint = "WA_PrefersHighContrast", CallingConvention = CallingConvention.Cdecl)]
         public static extern int PrefersHighContrast();
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_GetSystemColors", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void GetSystemColors([Out] int[] colors, int count);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterAccessibilityCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterAccessibilityCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnAccessibilityCallBack callback);

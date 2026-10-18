@@ -30,6 +30,7 @@ namespace Ixen.Platform.Mac
         private readonly MacApi.OnWheelCallBack _onWheel;
         private readonly MacApi.OnDropCallBack _onDrop;
         private readonly MacApi.OnSuspendCallBack _onSuspend;
+        private readonly MacApi.OnPreferencesCallBack _onPreferences;
 
         private readonly IxenSurface _ixenSurface;
         private readonly IxenHost _host;
@@ -38,8 +39,7 @@ namespace Ixen.Platform.Mac
         public MacWindow(IxenSurface ixenSurface)
         {
             _ixenSurface = ixenSurface;
-            _ixenSurface.ReducedMotion = MacApi.PrefersReducedMotion() != 0;
-            _ixenSurface.HighContrast = MacApi.PrefersHighContrast() != 0;
+            ReadPreferences();
             _ixenSurface.PreservesFrame = true;
             _ixenSurface.AcceleratorModifier = KeyModifiers.Meta;
 
@@ -57,6 +57,7 @@ namespace Ixen.Platform.Mac
             _onWheel = OnWheel;
             _onDrop = OnDrop;
             _onSuspend = OnSuspend;
+            _onPreferences = OnPreferences;
 
             _windowPtr = MacApi.CreateWindow(_ixenSurface.InitOptions.Title,
                 _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
@@ -113,6 +114,7 @@ namespace Ixen.Platform.Mac
             MacApi.RegisterWheelCallBack(_windowPtr, _onWheel);
             MacApi.RegisterDropCallBack(_windowPtr, _onDrop);
             MacApi.RegisterSuspendCallBack(_windowPtr, _onSuspend);
+            MacApi.RegisterPreferencesCallBack(_windowPtr, _onPreferences);
 
             _accessibility.Register();
 
@@ -302,6 +304,19 @@ namespace Ixen.Platform.Mac
         private static readonly char[] _dropSeparator = { '\n' };
 
         private void OnSuspend() => _host.ReleaseCaches();
+
+        private void OnPreferences()
+        {
+            ReadPreferences();
+            RequestRepaint();
+        }
+
+        private void ReadPreferences()
+        {
+            _ixenSurface.ReducedMotion = MacApi.PrefersReducedMotion() != 0;
+            _ixenSurface.HighContrast = MacApi.PrefersHighContrast() != 0;
+            _ixenSurface.SystemColors = MacPreferences.SystemColors();
+        }
 
         private void OnDrop(int x, int y, string paths)
         {

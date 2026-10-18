@@ -122,6 +122,19 @@ void WA_RegisterSuspendCallBack(NativeWindow* window, void callBack())
     }
 }
 
+void WA_RegisterPreferencesCallBack(NativeWindow* window, void callBack())
+{
+    if (window != nullptr)
+    {
+        window->preferencesCallBack = callBack;
+    }
+}
+
+void WA_GetSystemColors(int* colors, int count)
+{
+    GetSystemColors(colors, count);
+}
+
 const char* WA_GetClipboardText()
 {
     return GetPasteboardText();
