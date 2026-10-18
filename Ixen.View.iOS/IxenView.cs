@@ -21,6 +21,7 @@ namespace Ixen.View.iOS
 
         private SKCanvasView _canvasView;
         private IxenHost _host;
+        private IosAccessibility _accessibility;
 
         public IxenView()
             : base()
@@ -60,6 +61,9 @@ namespace Ixen.View.iOS
             _host.Surface.ReducedMotion = UIAccessibility.IsReduceMotionEnabled;
             _host.Surface.HighContrast = UIAccessibility.DarkerSystemColorsEnabled;
             _host.Surface.AcceleratorModifier = KeyModifiers.Meta;
+
+            _accessibility = new IosAccessibility(this, _host.Surface);
+            IsAccessibilityElement = false;
 
             _canvasView.PaintSurface += OnPaintSurface;
 
@@ -112,6 +116,7 @@ namespace Ixen.View.iOS
             _host.Surface.FontScale = ReadFontScale();
             _host.Paint(e.Surface.Canvas, e.Info.Width, e.Info.Height);
             RevealFieldIfShrunk(e.Info.Height);
+            _accessibility.Sync();
             RequestKeyboardSync();
 
             _paints++;
@@ -263,6 +268,35 @@ namespace Ixen.View.iOS
             bitmap.Dispose();
 
             return null;
+        }
+
+        [Export("accessibilityElements")]
+        public NSArray ExposedElements => NSArray.FromNSObjects(_accessibility.Elements);
+
+        [Export("accessibilityHitTest:withEvent:")]
+        public NSObject AccessibilityHitTest(CGPoint point, UIEvent evt)
+        {
+            return _accessibility.HitTest(point) ?? this;
+        }
+
+        internal CGRect ScreenFrame(CGRect rect)
+        {
+            UIWindow window = Window;
+
+            if (window == null)
+            {
+                return rect;
+            }
+
+            CGRect inWindow = ConvertRectToView(rect, null);
+            UIScreen screen = window.WindowScene?.Screen;
+
+            return screen == null ? inWindow : window.ConvertRectToCoordinateSpace(inWindow, screen.CoordinateSpace);
+        }
+
+        internal void AccessibilityActed()
+        {
+            _canvasView.SetNeedsDisplay();
         }
 
         public IxenHost Host => _host;
