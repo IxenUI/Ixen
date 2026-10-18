@@ -64,6 +64,7 @@ namespace Ixen.View.iOS
             _host.Surface.AcceleratorModifier = KeyModifiers.Meta;
 
             AttachPointer();
+            AttachDrop();
             _accessibility = new IosAccessibility(this, _host.Surface);
             IsAccessibilityElement = false;
 

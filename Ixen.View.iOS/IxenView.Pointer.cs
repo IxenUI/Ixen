@@ -14,6 +14,7 @@ namespace Ixen.View.iOS
         private const int HOVER_POINTER = 0;
 
         private UIPointerInteraction _pointerInteraction;
+        private PointerStyles _pointerStyles;
         private CursorKind _cursor = CursorKind.Default;
         private CGPoint _lastScroll;
 
@@ -27,7 +28,8 @@ namespace Ixen.View.iOS
                 MaximumNumberOfTouches = 0,
             });
 
-            _pointerInteraction = new UIPointerInteraction(new PointerStyles(this));
+            _pointerStyles = new PointerStyles(this);
+            _pointerInteraction = new UIPointerInteraction(_pointerStyles);
             AddInteraction(_pointerInteraction);
         }
 
