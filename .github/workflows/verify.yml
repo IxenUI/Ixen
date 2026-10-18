@@ -45,3 +45,25 @@ jobs:
 
       - name: verify
         run: bash ./verify-linux.sh --skip-host-frame
+
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: verify
+        run: bash ./verify-mac.sh --skip-host-frame
+
+      - name: install the ios workloads
+        if: always()
+        run: dotnet workload install ios maccatalyst
+
+      - name: verify the iOS view
+        if: always()
+        run: bash ./verify-ios.sh

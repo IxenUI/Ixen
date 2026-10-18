@@ -24,7 +24,7 @@ do
     esac
 done
 
-framework="$(cd "$(dirname "$0")" && pwd)"
+framework="$(cd "$(dirname "$0")" && pwd -P)"
 workspace="$(dirname "$framework")"
 work="$(mktemp -d)"
 console=

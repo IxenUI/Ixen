@@ -25,7 +25,7 @@ then
     exit 2
 fi
 
-framework="$(cd "$(dirname "$0")" && pwd)"
+framework="$(cd "$(dirname "$0")" && pwd -P)"
 workspace="$(dirname "$framework")"
 work="$(mktemp -d)"
 
