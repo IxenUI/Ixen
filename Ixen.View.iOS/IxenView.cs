@@ -13,7 +13,7 @@ using UIKit;
 
 namespace Ixen.View.iOS
 {
-    public partial class IxenView : UIView, IUIKeyInput
+    public partial class IxenView : UIView, IUITextInput
     {
         private const float BODY_SIZE = 17f;
 

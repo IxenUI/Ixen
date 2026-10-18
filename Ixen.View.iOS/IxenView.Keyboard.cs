@@ -70,7 +70,7 @@ namespace Ixen.View.iOS
 
         private void RequestKeyboardSync()
         {
-            if (_syncPending || Field == _editing)
+            if (_syncPending || (Field == null && _editing == null))
             {
                 return;
             }
@@ -88,10 +88,12 @@ namespace Ixen.View.iOS
 
             if (field == _editing)
             {
+                TellInputAboutOutsideChanges();
                 return;
             }
 
             _editing = field;
+            _known = Snapshot();
 
             if (!IsFirstResponder)
             {
@@ -102,7 +104,7 @@ namespace Ixen.View.iOS
         }
 
         [Export("hasText")]
-        public bool HasText => !string.IsNullOrEmpty(Field?.Text);
+        public bool HasText => Document.Length > 0;
 
         [Export("insertText:")]
         public void InsertText(string text)
@@ -112,19 +114,30 @@ namespace Ixen.View.iOS
                 return;
             }
 
-            if (text == "\n")
+            if (Field?.IsComposing == true)
             {
-                Press(Key.Enter);
+                _host.CommitComposition(text);
+                Edited();
                 return;
             }
 
-            _host.TextInput(text);
+            if (text == "\n")
+            {
+                Press(Key.Enter);
+            }
+            else
+            {
+                _host.TextInput(text);
+            }
+
+            Edited();
         }
 
         [Export("deleteBackward")]
         public void DeleteBackward()
         {
             Press(Key.Backspace);
+            Edited();
         }
 
         private void Press(Key key)
@@ -133,26 +146,34 @@ namespace Ixen.View.iOS
             _host.KeyUp(key, KeyModifiers.None);
         }
 
+        private bool Masked => Field?.IsMasked ?? false;
+
         [Export("secureTextEntry")]
-        public bool SecureTextEntry => Field?.IsMasked ?? false;
+        public bool SecureTextEntry => Masked;
 
         [Export("autocorrectionType")]
-        public UITextAutocorrectionType AutocorrectionType => UITextAutocorrectionType.No;
+        public UITextAutocorrectionType AutocorrectionType
+            => Masked ? UITextAutocorrectionType.No : UITextAutocorrectionType.Default;
 
         [Export("autocapitalizationType")]
-        public UITextAutocapitalizationType AutocapitalizationType => UITextAutocapitalizationType.None;
+        public UITextAutocapitalizationType AutocapitalizationType
+            => Masked ? UITextAutocapitalizationType.None : UITextAutocapitalizationType.Sentences;
 
         [Export("spellCheckingType")]
-        public UITextSpellCheckingType SpellCheckingType => UITextSpellCheckingType.No;
+        public UITextSpellCheckingType SpellCheckingType
+            => Masked ? UITextSpellCheckingType.No : UITextSpellCheckingType.Default;
 
         [Export("smartQuotesType")]
-        public UITextSmartQuotesType SmartQuotesType => UITextSmartQuotesType.No;
+        public UITextSmartQuotesType SmartQuotesType
+            => Masked ? UITextSmartQuotesType.No : UITextSmartQuotesType.Default;
 
         [Export("smartDashesType")]
-        public UITextSmartDashesType SmartDashesType => UITextSmartDashesType.No;
+        public UITextSmartDashesType SmartDashesType
+            => Masked ? UITextSmartDashesType.No : UITextSmartDashesType.Default;
 
         [Export("smartInsertDeleteType")]
-        public UITextSmartInsertDeleteType SmartInsertDeleteType => UITextSmartInsertDeleteType.No;
+        public UITextSmartInsertDeleteType SmartInsertDeleteType
+            => Masked ? UITextSmartInsertDeleteType.No : UITextSmartInsertDeleteType.Default;
 
         [Export("returnKeyType")]
         public UIReturnKeyType ReturnKeyType => Field?.Multiline == true ? UIReturnKeyType.Default : UIReturnKeyType.Done;
