@@ -2,7 +2,6 @@ using Ixen.Core.Visual.Styles;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace Ixen.Core.Visual.Classes
 {
@@ -552,60 +551,48 @@ namespace Ixen.Core.Visual.Classes
 
         private void AddLoadedSheets(bool defaultsOnly)
         {
-            Type baseType = typeof(StyleSheet);
-
-            IEnumerable<Type> sheetTypes = AppDomain.CurrentDomain
-                .GetAssemblies()
-                .SelectMany(GetTypesSafely)
-                .Where(t => baseType.IsAssignableFrom(t)
-                    && t.IsClass
-                    && !t.IsAbstract
-                    && t != baseType
-                    && t.GetConstructor(Type.EmptyTypes) != null);
-
-            foreach (Type sheetType in sheetTypes)
+            foreach (StyleSheetCatalog.Entry entry in StyleSheetCatalog.Snapshot())
             {
-                bool isDefault = sheetType.Assembly
-                    .IsDefined(typeof(IxenDefaultStylesAttribute), false);
-
-                if (defaultsOnly && !isDefault)
+                if (!defaultsOnly || entry.Defaults)
                 {
-                    continue;
-                }
-
-                try
-                {
-                    if (Activator.CreateInstance(sheetType) is StyleSheet sheet)
-                    {
-                        if (isDefault)
-                        {
-                            AddDefaults(sheet);
-                        }
-                        else
-                        {
-                            Add(sheet);
-                        }
-                    }
-                }
-                catch
-                {
+                    AddEntry(entry);
                 }
             }
         }
 
-        private static IEnumerable<Type> GetTypesSafely(Assembly assembly)
+        internal static void SheetRegistered(StyleSheetCatalog.Entry entry)
         {
+            if (_default.IsValueCreated)
+            {
+                _default.Value.AddEntry(entry);
+            }
+        }
+
+        private void AddEntry(StyleSheetCatalog.Entry entry)
+        {
+            StyleSheet sheet;
+
             try
             {
-                return assembly.GetTypes();
-            }
-            catch (ReflectionTypeLoadException ex)
-            {
-                return ex.Types.Where(t => t != null);
+                sheet = entry.Create();
             }
             catch
             {
-                return Enumerable.Empty<Type>();
+                return;
+            }
+
+            if (sheet == null)
+            {
+                return;
+            }
+
+            if (entry.Defaults)
+            {
+                AddDefaults(sheet);
+            }
+            else
+            {
+                Add(sheet);
             }
         }
     }
