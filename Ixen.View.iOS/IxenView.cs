@@ -59,10 +59,9 @@ namespace Ixen.View.iOS
 
             IxenSynchronizationContext.Install(_host.Surface);
 
-            _host.Surface.ReducedMotion = UIAccessibility.IsReduceMotionEnabled;
-            _host.Surface.HighContrast = UIAccessibility.DarkerSystemColorsEnabled;
             _host.Surface.AcceleratorModifier = KeyModifiers.Meta;
 
+            AttachPreferences();
             AttachPointer();
             AttachDrop();
             AttachBack();
