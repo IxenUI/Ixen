@@ -15,18 +15,22 @@ namespace Ixen.View.iOS
 
         private UIPointerInteraction _pointerInteraction;
         private PointerStyles _pointerStyles;
+        private UIHoverGestureRecognizer _hover;
+        private UIPanGestureRecognizer _scroll;
         private CursorKind _cursor = CursorKind.Default;
         private CGPoint _lastScroll;
 
         private void AttachPointer()
         {
-            AddGestureRecognizer(new UIHoverGestureRecognizer(OnHover));
+            _hover = new UIHoverGestureRecognizer(OnHover);
+            AddGestureRecognizer(_hover);
 
-            AddGestureRecognizer(new UIPanGestureRecognizer(OnScroll)
+            _scroll = new UIPanGestureRecognizer(OnScroll)
             {
                 AllowedScrollTypesMask = UIScrollTypeMask.All,
                 MaximumNumberOfTouches = 0,
-            });
+            };
+            AddGestureRecognizer(_scroll);
 
             _pointerStyles = new PointerStyles(this);
             _pointerInteraction = new UIPointerInteraction(_pointerStyles);

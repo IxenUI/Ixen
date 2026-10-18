@@ -65,6 +65,7 @@ namespace Ixen.View.iOS
 
             AttachPointer();
             AttachDrop();
+            AttachBack();
             _accessibility = new IosAccessibility(this, _host.Surface);
             IsAccessibilityElement = false;
 
