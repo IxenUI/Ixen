@@ -21,8 +21,11 @@ namespace Ixen.View.iOS
 
         private void Deliver(CGPoint point, string[] paths)
         {
+            _dropTarget.Dropping = false;
+
             if (paths.Length == 0)
             {
+                _host.PointerDragLeave();
                 return;
             }
 
@@ -44,6 +47,8 @@ namespace Ixen.View.iOS
         {
             private readonly IxenView _view;
 
+            internal bool Dropping { get; set; }
+
             internal DropTarget(IxenView view)
             {
                 _view = view;
@@ -58,9 +63,40 @@ namespace Ixen.View.iOS
             [Export("dropInteraction:sessionDidUpdate:")]
             public UIDropProposal SessionDidUpdate(UIDropInteraction interaction, IUIDropSession session)
             {
-                return new UIDropProposal(_view._host.Surface.AcceptsDrops
-                    ? UIDropOperation.Copy
-                    : UIDropOperation.Forbidden);
+                CGPoint point = session.LocationInView(_view);
+                float scale = _view.DeviceScale;
+                bool accepted = _view._host.PointerDragOver((float)point.X * scale, (float)point.Y * scale,
+                    Names(session));
+
+                return new UIDropProposal(accepted ? UIDropOperation.Copy : UIDropOperation.Forbidden);
+            }
+
+            [Export("dropInteraction:sessionDidExit:")]
+            public void SessionDidExit(UIDropInteraction interaction, IUIDropSession session)
+            {
+                _view._host.PointerDragLeave();
+            }
+
+            [Export("dropInteraction:sessionDidEnd:")]
+            public void SessionDidEnd(UIDropInteraction interaction, IUIDropSession session)
+            {
+                if (!Dropping)
+                {
+                    _view._host.PointerDragLeave();
+                }
+            }
+
+            private static string[] Names(IUIDropSession session)
+            {
+                UIDragItem[] items = session.Items;
+                var names = new string[items.Length];
+
+                for (int index = 0; index < items.Length; index++)
+                {
+                    names[index] = items[index].ItemProvider?.SuggestedName ?? string.Empty;
+                }
+
+                return names;
             }
 
             [Export("dropInteraction:performDrop:")]
@@ -69,6 +105,8 @@ namespace Ixen.View.iOS
                 CGPoint point = session.LocationInView(_view);
                 UIDragItem[] items = session.Items;
                 string folder = DropFolder();
+
+                Dropping = true;
                 var paths = new string[items.Length];
                 int remaining = items.Length;
                 object gate = new object();
