@@ -20,6 +20,11 @@ void WA_CloseWindow(NativeWindow* window)
     CloseNativeWindow(window);
 }
 
+void WA_SetApplicationIcon(const void* bytes, int length)
+{
+    SetApplicationIcon(bytes, length);
+}
+
 void WA_SetWindowTitle(NativeWindow* window, const char* title)
 {
     SetNativeWindowTitle(window, title);

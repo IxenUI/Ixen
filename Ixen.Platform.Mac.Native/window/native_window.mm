@@ -981,6 +981,24 @@ namespace IxenMacNative
         });
     }
 
+    void SetApplicationIcon(const void* bytes, int length)
+    {
+        if (bytes == nullptr || length <= 0)
+        {
+            return;
+        }
+
+        EnsureApplication();
+
+        NSData* data = [NSData dataWithBytes:bytes length:(NSUInteger)length];
+        NSImage* image = [[NSImage alloc] initWithData:data];
+
+        if (image != nil)
+        {
+            [NSApp setApplicationIconImage:image];
+        }
+    }
+
     void SetNativeWindowTitle(NativeWindow* window, const char* title)
     {
         if (window == nullptr || title == nullptr)

@@ -45,6 +45,7 @@ namespace IxenMacNative
     int RunNativeWindow(NativeWindow* window);
     void ReleaseNativeWindow(NativeWindow* window);
     void CloseNativeWindow(NativeWindow* window);
+    void SetApplicationIcon(const void* bytes, int length);
     void SetNativeWindowTitle(NativeWindow* window, const char* title);
     void SetNativeWindowPixels(NativeWindow* window, void* pixels, int width, int height, int rowBytes);
     void InvalidateNativeWindow(NativeWindow* window);

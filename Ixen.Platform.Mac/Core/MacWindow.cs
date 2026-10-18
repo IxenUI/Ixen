@@ -63,6 +63,43 @@ namespace Ixen.Platform.Mac
             {
                 throw new Exception("Could not initialize the macOS window");
             }
+
+            SetIcon(_ixenSurface.InitOptions.Icon);
+        }
+
+        private static void SetIcon(string name)
+        {
+            byte[] bytes = ReadIcon(name);
+
+            if (bytes != null)
+            {
+                MacApi.SetApplicationIcon(bytes, bytes.Length);
+            }
+        }
+
+        private static byte[] ReadIcon(string name)
+        {
+            try
+            {
+                using (Stream stream = new MacImageSource().Open(name))
+                {
+                    if (stream == null)
+                    {
+                        return null;
+                    }
+
+                    using (var copy = new MemoryStream())
+                    {
+                        stream.CopyTo(copy);
+
+                        return copy.ToArray();
+                    }
+                }
+            }
+            catch (IOException)
+            {
+                return null;
+            }
         }
 
         public int Show()
