@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<PackageType>Template</PackageType>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<IncludeBuildOutput>false</IncludeBuildOutput>
+		<IncludeContentInPack>true</IncludeContentInPack>
+		<ContentTargetFolders>content</ContentTargetFolders>
+		<EnableDefaultItems>false</EnableDefaultItems>
+		<NoDefaultExcludes>true</NoDefaultExcludes>
+		<NoWarn>$(NoWarn);NU5128</NoWarn>
+		<SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+		<Copyright>©2026 by kipy</Copyright>
+		<AssemblyVersion>0.0.1</AssemblyVersion>
+		<FileVersion>0.0.1</FileVersion>
+		<PackageId>Ixen.Templates</PackageId>
+		<Version>0.0.1</Version>
+		<Authors>kipy</Authors>
+		<Description>dotnet new templates for Ixen: a desktop application and a shared view library.</Description>
+		<PackageTags>ixen;ui;dotnet-new;template</PackageTags>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Content Include="templates\**\*" Exclude="templates\**\bin\**;templates\**\obj\**" />
+	</ItemGroup>
+
+</Project>

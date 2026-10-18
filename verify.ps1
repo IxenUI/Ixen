@@ -213,6 +213,77 @@ else
     Record 'FAIL' 'one allocation harness' (@($harness | ForEach-Object { $_.Name }) -join ', ')
 }
 
+$templates = Join-Path $framework 'Ixen.Templates\templates'
+$core = Join-Path $framework 'Ixen.Core\Ixen.Core.csproj'
+
+if (-not (Test-Path $templates) -or -not (Test-Path $core))
+{
+    Record 'SKIP' 'template versions match' 'Ixen.Templates is not beside Ixen.Core'
+}
+else
+{
+    $version = ''
+    $found = @(Select-String -Path $core -Pattern '<Version>([^<]+)</Version>')
+
+    if ($found.Count -gt 0)
+    {
+        $version = $found[0].Matches[0].Groups[1].Value
+    }
+
+    $named = @(Get-ChildItem -Path $templates -Recurse -Include *.csproj, template.json)
+    $versions = New-Object System.Collections.ArrayList
+    $silent = New-Object System.Collections.ArrayList
+
+    foreach ($file in $named)
+    {
+        $before = $versions.Count
+
+        if ($file.Extension -eq '.csproj')
+        {
+            $label = $file.Name
+
+            foreach ($hit in @(Select-String -Path $file.FullName -Pattern 'Include="Ixen\.[A-Za-z.]+"\s+Version="([^"]+)"'))
+            {
+                $null = $versions.Add([pscustomobject]@{ Where = $label; Value = $hit.Matches[0].Groups[1].Value })
+            }
+        }
+        else
+        {
+            $label = Split-Path -Leaf (Split-Path -Parent $file.DirectoryName)
+            $declared = (Get-Content -Raw -Path $file.FullName | ConvertFrom-Json).symbols.IxenVersion.defaultValue
+
+            if ($null -ne $declared)
+            {
+                $null = $versions.Add([pscustomobject]@{ Where = $label; Value = $declared })
+            }
+        }
+
+        if ($versions.Count -eq $before)
+        {
+            $null = $silent.Add($label)
+        }
+    }
+
+    $wrong = @($versions | Where-Object { $_.Value -ne $version })
+
+    if ($version -eq '')
+    {
+        Record 'FAIL' 'template versions match' 'Ixen.Core declares no <Version>'
+    }
+    elseif ($named.Count -lt 4 -or $silent.Count -gt 0)
+    {
+        Record 'FAIL' 'template versions match' ('{0} file(s), and these name no version : {1}' -f $named.Count, (@($silent) -join ', '))
+    }
+    elseif ($wrong.Count -eq 0)
+    {
+        Record 'OK' 'template versions match' ('{0} references at {1}' -f $versions.Count, $version)
+    }
+    else
+    {
+        Record 'FAIL' 'template versions match' ((@($wrong | ForEach-Object { '{0} says {1}' -f $_.Where, $_.Value }) -join ', ') + (' - Ixen.Core is at {0}' -f $version))
+    }
+}
+
 $tools = Join-Path $workspace 'Tools\Ixen.Docs\Ixen.Docs.csproj'
 $docs = Join-Path $workspace 'Documentation'
 $toolBuilt = $false

@@ -1,0 +1,25 @@
+#CardView {
+    width: ?
+    height: ?
+}
+
+card {
+    layout: column
+    width: ?
+    height: ?
+    background: #FFFFFF
+    border: #D9DEEA 1px inner
+    corner-radius: 6px
+    padding: 12px 14px
+    gap: 6px
+
+    card_title {
+        height: ?
+        font-size: 16px
+    }
+
+    card_body {
+        height: ?
+        color: #5A6274
+    }
+}

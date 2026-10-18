@@ -1,0 +1,4 @@
+host {} [
+	<LibraryCardComponent> { caption: "from a referenced assembly" }
+	badge<LibraryBadge> {}
+]

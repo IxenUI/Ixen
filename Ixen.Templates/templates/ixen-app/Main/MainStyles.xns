@@ -1,0 +1,19 @@
+shell {
+    layout: column
+    width: 1*
+    height: 1*
+    background: #F7F8FC
+    color: #1F2430
+    padding: 32px
+    gap: 14px
+
+    title {
+        height: ?
+        font-size: 24px
+    }
+
+    greeting {
+        height: ?
+        color: #5A6274
+    }
+}

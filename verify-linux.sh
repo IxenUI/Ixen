@@ -158,6 +158,66 @@ else
     Record FAIL "one allocation harness" "$harnesses files measure allocation, there should be one"
 fi
 
+templates="$framework/Ixen.Templates/templates"
+core="$framework/Ixen.Core/Ixen.Core.csproj"
+
+if [ ! -d "$templates" ] || [ ! -f "$core" ]
+then
+    Record SKIP "template versions match" "Ixen.Templates is not beside Ixen.Core"
+else
+    version="$(sed -n 's/.*<Version>\([^<]*\)<\/Version>.*/\1/p' "$core" | head -1)"
+    silent=""
+    wrong=""
+    files=0
+    total=0
+
+    for file in $(find "$templates" \( -name '*.csproj' -o -name 'template.json' \) | sort)
+    do
+        files=$((files + 1))
+        label="$(basename "$file")"
+        found=""
+
+        case "$file" in
+            *.csproj)
+                found="$(sed -n 's/.*Include="Ixen\.[A-Za-z.]*"[[:space:]]*Version="\([^"]*\)".*/\1/p' "$file")"
+                ;;
+            *)
+                label="$(basename "$(dirname "$(dirname "$file")")")"
+                found="$(grep -A4 '"IxenVersion"' "$file" | sed -n 's/.*"defaultValue":[[:space:]]*"\([^"]*\)".*/\1/p')"
+                ;;
+        esac
+
+        if [ -z "$found" ]
+        then
+            silent="$silent $label"
+            continue
+        fi
+
+        for one in $found
+        do
+            total=$((total + 1))
+
+            if [ "$one" != "$version" ]
+            then
+                wrong="$wrong $label=$one"
+            fi
+        done
+    done
+
+    if [ -z "$version" ]
+    then
+        Record FAIL "template versions match" "Ixen.Core declares no <Version>"
+    elif [ "$files" -lt 4 ] || [ -n "$silent" ]
+    then
+        Record FAIL "template versions match" "$files file(s), and these name no version :$silent"
+    elif [ -n "$wrong" ]
+    then
+        Record FAIL "template versions match" "$wrong - Ixen.Core is at $version"
+    else
+        Record OK "template versions match" "$total references at $version"
+    fi
+fi
+
 tools="$workspace/Tools/Ixen.Docs/Ixen.Docs.csproj"
 demo="$workspace/Demo App/Ixen.DemoApp.Desktop/Ixen.DemoApp.Desktop.csproj"
 tools_built=0

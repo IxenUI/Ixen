@@ -1549,22 +1549,7 @@ namespace Ixen.Generators.Xnl
                     return null;
                 }
 
-                var found = new List<INamedTypeSymbol>();
-
-                found.AddRange(_compilation
-                    .GetSymbolsWithName(name => name == node.Type, SymbolFilter.Type)
-                    .OfType<INamedTypeSymbol>());
-
-                foreach (MetadataReference reference in _compilation.References)
-                {
-                    if (_compilation.GetAssemblyOrModuleSymbol(reference) is IAssemblySymbol assembly
-                        && assembly.TypeNames.Contains(node.Type))
-                    {
-                        CollectNamed(assembly.GlobalNamespace, node.Type, found);
-                    }
-                }
-
-                List<INamedTypeSymbol> candidates = found
+                List<INamedTypeSymbol> candidates = Named(node.Type)
                     .Where(s => IsVisualElement(s))
                     .Distinct(SymbolEqualityComparer.Default)
                     .OfType<INamedTypeSymbol>()
@@ -1583,6 +1568,26 @@ namespace Ixen.Generators.Xnl
                 }
 
                 return candidates.FirstOrDefault();
+            }
+
+            private List<INamedTypeSymbol> Named(string name)
+            {
+                var found = new List<INamedTypeSymbol>();
+
+                found.AddRange(_compilation
+                    .GetSymbolsWithName(declared => declared == name, SymbolFilter.Type)
+                    .OfType<INamedTypeSymbol>());
+
+                foreach (MetadataReference reference in _compilation.References)
+                {
+                    if (_compilation.GetAssemblyOrModuleSymbol(reference) is IAssemblySymbol assembly
+                        && assembly.TypeNames.Contains(name))
+                    {
+                        CollectNamed(assembly.GlobalNamespace, name, found);
+                    }
+                }
+
+                return found;
             }
 
             private static void CollectNamed(INamespaceSymbol space, string name,
@@ -1606,10 +1611,10 @@ namespace Ixen.Generators.Xnl
                     return null;
                 }
 
-                List<INamedTypeSymbol> candidates = _compilation
-                    .GetSymbolsWithName(name => name == node.Type, SymbolFilter.Type)
-                    .OfType<INamedTypeSymbol>()
+                List<INamedTypeSymbol> candidates = Named(node.Type)
                     .Where(s => DerivesFrom(s, _componentSymbol))
+                    .Distinct(SymbolEqualityComparer.Default)
+                    .OfType<INamedTypeSymbol>()
                     .OrderBy(s => s.ToDisplayString(), StringComparer.Ordinal)
                     .ToList();
 

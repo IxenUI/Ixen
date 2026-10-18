@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "kipy",
+  "classifications": [ "Ixen", "UI", "Library" ],
+  "identity": "Ixen.Templates.ViewLibrary",
+  "name": "Ixen view library",
+  "shortName": "ixenlib",
+  "description": "Views and components with no host, meant to be shared between applications. One package reference, because Ixen.Generators brings Ixen.Core with it.",
+  "sourceName": "IxenLib",
+  "defaultName": "IxenLib",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "symbols": {
+    "IxenVersion": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "0.0.1",
+      "replaces": "0.0.1",
+      "description": "The version of the Ixen packages to reference."
+    },
+    "Framework": {
+      "type": "parameter",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "netstandard2.0",
+          "description": "Target netstandard2.0, so the library is consumable from every host"
+        },
+        {
+          "choice": "net10.0",
+          "description": "Target net10.0"
+        }
+      ],
+      "defaultValue": "netstandard2.0",
+      "replaces": "netstandard2.0",
+      "description": "The target framework for the project."
+    }
+  }
+}
