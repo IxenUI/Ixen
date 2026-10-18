@@ -38,6 +38,9 @@ namespace Ixen.Core.UT.Native
             { "IXEN_IME_CANCEL", "Cancel" },
             { "IXEN_IME_FINISH", "Finish" },
 
+            { "IXEN_DRAG_OVER", "Over" },
+            { "IXEN_DRAG_LEAVE", "Leave" },
+
             { "IXEN_MOD_SHIFT", "MOD_SHIFT" },
             { "IXEN_MOD_CONTROL", "MOD_CONTROL" },
             { "IXEN_MOD_ALT", "MOD_ALT" },
@@ -127,6 +130,11 @@ namespace Ixen.Core.UT.Native
                 return "MacImeKind." + name;
             }
 
+            if (define.StartsWith("IXEN_DRAG_"))
+            {
+                return "MacDragKind." + name;
+            }
+
             if (define.StartsWith("IXEN_AXA_"))
             {
                 return "MacAccessibilityAction." + name;
@@ -156,6 +164,7 @@ namespace Ixen.Core.UT.Native
             ReadEnum(kinds, "MacPointerButton", found);
             ReadEnum(kinds, "MacKeyKind", found);
             ReadEnum(kinds, "MacImeKind", found);
+            ReadEnum(kinds, "MacDragKind", found);
             ReadEnum(kinds, "MacAccessibilityAction", found);
             ReadEnum(kinds, "MacAccessibilityState", found);
             ReadEnum(kinds, "MacAccessibilityNotice", found);

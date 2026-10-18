@@ -1048,6 +1048,11 @@ namespace Ixen.Core
             _pointerDispatcher.Drop(Root, x / _scale, y / _scale, data, TrackStates);
         }
 
+        internal bool PointerDragOver(float x, float y, object data)
+            => _pointerDispatcher.DragOver(Root, x / _scale, y / _scale, data, TrackStates);
+
+        internal void PointerDragLeave() => _pointerDispatcher.DragLeave();
+
         internal void PointerLeaveSurface()
         {
             VisualElement before = _pointerDispatcher.Hovered;

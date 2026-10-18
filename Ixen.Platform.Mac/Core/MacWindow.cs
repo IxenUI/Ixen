@@ -33,6 +33,7 @@ namespace Ixen.Platform.Mac
         private readonly MacApi.OnDropCallBack _onDrop;
         private readonly MacApi.OnSuspendCallBack _onSuspend;
         private readonly MacApi.OnPreferencesCallBack _onPreferences;
+        private readonly MacApi.OnDragCallBack _onDrag;
 
         private readonly IxenSurface _ixenSurface;
         private readonly IxenHost _host;
@@ -60,6 +61,7 @@ namespace Ixen.Platform.Mac
             _onDrop = OnDrop;
             _onSuspend = OnSuspend;
             _onPreferences = OnPreferences;
+            _onDrag = OnDrag;
 
             _windowPtr = MacApi.CreateWindow(_ixenSurface.InitOptions.Title,
                 _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
@@ -117,6 +119,7 @@ namespace Ixen.Platform.Mac
             MacApi.RegisterDropCallBack(_windowPtr, _onDrop);
             MacApi.RegisterSuspendCallBack(_windowPtr, _onSuspend);
             MacApi.RegisterPreferencesCallBack(_windowPtr, _onPreferences);
+            MacApi.RegisterDragCallBack(_windowPtr, _onDrag);
 
             _accessibility.Register();
 
@@ -362,6 +365,22 @@ namespace Ixen.Platform.Mac
             }
 
             _host.PointerDrop(x, y, paths.Split(_dropSeparator));
+        }
+
+        private int OnDrag(int kind, int x, int y, string paths)
+        {
+            if ((MacDragKind)kind == MacDragKind.Leave)
+            {
+                _host.PointerDragLeave();
+                return 0;
+            }
+
+            if (string.IsNullOrEmpty(paths))
+            {
+                return 0;
+            }
+
+            return _host.PointerDragOver(x, y, paths.Split(_dropSeparator)) ? 1 : 0;
         }
 
         private bool _acceptsFiles;

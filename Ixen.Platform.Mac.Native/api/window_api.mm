@@ -122,6 +122,14 @@ void WA_RegisterSuspendCallBack(NativeWindow* window, void callBack())
     }
 }
 
+void WA_RegisterDragCallBack(NativeWindow* window, int callBack(int, int, int, const char*))
+{
+    if (window != nullptr)
+    {
+        window->dragCallBack = callBack;
+    }
+}
+
 void WA_RegisterPreferencesCallBack(NativeWindow* window, void callBack())
 {
     if (window != nullptr)

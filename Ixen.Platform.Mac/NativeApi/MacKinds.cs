@@ -28,6 +28,12 @@ namespace Ixen.Platform.Mac.NativeApi
         Finish = 3
     }
 
+    internal enum MacDragKind
+    {
+        Over = 0,
+        Leave = 1
+    }
+
     internal enum MacKeyKind
     {
         Down = 0,

@@ -26,6 +26,7 @@ IXEN_API_ENTRY void WA_RegisterKeyCallBack(NativeWindow* window, void callBack(i
 IXEN_API_ENTRY void WA_RegisterImeCallBack(NativeWindow* window, void callBack(int, const char*, int));
 IXEN_API_ENTRY void WA_RegisterWheelCallBack(NativeWindow* window, void callBack(int, int, int, int, int));
 IXEN_API_ENTRY void WA_RegisterDropCallBack(NativeWindow* window, void callBack(int, int, const char*));
+IXEN_API_ENTRY void WA_RegisterDragCallBack(NativeWindow* window, int callBack(int, int, int, const char*));
 IXEN_API_ENTRY void WA_RegisterSuspendCallBack(NativeWindow* window, void callBack());
 IXEN_API_ENTRY const char* WA_GetClipboardText();
 IXEN_API_ENTRY void WA_SetClipboardText(const char* text);

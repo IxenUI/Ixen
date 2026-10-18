@@ -23,6 +23,9 @@
 #define IXEN_IME_CANCEL 2
 #define IXEN_IME_FINISH 3
 
+#define IXEN_DRAG_OVER 0
+#define IXEN_DRAG_LEAVE 1
+
 #define IXEN_MOD_SHIFT 1
 #define IXEN_MOD_CONTROL 2
 #define IXEN_MOD_ALT 4
@@ -713,12 +716,43 @@ static IxenAccessibleElement* AccessibilityFocus(NativeWindow* window)
 
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender
 {
-    return NSDragOperationCopy;
+    return [self dragOver:sender];
 }
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender
 {
-    return NSDragOperationCopy;
+    return [self dragOver:sender];
+}
+
+- (void)draggingExited:(id<NSDraggingInfo>)sender
+{
+    if (owner != nullptr && owner->dragCallBack != nullptr)
+    {
+        owner->dragCallBack(IXEN_DRAG_LEAVE, 0, 0, "");
+    }
+}
+
+- (NSDragOperation)dragOver:(id<NSDraggingInfo>)sender
+{
+    if (owner == nullptr || owner->dragCallBack == nullptr)
+    {
+        return NSDragOperationCopy;
+    }
+
+    NSString* paths = [self pathsOf:sender];
+
+    if (paths == nil)
+    {
+        return NSDragOperationNone;
+    }
+
+    NSPoint point = [self convertPoint:[sender draggingLocation] fromView:nil];
+    CGFloat scale = [self scale];
+
+    int accepted = owner->dragCallBack(IXEN_DRAG_OVER, (int)(point.x * scale), (int)(point.y * scale),
+        [paths UTF8String]);
+
+    return accepted ? NSDragOperationCopy : NSDragOperationNone;
 }
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender
@@ -728,6 +762,23 @@ static IxenAccessibleElement* AccessibilityFocus(NativeWindow* window)
         return NO;
     }
 
+    NSString* paths = [self pathsOf:sender];
+
+    if (paths == nil)
+    {
+        return NO;
+    }
+
+    NSPoint point = [self convertPoint:[sender draggingLocation] fromView:nil];
+    CGFloat scale = [self scale];
+
+    owner->dropCallBack((int)(point.x * scale), (int)(point.y * scale), [paths UTF8String]);
+
+    return YES;
+}
+
+- (NSString*)pathsOf:(id<NSDraggingInfo>)sender
+{
     NSDictionary* options = @{ NSPasteboardURLReadingFileURLsOnlyKey: @YES };
 
     NSArray* urls = [[sender draggingPasteboard] readObjectsForClasses:@[ [NSURL class] ]
@@ -735,7 +786,7 @@ static IxenAccessibleElement* AccessibilityFocus(NativeWindow* window)
 
     if (urls == nil || [urls count] == 0)
     {
-        return NO;
+        return nil;
     }
 
     NSMutableString* paths = [NSMutableString string];
@@ -757,17 +808,7 @@ static IxenAccessibleElement* AccessibilityFocus(NativeWindow* window)
         [paths appendString:path];
     }
 
-    if ([paths length] == 0)
-    {
-        return NO;
-    }
-
-    NSPoint point = [self convertPoint:[sender draggingLocation] fromView:nil];
-    CGFloat scale = [self scale];
-
-    owner->dropCallBack((int)(point.x * scale), (int)(point.y * scale), [paths UTF8String]);
-
-    return YES;
+    return [paths length] == 0 ? nil : paths;
 }
 
 - (BOOL)isAccessibilityElement
@@ -1064,6 +1105,7 @@ namespace IxenMacNative
         result->accessibilityCallBack = nullptr;
         result->suspendCallBack = nullptr;
         result->preferencesCallBack = nullptr;
+        result->dragCallBack = nullptr;
         result->hasTextRect = 0;
         result->accessibilityNodes = nullptr;
         result->accessibilityRoot = -1;

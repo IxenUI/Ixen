@@ -15,6 +15,7 @@ namespace Ixen.Platform.Mac.NativeApi
         public delegate void OnDropCallBack(int x, int y, [MarshalAs(UnmanagedType.LPUTF8Str)] string paths);
         public delegate void OnSuspendCallBack();
         public delegate void OnPreferencesCallBack();
+        public delegate int OnDragCallBack(int kind, int x, int y, [MarshalAs(UnmanagedType.LPUTF8Str)] string paths);
         public delegate void OnTimerCallBack(long id);
         public delegate int OnAccessibilityCallBack(int identifier, int action, [MarshalAs(UnmanagedType.LPUTF8Str)] string value);
 
@@ -77,6 +78,9 @@ namespace Ixen.Platform.Mac.NativeApi
 
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterSuspendCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterSuspendCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnSuspendCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterDragCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterDragCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnDragCallBack callback);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterPreferencesCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterPreferencesCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnPreferencesCallBack callback);

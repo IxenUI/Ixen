@@ -228,6 +228,39 @@ namespace Ixen.Platform
             }
         }
 
+        public bool PointerDragOver(float x, float y, object data)
+        {
+            try
+            {
+                return _surface.PointerDragOver(x, y, data);
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Pointer, error);
+                return false;
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
+        }
+
+        public void PointerDragLeave()
+        {
+            try
+            {
+                _surface.PointerDragLeave();
+            }
+            catch (Exception error)
+            {
+                Fail(IxenErrorPhase.Pointer, error);
+            }
+            finally
+            {
+                RepaintIfDirty();
+            }
+        }
+
         public void ReleaseCaches()
         {
             try

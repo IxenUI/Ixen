@@ -67,6 +67,9 @@ namespace Ixen.Core.Input
         private object _dragData;
         private VisualElement _dropTarget;
         private bool _dropAccepted;
+        private bool _externalDrag;
+        private float _externalX;
+        private float _externalY;
         private bool _dropped;
         private float _lastX;
         private float _lastY;
@@ -851,12 +854,46 @@ namespace Ixen.Core.Input
             return args.Handled;
         }
 
-        internal void Drop(VisualElement root, float x, float y, object data, bool trackStates)
+        internal bool DragOver(VisualElement root, float x, float y, object data, bool trackStates)
         {
-            if (root == null || data == null || _dragData != null || _pressed != null)
+            if (root == null || data == null || _pressed != null || (_dragData != null && !_externalDrag))
+            {
+                return false;
+            }
+
+            _trackStates = trackStates;
+            _kind = PointerKind.Mouse;
+            _dragData = data;
+            _externalDrag = true;
+            _externalX = x;
+            _externalY = y;
+
+            SyncDropTarget(Enabled(HitTester.HitTest(root, x, y)), x, y);
+
+            return _dropTarget != null && _dropAccepted;
+        }
+
+        internal void DragLeave()
+        {
+            if (!_externalDrag)
             {
                 return;
             }
+
+            LeaveDropTarget(_externalX, _externalY);
+
+            _dragData = null;
+            _externalDrag = false;
+        }
+
+        internal void Drop(VisualElement root, float x, float y, object data, bool trackStates)
+        {
+            if (root == null || data == null || _pressed != null || (_dragData != null && !_externalDrag))
+            {
+                return;
+            }
+
+            bool hovered = _externalDrag;
 
             _trackStates = trackStates;
             _kind = PointerKind.Mouse;
@@ -866,7 +903,7 @@ namespace Ixen.Core.Input
             {
                 SyncDropTarget(Enabled(HitTester.HitTest(root, x, y)), x, y);
 
-                if (_dropAccepted)
+                if (!hovered && _dropAccepted)
                 {
                     SyncDropTarget(_dropTarget, x, y);
                 }
@@ -877,6 +914,7 @@ namespace Ixen.Core.Input
             {
                 _dragData = null;
                 _dropped = false;
+                _externalDrag = false;
             }
         }
 

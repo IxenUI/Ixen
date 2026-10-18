@@ -17,6 +17,7 @@ namespace IxenMacNative
     typedef int (*AccessibilityCallBack)(int identifier, int action, const char* value);
     typedef void (*SuspendCallBack)();
     typedef void (*PreferencesCallBack)();
+    typedef int (*DragCallBack)(int kind, int x, int y, const char* paths);
 
     struct NativeWindow
     {
@@ -37,6 +38,7 @@ namespace IxenMacNative
         AccessibilityCallBack accessibilityCallBack;
         SuspendCallBack suspendCallBack;
         PreferencesCallBack preferencesCallBack;
+        DragCallBack dragCallBack;
 
         int hasTextRect;
         float textX;
