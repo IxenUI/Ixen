@@ -1,6 +1,7 @@
 #import "native_window.h"
 #import <IOSurface/IOSurface.h>
 #import <QuartzCore/QuartzCore.h>
+#import <Metal/Metal.h>
 
 #include <map>
 #include <string>
@@ -376,6 +377,20 @@ static IxenAccessibleElement* AccessibilityFocus(NativeWindow* window)
 
     if (owner->paintCallBack == nullptr || width <= 0 || height <= 0)
     {
+        return;
+    }
+
+    if (owner->metalLayer != nullptr)
+    {
+        CAMetalLayer* metal = (__bridge CAMetalLayer*)owner->metalLayer;
+
+        [CATransaction begin];
+        [CATransaction setDisableActions:YES];
+        metal.frame = self.layer.bounds;
+        metal.contentsScale = scale;
+        [CATransaction commit];
+
+        owner->paintCallBack(width, height);
         return;
     }
 
@@ -1100,6 +1115,10 @@ namespace IxenMacNative
         result->preferencesCallBack = nullptr;
         result->dragCallBack = nullptr;
         result->hasTextRect = 0;
+        result->metalLayer = nullptr;
+        result->metalDevice = nullptr;
+        result->metalQueue = nullptr;
+        result->drawable = nullptr;
         result->accessibilityNodes = nullptr;
         result->accessibilityRoot = -1;
         result->accessibilityAsked = 0;
@@ -1201,6 +1220,26 @@ namespace IxenMacNative
 
         ReleaseSurfaces(window);
 
+        if (window->drawable != nullptr)
+        {
+            CFBridgingRelease(window->drawable);
+        }
+
+        if (window->metalLayer != nullptr)
+        {
+            CFBridgingRelease(window->metalLayer);
+        }
+
+        if (window->metalQueue != nullptr)
+        {
+            CFBridgingRelease(window->metalQueue);
+        }
+
+        if (window->metalDevice != nullptr)
+        {
+            CFBridgingRelease(window->metalDevice);
+        }
+
         delete window;
     }
 
@@ -1290,6 +1329,92 @@ namespace IxenMacNative
         window->surfaces[1] = (void*)CreateSurface(width, height);
         window->surfaceWidth = width;
         window->surfaceHeight = height;
+    }
+
+    int CreateNativeWindowMetal(NativeWindow* window, void** device, void** queue)
+    {
+        if (window == nullptr || window->view == nullptr)
+        {
+            return 0;
+        }
+
+        if (window->metalLayer == nullptr)
+        {
+            id<MTLDevice> created = MTLCreateSystemDefaultDevice();
+
+            if (created == nil)
+            {
+                return 0;
+            }
+
+            id<MTLCommandQueue> commands = [created newCommandQueue];
+
+            if (commands == nil)
+            {
+                return 0;
+            }
+
+            NSView* view = (__bridge NSView*)window->view;
+            CAMetalLayer* metal = [CAMetalLayer layer];
+
+            metal.device = created;
+            metal.pixelFormat = MTLPixelFormatBGRA8Unorm;
+            metal.framebufferOnly = NO;
+            metal.contentsGravity = kCAGravityTopLeft;
+            metal.presentsWithTransaction = YES;
+            metal.frame = view.layer.bounds;
+            metal.contentsScale = view.window != nil ? view.window.backingScaleFactor : 1;
+            [view.layer addSublayer:metal];
+
+            window->metalDevice = (void*)CFBridgingRetain(created);
+            window->metalQueue = (void*)CFBridgingRetain(commands);
+            window->metalLayer = (void*)CFBridgingRetain(metal);
+        }
+
+        *device = window->metalDevice;
+        *queue = window->metalQueue;
+
+        return 1;
+    }
+
+    void* NextNativeWindowDrawable(NativeWindow* window, int width, int height)
+    {
+        if (window == nullptr || window->metalLayer == nullptr)
+        {
+            return nullptr;
+        }
+
+        CAMetalLayer* metal = (__bridge CAMetalLayer*)window->metalLayer;
+
+        metal.drawableSize = CGSizeMake(width, height);
+
+        id<CAMetalDrawable> next = [metal nextDrawable];
+
+        if (next == nil)
+        {
+            return nullptr;
+        }
+
+        window->drawable = (void*)CFBridgingRetain(next);
+
+        return (__bridge void*)next.texture;
+    }
+
+    void PresentNativeWindowDrawable(NativeWindow* window)
+    {
+        if (window == nullptr || window->drawable == nullptr)
+        {
+            return;
+        }
+
+        id<CAMetalDrawable> next = (id<CAMetalDrawable>)CFBridgingRelease(window->drawable);
+        id<MTLCommandQueue> commands = (__bridge id<MTLCommandQueue>)window->metalQueue;
+        id<MTLCommandBuffer> buffer = [commands commandBuffer];
+
+        window->drawable = nullptr;
+        [buffer commit];
+        [buffer waitUntilScheduled];
+        [next present];
     }
 
     void* GetNativeWindowFrame(NativeWindow* window, int* rowBytes)

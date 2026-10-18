@@ -4,6 +4,8 @@ namespace Ixen.Platform.Mac
 {
     public static class IxenMacApplication
     {
+        public static string Backend => MacWindow.Backend;
+
         public static int CreateWindow(IxenSurface surface)
         {
             using (var window = new MacWindow(surface))

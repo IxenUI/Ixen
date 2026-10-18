@@ -31,6 +31,11 @@ namespace IxenMacNative
         void* frame;
         int frameRowBytes;
 
+        void* metalLayer;
+        void* metalDevice;
+        void* metalQueue;
+        void* drawable;
+
         PaintCallBack paintCallBack;
         PointerCallBack pointerCallBack;
         KeyCallBack keyCallBack;
@@ -62,6 +67,9 @@ namespace IxenMacNative
     void SetApplicationIcon(const void* bytes, int length);
     void SetNativeWindowTitle(NativeWindow* window, const char* title);
     void* GetNativeWindowFrame(NativeWindow* window, int* rowBytes);
+    int CreateNativeWindowMetal(NativeWindow* window, void** device, void** queue);
+    void* NextNativeWindowDrawable(NativeWindow* window, int width, int height);
+    void PresentNativeWindowDrawable(NativeWindow* window);
     void EnsureSurfaces(NativeWindow* window, int width, int height);
     void ReleaseSurfaces(NativeWindow* window);
     void InvalidateNativeWindow(NativeWindow* window);

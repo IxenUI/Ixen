@@ -74,6 +74,42 @@ namespace Ixen.Platform.Mac
             }
 
             SetIcon(_ixenSurface.InitOptions.Icon);
+
+            if (_ixenSurface.InitOptions.PreferGpu)
+            {
+                TryCreateMetal();
+            }
+
+            Backend = _metal != null ? "macOS Metal" : "macOS";
+        }
+
+        internal static string Backend { get; private set; }
+
+        private GRContext _metal;
+
+        private void TryCreateMetal()
+        {
+            try
+            {
+                if (MacApi.CreateMetal(_windowPtr, out IntPtr device, out IntPtr queue) == 0)
+                {
+                    return;
+                }
+
+                using (var backend = new GRMtlBackendContext { DeviceHandle = device, QueueHandle = queue })
+                {
+                    _metal = GRContext.CreateMetal(backend);
+                }
+            }
+            catch (Exception)
+            {
+                _metal = null;
+            }
+
+            if (_metal != null)
+            {
+                _ixenSurface.PreservesFrame = false;
+            }
         }
 
         private static void SetIcon(string name)
@@ -138,15 +174,42 @@ namespace Ixen.Platform.Mac
             _ixenSurface.Presentable = CanPresent();
             _ixenSurface.Scale = MacApi.GetWindowDpi(_windowPtr) / DEFAULT_DPI;
 
-            IntPtr frame = MacApi.GetWindowFrame(_windowPtr, out int rowBytes);
-            SKSurface surface = Surface(frame, width, height, rowBytes);
+            GRBackendRenderTarget target = null;
+            SKSurface surface;
+
+            if (_metal != null)
+            {
+                IntPtr texture = MacApi.NextDrawable(_windowPtr, width, height);
+
+                if (texture == IntPtr.Zero)
+                {
+                    return;
+                }
+
+                target = new GRBackendRenderTarget(width, height, new GRMtlTextureInfo(texture));
+                surface = SKSurface.Create(_metal, target, GRSurfaceOrigin.TopLeft, SKColorType.Bgra8888);
+                _surface = surface;
+            }
+            else
+            {
+                IntPtr frame = MacApi.GetWindowFrame(_windowPtr, out int rowBytes);
+
+                surface = Surface(frame, width, height, rowBytes);
+            }
 
             if (surface == null)
             {
+                target?.Dispose();
                 return;
             }
 
             _host.Paint(surface.Canvas, width, height);
+
+            if (_metal != null)
+            {
+                _metal.Flush();
+                _metal.Submit();
+            }
 
             _accessibility.Sync();
             SyncTextRect();
@@ -162,6 +225,15 @@ namespace Ixen.Platform.Mac
             else if (_capturePath != null)
             {
                 RequestRepaint();
+            }
+
+            if (_metal != null)
+            {
+                surface.Dispose();
+                target.Dispose();
+                _surface = null;
+
+                MacApi.PresentDrawable(_windowPtr);
             }
         }
 
@@ -454,6 +526,8 @@ namespace Ixen.Platform.Mac
 
         public void Dispose()
         {
+            _metal?.Dispose();
+            _metal = null;
             _cursorImages.Clear();
             ReleaseSurfaces();
 

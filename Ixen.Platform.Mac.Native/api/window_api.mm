@@ -30,6 +30,21 @@ void WA_SetWindowTitle(NativeWindow* window, const char* title)
     SetNativeWindowTitle(window, title);
 }
 
+int WA_CreateMetal(NativeWindow* window, void** device, void** queue)
+{
+    return CreateNativeWindowMetal(window, device, queue);
+}
+
+void* WA_NextDrawable(NativeWindow* window, int width, int height)
+{
+    return NextNativeWindowDrawable(window, width, height);
+}
+
+void WA_PresentDrawable(NativeWindow* window)
+{
+    PresentNativeWindowDrawable(window);
+}
+
 void* WA_GetWindowFrame(NativeWindow* window, int* rowBytes)
 {
     return GetNativeWindowFrame(window, rowBytes);

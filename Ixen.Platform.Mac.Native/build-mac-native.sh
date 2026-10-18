@@ -36,7 +36,7 @@ if [ "$CONFIG" = "Debug" ]; then
 fi
 
 SOURCES="window/native_window.mm api/window_api.mm"
-FLAGS="-std=c++17 -fobjc-arc -fvisibility=hidden $OPT -framework Cocoa -framework IOSurface -framework QuartzCore -dynamiclib"
+FLAGS="-std=c++17 -fobjc-arc -fvisibility=hidden $OPT -framework Cocoa -framework IOSurface -framework QuartzCore -framework Metal -dynamiclib"
 
 mkdir -p bin
 

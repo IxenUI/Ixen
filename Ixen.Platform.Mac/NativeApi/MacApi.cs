@@ -37,6 +37,15 @@ namespace Ixen.Platform.Mac.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowTitle", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetWindowTitle(IntPtr windowPtr, [MarshalAs(UnmanagedType.LPUTF8Str)] string title);
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_CreateMetal", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int CreateMetal(IntPtr windowPtr, out IntPtr device, out IntPtr queue);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_NextDrawable", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr NextDrawable(IntPtr windowPtr, int width, int height);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_PresentDrawable", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void PresentDrawable(IntPtr windowPtr);
+
         [DllImport(LIB_NAME, EntryPoint = "WA_GetWindowFrame", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr GetWindowFrame(IntPtr windowPtr, out int rowBytes);
 

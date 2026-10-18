@@ -20,7 +20,7 @@ namespace Ixen.Platform.Desktop
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
-                    return "macOS";
+                    return IxenMacApplication.Backend ?? "macOS";
                 }
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
