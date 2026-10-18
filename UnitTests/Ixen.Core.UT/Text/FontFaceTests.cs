@@ -206,5 +206,93 @@ namespace Ixen.Core.UT.Text
                 Assert.IsTrue(xnsSource.HasErrors, $"'{bad}' should be rejected");
             }
         }
+
+        private static VisualElement Unnamed(FontWeight weight = FontWeight.Normal,
+            FontStyle style = FontStyle.Normal, string text = "Handgloves")
+        {
+            var element = Element("label", LayoutType.Column, SizeUnit.Content, 0, SizeUnit.Content, 0);
+            element.Styles.FontSize = new FontSizeStyleDescriptor { Value = 24 };
+            element.Styles.FontWeight = new FontWeightStyleDescriptor { Value = weight };
+            element.Styles.FontStyle = new FontStyleStyleDescriptor { Value = style };
+            element.Text = text;
+            return element;
+        }
+
+        private static SKTypeface FaceOf(FontWeight weight, FontStyle style)
+        {
+            return FontCache.Get(new FontSpec(null, 24, weight == FontWeight.Bold,
+                style == FontStyle.Italic)).Typeface;
+        }
+
+        private static bool Offers(SKFontStyleWeight weight, SKFontStyleSlant slant)
+        {
+            SKTypeface plain = SKTypeface.FromFamilyName(FAMILY, SKFontStyleWeight.Normal,
+                SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+
+            SKTypeface asked = SKTypeface.FromFamilyName(FAMILY, weight, SKFontStyleWidth.Normal,
+                slant);
+
+            if (plain == null || asked == null)
+            {
+                return false;
+            }
+
+            return asked.FontStyle.Weight != plain.FontStyle.Weight
+                || asked.FontStyle.Slant != plain.FontStyle.Slant;
+        }
+
+        [TestMethod]
+        public void AWeightIsHonouredWithNoFamilyDeclared()
+        {
+            if (!Offers(SKFontStyleWeight.Bold, SKFontStyleSlant.Upright))
+            {
+                Assert.Inconclusive($"{FAMILY} offers no distinct bold on this machine, so there "
+                    + "is nothing for Ixen to select. Nothing here is wrong with the framework.");
+            }
+
+            Assert.IsTrue(FaceOf(FontWeight.Bold, FontStyle.Normal).FontStyle.Weight
+                > FaceOf(FontWeight.Normal, FontStyle.Normal).FontStyle.Weight,
+                "a null family makes SKTypeface.FromFamilyName ignore the weight, so the family "
+                + "has to be resolved to the default one before it is asked for a face");
+
+            VisualElement plain = Unnamed();
+            VisualElement heavy = Unnamed(FontWeight.Bold);
+
+            Layout(plain);
+            Layout(heavy);
+
+            Assert.IsTrue(heavy.Width > plain.Width,
+                $"and it has to reach the measure pass: plain={plain.Width} heavy={heavy.Width}");
+        }
+
+        [TestMethod]
+        public void ASlantIsHonouredWithNoFamilyDeclared()
+        {
+            if (!Offers(SKFontStyleWeight.Normal, SKFontStyleSlant.Italic))
+            {
+                Assert.Inconclusive($"{FAMILY} offers no distinct italic on this machine, so there "
+                    + "is nothing for Ixen to select. Nothing here is wrong with the framework.");
+            }
+
+            Assert.AreEqual(SKFontStyleSlant.Upright,
+                FaceOf(FontWeight.Normal, FontStyle.Normal).FontStyle.Slant);
+
+            Assert.AreNotEqual(SKFontStyleSlant.Upright,
+                FaceOf(FontWeight.Normal, FontStyle.Italic).FontStyle.Slant,
+                "a null family makes SKTypeface.FromFamilyName ignore the slant too");
+        }
+
+        [TestMethod]
+        public void NamingNoFamilyIsTheSameRegularFaceAsNamingTheDefaultOne()
+        {
+            SKFont unnamed = FontCache.Get(new FontSpec(null, 24, false, false));
+            SKFont named = FontCache.Get(new FontSpec(FAMILY, 24, false, false));
+
+            Assert.AreEqual(named.Typeface.FamilyName, unnamed.Typeface.FamilyName);
+
+            Assert.AreEqual(named.MeasureText("Handgloves"), unnamed.MeasureText("Handgloves"),
+                "resolving the family cannot move ordinary text, which is what lets every figure "
+                + "that declares no weight stay byte-identical");
+        }
     }
 }

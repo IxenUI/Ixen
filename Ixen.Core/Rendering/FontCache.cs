@@ -16,6 +16,8 @@ namespace Ixen.Core.Rendering
 
         private static readonly Dictionary<(SKFont font, int codepoint), bool> _covers = new();
 
+        private static string _defaultFamily;
+
         internal static SKFont Get(FontSpec spec) => Get(spec, false);
 
         internal static SKFont Get(FontSpec spec, bool smooth)
@@ -29,7 +31,7 @@ namespace Ixen.Core.Rendering
             }
 
             SKTypeface typeface = SKTypeface.FromFamilyName(
-                string.IsNullOrWhiteSpace(spec.Family) ? null : spec.Family,
+                FamilyOf(spec),
                 spec.Bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal,
                 SKFontStyleWidth.Normal,
                 spec.Italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright)
@@ -39,6 +41,25 @@ namespace Ixen.Core.Rendering
             _fonts[key] = font;
 
             return font;
+        }
+
+        private static string FamilyOf(FontSpec spec)
+        {
+            if (!string.IsNullOrWhiteSpace(spec.Family))
+            {
+                return spec.Family;
+            }
+
+            if (_defaultFamily == null)
+            {
+                SKTypeface face = SKTypeface.Default;
+
+                _defaultFamily = face == null || string.IsNullOrWhiteSpace(face.FamilyName)
+                    ? string.Empty
+                    : face.FamilyName;
+            }
+
+            return _defaultFamily.Length == 0 ? null : _defaultFamily;
         }
 
         private static SKFont Shape(SKFont font, bool smooth)
