@@ -106,7 +106,7 @@ namespace Ixen.Core.UT.Input
         [TestMethod]
         public void TheBoundsFollowTheCaretAlongTheText()
         {
-            Build(new TextField(), 30, null);
+            Build(new TextField(), 60, null);
 
             _field.Text = "    ";
             _field.CaretIndex = 4;
