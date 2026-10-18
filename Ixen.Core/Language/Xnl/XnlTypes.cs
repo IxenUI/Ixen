@@ -7,6 +7,9 @@ using System.Text;
 
 namespace Ixen.Core.Language.Xnl
 {
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Editor completion only: it reflects over Ixen.Core's own public element types for the language server and the Visual Studio extension. No application calls it, and a trimmed application removes it.")]
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2065", Justification = "Editor completion only: it reflects over Ixen.Core's own public element types for the language server and the Visual Studio extension. No application calls it, and a trimmed application removes it.")]
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "Editor completion only: it reflects over Ixen.Core's own public element types for the language server and the Visual Studio extension. No application calls it, and a trimmed application removes it.")]
     internal static class XnlTypes
     {
         internal const string CLASS_PROPERTY = "class";
