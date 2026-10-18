@@ -99,6 +99,9 @@ namespace Ixen.Platform.Mac.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_PrefersHighContrast", CallingConvention = CallingConvention.Cdecl)]
         public static extern int PrefersHighContrast();
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_SetTextInputRect", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetTextInputRect(IntPtr windowPtr, int has, float x, float y, float width, float height);
+
         [DllImport(LIB_NAME, EntryPoint = "WA_GetSystemColors", CallingConvention = CallingConvention.Cdecl)]
         public static extern void GetSystemColors([Out] int[] colors, int count);
 

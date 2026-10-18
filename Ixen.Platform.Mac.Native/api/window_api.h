@@ -34,6 +34,7 @@ IXEN_API_ENTRY void WA_Cancel(long identifier);
 IXEN_API_ENTRY int WA_PrefersReducedMotion();
 IXEN_API_ENTRY int WA_PrefersHighContrast();
 IXEN_API_ENTRY void WA_GetSystemColors(int* colors, int count);
+IXEN_API_ENTRY void WA_SetTextInputRect(NativeWindow* window, int has, float x, float y, float width, float height);
 IXEN_API_ENTRY void WA_RegisterPreferencesCallBack(NativeWindow* window, void callBack());
 IXEN_API_ENTRY void WA_RegisterAccessibilityCallBack(NativeWindow* window, int callBack(int, int, const char*));
 IXEN_API_ENTRY int WA_AccessibilityIsActive(NativeWindow* window);

@@ -1,5 +1,6 @@
 using Ixen.Core;
 using Ixen.Core.Input;
+using Ixen.Core.Visual;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Ixen.Platform.Mac.Accessibility;
 using Ixen.Platform.Mac.NativeApi;
@@ -11,6 +12,7 @@ namespace Ixen.Platform.Mac
 {
     internal class MacWindow : IDisposable
     {
+        private const float TEXT_RECT_WIDTH = 1f;
         private const float DEFAULT_DPI = 96f;
         private const float WHEEL_DELTA = 120f;
 
@@ -146,6 +148,7 @@ namespace Ixen.Platform.Mac
                 _pixelBuffer.RowBytes);
 
             _accessibility.Sync();
+            SyncTextRect();
 
             SyncAcceptsFiles();
 
@@ -304,6 +307,39 @@ namespace Ixen.Platform.Mac
         private static readonly char[] _dropSeparator = { '\n' };
 
         private void OnSuspend() => _host.ReleaseCaches();
+
+        private bool _hasTextRect;
+        private float _textX;
+        private float _textY;
+        private float _textHeight;
+
+        private void SyncTextRect()
+        {
+            TextField field = _ixenSurface.FocusedElement as TextField;
+            float x = 0;
+            float y = 0;
+            float height = 0;
+
+            if (field != null)
+            {
+                field.CaretBounds(field.IsComposing ? field.CompositionStart : field.DisplayCaret,
+                    out x, out y, out height);
+            }
+
+            bool has = field != null;
+
+            if (has == _hasTextRect && x == _textX && y == _textY && height == _textHeight)
+            {
+                return;
+            }
+
+            _hasTextRect = has;
+            _textX = x;
+            _textY = y;
+            _textHeight = height;
+
+            MacApi.SetTextInputRect(_windowPtr, has ? 1 : 0, x, y, TEXT_RECT_WIDTH, height);
+        }
 
         private void OnPreferences()
         {

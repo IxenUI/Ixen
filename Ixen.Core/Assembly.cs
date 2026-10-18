@@ -8,6 +8,7 @@
 [assembly: InternalsVisibleTo("Ixen.LanguageServer")]
 [assembly: InternalsVisibleTo("Ixen.LanguageServer.UT")]
 [assembly: InternalsVisibleTo("Ixen.Platform")]
+[assembly: InternalsVisibleTo("Ixen.Platform.Mac")]
 [assembly: InternalsVisibleTo("Ixen.Platform.Windows")]
 [assembly: InternalsVisibleTo("Ixen.View.Android")]
 [assembly: InternalsVisibleTo("Ixen.View.iOS")]

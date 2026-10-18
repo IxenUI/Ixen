@@ -130,6 +130,11 @@ void WA_RegisterPreferencesCallBack(NativeWindow* window, void callBack())
     }
 }
 
+void WA_SetTextInputRect(NativeWindow* window, int has, float x, float y, float width, float height)
+{
+    SetNativeWindowTextRect(window, has, x, y, width, height);
+}
+
 void WA_GetSystemColors(int* colors, int count)
 {
     GetSystemColors(colors, count);

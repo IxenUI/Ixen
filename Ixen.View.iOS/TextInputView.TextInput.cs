@@ -285,10 +285,7 @@ namespace Ixen.View.iOS
 
         private CGRect CaretRect(TextField edited, int index)
         {
-            int line = edited.Multiline ? edited.LineAt(index) : 0;
-            float height = edited.LineHeight > 0 ? edited.LineHeight : 16f;
-            float x = edited.X + edited.PaddingLeft + edited.BorderInsideLeft + edited.OffsetAt(index) - edited.ContentOffset;
-            float y = edited.Y + edited.PaddingTop + edited.BorderInsideTop + line * height - (edited.Multiline ? edited.ScrollY : 0);
+            edited.CaretBounds(index, out float x, out float y, out float height);
 
             return new CGRect(x, y, CARET_WIDTH, height);
         }

@@ -38,6 +38,12 @@ namespace IxenMacNative
         SuspendCallBack suspendCallBack;
         PreferencesCallBack preferencesCallBack;
 
+        int hasTextRect;
+        float textX;
+        float textY;
+        float textWidth;
+        float textHeight;
+
         void* accessibilityNodes;
         int accessibilityRoot;
         int accessibilityAsked;
@@ -58,6 +64,7 @@ namespace IxenMacNative
     void SetNativeWindowCursor(NativeWindow* window, int kind);
     void SetNativeWindowCursorImage(NativeWindow* window, const void* bytes, int length, int hotspotX, int hotspotY);
     void SetNativeWindowAcceptsFiles(NativeWindow* window, int accepts);
+    void SetNativeWindowTextRect(NativeWindow* window, int has, float x, float y, float width, float height);
 
     const char* GetPasteboardText();
     void SetPasteboardText(const char* text);

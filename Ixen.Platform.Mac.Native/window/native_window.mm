@@ -684,6 +684,16 @@ static IxenAccessibleElement* AccessibilityFocus(NativeWindow* window)
     NSRect local = NSMakeRect(0, bounds.size.height, 0, 0);
     NSWindow* host = [self window];
 
+    if (owner != nullptr && owner->hasTextRect)
+    {
+        local = NSMakeRect(owner->textX, owner->textY, owner->textWidth, owner->textHeight);
+    }
+
+    if (actual != nullptr)
+    {
+        *actual = range;
+    }
+
     if (host == nil)
     {
         return local;
@@ -1054,6 +1064,7 @@ namespace IxenMacNative
         result->accessibilityCallBack = nullptr;
         result->suspendCallBack = nullptr;
         result->preferencesCallBack = nullptr;
+        result->hasTextRect = 0;
         result->accessibilityNodes = nullptr;
         result->accessibilityRoot = -1;
         result->accessibilityAsked = 0;
@@ -1342,6 +1353,20 @@ namespace IxenMacNative
                                                    hotSpot:NSMakePoint(hotspotX, hotspotY)];
 
         [view useCursor:cursor];
+    }
+
+    void SetNativeWindowTextRect(NativeWindow* window, int has, float x, float y, float width, float height)
+    {
+        if (window == nullptr)
+        {
+            return;
+        }
+
+        window->hasTextRect = has;
+        window->textX = x;
+        window->textY = y;
+        window->textWidth = width;
+        window->textHeight = height;
     }
 
     void SetNativeWindowAcceptsFiles(NativeWindow* window, int accepts)

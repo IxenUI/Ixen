@@ -12,6 +12,7 @@ namespace Ixen.Core.Visual
         public const char DEFAULT_PASSWORD_CHAR = '\u25CF';
 
         private const int UNDO_LIMIT = 100;
+        private const float DEFAULT_CARET_HEIGHT = 16f;
 
         private int _caret;
         private string _composition = string.Empty;
@@ -779,6 +780,29 @@ namespace Ixen.Core.Visual
             }
 
             return IndexInLine(line, column);
+        }
+
+        internal void CaretBounds(int index, out float x, out float y, out float height)
+        {
+            height = LineHeight > 0 ? LineHeight : DEFAULT_CARET_HEIGHT;
+            x = X + PaddingLeft + BorderInsideLeft - ContentOffset + OffsetAt(index);
+            y = Y + PaddingTop + BorderInsideTop - ScrollY
+                + (Multiline ? LineAt(index) * height : AlignmentSlack(height));
+        }
+
+        private float AlignmentSlack(float lineHeight)
+        {
+            TextVAlign vertical = StylesHandlers == null
+                ? TextVAlign.Top
+                : StylesHandlers.TextAlign.Descriptor.Vertical;
+            float slack = ContentHeight - lineHeight;
+
+            if (vertical == TextVAlign.Top || slack <= 0)
+            {
+                return 0;
+            }
+
+            return vertical == TextVAlign.Middle ? slack / 2 : slack;
         }
 
         internal float OffsetAt(int index)
