@@ -26,6 +26,7 @@ namespace Ixen.Platform.Windows
 
         private readonly UiaBridge _accessibility;
         private readonly NativeCursorImages _cursors = new();
+        private readonly NativeIcons _icons = new();
 
         private IxenSurface _ixenSurface;
         private readonly IxenHost _host;
@@ -56,6 +57,8 @@ namespace Ixen.Platform.Windows
             {
                 throw new Exception("Could not initialize WIN32 Window");
             }
+
+            SetIcon(_ixenSurface.InitOptions.Icon);
 
             _renderer = ixenSurface.InitOptions.PreferGpu
                 ? GpuWindowRenderer.TryCreate(_windowPtr) ?? (WindowRenderer)new RasterWindowRenderer(_windowPtr)
@@ -144,6 +147,27 @@ namespace Ixen.Platform.Windows
             }
 
             WindowApi.SetWindowCursor(_windowPtr, NativeCursors.ToNative(kind));
+        }
+
+        private void SetIcon(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return;
+            }
+
+            using (Stream stream = new WindowsImageSource().Open(name))
+            {
+                if (stream == null)
+                {
+                    return;
+                }
+
+                using (SKBitmap bitmap = SKBitmap.Decode(stream))
+                {
+                    _icons.Apply(WindowApi.GetWindowHandle(_windowPtr), bitmap, WindowApi.GetWindowDpi(_windowPtr));
+                }
+            }
         }
 
         private void OnPointer(int kind, int x, int y, int button)
@@ -309,6 +333,7 @@ namespace Ixen.Platform.Windows
         {
             _renderer.Dispose();
             _cursors.Dispose();
+            _icons.Dispose();
 
             WindowApi.DestroyWindow(_windowPtr);
         }
