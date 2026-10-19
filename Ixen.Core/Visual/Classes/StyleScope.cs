@@ -27,6 +27,7 @@ namespace Ixen.Core.Visual.Classes
         internal string State { get; }
         internal StyleScopeRelation Relation { get; }
         internal StyleScopeSegment[] Not { get; }
+        internal string[] States { get; }
 
         internal StyleScopeSegment(StyleScopeSegmentKind kind, string value, string state,
             StyleScopeRelation relation, StyleScopeSegment[] not)
@@ -36,12 +37,12 @@ namespace Ixen.Core.Visual.Classes
             State = state;
             Relation = relation;
             Not = not;
+            States = StyleScope.SplitPseudos(state);
         }
 
         internal bool Matches(VisualElement element)
         {
-            if (State != null && !element.HasState(State)
-                && !StyleStructural.Holds(element, State))
+            if (State != null && !StyleScope.HoldsAll(element, States))
             {
                 return false;
             }
@@ -439,6 +440,37 @@ namespace Ixen.Core.Visual.Classes
             state = selector.Substring(separator + 1);
 
             return selector.Substring(0, separator);
+        }
+
+        private static readonly char[] _stateSeparators = { STATE_SEPARATOR };
+
+        internal static string[] SplitPseudos(string state)
+            => string.IsNullOrEmpty(state)
+                ? null
+                : state.Split(_stateSeparators, StringSplitOptions.RemoveEmptyEntries);
+
+        internal static bool IsCompound(string state)
+            => state != null && state.IndexOf(STATE_SEPARATOR) >= 0;
+
+        internal static bool HoldsPseudo(VisualElement element, string pseudo)
+            => element.HasState(pseudo) || StyleStructural.Holds(element, pseudo);
+
+        internal static bool HoldsAll(VisualElement element, string[] pseudos)
+        {
+            if (pseudos == null || pseudos.Length == 0)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < pseudos.Length; i++)
+            {
+                if (!HoldsPseudo(element, pseudos[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         internal static bool Matches(StyleScopeSegment[] segments, VisualElement element)

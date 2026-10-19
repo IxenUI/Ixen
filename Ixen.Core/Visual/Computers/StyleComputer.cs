@@ -158,6 +158,29 @@ namespace Ixen.Core.Visual.Computers
                 ApplyScopedClasses(handlers, registry, target, stated, element, scoped);
             }
 
+            List<StyleRegistry.CompoundState> compounds = registry.HasCompoundClasses
+                ? registry.CompoundsOf(target, name)
+                : null;
+
+            if (compounds != null)
+            {
+                for (int i = 0; i < compounds.Count; i++)
+                {
+                    if (!compounds[i].Holds(element))
+                    {
+                        continue;
+                    }
+
+                    if (defaults)
+                    {
+                        ApplyClass(handlers, registry.GetDefault(target, compounds[i].Name), true);
+                    }
+
+                    ApplyClass(handlers, registry.GetGlobal(target, compounds[i].Name));
+                    ApplyScopedClasses(handlers, registry, target, compounds[i].Name, element, scoped);
+                }
+            }
+
             if (registry.HasMediaClasses)
             {
                 ApplyMediaClasses(handlers, registry, target, name, element);
@@ -166,6 +189,14 @@ namespace Ixen.Core.Visual.Computers
                 {
                     ApplyMediaClasses(handlers, registry, target,
                         name + StyleScope.STATE_SEPARATOR + element.States[i], element);
+                }
+
+                for (int i = 0; compounds != null && i < compounds.Count; i++)
+                {
+                    if (compounds[i].Holds(element))
+                    {
+                        ApplyMediaClasses(handlers, registry, target, compounds[i].Name, element);
+                    }
                 }
             }
 
@@ -180,6 +211,14 @@ namespace Ixen.Core.Visual.Computers
             {
                 ApplyContainerClasses(handlers, registry, target,
                     name + StyleScope.STATE_SEPARATOR + element.States[i], element);
+            }
+
+            for (int i = 0; compounds != null && i < compounds.Count; i++)
+            {
+                if (compounds[i].Holds(element))
+                {
+                    ApplyContainerClasses(handlers, registry, target, compounds[i].Name, element);
+                }
             }
         }
 

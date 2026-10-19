@@ -29,6 +29,21 @@ namespace Ixen.Core.Visual.Classes
             }
         }
 
+        internal sealed class CompoundState
+        {
+            internal string Name { get; }
+            internal string[] Parts { get; }
+
+            internal CompoundState(string name, string[] parts)
+            {
+                Name = name;
+                Parts = parts;
+            }
+
+            internal bool Holds(VisualElement element) => StyleScope.HoldsAll(element, Parts);
+        }
+
+        private readonly Dictionary<(StyleClassTarget target, string name), List<CompoundState>> _compounds = new();
         private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), StyleClass> _unscoped = new();
         private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), List<ScopedClass>> _scoped = new();
         private readonly Dictionary<(StyleClassTarget target, string sheetScope, string name), List<ScopedClass>> _media = new();
@@ -74,6 +89,46 @@ namespace Ixen.Core.Visual.Classes
 
         internal bool HasKeyframes => _keyframes.Count > 0;
 
+        internal bool HasCompoundClasses => _compounds.Count > 0;
+
+        internal List<CompoundState> CompoundsOf(StyleClassTarget target, string name)
+            => name != null && _compounds.TryGetValue((target, name), out List<CompoundState> found)
+                ? found
+                : null;
+
+        private void IndexCompound(StyleClass styleClass)
+        {
+            string bare = StyleScope.SplitState(styleClass.Name, out string state);
+
+            if (!StyleScope.IsCompound(state))
+            {
+                return;
+            }
+
+            var key = (styleClass.Target, bare);
+
+            if (!_compounds.TryGetValue(key, out List<CompoundState> compounds))
+            {
+                compounds = new List<CompoundState>();
+                _compounds[key] = compounds;
+            }
+
+            if (compounds.Exists(c => c.Name == styleClass.Name))
+            {
+                return;
+            }
+
+            var compound = new CompoundState(styleClass.Name, StyleScope.SplitPseudos(state));
+            int at = compounds.Count;
+
+            while (at > 0 && compounds[at - 1].Parts.Length > compound.Parts.Length)
+            {
+                at--;
+            }
+
+            compounds.Insert(at, compound);
+        }
+
         private static bool DeclaresFocus(StyleClass styleClass)
             => Mentions(styleClass.Name) || Mentions(styleClass.Scope)
                 || Mentions(styleClass.Negations);
@@ -111,6 +166,8 @@ namespace Ixen.Core.Visual.Classes
 
             _structural |= StyleStructural.Scan(styleClass.Name, _nth)
                 | StyleStructural.Scan(styleClass.Scope, _nth);
+
+            IndexCompound(styleClass);
 
             var key = (styleClass.Target, styleClass.SheetScope, styleClass.Name);
 
@@ -379,6 +436,8 @@ namespace Ixen.Core.Visual.Classes
             {
                 _hasFocusClasses = true;
             }
+
+            IndexCompound(styleClass);
 
             _defaults[(styleClass.Target, styleClass.Name)] = styleClass;
         }
