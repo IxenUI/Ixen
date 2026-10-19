@@ -125,6 +125,7 @@ namespace Ixen.View.Android
             _host.Surface.Scale = density > 0 ? density : 1f;
             _host.Surface.FontScale = fontScale > 0 ? fontScale : 1f;
             _host.Paint(e.Surface.Canvas, e.Info.Width, e.Info.Height);
+            RevealFieldIfShrunk(e.Info.Height);
             _accessibility?.Sync();
 
             _paints++;
@@ -204,7 +205,7 @@ namespace Ixen.View.Android
                 return base.OnGenericMotionEvent(e);
             }
 
-            _host.PointerWheel(e.GetX(), e.GetY(), deltaX, deltaY,
+            _host.PointerWheel(e.GetX() - PaddingLeft, e.GetY() - PaddingTop, deltaX, deltaY,
                 AndroidKeys.ToModifiers(e.MetaState));
 
             return true;
@@ -269,6 +270,40 @@ namespace Ixen.View.Android
             _backGesture = null;
 
             base.OnDetachedFromWindow();
+        }
+
+        public override WindowInsets OnApplyWindowInsets(WindowInsets insets)
+        {
+            if (insets == null || !System.OperatingSystem.IsAndroidVersionAtLeast(30))
+            {
+                return base.OnApplyWindowInsets(insets);
+            }
+
+            global::Android.Graphics.Insets safe = insets.GetInsets(WindowInsets.Type.SystemBars() | WindowInsets.Type.DisplayCutout());
+            global::Android.Graphics.Insets ime = insets.GetInsets(WindowInsets.Type.Ime());
+
+            SetPadding(safe.Left, safe.Top, safe.Right, System.Math.Max(safe.Bottom, ime.Bottom));
+
+            return WindowInsets.Consumed;
+        }
+
+        private int _canvasHeight;
+
+        private void RevealFieldIfShrunk(int height)
+        {
+            bool shrunk = _canvasHeight > 0 && height < _canvasHeight;
+
+            _canvasHeight = height;
+
+            if (!shrunk || !(_host.FocusedElement is TextField field))
+            {
+                return;
+            }
+
+            if (ScrollNavigator.IntoView(field))
+            {
+                _skCanvasView.PostInvalidate();
+            }
         }
 
         public override bool DispatchKeyEvent(KeyEvent e)

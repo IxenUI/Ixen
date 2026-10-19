@@ -238,8 +238,8 @@ namespace Ixen.View.Android
 
             _view.GetLocationOnScreen(offset);
 
-            int left = offset[0] + (int)(node.X * scale);
-            int top = offset[1] + (int)(node.Y * scale);
+            int left = offset[0] + _view.PaddingLeft + (int)(node.X * scale);
+            int top = offset[1] + _view.PaddingTop + (int)(node.Y * scale);
 
             return new Rect(left, top,
                 left + (int)(node.Width * scale),
