@@ -7,6 +7,11 @@ namespace Ixen.Core.Accessibility
     {
         public const int NONE = -1;
 
+        private const AccessibleStates ANNOUNCED_STATES = AccessibleStates.Checked
+            | AccessibleStates.Selected
+            | AccessibleStates.Expanded
+            | AccessibleStates.Expandable;
+
         private static readonly List<int> NO_CHILDREN = new List<int>();
 
         private readonly Dictionary<int, AccessibleNode> _nodes
@@ -220,6 +225,11 @@ namespace Ixen.Core.Accessibility
                 != after.HasState(AccessibleStates.Focused))
             {
                 Add(AccessibilityChangeKind.Focus, id, before, after, into);
+            }
+
+            if ((before.States & ANNOUNCED_STATES) != (after.States & ANNOUNCED_STATES))
+            {
+                Add(AccessibilityChangeKind.States, id, before, after, into);
             }
         }
 

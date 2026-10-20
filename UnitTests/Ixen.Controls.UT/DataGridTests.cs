@@ -322,18 +322,21 @@ namespace Ixen.Controls.UT
             Layout();
 
             AccessibleNode root = _surface.BuildAccessibilityTree();
-            AccessibleNode grid = Find(root, n => n.Role == AccessibleRole.Table);
+            AccessibleNode grid = AccessibleSearch.Find(root, n => n.Role == AccessibleRole.Table);
 
             Assert.IsNotNull(grid);
+            Assert.IsNull(AccessibleSearch.Find(grid, n => n.Role == AccessibleRole.List),
+                "the body's virtual list is plumbing: an item looking for its selection "
+                + "container must reach the table");
 
-            AccessibleNode header = Find(root, n => n.Role == AccessibleRole.ColumnHeader);
+            AccessibleNode header = AccessibleSearch.Find(root, n => n.Role == AccessibleRole.ColumnHeader);
 
             Assert.AreEqual("Name", header.Name,
                 "a column header is named by its caption, and its sort mark is decoration that "
                 + "must not be read out");
             Assert.IsTrue(header.Supports(AccessibleActions.Invoke));
 
-            AccessibleNode row = Find(root, n => n.Role == AccessibleRole.TableRow
+            AccessibleNode row = AccessibleSearch.Find(root, n => n.Role == AccessibleRole.TableRow
                 && n.States.HasFlag(AccessibleStates.Selected));
 
             Assert.IsNotNull(row);
@@ -342,26 +345,6 @@ namespace Ixen.Controls.UT
                 + "collapsing into one string");
             Assert.AreEqual(AccessibleRole.TableCell, row.Children[0].Role);
             Assert.AreEqual("Yeats", row.Children[0].Name);
-        }
-
-        private static AccessibleNode Find(AccessibleNode node, Func<AccessibleNode, bool> match)
-        {
-            if (match(node))
-            {
-                return node;
-            }
-
-            foreach (AccessibleNode child in node.Children)
-            {
-                AccessibleNode found = Find(child, match);
-
-                if (found != null)
-                {
-                    return found;
-                }
-            }
-
-            return null;
         }
     }
 }

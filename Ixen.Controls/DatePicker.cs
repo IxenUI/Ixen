@@ -9,7 +9,7 @@ using System.Globalization;
 
 namespace Ixen.Controls
 {
-    public class DatePicker : VisualElement
+    public class DatePicker : VisualElement, IExpandable
     {
         public const string LABEL = "DatePickerLabel";
         public const string CHEVRON = "DatePickerChevron";
@@ -163,6 +163,22 @@ namespace Ixen.Controls
         }
 
         public void Close() => _menu.Close();
+
+        bool IExpandable.CanExpand => true;
+
+        bool IExpandable.IsExpanded => IsOpen;
+
+        void IExpandable.SetExpanded(bool expanded)
+        {
+            if (expanded)
+            {
+                Open();
+            }
+            else
+            {
+                Close();
+            }
+        }
 
         public void Toggle()
         {

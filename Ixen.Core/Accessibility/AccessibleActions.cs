@@ -9,6 +9,9 @@ namespace Ixen.Core.Accessibility
         Invoke = 1,
         Focus = 2,
         SetValue = 4,
-        ScrollIntoView = 8
+        ScrollIntoView = 8,
+        Expand = 16,
+        Collapse = 32,
+        Select = 64
     }
 }

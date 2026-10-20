@@ -7,7 +7,7 @@ using System;
 
 namespace Ixen.Controls
 {
-    public class MenuItem : VisualElement
+    public class MenuItem : VisualElement, IExpandable
     {
         public const string SUBMENU = "submenu";
         public const string MARKER = "MenuItemMarker";
@@ -157,6 +157,22 @@ namespace Ixen.Controls
         }
 
         internal bool SubmenuIsOpen => _looked && _submenu != null && _submenu.Open;
+
+        bool IExpandable.CanExpand => HasSubmenu;
+
+        bool IExpandable.IsExpanded => SubmenuIsOpen;
+
+        void IExpandable.SetExpanded(bool expanded)
+        {
+            if (expanded)
+            {
+                OpenSubmenu();
+            }
+            else
+            {
+                CloseSubmenu();
+            }
+        }
 
         private IMenuOwner Owner()
         {

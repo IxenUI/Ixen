@@ -5,7 +5,7 @@ using Ixen.Core.Visual.Styles.Descriptors;
 
 namespace Ixen.Controls
 {
-    public class TreeRow : VisualElement
+    public class TreeRow : VisualElement, IExpandable
     {
         public const string EXPANDER = "TreeExpander";
         public const string EXPANDED = "expanded";
@@ -16,6 +16,8 @@ namespace Ixen.Controls
         private readonly VisualElement _expander;
 
         private VisualElement _content;
+        private bool _hasChildren;
+        private bool _expanded;
 
         public TreeRow()
         {
@@ -53,8 +55,22 @@ namespace Ixen.Controls
             };
         }
 
+        internal TreeView Owner { get; set; }
+
+        bool IExpandable.CanExpand => _hasChildren;
+
+        bool IExpandable.IsExpanded => _hasChildren && _expanded;
+
+        void IExpandable.SetExpanded(bool expanded)
+        {
+            Owner?.SetExpanded(this, expanded);
+        }
+
         internal void SetBranch(bool hasChildren, bool expanded)
         {
+            _hasChildren = hasChildren;
+            _expanded = expanded;
+
             ToggleState(LEAF, !hasChildren);
             ToggleState(EXPANDED, expanded);
 

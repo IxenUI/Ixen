@@ -1,4 +1,5 @@
 using Ixen.Core;
+using Ixen.Core.Accessibility;
 using Ixen.Core.Input;
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
@@ -250,6 +251,29 @@ namespace Ixen.Controls.UT
                 "PointerClick BUBBLES, so a click on a deep item reaches the parent item and "
                 + "used to re-open the branch that had just closed. An item acts on its own "
                 + "click only.");
+        }
+
+        [TestMethod]
+        public void AnItemWithASubmenuExpandsItAndAPlainItemDoesNot()
+        {
+            _menu.Open = true;
+            Layout();
+
+            AccessibleNode root = _surface.BuildAccessibilityTree();
+            AccessibleNode parent = AccessibleSearch.Find(root, node => node.Element == _parent);
+            AccessibleNode plain = AccessibleSearch.Find(root, node => node.Element == _plain);
+
+            Assert.IsTrue(parent.HasState(AccessibleStates.Expandable));
+            Assert.IsFalse(plain.HasState(AccessibleStates.Expandable));
+
+            Assert.IsTrue(_surface.Perform(parent, AccessibleActions.Expand));
+            Assert.IsTrue(_submenu.Open);
+
+            Layout();
+
+            parent = AccessibleSearch.Find(_surface.BuildAccessibilityTree(), node => node.Element == _parent);
+
+            Assert.IsTrue(parent.HasState(AccessibleStates.Expanded));
         }
     }
 }

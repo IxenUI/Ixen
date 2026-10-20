@@ -43,7 +43,7 @@ namespace Ixen.Controls
 
             _header.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Row };
 
-            _body = new VirtualList { TypeName = BODY };
+            _body = new VirtualList { TypeName = BODY, Role = AccessibleRole.None };
 
             AddChild(_header);
             AddChild(_body);

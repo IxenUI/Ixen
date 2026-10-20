@@ -162,6 +162,41 @@ namespace Ixen.Platform.Windows.Accessibility
                     case AccessibilityChangeKind.Structure:
                         Structure(change.Id);
                         break;
+
+                    case AccessibilityChangeKind.States:
+                        States(change);
+                        break;
+                }
+            }
+        }
+
+        private void States(AccessibilityChange change)
+        {
+            AccessibleNode was = change.Previous;
+            AccessibleNode now = change.Current;
+
+            if (UiaProvider.IsToggle(now) && UiaProvider.ToggleOf(was) != UiaProvider.ToggleOf(now))
+            {
+                Raise(change.Id, UiaProperty.TOGGLE_STATE, (int)UiaProvider.ToggleOf(was),
+                    (int)UiaProvider.ToggleOf(now));
+            }
+
+            if (UiaProvider.IsExpandCollapse(now)
+                && UiaProvider.ExpansionOf(was) != UiaProvider.ExpansionOf(now))
+            {
+                Raise(change.Id, UiaProperty.EXPAND_COLLAPSE_STATE, (int)UiaProvider.ExpansionOf(was),
+                    (int)UiaProvider.ExpansionOf(now));
+            }
+
+            if (UiaProvider.IsSelectionItem(now.Role)
+                && UiaProvider.IsSelected(was) != UiaProvider.IsSelected(now))
+            {
+                Raise(change.Id, UiaProperty.SELECTION_ITEM_IS_SELECTED, UiaProvider.IsSelected(was),
+                    UiaProvider.IsSelected(now));
+
+                if (UiaProvider.IsSelected(now))
+                {
+                    Event(change.Id, UiaEvent.ELEMENT_SELECTED);
                 }
             }
         }
@@ -312,6 +347,60 @@ namespace Ixen.Platform.Windows.Accessibility
         }
 
         internal IRawElementProviderFragment Focused() => ProviderFor(_snapshot.FocusedId());
+
+        internal IRawElementProviderSimple ContainerOf(int id)
+        {
+            AccessibilitySnapshot snapshot = _snapshot;
+
+            for (int at = snapshot.ParentOf(id); at >= 0; at = snapshot.ParentOf(at))
+            {
+                AccessibleNode node = snapshot.NodeOf(at);
+
+                if (node != null && UiaProvider.IsSelectionContainer(node.Role))
+                {
+                    return ProviderFor(at);
+                }
+            }
+
+            return null;
+        }
+
+        internal IRawElementProviderSimple[] SelectionOf(int id)
+        {
+            AccessibilitySnapshot snapshot = _snapshot;
+            var selected = new List<IRawElementProviderSimple>();
+
+            if (snapshot.Contains(id))
+            {
+                CollectSelected(snapshot, id, selected);
+            }
+
+            return selected.ToArray();
+        }
+
+        private void CollectSelected(AccessibilitySnapshot snapshot, int id,
+            List<IRawElementProviderSimple> into)
+        {
+            IReadOnlyList<int> children = snapshot.ChildrenOf(id);
+
+            for (int index = 0; index < children.Count; index++)
+            {
+                int child = children[index];
+                AccessibleNode node = snapshot.NodeOf(child);
+
+                if (node == null || UiaProvider.IsSelectionContainer(node.Role))
+                {
+                    continue;
+                }
+
+                if (UiaProvider.IsSelectionItem(node.Role) && UiaProvider.IsSelected(node))
+                {
+                    into.Add(ProviderFor(child));
+                }
+
+                CollectSelected(snapshot, child, into);
+            }
+        }
 
         internal void Post(int id, AccessibleActions action, string value)
         {

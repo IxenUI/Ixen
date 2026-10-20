@@ -100,10 +100,78 @@ namespace Ixen.Platform.Windows.Accessibility
         void ScrollIntoView();
     }
 
+    internal enum ToggleState
+    {
+        Off = 0,
+        On = 1,
+        Indeterminate = 2
+    }
+
+    internal enum ExpandCollapseState
+    {
+        Collapsed = 0,
+        Expanded = 1,
+        PartiallyExpanded = 2,
+        LeafNode = 3
+    }
+
+    [GeneratedComInterface]
+    [Guid("56d00bd0-c4f4-433c-a836-1a52a57e0892")]
+    internal partial interface IToggleProvider
+    {
+        void Toggle();
+
+        ToggleState get_ToggleState();
+    }
+
+    [GeneratedComInterface]
+    [Guid("d847d3a5-cab0-4a98-8c32-ecb45c59ad24")]
+    internal partial interface IExpandCollapseProvider
+    {
+        void Expand();
+
+        void Collapse();
+
+        ExpandCollapseState get_ExpandCollapseState();
+    }
+
+    [GeneratedComInterface]
+    [Guid("2acad808-b2d4-452d-a407-91ff1ad167b2")]
+    internal partial interface ISelectionItemProvider
+    {
+        void Select();
+
+        void AddToSelection();
+
+        void RemoveFromSelection();
+
+        [return: MarshalAs(UnmanagedType.Bool)]
+        bool get_IsSelected();
+
+        IRawElementProviderSimple get_SelectionContainer();
+    }
+
+    [GeneratedComInterface]
+    [Guid("fb8b03af-3bdf-48d4-bd36-1a65793be168")]
+    internal partial interface ISelectionProvider
+    {
+        nint GetSelection();
+
+        [return: MarshalAs(UnmanagedType.Bool)]
+        bool get_CanSelectMultiple();
+
+        [return: MarshalAs(UnmanagedType.Bool)]
+        bool get_IsSelectionRequired();
+    }
+
     internal static class UiaPattern
     {
         internal const int INVOKE = 10000;
+        internal const int SELECTION = 10001;
         internal const int VALUE = 10002;
+        internal const int EXPAND_COLLAPSE = 10005;
+        internal const int SELECTION_ITEM = 10010;
+        internal const int TOGGLE = 10015;
         internal const int SCROLL_ITEM = 10017;
     }
 
@@ -125,6 +193,11 @@ namespace Ixen.Platform.Windows.Accessibility
         internal const int VALUE_VALUE = 30045;
         internal const int VALUE_IS_READ_ONLY = 30046;
         internal const int LIVE_SETTING = 30135;
+        internal const int SELECTION_CAN_SELECT_MULTIPLE = 30060;
+        internal const int SELECTION_IS_SELECTION_REQUIRED = 30061;
+        internal const int EXPAND_COLLAPSE_STATE = 30070;
+        internal const int SELECTION_ITEM_IS_SELECTED = 30079;
+        internal const int TOGGLE_STATE = 30086;
     }
 
     internal static class UiaControlType
@@ -170,6 +243,7 @@ namespace Ixen.Platform.Windows.Accessibility
     internal static class UiaEvent
     {
         internal const int FOCUS_CHANGED = 20005;
+        internal const int ELEMENT_SELECTED = 20012;
         internal const int LIVE_REGION_CHANGED = 20024;
     }
 
@@ -179,6 +253,7 @@ namespace Ixen.Platform.Windows.Accessibility
         private const string OLE_NAME = "oleaut32.dll";
 
         private const ushort VT_I4 = 3;
+        private const ushort VT_UNKNOWN = 13;
 
         internal const int UIA_APPEND_RUNTIME_ID = 3;
 
@@ -211,6 +286,9 @@ namespace Ixen.Platform.Windows.Accessibility
 
         [LibraryImport(OLE_NAME)]
         private static partial int SafeArrayPutElement(nint array, ref int index, ref int value);
+
+        [LibraryImport(OLE_NAME, EntryPoint = "SafeArrayPutElement")]
+        private static partial int SafeArrayPutPointer(nint array, ref int index, nint value);
 
         [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -281,6 +359,27 @@ namespace Ixen.Platform.Windows.Accessibility
                 int value = values[index];
 
                 SafeArrayPutElement(array, ref at, ref value);
+            }
+
+            return array;
+        }
+
+        internal static nint ProviderArray(IRawElementProviderSimple[] providers)
+        {
+            nint array = SafeArrayCreateVector(VT_UNKNOWN, 0, (uint)providers.Length);
+
+            if (array == 0)
+            {
+                return 0;
+            }
+
+            for (int index = 0; index < providers.Length; index++)
+            {
+                int at = index;
+                nint pointer = ProviderPointer(providers[index]);
+
+                SafeArrayPutPointer(array, ref at, pointer);
+                Release(pointer);
             }
 
             return array;

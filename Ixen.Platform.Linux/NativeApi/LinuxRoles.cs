@@ -118,6 +118,11 @@ namespace Ixen.Platform.Linux.NativeApi
                 mask |= Bit(STATE_EXPANDED) | Bit(STATE_EXPANDABLE);
             }
 
+            if ((states & AccessibleStates.Expandable) != 0)
+            {
+                mask |= Bit(STATE_EXPANDABLE);
+            }
+
             if ((states & AccessibleStates.Invalid) != 0)
             {
                 mask |= Bit(STATE_INVALID_ENTRY);

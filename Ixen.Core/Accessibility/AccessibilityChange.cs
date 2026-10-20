@@ -6,7 +6,8 @@ namespace Ixen.Core.Accessibility
         Value,
         LiveRegion,
         Focus,
-        Structure
+        Structure,
+        States
     }
 
     public struct AccessibilityChange

@@ -193,16 +193,17 @@ namespace Ixen.Core.UT.Native
         }
 
         [TestMethod]
-        public void ACollapsedBranchIsIndistinguishableFromALeaf()
+        public void ACollapsedBranchIsExpandableAndALeafIsNot()
         {
-            long collapsed = StatesOf(AccessibleStates.None);
+            long collapsed = StatesOf(AccessibleStates.Expandable);
+            long leaf = StatesOf(AccessibleStates.None);
 
-            Assert.IsFalse(Has(collapsed, STATE_EXPANDABLE),
-                "AccessibleStates has no Expandable, so a collapsed branch and a leaf are the "
-                    + "same node to every bridge. Claiming EXPANDABLE here would make Orca "
-                    + "announce 'collapsed' on every leaf of a tree.");
-
+            Assert.IsTrue(Has(collapsed, STATE_EXPANDABLE));
             Assert.IsFalse(Has(collapsed, STATE_EXPANDED));
+
+            Assert.IsFalse(Has(leaf, STATE_EXPANDABLE),
+                "claiming EXPANDABLE on a leaf would make Orca announce 'collapsed' on every "
+                    + "leaf of a tree");
         }
 
         [TestMethod]

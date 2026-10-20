@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Ixen.Controls
 {
-    public class ComboBox : VisualElement
+    public class ComboBox : VisualElement, IExpandable
     {
         public const string LABEL = "ComboBoxLabel";
         public const string CHEVRON = "ComboBoxChevron";
@@ -133,6 +133,22 @@ namespace Ixen.Controls
         }
 
         public void Close() => _menu.Close();
+
+        bool IExpandable.CanExpand => true;
+
+        bool IExpandable.IsExpanded => IsOpen;
+
+        void IExpandable.SetExpanded(bool expanded)
+        {
+            if (expanded)
+            {
+                Open();
+            }
+            else
+            {
+                Close();
+            }
+        }
 
         public void Toggle()
         {

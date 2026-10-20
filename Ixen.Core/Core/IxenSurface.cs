@@ -493,6 +493,20 @@ namespace Ixen.Core
                 case Accessibility.AccessibleActions.ScrollIntoView:
                     return ScrollNavigator.IntoView(node.Element);
 
+                case Accessibility.AccessibleActions.Expand:
+                case Accessibility.AccessibleActions.Collapse:
+                    if (!(node.Element is Accessibility.IExpandable expandable))
+                    {
+                        return false;
+                    }
+
+                    expandable.SetExpanded(action == Accessibility.AccessibleActions.Expand);
+                    return expandable.IsExpanded == (action == Accessibility.AccessibleActions.Expand);
+
+                case Accessibility.AccessibleActions.Select:
+                    node.Element.PerformClick();
+                    return true;
+
                 default:
                     return false;
             }

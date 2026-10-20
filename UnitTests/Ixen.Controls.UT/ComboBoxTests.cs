@@ -251,5 +251,31 @@ namespace Ixen.Controls.UT
             Assert.AreEqual("Large", fresh.DisplayText,
                 "and the box catches up on attach, which is the first moment the items are known");
         }
+
+        private AccessibleNode Combo()
+        {
+            Layout();
+
+            return _surface.BuildAccessibilityTree().Children.Single(c => c.Role == AccessibleRole.ComboBox);
+        }
+
+        [TestMethod]
+        public void ItExpandsAndCollapsesThroughTheAccessibilityTree()
+        {
+            AccessibleNode closed = Combo();
+
+            Assert.IsTrue(closed.HasState(AccessibleStates.Expandable));
+            Assert.IsFalse(closed.HasState(AccessibleStates.Expanded));
+
+            Assert.IsTrue(_surface.Perform(closed, AccessibleActions.Expand));
+            Assert.IsTrue(_combo.IsOpen);
+
+            AccessibleNode open = Combo();
+
+            Assert.IsTrue(open.HasState(AccessibleStates.Expanded),
+                "the open popup is what a reader announces as expanded");
+            Assert.IsTrue(_surface.Perform(open, AccessibleActions.Collapse));
+            Assert.IsFalse(_combo.IsOpen);
+        }
     }
 }

@@ -7,7 +7,7 @@ namespace Ixen.Platform.Windows.Accessibility
 {
     [GeneratedComClass]
     internal partial class UiaProvider : IRawElementProviderSimple, IRawElementProviderFragment, IInvokeProvider, IValueProvider,
-        IScrollItemProvider
+        IScrollItemProvider, IToggleProvider, IExpandCollapseProvider, ISelectionItemProvider, ISelectionProvider
     {
         private readonly UiaBridge _bridge;
         private readonly int _id;
@@ -50,10 +50,67 @@ namespace Ixen.Platform.Windows.Accessibility
                 case UiaPattern.SCROLL_ITEM:
                     return node.Supports(AccessibleActions.ScrollIntoView) ? this : null;
 
+                case UiaPattern.TOGGLE:
+                    return IsToggle(node) ? this : null;
+
+                case UiaPattern.EXPAND_COLLAPSE:
+                    return IsExpandCollapse(node) ? this : null;
+
+                case UiaPattern.SELECTION_ITEM:
+                    return IsSelectionItem(node.Role) ? this : null;
+
+                case UiaPattern.SELECTION:
+                    return IsSelectionContainer(node.Role) ? this : null;
+
                 default:
                     return null;
             }
         }
+
+        internal static bool IsToggle(AccessibleNode node)
+            => node.Role == AccessibleRole.CheckBox || node.Role == AccessibleRole.Switch;
+
+        internal static bool IsExpandCollapse(AccessibleNode node)
+            => node.Role == AccessibleRole.TreeItem
+                || node.HasState(AccessibleStates.Expandable)
+                || node.HasState(AccessibleStates.Expanded);
+
+        internal static bool IsSelectionItem(AccessibleRole role)
+        {
+            return role == AccessibleRole.Tab
+                || role == AccessibleRole.RadioButton
+                || role == AccessibleRole.ListItem
+                || role == AccessibleRole.TreeItem
+                || role == AccessibleRole.TableRow;
+        }
+
+        internal static bool IsSelectionContainer(AccessibleRole role)
+        {
+            return role == AccessibleRole.TabList
+                || role == AccessibleRole.List
+                || role == AccessibleRole.Tree
+                || role == AccessibleRole.Table;
+        }
+
+        internal static ToggleState ToggleOf(AccessibleNode node)
+            => node.HasState(AccessibleStates.Checked) ? ToggleState.On : ToggleState.Off;
+
+        internal static ExpandCollapseState ExpansionOf(AccessibleNode node)
+        {
+            if (node.HasState(AccessibleStates.Expanded))
+            {
+                return ExpandCollapseState.Expanded;
+            }
+
+            return node.HasState(AccessibleStates.Expandable)
+                ? ExpandCollapseState.Collapsed
+                : ExpandCollapseState.LeafNode;
+        }
+
+        internal static bool IsSelected(AccessibleNode node)
+            => node.Role == AccessibleRole.RadioButton
+                ? node.HasState(AccessibleStates.Checked)
+                : node.HasState(AccessibleStates.Selected);
 
         public unsafe int GetPropertyValue(int propertyId, ComVariant* value)
         {
@@ -186,6 +243,59 @@ namespace Ixen.Platform.Windows.Accessibility
         }
 
         public void ScrollIntoView() => _bridge.Post(_id, AccessibleActions.ScrollIntoView, null);
+
+        public void Toggle() => _bridge.Post(_id, AccessibleActions.Invoke, null);
+
+        public ToggleState get_ToggleState()
+        {
+            AccessibleNode node = Node;
+
+            return node == null ? ToggleState.Off : ToggleOf(node);
+        }
+
+        public void Expand() => _bridge.Post(_id, AccessibleActions.Expand, null);
+
+        public void Collapse() => _bridge.Post(_id, AccessibleActions.Collapse, null);
+
+        public ExpandCollapseState get_ExpandCollapseState()
+        {
+            AccessibleNode node = Node;
+
+            return node == null ? ExpandCollapseState.LeafNode : ExpansionOf(node);
+        }
+
+        public void Select() => _bridge.Post(_id, AccessibleActions.Select, null);
+
+        public void AddToSelection()
+        {
+            if (!get_IsSelected())
+            {
+                Select();
+            }
+        }
+
+        public void RemoveFromSelection()
+        {
+            if (get_IsSelected())
+            {
+                throw new InvalidOperationException();
+            }
+        }
+
+        public bool get_IsSelected()
+        {
+            AccessibleNode node = Node;
+
+            return node != null && IsSelected(node);
+        }
+
+        public IRawElementProviderSimple get_SelectionContainer() => _bridge.ContainerOf(_id);
+
+        public nint GetSelection() => UiaNative.ProviderArray(_bridge.SelectionOf(_id));
+
+        public bool get_CanSelectMultiple() => false;
+
+        public bool get_IsSelectionRequired() => Node?.Role == AccessibleRole.TabList;
     }
 
     [GeneratedComClass]

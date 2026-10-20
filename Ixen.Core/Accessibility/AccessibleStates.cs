@@ -16,6 +16,7 @@ namespace Ixen.Core.Accessibility
         Checked = 128,
         Selected = 256,
         Expanded = 512,
-        Invalid = 1024
+        Invalid = 1024,
+        Expandable = 2048
     }
 }

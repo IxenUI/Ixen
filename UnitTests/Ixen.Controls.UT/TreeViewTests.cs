@@ -379,5 +379,82 @@ namespace Ixen.Controls.UT
 
             return null;
         }
+
+        private AccessibleNode TreeItem(string name)
+        {
+            Layout();
+
+            return AccessibleSearch.Find(_surface.BuildAccessibilityTree(),
+                node => node.Role == AccessibleRole.TreeItem && node.Name == name);
+        }
+
+        [TestMethod]
+        public void ABranchReadsAsCollapsedAndALeafAsALeaf()
+        {
+            AccessibleNode documents = TreeItem("Documents");
+            AccessibleNode pictures = TreeItem("Pictures");
+
+            Assert.IsTrue(documents.HasState(AccessibleStates.Expandable));
+            Assert.IsFalse(documents.HasState(AccessibleStates.Expanded));
+            Assert.IsTrue(documents.Supports(AccessibleActions.Expand));
+
+            Assert.IsFalse(pictures.HasState(AccessibleStates.Expandable),
+                "a folder with nothing inside must not read as a closed branch");
+            Assert.IsFalse(pictures.Supports(AccessibleActions.Expand));
+        }
+
+        [TestMethod]
+        public void ExpandingFromTheAccessibilityTreeOpensTheBranch()
+        {
+            Assert.IsTrue(_surface.Perform(TreeItem("Documents"), AccessibleActions.Expand));
+
+            CollectionAssert.AreEqual(
+                new[] { "Documents", "Reports", "Letters", "Pictures" },
+                Visible());
+
+            AccessibleNode documents = TreeItem("Documents");
+
+            Assert.IsTrue(documents.HasState(AccessibleStates.Expanded));
+            Assert.IsTrue(_surface.Perform(documents, AccessibleActions.Collapse));
+
+            CollectionAssert.AreEqual(new[] { "Documents", "Pictures" }, Visible());
+        }
+
+        [TestMethod]
+        public void ExpandingAnInnerBranchOpensThatOneNotTheFirstRow()
+        {
+            _tree.Expand(_documents);
+
+            Assert.IsTrue(_surface.Perform(TreeItem("Reports"), AccessibleActions.Expand),
+                "the row knows which item it shows only through the list, and rows are reused");
+
+            CollectionAssert.AreEqual(
+                new[] { "Documents", "Reports", "2024", "2025", "Letters", "Pictures" },
+                Visible());
+        }
+
+        [TestMethod]
+        public void ARowIsSelectableAndSelectingItSelectsTheItem()
+        {
+            AccessibleNode pictures = TreeItem("Pictures");
+
+            Assert.IsTrue(_surface.Perform(pictures, AccessibleActions.Select));
+
+            Assert.AreEqual("Pictures", ((Folder)_tree.SelectedNode.Item).Name);
+            Assert.IsTrue(TreeItem("Pictures").HasState(AccessibleStates.Selected));
+        }
+
+        [TestMethod]
+        public void NoListSitsBetweenTheTreeAndItsItems()
+        {
+            Layout();
+
+            AccessibleNode tree = AccessibleSearch.Find(_surface.BuildAccessibilityTree(),
+                node => node.Role == AccessibleRole.Tree);
+
+            Assert.IsNull(AccessibleSearch.Find(tree, node => node.Role == AccessibleRole.List),
+                "the inner virtual list is plumbing: a reader that looks for the selection "
+                + "container of an item would otherwise stop at it and never reach the tree");
+        }
     }
 }

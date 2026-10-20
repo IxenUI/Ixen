@@ -36,7 +36,7 @@ namespace Ixen.Controls
 
             Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
 
-            _list = new VirtualList { TypeName = ROWS };
+            _list = new VirtualList { TypeName = ROWS, Role = AccessibleRole.None };
 
             AddChild(_list);
 
@@ -96,6 +96,27 @@ namespace Ixen.Controls
             }
 
             Rebuild();
+        }
+
+        internal void SetExpanded(TreeRow row, bool expanded)
+        {
+            TreeNode node = NodeAt(_list.IndexOfRow(row));
+
+            if (node == null || !node.HasChildren)
+            {
+                return;
+            }
+
+            if (expanded)
+            {
+                Expand(node.Item);
+            }
+            else
+            {
+                Collapse(node.Item);
+            }
+
+            row.SetBranch(true, IsExpanded(node.Item));
         }
 
         public void Toggle(int index)
@@ -201,7 +222,7 @@ namespace Ixen.Controls
 
         private VisualElement CreateRow()
         {
-            var row = new TreeRow();
+            var row = new TreeRow { Owner = this };
 
             row.SetContent(_create());
 

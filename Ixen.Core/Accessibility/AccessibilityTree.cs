@@ -239,6 +239,18 @@ namespace Ixen.Core.Accessibility
                 actions |= AccessibleActions.SetValue;
             }
 
+            if (element is IExpandable expandable && expandable.CanExpand)
+            {
+                actions |= expandable.IsExpanded
+                    ? AccessibleActions.Collapse
+                    : AccessibleActions.Expand;
+            }
+
+            if (IsSelectable(role))
+            {
+                actions |= AccessibleActions.Select;
+            }
+
             if (Input.ScrollNavigator.Find(element.Parent, 0, 1) != null
                 || Input.ScrollNavigator.Find(element.Parent, 0, -1) != null)
             {
@@ -246,6 +258,15 @@ namespace Ixen.Core.Accessibility
             }
 
             return actions;
+        }
+
+        private static bool IsSelectable(AccessibleRole role)
+        {
+            return role == AccessibleRole.Tab
+                || role == AccessibleRole.RadioButton
+                || role == AccessibleRole.ListItem
+                || role == AccessibleRole.TreeItem
+                || role == AccessibleRole.TableRow;
         }
 
         private static bool IsInvocable(AccessibleRole role)
@@ -314,7 +335,19 @@ namespace Ixen.Core.Accessibility
                 states |= AccessibleStates.Selected;
             }
 
-            if (element.HasState(Visual.Styles.StyleStates.EXPANDED))
+            if (element is IExpandable expandable)
+            {
+                if (expandable.CanExpand)
+                {
+                    states |= AccessibleStates.Expandable;
+                }
+
+                if (expandable.IsExpanded)
+                {
+                    states |= AccessibleStates.Expanded;
+                }
+            }
+            else if (element.HasState(Visual.Styles.StyleStates.EXPANDED))
             {
                 states |= AccessibleStates.Expanded;
             }
