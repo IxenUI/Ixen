@@ -1,11 +1,12 @@
 using Ixen.Core.Accessibility;
 using System;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace Ixen.Platform.Windows.Accessibility
 {
-    [ComVisible(true)]
-    internal class UiaProvider : IRawElementProviderFragment, IInvokeProvider, IValueProvider,
+    [GeneratedComClass]
+    internal partial class UiaProvider : IRawElementProviderSimple, IRawElementProviderFragment, IInvokeProvider, IValueProvider,
         IScrollItemProvider
     {
         private readonly UiaBridge _bridge;
@@ -21,11 +22,13 @@ namespace Ixen.Platform.Windows.Accessibility
 
         private AccessibleNode Node => _bridge.NodeOf(_id);
 
-        public ProviderOptions ProviderOptions => ProviderOptions.ServerSideProvider;
+        public ProviderOptions get_ProviderOptions() => ProviderOptions.ServerSideProvider;
 
-        public virtual IRawElementProviderSimple HostRawElementProvider => null;
+        public virtual nint get_HostRawElementProvider() => 0;
 
-        public object GetPatternProvider(int patternId)
+        public nint GetPatternProvider(int patternId) => UiaNative.UnknownOf(PatternOf(patternId));
+
+        private object PatternOf(int patternId)
         {
             AccessibleNode node = Node;
 
@@ -52,7 +55,14 @@ namespace Ixen.Platform.Windows.Accessibility
             }
         }
 
-        public virtual object GetPropertyValue(int propertyId)
+        public unsafe int GetPropertyValue(int propertyId, ComVariant* value)
+        {
+            *value = UiaNative.Variant(PropertyOf(propertyId));
+
+            return 0;
+        }
+
+        protected virtual object PropertyOf(int propertyId)
         {
             AccessibleNode node = Node;
 
@@ -151,38 +161,35 @@ namespace Ixen.Platform.Windows.Accessibility
         public IRawElementProviderFragment Navigate(NavigateDirection direction)
             => _bridge.Navigate(_id, direction);
 
-        public int[] GetRuntimeId()
-            => new[] { UiaNative.UIA_APPEND_RUNTIME_ID, _id };
+        public nint GetRuntimeId()
+            => UiaNative.IntArray(new[] { UiaNative.UIA_APPEND_RUNTIME_ID, _id });
 
-        public UiaRect BoundingRectangle => _bridge.RectangleOf(_id);
+        public UiaRect get_BoundingRectangle() => _bridge.RectangleOf(_id);
 
-        public IRawElementProviderSimple[] GetEmbeddedFragmentRoots() => null;
+        public nint GetEmbeddedFragmentRoots() => 0;
 
         public void SetFocus() => _bridge.Post(_id, AccessibleActions.Focus, null);
 
-        public IRawElementProviderFragmentRoot FragmentRoot => _bridge.Root;
+        public IRawElementProviderFragmentRoot get_FragmentRoot() => _bridge.Root;
 
         public void Invoke() => _bridge.Post(_id, AccessibleActions.Invoke, null);
 
         public void SetValue(string value) => _bridge.Post(_id, AccessibleActions.SetValue, value);
 
-        public string GetValue() => Node?.Value ?? string.Empty;
+        public string get_Value() => Node?.Value ?? string.Empty;
 
-        public bool IsReadOnly
+        public bool get_IsReadOnly()
         {
-            get
-            {
-                AccessibleNode node = Node;
+            AccessibleNode node = Node;
 
-                return node == null || !node.Supports(AccessibleActions.SetValue);
-            }
+            return node == null || !node.Supports(AccessibleActions.SetValue);
         }
 
         public void ScrollIntoView() => _bridge.Post(_id, AccessibleActions.ScrollIntoView, null);
     }
 
-    [ComVisible(true)]
-    internal sealed class UiaRootProvider : UiaProvider, IRawElementProviderFragmentRoot
+    [GeneratedComClass]
+    internal sealed partial class UiaRootProvider : UiaProvider, IRawElementProviderFragmentRoot
     {
         private readonly UiaBridge _bridge;
 
@@ -192,17 +199,16 @@ namespace Ixen.Platform.Windows.Accessibility
             _bridge = bridge;
         }
 
-        public override IRawElementProviderSimple HostRawElementProvider
-            => _bridge.HostProvider;
+        public override nint get_HostRawElementProvider() => _bridge.HostProvider();
 
-        public override object GetPropertyValue(int propertyId)
+        protected override object PropertyOf(int propertyId)
         {
             if (propertyId == UiaProperty.CONTROL_TYPE || propertyId == UiaProperty.NAME)
             {
                 return null;
             }
 
-            return base.GetPropertyValue(propertyId);
+            return base.PropertyOf(propertyId);
         }
 
         public IRawElementProviderFragment ElementProviderFromPoint(double x, double y)

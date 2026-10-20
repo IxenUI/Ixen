@@ -213,6 +213,73 @@ else
     Record 'FAIL' 'one allocation harness' (@($harness | ForEach-Object { $_.Name }) -join ', ')
 }
 
+$aotProject = Join-Path $framework 'ci\AotApp\Ixen.AotApp.csproj'
+$aotExe = Join-Path $framework 'ci\AotApp\bin\Release\net10.0\win-x64\publish\Ixen.AotApp.exe'
+$aotPublished = $false
+
+if ($null -eq $msbuild)
+{
+    Record 'SKIP' 'aot publish, warning-free' 'vswhere found no MSBuild'
+}
+elseif (-not $built)
+{
+    Record 'SKIP' 'aot publish, warning-free' 'the solution did not build'
+}
+else
+{
+    $installerDir = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer'
+    $savedPath = $env:PATH
+    $env:PATH = $env:PATH + ';' + $installerDir
+
+    Remove-Item $aotExe -ErrorAction SilentlyContinue
+
+    $out = @(& $msbuild $aotProject '-restore' '-t:Publish' '-p:Configuration=Release' '-warnaserror' '-nologo' '-v:m' 2>&1)
+    $code = $LASTEXITCODE
+    $env:PATH = $savedPath
+    $warnings = @($out | Where-Object { $_ -match ': (error|warning) ' } | Sort-Object -Unique)
+
+    if ($code -eq 0 -and $warnings.Count -eq 0 -and (Test-Path $aotExe))
+    {
+        $aotPublished = $true
+        $size = [Math]::Round((Get-Item $aotExe).Length / 1MB, 1)
+        Record 'OK' 'aot publish, warning-free' ('the template app with the controls, {0} MB, no trim or aot warning' -f $size)
+    }
+    else
+    {
+        Show $warnings 12
+        Record 'FAIL' 'aot publish, warning-free' ('exit {0}, {1} warning or error line(s)' -f $code, $warnings.Count)
+    }
+}
+
+if ($SkipHostFrame)
+{
+    Record 'SKIP' 'aot app paints' 'asked to skip'
+}
+elseif (-not $aotPublished)
+{
+    Record 'SKIP' 'aot app paints' 'the nativeaot app was not published'
+}
+else
+{
+    $aotShot = Join-Path ([System.IO.Path]::GetTempPath()) 'ixen-verify-aot.png'
+
+    Remove-Item $aotShot -ErrorAction SilentlyContinue
+
+    $run = Start-Process -FilePath $aotExe -ArgumentList '--capture', ('"' + $aotShot + '"') -Wait -PassThru
+    $code = $run.ExitCode
+
+    if ($code -eq 0 -and (Test-Path $aotShot) -and (Get-Item $aotShot).Length -gt 0)
+    {
+        Record 'OK' 'aot app paints' 'the published exe opened a window and captured a frame'
+    }
+    else
+    {
+        Record 'FAIL' 'aot app paints' ('no frame, exit ' + $code + ' - a runner with no interactive desktop needs -SkipHostFrame')
+    }
+
+    Remove-Item $aotShot -ErrorAction SilentlyContinue
+}
+
 $templates = Join-Path $framework 'Ixen.Templates\templates'
 $core = Join-Path $framework 'Ixen.Core\Ixen.Core.csproj'
 

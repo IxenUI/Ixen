@@ -1,0 +1,5 @@
+shell {} [
+	title { text: "Ixen AOT" }
+	greeting { text: "{Greeting}" }
+	<Button> { text: "Press me" click: "{Press()}" }
+]

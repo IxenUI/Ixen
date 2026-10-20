@@ -2,8 +2,10 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
+        <IsAotCompatible>true</IsAotCompatible>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <ShouldIncludeNativeSkiaSharp>True</ShouldIncludeNativeSkiaSharp>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>disable</Nullable>
 		<Copyright>©2026 by kipy</Copyright>

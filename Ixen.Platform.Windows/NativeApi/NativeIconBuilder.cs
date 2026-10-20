@@ -26,7 +26,7 @@ namespace Ixen.Platform.Windows.NativeApi
 
             var header = new BITMAPINFOHEADER
             {
-                biSize = Marshal.SizeOf(typeof(BITMAPINFOHEADER)),
+                biSize = Marshal.SizeOf<BITMAPINFOHEADER>(),
                 biWidth = width,
                 biHeight = -height,
                 biPlanes = 1,

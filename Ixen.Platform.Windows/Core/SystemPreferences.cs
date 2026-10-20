@@ -144,7 +144,7 @@ namespace Ixen.Platform.Windows
             {
                 HIGHCONTRAST contrast = new HIGHCONTRAST
                 {
-                    Size = (uint)Marshal.SizeOf(typeof(HIGHCONTRAST))
+                    Size = (uint)Marshal.SizeOf<HIGHCONTRAST>()
                 };
 
                 if (!SystemParametersInfoContrast(SPI_GETHIGHCONTRAST, contrast.Size, ref contrast, 0))

@@ -3,6 +3,8 @@ using Ixen.Core.Accessibility;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace Ixen.Platform.Windows.Accessibility
 {
@@ -25,7 +27,7 @@ namespace Ixen.Platform.Windows.Accessibility
             = new ConcurrentQueue<(int, AccessibleActions, string)>();
 
         private AccessibilitySnapshot _snapshot = AccessibilitySnapshot.Empty;
-        private IRawElementProviderSimple _host;
+        private nint _host;
 
         internal UiaBridge(IxenSurface surface, Func<IntPtr> handle, Action invalidate)
         {
@@ -37,17 +39,19 @@ namespace Ixen.Platform.Windows.Accessibility
         internal IRawElementProviderFragmentRoot Root
             => ProviderFor(_snapshot.RootId) as IRawElementProviderFragmentRoot;
 
-        internal IRawElementProviderSimple HostProvider
+        internal nint HostProvider()
         {
-            get
+            if (_host == 0)
             {
-                if (_host == null)
-                {
-                    UiaNative.UiaHostProviderFromHwnd(_handle(), out _host);
-                }
-
-                return _host;
+                UiaNative.UiaHostProviderFromHwnd(_handle(), out _host);
             }
+
+            if (_host != 0)
+            {
+                Marshal.AddRef(_host);
+            }
+
+            return _host;
         }
 
         internal IntPtr Answer(IntPtr wParam, IntPtr lParam)
@@ -64,7 +68,21 @@ namespace Ixen.Platform.Windows.Accessibility
                 return IntPtr.Zero;
             }
 
-            return UiaNative.UiaReturnRawElementProvider(_handle(), wParam, lParam, provider);
+            nint pointer = UiaNative.ProviderPointer(provider);
+
+            if (pointer == 0)
+            {
+                return IntPtr.Zero;
+            }
+
+            try
+            {
+                return UiaNative.UiaReturnRawElementProvider(_handle(), wParam, lParam, pointer);
+            }
+            finally
+            {
+                UiaNative.Release(pointer);
+            }
         }
 
         internal void Sync()
@@ -150,9 +168,23 @@ namespace Ixen.Platform.Windows.Accessibility
 
         private void Raise(int id, int property, object was, object now)
         {
-            if (ProviderFor(id) is IRawElementProviderSimple provider)
+            if (UiaNative.CanPassVariants && ProviderFor(id) is IRawElementProviderSimple provider)
             {
-                UiaNative.UiaRaiseAutomationPropertyChangedEvent(provider, property, was, now);
+                nint pointer = UiaNative.ProviderPointer(provider);
+                ComVariant before = UiaNative.Variant(was);
+                ComVariant after = UiaNative.Variant(now);
+
+                try
+                {
+                    UiaNative.UiaRaiseAutomationPropertyChangedEvent(pointer, property,
+                        UiaNative.Raw(before), UiaNative.Raw(after));
+                }
+                finally
+                {
+                    before.Dispose();
+                    after.Dispose();
+                    UiaNative.Release(pointer);
+                }
             }
         }
 
@@ -160,7 +192,10 @@ namespace Ixen.Platform.Windows.Accessibility
         {
             if (ProviderFor(id) is IRawElementProviderSimple provider)
             {
-                UiaNative.UiaRaiseAutomationEvent(provider, eventId);
+                nint pointer = UiaNative.ProviderPointer(provider);
+
+                UiaNative.UiaRaiseAutomationEvent(pointer, eventId);
+                UiaNative.Release(pointer);
             }
         }
 
@@ -168,10 +203,13 @@ namespace Ixen.Platform.Windows.Accessibility
         {
             if (ProviderFor(id) is IRawElementProviderSimple provider)
             {
-                UiaNative.UiaRaiseStructureChangedEvent(provider,
+                nint pointer = UiaNative.ProviderPointer(provider);
+
+                UiaNative.UiaRaiseStructureChangedEvent(pointer,
                     StructureChangeType.ChildrenInvalidated,
                     new[] { UiaNative.UIA_APPEND_RUNTIME_ID, id },
                     2);
+                UiaNative.Release(pointer);
             }
         }
 

@@ -1,5 +1,7 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace Ixen.Platform.Windows.Accessibility
 {
@@ -31,83 +33,69 @@ namespace Ixen.Platform.Windows.Accessibility
         public double Height;
     }
 
-    [ComVisible(true)]
-    [ComImport]
+    [GeneratedComInterface]
     [Guid("d6dd68d1-86fd-4332-8666-9abedea2d24c")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IRawElementProviderSimple
+    internal unsafe partial interface IRawElementProviderSimple
     {
-        ProviderOptions ProviderOptions { get; }
+        ProviderOptions get_ProviderOptions();
 
-        [return: MarshalAs(UnmanagedType.IUnknown)]
-        object GetPatternProvider(int patternId);
+        nint GetPatternProvider(int patternId);
 
-        [return: MarshalAs(UnmanagedType.Struct)]
-        object GetPropertyValue(int propertyId);
+        [PreserveSig]
+        int GetPropertyValue(int propertyId, ComVariant* value);
 
-        IRawElementProviderSimple HostRawElementProvider { get; }
+        nint get_HostRawElementProvider();
     }
 
-    [ComVisible(true)]
-    [ComImport]
+    [GeneratedComInterface]
     [Guid("f7063da8-8359-439c-9297-bbc5299a7d87")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IRawElementProviderFragment : IRawElementProviderSimple
+    internal partial interface IRawElementProviderFragment
     {
         IRawElementProviderFragment Navigate(NavigateDirection direction);
 
-        [return: MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_I4)]
-        int[] GetRuntimeId();
+        nint GetRuntimeId();
 
-        UiaRect BoundingRectangle { get; }
+        UiaRect get_BoundingRectangle();
 
-        [return: MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_UNKNOWN)]
-        IRawElementProviderSimple[] GetEmbeddedFragmentRoots();
+        nint GetEmbeddedFragmentRoots();
 
         void SetFocus();
 
-        IRawElementProviderFragmentRoot FragmentRoot { get; }
+        IRawElementProviderFragmentRoot get_FragmentRoot();
     }
 
-    [ComVisible(true)]
-    [ComImport]
+    [GeneratedComInterface]
     [Guid("620ce2a5-ab8f-40a9-86cb-de3c75599b58")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IRawElementProviderFragmentRoot : IRawElementProviderFragment
+    internal partial interface IRawElementProviderFragmentRoot
     {
         IRawElementProviderFragment ElementProviderFromPoint(double x, double y);
 
         IRawElementProviderFragment GetFocus();
     }
 
-    [ComVisible(true)]
-    [ComImport]
+    [GeneratedComInterface]
     [Guid("54fcb24b-e18e-47a2-b4d3-eccbe77599a2")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IInvokeProvider
+    internal partial interface IInvokeProvider
     {
         void Invoke();
     }
 
-    [ComVisible(true)]
-    [ComImport]
+    [GeneratedComInterface(StringMarshalling = StringMarshalling.Utf16)]
     [Guid("c7935180-6fb3-4201-b174-7df73adbf64a")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IValueProvider
+    internal partial interface IValueProvider
     {
-        void SetValue([MarshalAs(UnmanagedType.LPWStr)] string value);
+        void SetValue(string value);
 
-        [return: MarshalAs(UnmanagedType.BStr)]
-        string GetValue();
+        [return: MarshalUsing(typeof(BStrStringMarshaller))]
+        string get_Value();
 
-        bool IsReadOnly { get; }
+        [return: MarshalAs(UnmanagedType.Bool)]
+        bool get_IsReadOnly();
     }
 
-    [ComVisible(true)]
-    [ComImport]
+    [GeneratedComInterface]
     [Guid("2360c714-4bf1-4b26-ba65-9b21316127eb")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IScrollItemProvider
+    internal partial interface IScrollItemProvider
     {
         void ScrollIntoView();
     }
@@ -185,46 +173,138 @@ namespace Ixen.Platform.Windows.Accessibility
         internal const int LIVE_REGION_CHANGED = 20024;
     }
 
-    internal static class UiaNative
+    internal static partial class UiaNative
     {
         private const string LIB_NAME = "uiautomationcore.dll";
+        private const string OLE_NAME = "oleaut32.dll";
+
+        private const ushort VT_I4 = 3;
 
         internal const int UIA_APPEND_RUNTIME_ID = 3;
 
-        [DllImport(LIB_NAME, ExactSpelling = true)]
-        internal static extern IntPtr UiaReturnRawElementProvider(IntPtr hwnd, IntPtr wParam,
-            IntPtr lParam, [MarshalAs(UnmanagedType.Interface)] IRawElementProviderSimple provider);
+        private static readonly StrategyBasedComWrappers _wrappers = new StrategyBasedComWrappers();
 
-        [DllImport(LIB_NAME, ExactSpelling = true)]
-        internal static extern int UiaHostProviderFromHwnd(IntPtr hwnd,
-            [MarshalAs(UnmanagedType.Interface)] out IRawElementProviderSimple provider);
+        [LibraryImport(LIB_NAME)]
+        internal static partial nint UiaReturnRawElementProvider(nint hwnd, nint wParam,
+            nint lParam, nint provider);
 
-        [DllImport(LIB_NAME, ExactSpelling = true)]
-        internal static extern bool UiaClientsAreListening();
+        [LibraryImport(LIB_NAME)]
+        internal static partial int UiaHostProviderFromHwnd(nint hwnd, out nint provider);
 
-        [DllImport(LIB_NAME, ExactSpelling = true)]
-        internal static extern int UiaRaiseAutomationEvent(
-            [MarshalAs(UnmanagedType.Interface)] IRawElementProviderSimple provider, int id);
+        [LibraryImport(LIB_NAME)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool UiaClientsAreListening();
 
-        [DllImport(LIB_NAME, ExactSpelling = true)]
-        internal static extern int UiaRaiseAutomationPropertyChangedEvent(
-            [MarshalAs(UnmanagedType.Interface)] IRawElementProviderSimple provider, int id,
-            [MarshalAs(UnmanagedType.Struct)] object oldValue,
-            [MarshalAs(UnmanagedType.Struct)] object newValue);
+        [LibraryImport(LIB_NAME)]
+        internal static partial int UiaRaiseAutomationEvent(nint provider, int id);
 
-        [DllImport(LIB_NAME, ExactSpelling = true)]
-        internal static extern int UiaRaiseStructureChangedEvent(
-            [MarshalAs(UnmanagedType.Interface)] IRawElementProviderSimple provider,
+        [LibraryImport(LIB_NAME)]
+        internal static partial int UiaRaiseAutomationPropertyChangedEvent(nint provider, int id,
+            RawVariant oldValue, RawVariant newValue);
+
+        [LibraryImport(LIB_NAME)]
+        internal static partial int UiaRaiseStructureChangedEvent(nint provider,
             StructureChangeType change, int[] runtimeId, int runtimeIdLength);
 
-        [DllImport("user32.dll")]
-        internal static extern bool ClientToScreen(IntPtr hwnd, ref Point point);
+        [LibraryImport(OLE_NAME)]
+        private static partial nint SafeArrayCreateVector(ushort type, int lowerBound, uint count);
+
+        [LibraryImport(OLE_NAME)]
+        private static partial int SafeArrayPutElement(nint array, ref int index, ref int value);
+
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool ClientToScreen(nint hwnd, ref Point point);
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct RawVariant
+        {
+            public long Head;
+            public long Body;
+            public long Tail;
+        }
+
+        internal static bool CanPassVariants => Unsafe.SizeOf<ComVariant>() == Unsafe.SizeOf<RawVariant>();
+
+        internal static RawVariant Raw(ComVariant variant) => Unsafe.As<ComVariant, RawVariant>(ref variant);
 
         [StructLayout(LayoutKind.Sequential)]
         internal struct Point
         {
             public int X;
             public int Y;
+        }
+
+        private static readonly Guid _simpleProvider = new Guid("d6dd68d1-86fd-4332-8666-9abedea2d24c");
+
+        internal static nint ProviderPointer(IRawElementProviderSimple provider)
+        {
+            nint unknown = _wrappers.GetOrCreateComInterfaceForObject(provider, CreateComInterfaceFlags.None);
+
+            if (unknown == 0)
+            {
+                return 0;
+            }
+
+            int result = Marshal.QueryInterface(unknown, in _simpleProvider, out nint simple);
+
+            Marshal.Release(unknown);
+
+            return result == 0 ? simple : 0;
+        }
+
+        internal static void Release(nint pointer)
+        {
+            if (pointer != 0)
+            {
+                Marshal.Release(pointer);
+            }
+        }
+
+        internal static nint UnknownOf(object instance)
+            => instance == null
+                ? 0
+                : _wrappers.GetOrCreateComInterfaceForObject(instance, CreateComInterfaceFlags.None);
+
+        internal static nint IntArray(int[] values)
+        {
+            nint array = SafeArrayCreateVector(VT_I4, 0, (uint)values.Length);
+
+            if (array == 0)
+            {
+                return 0;
+            }
+
+            for (int index = 0; index < values.Length; index++)
+            {
+                int at = index;
+                int value = values[index];
+
+                SafeArrayPutElement(array, ref at, ref value);
+            }
+
+            return array;
+        }
+
+        internal static ComVariant Variant(object value)
+        {
+            switch (value)
+            {
+                case null:
+                    return default;
+
+                case string text:
+                    return ComVariant.Create(text);
+
+                case bool flag:
+                    return ComVariant.Create(flag);
+
+                case int number:
+                    return ComVariant.Create(number);
+
+                default:
+                    return default;
+            }
         }
     }
 }
