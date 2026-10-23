@@ -73,6 +73,22 @@ namespace Ixen.Controls
             }
         }
 
+        internal void SetByUser(bool value)
+        {
+            bool was = _interacting;
+
+            _interacting = true;
+
+            try
+            {
+                Set(value);
+            }
+            finally
+            {
+                _interacting = was;
+            }
+        }
+
         protected virtual void OnActivated() => Set(!_checked);
 
         public void Activate()

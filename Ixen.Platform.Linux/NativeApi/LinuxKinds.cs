@@ -30,7 +30,10 @@ namespace Ixen.Platform.Linux.NativeApi
         Invoke = 1,
         Focus = 2,
         SetValue = 4,
-        ScrollIntoView = 8
+        ScrollIntoView = 8,
+        Expand = 16,
+        Collapse = 32,
+        Select = 64
     }
 
     internal enum LinuxAccessibilityNotice
@@ -40,7 +43,10 @@ namespace Ixen.Platform.Linux.NativeApi
         Focus = 2,
         Structure = 3,
         Announce = 4,
-        AnnounceUrgent = 5
+        AnnounceUrgent = 5,
+        Checked = 6,
+        Expanded = 7,
+        Selected = 8
     }
 
     internal static class LinuxCursors

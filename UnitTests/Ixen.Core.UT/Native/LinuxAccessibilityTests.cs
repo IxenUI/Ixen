@@ -304,5 +304,43 @@ namespace Ixen.Core.UT.Native
 
             Assert.AreEqual("Saved", LinuxAccessibility.Spoken(named));
         }
+
+        private static AccessibilityChange StateChange(AccessibleStates was, AccessibleStates now)
+            => new AccessibilityChange
+            {
+                Kind = AccessibilityChangeKind.States,
+                Previous = new AccessibleNode { States = was },
+                Current = new AccessibleNode { States = now }
+            };
+
+        [TestMethod]
+        public void EachStateThatMovedIsOneSignal()
+        {
+            var both = new List<LinuxAccessibilityNotice>(LinuxAccessibility.StateNotices(
+                StateChange(AccessibleStates.None, AccessibleStates.Checked | AccessibleStates.Selected)));
+
+            CollectionAssert.AreEqual(
+                new[] { LinuxAccessibilityNotice.Checked, LinuxAccessibilityNotice.Selected },
+                both);
+        }
+
+        [TestMethod]
+        public void ALeafGainingChildrenIsAnExpansionSignal()
+        {
+            var notices = new List<LinuxAccessibilityNotice>(LinuxAccessibility.StateNotices(
+                StateChange(AccessibleStates.None, AccessibleStates.Expandable)));
+
+            CollectionAssert.AreEqual(new[] { LinuxAccessibilityNotice.Expanded }, notices,
+                "Orca learns that the node is now a closed branch rather than a leaf");
+        }
+
+        [TestMethod]
+        public void AFocusMoveIsNotAStateSignal()
+        {
+            var notices = new List<LinuxAccessibilityNotice>(LinuxAccessibility.StateNotices(
+                StateChange(AccessibleStates.Focused, AccessibleStates.None)));
+
+            Assert.AreEqual(0, notices.Count, "focus has its own notice already");
+        }
     }
 }

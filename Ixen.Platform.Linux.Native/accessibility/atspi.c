@@ -475,11 +475,64 @@ static int HasText(AtspiBridge* bridge, int identifier)
     return node != NULL && (node->value != NULL || (node->actions & IXEN_AXA_SET_VALUE) != 0);
 }
 
+#define ATSPI_STATE_CHECKED 4
+#define ATSPI_STATE_EXPANDED 10
+#define ATSPI_STATE_SELECTED 23
+
+static dbus_int32_t HasState(AtspiBridge* bridge, int identifier, int state)
+{
+    AtspiNode* node = NodeAt(bridge, identifier);
+
+    return node != NULL && ((node->states >> state) & 1ull) != 0 ? 1 : 0;
+}
+
+static const int ACTION_KINDS[] = { IXEN_AXA_INVOKE, IXEN_AXA_EXPAND, IXEN_AXA_COLLAPSE, IXEN_AXA_SELECT };
+
+#define ACTION_KIND_COUNT 4
+
+static int ActionsOf(AtspiNode* node, int* kinds)
+{
+    int count = 0;
+
+    for (int index = 0; node != NULL && index < ACTION_KIND_COUNT; index++)
+    {
+        if ((node->actions & ACTION_KINDS[index]) != 0)
+        {
+            kinds[count++] = ACTION_KINDS[index];
+        }
+    }
+
+    return count;
+}
+
+static int ActionCount(AtspiBridge* bridge, int identifier)
+{
+    int kinds[ACTION_KIND_COUNT];
+
+    return ActionsOf(identifier == APP_NODE ? NULL : NodeAt(bridge, identifier), kinds);
+}
+
 static int HasActions(AtspiBridge* bridge, int identifier)
 {
-    AtspiNode* node = identifier == APP_NODE ? NULL : NodeAt(bridge, identifier);
+    return ActionCount(bridge, identifier) > 0;
+}
 
-    return node != NULL && (node->actions & IXEN_AXA_INVOKE) != 0;
+static const char* ActionName(int kind)
+{
+    switch (kind)
+    {
+        case IXEN_AXA_EXPAND:
+            return "expand";
+
+        case IXEN_AXA_COLLAPSE:
+            return "collapse";
+
+        case IXEN_AXA_SELECT:
+            return "select";
+
+        default:
+            return "click";
+    }
 }
 
 static int HasEditable(AtspiBridge* bridge, int identifier)
@@ -704,7 +757,7 @@ static DBusHandlerResult ActionProperty(AtspiBridge* bridge, DBusMessage* messag
     DBusMessageIter iter;
 
     dbus_message_iter_init_append(reply, &iter);
-    AppendVariantInt(&iter, HasActions(bridge, identifier) ? 1 : 0);
+    AppendVariantInt(&iter, ActionCount(bridge, identifier));
 
     return Answer(bridge, message, reply);
 }
@@ -767,7 +820,7 @@ static DBusHandlerResult GetAll(AtspiBridge* bridge, DBusMessage* message, int i
     }
     else if (strcmp(interface, IFACE_ACTION) == 0)
     {
-        AppendDictInt(&dict, "NActions", HasActions(bridge, identifier) ? 1 : 0);
+        AppendDictInt(&dict, "NActions", ActionCount(bridge, identifier));
     }
 
     dbus_message_iter_close_container(&iter, &dict);
@@ -1190,6 +1243,22 @@ static DBusHandlerResult Action(AtspiBridge* bridge, DBusMessage* message, int i
         return Unknown(bridge, message);
     }
 
+    int kinds[ACTION_KIND_COUNT];
+    int count = ActionsOf(node, kinds);
+    dbus_int32_t index = 0;
+    DBusError error;
+
+    dbus_error_init(&error);
+
+    if (strcmp(member, "GetActions") != 0)
+    {
+        dbus_message_get_args(message, &error, DBUS_TYPE_INT32, &index, DBUS_TYPE_INVALID);
+    }
+
+    dbus_error_free(&error);
+
+    int kind = index >= 0 && index < count ? kinds[index] : 0;
+
     DBusMessage* reply = dbus_message_new_method_return(message);
 
     if (reply == NULL)
@@ -1203,25 +1272,25 @@ static DBusHandlerResult Action(AtspiBridge* bridge, DBusMessage* message, int i
 
     if (strcmp(member, "DoAction") == 0)
     {
-        dbus_bool_t done = Perform(bridge, identifier, IXEN_AXA_INVOKE, NULL) != 0;
+        dbus_bool_t done = kind != 0 && Perform(bridge, identifier, kind, NULL) != 0;
 
         dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &done);
     }
     else if (strcmp(member, "GetName") == 0 || strcmp(member, "GetLocalizedName") == 0)
     {
-        const char* name = "click";
+        const char* name = kind == 0 ? "" : ActionName(kind);
 
         dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &name);
     }
     else if (strcmp(member, "GetDescription") == 0)
     {
-        const char* description = Text(node->description);
+        const char* description = kind == 0 ? "" : Text(node->description);
 
         dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &description);
     }
     else if (strcmp(member, "GetKeyBinding") == 0)
     {
-        const char* shortcut = Text(node->shortcut);
+        const char* shortcut = kind == IXEN_AXA_INVOKE ? Text(node->shortcut) : "";
 
         dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &shortcut);
     }
@@ -1231,12 +1300,12 @@ static DBusHandlerResult Action(AtspiBridge* bridge, DBusMessage* message, int i
 
         dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "(sss)", &array);
 
-        if (HasActions(bridge, identifier))
+        for (int at = 0; at < count; at++)
         {
             DBusMessageIter structure;
-            const char* name = "click";
+            const char* name = ActionName(kinds[at]);
             const char* description = Text(node->description);
-            const char* shortcut = Text(node->shortcut);
+            const char* shortcut = kinds[at] == IXEN_AXA_INVOKE ? Text(node->shortcut) : "";
 
             dbus_message_iter_open_container(&array, DBUS_TYPE_STRUCT, NULL, &structure);
             dbus_message_iter_append_basic(&structure, DBUS_TYPE_STRING, &name);
@@ -2108,6 +2177,24 @@ void Atspi_Notify(AtspiBridge* bridge, int identifier, int kind, const char* tex
         case IXEN_AXN_ANNOUNCE_URGENT:
             member = "Announcement";
             first = 2;
+            break;
+
+        case IXEN_AXN_CHECKED:
+            member = "StateChanged";
+            detail = "checked";
+            first = HasState(bridge, identifier, ATSPI_STATE_CHECKED);
+            break;
+
+        case IXEN_AXN_EXPANDED:
+            member = "StateChanged";
+            detail = "expanded";
+            first = HasState(bridge, identifier, ATSPI_STATE_EXPANDED);
+            break;
+
+        case IXEN_AXN_SELECTED:
+            member = "StateChanged";
+            detail = "selected";
+            first = HasState(bridge, identifier, ATSPI_STATE_SELECTED);
             break;
 
         default:

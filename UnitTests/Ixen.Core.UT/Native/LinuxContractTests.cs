@@ -60,13 +60,19 @@ namespace Ixen.Core.UT.Native
             { "IXEN_AXA_FOCUS", "Focus" },
             { "IXEN_AXA_SET_VALUE", "SetValue" },
             { "IXEN_AXA_SCROLL", "ScrollIntoView" },
+            { "IXEN_AXA_EXPAND", "Expand" },
+            { "IXEN_AXA_COLLAPSE", "Collapse" },
+            { "IXEN_AXA_SELECT", "Select" },
 
             { "IXEN_AXN_NAME", "Name" },
             { "IXEN_AXN_VALUE", "Value" },
             { "IXEN_AXN_FOCUS", "Focus" },
             { "IXEN_AXN_STRUCTURE", "Structure" },
             { "IXEN_AXN_ANNOUNCE", "Announce" },
-            { "IXEN_AXN_ANNOUNCE_URGENT", "AnnounceUrgent" }
+            { "IXEN_AXN_ANNOUNCE_URGENT", "AnnounceUrgent" },
+            { "IXEN_AXN_CHECKED", "Checked" },
+            { "IXEN_AXN_EXPANDED", "Expanded" },
+            { "IXEN_AXN_SELECTED", "Selected" }
         };
 
         private static readonly Dictionary<string, string> _cursorNames = new Dictionary<string, string>

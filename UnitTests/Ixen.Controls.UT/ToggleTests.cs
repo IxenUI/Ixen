@@ -189,6 +189,54 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
+        public void TheRadioThatALaterChoiceUnchecksSaysSo()
+        {
+            RadioButton small = Add<RadioButton>("small");
+            RadioButton large = Add<RadioButton>("large");
+
+            small.Group = "size";
+            large.Group = "size";
+            small.Checked = true;
+
+            int smallChanges = 0;
+            int largeChanges = 0;
+
+            small.CheckedChanged += (sender, e) => smallChanges++;
+            large.CheckedChanged += (sender, e) => largeChanges++;
+
+            Layout();
+
+            large.Activate();
+
+            Assert.AreEqual(1, largeChanges);
+            Assert.AreEqual(1, smallChanges,
+                "a two-way checked: \"[Small]\" would otherwise keep true, and the next "
+                + "SetState rebinds it - two radios of one group checked at once");
+            Assert.IsFalse(small.Checked);
+        }
+
+        [TestMethod]
+        public void AssigningARadioDoesNotRaiseItsPeersEvents()
+        {
+            RadioButton small = Add<RadioButton>("small");
+            RadioButton large = Add<RadioButton>("large");
+
+            small.Group = "size";
+            large.Group = "size";
+            small.Checked = true;
+
+            int changes = 0;
+
+            small.CheckedChanged += (sender, e) => changes++;
+            large.CheckedChanged += (sender, e) => changes++;
+
+            large.Checked = true;
+            small.Checked = false;
+
+            Assert.AreEqual(0, changes, "only the user's own choices are reported");
+        }
+
+        [TestMethod]
         public void AGrouplessRadioIsOnItsOwn()
         {
             RadioButton one = Add<RadioButton>("one");

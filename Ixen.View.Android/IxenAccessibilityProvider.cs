@@ -96,9 +96,57 @@ namespace Ixen.View.Android
                         Send(change.Id, EventTypes.WindowContentChanged,
                             ContentChangeTypes.Subtree);
                         break;
+
+                    case AccessibilityChangeKind.States:
+                        States(change);
+                        break;
                 }
             }
         }
+
+        private void States(AccessibilityChange change)
+        {
+            AccessibleStates was = change.Previous.States;
+            AccessibleStates now = change.Current.States;
+
+            if (Changed(was, now, AccessibleStates.Checked))
+            {
+                Send(change.Id, EventTypes.WindowContentChanged, CheckedChange());
+            }
+
+            if (Changed(was, now, AccessibleStates.Expanded) || Changed(was, now, AccessibleStates.Expandable))
+            {
+                Send(change.Id, EventTypes.WindowContentChanged, ExpandedChange());
+            }
+
+            if (Changed(was, now, AccessibleStates.Selected))
+            {
+                Send(change.Id, EventTypes.WindowContentChanged, StateChange());
+
+                if ((now & AccessibleStates.Selected) != 0)
+                {
+                    Send(change.Id, EventTypes.ViewSelected);
+                }
+            }
+        }
+
+        private static bool Changed(AccessibleStates was, AccessibleStates now, AccessibleStates state)
+            => (was & state) != (now & state);
+
+        private static ContentChangeTypes StateChange()
+            => System.OperatingSystem.IsAndroidVersionAtLeast(30)
+                ? ContentChangeTypes.StateDescription
+                : ContentChangeTypes.Undefined;
+
+        private static ContentChangeTypes CheckedChange()
+            => System.OperatingSystem.IsAndroidVersionAtLeast(36)
+                ? ContentChangeTypes.Checked
+                : StateChange();
+
+        private static ContentChangeTypes ExpandedChange()
+            => System.OperatingSystem.IsAndroidVersionAtLeast(36)
+                ? ContentChangeTypes.Expanded
+                : StateChange();
 
         public override AccessibilityNodeInfo CreateAccessibilityNodeInfo(int virtualViewId)
         {
@@ -191,6 +239,23 @@ namespace Ixen.View.Android
                 info.AddAction(AccessibilityNodeInfo.AccessibilityAction.ActionShowOnScreen);
             }
 
+            if (node.Supports(AccessibleActions.Expand))
+            {
+                info.AddAction(AccessibilityNodeInfo.AccessibilityAction.ActionExpand);
+            }
+
+            if (node.Supports(AccessibleActions.Collapse))
+            {
+                info.AddAction(AccessibilityNodeInfo.AccessibilityAction.ActionCollapse);
+            }
+
+            if (node.Supports(AccessibleActions.Select))
+            {
+                info.AddAction(AccessibilityNodeInfo.AccessibilityAction.ActionSelect);
+            }
+
+            SetExpanded(info, node);
+
             info.SetBoundsInScreen(BoundsOf(node));
 
             return info;
@@ -208,6 +273,23 @@ namespace Ixen.View.Android
             }
 
             info.Checked = value;
+        }
+
+        private static void SetExpanded(AccessibilityNodeInfo info, AccessibleNode node)
+        {
+            if (!System.OperatingSystem.IsAndroidVersionAtLeast(36))
+            {
+                return;
+            }
+
+            if (node.HasState(AccessibleStates.Expanded))
+            {
+                info.ExpandedState = ExpandedState.Full;
+            }
+            else if (node.HasState(AccessibleStates.Expandable))
+            {
+                info.ExpandedState = ExpandedState.Collapsed;
+            }
         }
 
         private AccessibilityNodeInfo Fresh(int id)
@@ -323,6 +405,15 @@ namespace Ixen.View.Android
             {
                 case Action.Click:
                     return _surface.Perform(node, AccessibleActions.Invoke);
+
+                case Action.Expand:
+                    return _surface.Perform(node, AccessibleActions.Expand);
+
+                case Action.Collapse:
+                    return _surface.Perform(node, AccessibleActions.Collapse);
+
+                case Action.Select:
+                    return _surface.Perform(node, AccessibleActions.Select);
 
                 case Action.Focus:
                     if (!_surface.Perform(node, AccessibleActions.Focus))

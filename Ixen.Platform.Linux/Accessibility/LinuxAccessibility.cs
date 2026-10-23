@@ -162,6 +162,14 @@ namespace Ixen.Platform.Linux.Accessibility
                         Notify(window, change.Id, LinuxAccessibilityNotice.Structure, null);
                         break;
 
+                    case AccessibilityChangeKind.States:
+                        foreach (LinuxAccessibilityNotice notice in StateNotices(change))
+                        {
+                            Notify(window, change.Id, notice, null);
+                        }
+
+                        break;
+
                     case AccessibilityChangeKind.LiveRegion:
                         Notify(window, change.Id,
                             change.Current.Live == LiveRegionKind.Assertive
@@ -172,6 +180,30 @@ namespace Ixen.Platform.Linux.Accessibility
                 }
             }
         }
+
+        internal static IEnumerable<LinuxAccessibilityNotice> StateNotices(AccessibilityChange change)
+        {
+            AccessibleStates was = change.Previous.States;
+            AccessibleStates now = change.Current.States;
+
+            if (Changed(was, now, AccessibleStates.Checked))
+            {
+                yield return LinuxAccessibilityNotice.Checked;
+            }
+
+            if (Changed(was, now, AccessibleStates.Expanded) || Changed(was, now, AccessibleStates.Expandable))
+            {
+                yield return LinuxAccessibilityNotice.Expanded;
+            }
+
+            if (Changed(was, now, AccessibleStates.Selected))
+            {
+                yield return LinuxAccessibilityNotice.Selected;
+            }
+        }
+
+        private static bool Changed(AccessibleStates was, AccessibleStates now, AccessibleStates state)
+            => (was & state) != (now & state);
 
         private static void Notify(IntPtr window, int id, LinuxAccessibilityNotice notice, string text)
             => LinuxApi.AccessibilityNotify(window, id, (int)notice, text);

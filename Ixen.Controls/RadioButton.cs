@@ -29,7 +29,7 @@ namespace Ixen.Controls
 
             foreach (RadioButton other in Peers())
             {
-                other.Set(false);
+                other.SetByUser(false);
             }
         }
 
