@@ -82,6 +82,12 @@ namespace Ixen.View.Android
 
                     case AccessibilityChangeKind.Value:
                         Send(change.Id, EventTypes.WindowContentChanged, ContentChangeTypes.Text);
+
+                        if (change.Current.Role == AccessibleRole.TextField)
+                        {
+                            Typed(change);
+                        }
+
                         break;
 
                     case AccessibilityChangeKind.Focus:
@@ -128,6 +134,29 @@ namespace Ixen.View.Android
                     Send(change.Id, EventTypes.ViewSelected);
                 }
             }
+        }
+
+        private void Typed(AccessibilityChange change)
+        {
+            TextDelta delta = TextDelta.Of(change.Previous.Value, change.Current.Value);
+
+            if (delta.IsEmpty || !_view.IsShown)
+            {
+                return;
+            }
+
+            AccessibilityEvent args = FreshEvent(EventTypes.ViewTextChanged);
+
+            args.PackageName = _view.Context?.PackageName;
+            args.ClassName = "android.widget.EditText";
+            args.BeforeText = change.Previous.Value ?? string.Empty;
+            args.FromIndex = delta.Start;
+            args.RemovedCount = delta.Removed;
+            args.AddedCount = delta.Added;
+            args.Text.Add(new Java.Lang.String(change.Current.Value ?? string.Empty));
+            args.SetSource(_view, change.Id);
+
+            _view.Parent?.RequestSendAccessibilityEvent(_view, args);
         }
 
         private static bool Changed(AccessibleStates was, AccessibleStates now, AccessibleStates state)
