@@ -235,6 +235,31 @@ namespace Ixen.Core.UT.Accessibility
         }
 
         [TestMethod]
+        public void AHandMadeTabSaysItIsTheCurrentOne()
+        {
+            var tab = Sized(new VisualElement { Name = "tab", Role = AccessibleRole.Tab, Text = "Home" });
+
+            _root.AddChild(tab);
+
+            AccessibilitySnapshot was = Take();
+
+            tab.Selected = true;
+
+            AccessibilitySnapshot now = Take();
+
+            Assert.IsTrue(tab.HasState("selected"),
+                "the property is the selected state, so :selected styles it and a control that "
+                + "sets the state itself reads back the same");
+            Assert.IsTrue(now.NodeOf(now.Order.Last()).HasState(AccessibleStates.Selected));
+            Assert.AreEqual(1, StateChanges(was, now).Count);
+
+            tab.Selected = false;
+
+            Assert.IsFalse(tab.HasState("selected"));
+            Assert.IsFalse(Node().HasState(AccessibleStates.Selected));
+        }
+
+        [TestMethod]
         public void AButtonIsNotSelectable()
         {
             _root.AddChild(Sized(new VisualElement { Name = "button", Role = AccessibleRole.Button, Text = "Go" }));
