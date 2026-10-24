@@ -12,11 +12,14 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 
         public TextOverflow Value { get; set; } = TextOverflow.Clip;
 
+        public int MaxLines { get; set; }
+
         internal override bool CanGenerateSource => true;
         internal override string ToSource()
             => $"new {nameof(TextOverflowStyleDescriptor)} " +
                 "{ " +
-                    $"{nameof(Value)} = {nameof(TextOverflow)}.{Value} " +
+                    $"{nameof(Value)} = {nameof(TextOverflow)}.{Value}, " +
+                    $"{nameof(MaxLines)} = {MaxLines} " +
                 "}";
     }
 }

@@ -195,6 +195,7 @@ namespace Ixen.Core.UT.Xns
             Assert.AreEqual(TextVAlign.Bottom, align.Vertical);
             Assert.AreEqual(TextWrap.NoWrap, Style<TextWrapStyleDescriptor>().Value);
             Assert.AreEqual(TextOverflow.Ellipsis, Style<TextOverflowStyleDescriptor>().Value);
+            Assert.AreEqual(3, Style<TextOverflowStyleDescriptor>().MaxLines, "the line count survives too");
         }
 
         [TestMethod]

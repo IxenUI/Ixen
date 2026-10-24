@@ -9,6 +9,7 @@ namespace Ixen.Core.Visual
         private FontSpec _font;
         private TextWrap _wrap;
         private bool _ellipsis;
+        private int _maxLines;
         private float _availableWidth;
         private float _availableHeight;
         private bool _valid;
@@ -17,12 +18,13 @@ namespace Ixen.Core.Visual
         internal float Height { get; private set; }
 
         internal bool Matches(ITextMeasurer measurer, string text, FontSpec font, TextWrap wrap, bool ellipsis,
-            float availableWidth, float availableHeight)
+            int maxLines, float availableWidth, float availableHeight)
         {
             return _valid
                 && _measurer == measurer
                 && _wrap == wrap
                 && _ellipsis == ellipsis
+                && _maxLines == maxLines
                 && _availableWidth == availableWidth
                 && _availableHeight == availableHeight
                 && string.Equals(_text, text)
@@ -30,13 +32,14 @@ namespace Ixen.Core.Visual
         }
 
         internal void Set(ITextMeasurer measurer, string text, FontSpec font, TextWrap wrap, bool ellipsis,
-            float availableWidth, float availableHeight, float width, float height)
+            int maxLines, float availableWidth, float availableHeight, float width, float height)
         {
             _measurer = measurer;
             _text = text;
             _font = font;
             _wrap = wrap;
             _ellipsis = ellipsis;
+            _maxLines = maxLines;
             _availableWidth = availableWidth;
             _availableHeight = availableHeight;
 

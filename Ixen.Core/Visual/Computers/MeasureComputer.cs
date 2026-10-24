@@ -367,13 +367,15 @@ namespace Ixen.Core.Visual.Computers
             TextWrap wrap = element.StylesHandlers.TextWrap.Descriptor.Value;
             bool wraps = wrap != TextWrap.NoWrap;
             bool breakWord = wrap == TextWrap.BreakWord;
-            bool ellipsis = element.StylesHandlers.TextOverflow.Descriptor.Value == TextOverflow.Ellipsis;
+            TextOverflowStyleDescriptor overflow = element.StylesHandlers.TextOverflow.Descriptor;
+            bool ellipsis = overflow.Value == TextOverflow.Ellipsis;
+            int maxLines = overflow.MaxLines;
 
             float limit = ellipsis ? availableHeight : 0;
 
             TextLayoutCache cache = element.EnsureTextLayout();
 
-            if (cache.Matches(_textMeasurer, element.Text, fontSpec, wrap, ellipsis, availableWidth, limit))
+            if (cache.Matches(_textMeasurer, element.Text, fontSpec, wrap, ellipsis, maxLines, availableWidth, limit))
             {
                 width = cache.Width;
                 height = cache.Height;
@@ -386,14 +388,14 @@ namespace Ixen.Core.Visual.Computers
 
             float lineHeight = _textMeasurer.GetLineHeight(fontSpec);
 
-            if (Truncate(lines, fontSpec, availableWidth, lineHeight, limit))
+            if (Truncate(lines, fontSpec, availableWidth, lineHeight, limit, maxLines, ellipsis))
             {
                 width = Widest(lines, fontSpec);
             }
 
             height = lineHeight * lines.Count;
 
-            cache.Set(_textMeasurer, element.Text, fontSpec, wrap, ellipsis, availableWidth, limit,
+            cache.Set(_textMeasurer, element.Text, fontSpec, wrap, ellipsis, maxLines, availableWidth, limit,
                 width, height);
         }
 
@@ -725,14 +727,20 @@ namespace Ixen.Core.Visual.Computers
         }
 
         private bool Truncate(List<string> lines, FontSpec fontSpec, float maxWidth,
-            float lineHeight, float limit)
+            float lineHeight, float limit, int maxLines, bool ellipsis)
         {
-            if (limit <= 0 || lineHeight <= 0 || lines.Count < 2)
+            if ((limit <= 0 && maxLines <= 0) || lineHeight <= 0 || lines.Count < 2)
             {
                 return false;
             }
 
-            int keep = (int)(limit / lineHeight);
+            float fits = limit > 0 ? limit / lineHeight : float.MaxValue;
+            int keep = fits >= int.MaxValue ? int.MaxValue : (int)fits;
+
+            if (maxLines > 0 && maxLines < keep)
+            {
+                keep = maxLines;
+            }
 
             if (keep < 1)
             {
@@ -745,6 +753,11 @@ namespace Ixen.Core.Visual.Computers
             }
 
             lines.RemoveRange(keep, lines.Count - keep);
+
+            if (!ellipsis)
+            {
+                return true;
+            }
 
             string last = lines[keep - 1];
             float[] advances = EnsureAdvances(last.Length);

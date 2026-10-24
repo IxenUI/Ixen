@@ -3,7 +3,7 @@ $generated_phone: (max-width: 600px)
 
 @mixin generated_mixin {
     text-wrap: nowrap
-    text-overflow: ellipsis
+    text-overflow: ellipsis 3
 }
 
 generated_root {
