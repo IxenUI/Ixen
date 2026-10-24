@@ -1,0 +1,38 @@
+<Project>
+
+	<PropertyGroup>
+		<IxenWindowsIcon Condition="'$(IxenWindowsIcon)' == '' And '$(ApplicationIcon)' == '' And Exists('$(MSBuildProjectDirectory)/icon.png')">$(MSBuildProjectDirectory)/icon.png</IxenWindowsIcon>
+		<IxenWindowsIconScript>$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)', 'ixen-icon.ps1'))</IxenWindowsIconScript>
+	</PropertyGroup>
+
+	<Target Name="IxenWindowsIconPath">
+		<PropertyGroup>
+			<IxenWindowsIconFile>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(IntermediateOutputPath)', 'ixen-app.ico'))</IxenWindowsIconFile>
+		</PropertyGroup>
+	</Target>
+
+	<Target Name="IxenWindowsIconFile"
+			DependsOnTargets="IxenWindowsIconPath"
+			Condition="'$(IxenWindowsIcon)' != '' And ('$(OutputType)' == 'Exe' Or '$(OutputType)' == 'WinExe') And $([MSBuild]::IsOSPlatform('Windows'))"
+			Inputs="$(IxenWindowsIcon);$(IxenWindowsIconScript)"
+			Outputs="$(IxenWindowsIconFile)">
+
+		<Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(IxenWindowsIconScript)&quot; -Png &quot;$(IxenWindowsIcon)&quot; -Ico &quot;$(IxenWindowsIconFile)&quot;"
+			  IgnoreExitCode="true" IgnoreStandardErrorWarningFormat="true">
+			<Output TaskParameter="ExitCode" PropertyName="IxenWindowsIconExit" />
+		</Exec>
+
+		<Warning Condition="'$(IxenWindowsIconExit)' != '0'"
+				 Code="IXEN003"
+				 Text="The executable's icon could not be made from $(IxenWindowsIcon); the file shows Windows' default icon. Set ApplicationIcon to an .ico, or IxenWindowsIcon to another picture." />
+	</Target>
+
+	<Target Name="IxenWindowsIcon" BeforeTargets="CoreCompile" DependsOnTargets="IxenWindowsIconFile"
+			Condition="'$(IxenWindowsIcon)' != '' And ('$(OutputType)' == 'Exe' Or '$(OutputType)' == 'WinExe') And $([MSBuild]::IsOSPlatform('Windows'))">
+
+		<PropertyGroup Condition="Exists('$(IxenWindowsIconFile)')">
+			<ApplicationIcon>$(IxenWindowsIconFile)</ApplicationIcon>
+		</PropertyGroup>
+	</Target>
+
+</Project>

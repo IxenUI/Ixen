@@ -30,6 +30,11 @@
 		<PackageReference Include="SkiaSharp" Version="4.151.1" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<None Include="buildTransitive/Ixen.Platform.Windows.targets" Pack="true" PackagePath="buildTransitive" />
+		<None Include="buildTransitive/ixen-icon.ps1" Pack="true" PackagePath="buildTransitive" />
+	</ItemGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\Ixen.Core\Ixen.Core.csproj" />
 		<ProjectReference Include="..\Ixen.Platform\Ixen.Platform.csproj" />
