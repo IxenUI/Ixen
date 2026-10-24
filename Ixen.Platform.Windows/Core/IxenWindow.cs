@@ -23,6 +23,7 @@ namespace Ixen.Platform.Windows
         private readonly WindowApi.OnAccessibilityCallBack _onAccessibility;
         private readonly WindowApi.OnDropCallBack _onDrop;
         private readonly WindowApi.OnSuspendCallBack _onSuspend;
+        private readonly WindowApi.OnSystemCallBack _onSystem;
 
         private readonly UiaBridge _accessibility;
         private readonly NativeCursorImages _cursors = new();
@@ -34,10 +35,7 @@ namespace Ixen.Platform.Windows
         public IxenWindow(IxenSurface ixenSurface)
         {
             _ixenSurface = ixenSurface;
-            _ixenSurface.ReducedMotion = SystemPreferences.PrefersReducedMotion();
-            _ixenSurface.FontScale = SystemPreferences.TextScale();
-            _ixenSurface.HighContrast = SystemPreferences.PrefersHighContrast();
-            _ixenSurface.SystemColors = SystemPreferences.SystemColors();
+            ReadPreferences();
             _host = new IxenHost(ixenSurface, RequestRepaint, new MessageScheduler(), new WindowsClipboard(),
                 SetCursor, new WindowsImageSource(), null, CanPresent);
 
@@ -51,6 +49,7 @@ namespace Ixen.Platform.Windows
             _onAccessibility = OnAccessibility;
             _onDrop = OnDrop;
             _onSuspend = OnSuspend;
+            _onSystem = OnSystem;
             _windowPtr = WindowApi.CreateWindow(_ixenSurface.InitOptions.Title, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
@@ -81,6 +80,7 @@ namespace Ixen.Platform.Windows
             WindowApi.RegisterAccessibilityCallBack(_windowPtr, _onAccessibility);
             WindowApi.RegisterDropCallBack(_windowPtr, _onDrop);
             WindowApi.RegisterSuspendCallBack(_windowPtr, _onSuspend);
+            WindowApi.RegisterSystemCallBack(_windowPtr, _onSystem);
 
             return WindowApi.ShowWindow(_windowPtr);
         }
@@ -147,6 +147,29 @@ namespace Ixen.Platform.Windows
             }
 
             WindowApi.SetWindowCursor(_windowPtr, NativeCursors.ToNative(kind));
+        }
+
+        private void ReadPreferences()
+        {
+            _ixenSurface.ReducedMotion = SystemPreferences.PrefersReducedMotion();
+            _ixenSurface.FontScale = SystemPreferences.TextScale();
+            _ixenSurface.HighContrast = SystemPreferences.PrefersHighContrast();
+            _ixenSurface.SystemColors = SystemPreferences.SystemColors();
+        }
+
+        private void OnSystem(int kind)
+        {
+            switch ((NativeSystemChange)kind)
+            {
+                case NativeSystemChange.Preferences:
+                    ReadPreferences();
+                    RequestRepaint();
+                    break;
+
+                case NativeSystemChange.Dpi:
+                    SetIcon(_ixenSurface.InitOptions.Icon);
+                    break;
+            }
         }
 
         private void SetIcon(string name)

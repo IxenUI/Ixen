@@ -17,6 +17,7 @@ namespace Ixen.Platform.Windows.NativeApi
         public delegate void OnDropCallBack(int x, int y,
             [MarshalAs(UnmanagedType.LPWStr)] string paths);
         public delegate void OnSuspendCallBack();
+        public delegate void OnSystemCallBack(int kind);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr CreateWindow([MarshalAs(UnmanagedType.LPWStr)] string title, int width, int height);
@@ -78,6 +79,9 @@ namespace Ixen.Platform.Windows.NativeApi
 
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterSuspendCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterSuspendCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnSuspendCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterSystemCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterSystemCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnSystemCallBack callback);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateGlContext", CallingConvention = CallingConvention.Cdecl)]
         public static extern int CreateGlContext(IntPtr windowPtr);

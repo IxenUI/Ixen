@@ -52,6 +52,9 @@
 #define IXEN_BUTTON_MIDDLE 2
 #define IXEN_BUTTON_RIGHT 3
 
+#define IXEN_CHANGE_PREFERENCES 1
+#define IXEN_CHANGE_DPI 2
+
 using namespace std;
 using namespace IxenWindowsNative;
 
@@ -113,8 +116,17 @@ LRESULT NativeWindow::HandleDpiChanged(LPARAM lParam)
     }
 
     Invalidate();
+    NotifySystemChange(IXEN_CHANGE_DPI);
 
     return 0;
+}
+
+void NativeWindow::NotifySystemChange(int kind)
+{
+    if (_systemCallBack != nullptr)
+    {
+        _systemCallBack(kind);
+    }
 }
 
 LRESULT NativeWindow::HandleDisplayChange()
@@ -742,6 +754,12 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_POWERBROADCAST:
         return HandlePower(wParam);
+
+    case WM_SETTINGCHANGE:
+    case WM_SYSCOLORCHANGE:
+    case WM_THEMECHANGED:
+        NotifySystemChange(IXEN_CHANGE_PREFERENCES);
+        break;
 
     case WM_DROPFILES:
         return HandleDropFiles(wParam);

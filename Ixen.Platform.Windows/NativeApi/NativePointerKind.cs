@@ -16,6 +16,12 @@ namespace Ixen.Platform.Windows.NativeApi
         Recreated = 2
     }
 
+    internal enum NativeSystemChange
+    {
+        Preferences = 1,
+        Dpi = 2
+    }
+
     internal enum NativePointerButton
     {
         None = 0,

@@ -19,6 +19,7 @@ namespace Ixen.Core
 
         Input.KeyModifiers AcceleratorModifier { get; }
 
+        bool ReducedMotion { get; }
         bool HighContrast { get; }
         float FontScale { get; }
         Visual.Classes.SystemPalette SystemColors { get; }

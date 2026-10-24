@@ -183,6 +183,14 @@ void WA_RegisterSuspendCallBack(NativeWindow* window, void __stdcall callBack())
     }
 }
 
+void WA_RegisterSystemCallBack(NativeWindow* window, void __stdcall callBack(int))
+{
+    if (window)
+    {
+        window->SetOnSystemCallBack(callBack);
+    }
+}
+
 int WA_CreateGlContext(NativeWindow* window)
 {
     if (!window)

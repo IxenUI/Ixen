@@ -26,6 +26,7 @@ IXEN_API_ENTRY void WA_SetWindowCursor(NativeWindow* window, int kind);
 IXEN_API_ENTRY void WA_SetWindowCursorHandle(NativeWindow* window, void* cursor);
 IXEN_API_ENTRY unsigned int WA_GetWindowDpi(NativeWindow* window);
 IXEN_API_ENTRY void WA_RegisterSuspendCallBack(NativeWindow* window, void __stdcall callBack());
+IXEN_API_ENTRY void WA_RegisterSystemCallBack(NativeWindow* window, void __stdcall callBack(int));
 IXEN_API_ENTRY int WA_CreateGlContext(NativeWindow* window);
 IXEN_API_ENTRY int WA_EnsureGlContext(NativeWindow* window);
 IXEN_API_ENTRY void WA_SwapGlBuffers(NativeWindow* window);

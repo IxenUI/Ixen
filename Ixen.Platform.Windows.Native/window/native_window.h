@@ -27,6 +27,7 @@ namespace IxenWindowsNative
         __int64 (*_accessibilityCallBack)(__int64, __int64) = nullptr;
         void (*_dropCallBack)(int, int, const wchar_t*) = nullptr;
         void (*_suspendCallBack)() = nullptr;
+        void (*_systemCallBack)(int) = nullptr;
         void* _pixelsBuffer = nullptr;
         HCURSOR _cursor = nullptr;
         HDC _deviceContext = nullptr;
@@ -47,6 +48,7 @@ namespace IxenWindowsNative
         LRESULT HandleDpiChanged(LPARAM lParam);
         LRESULT HandleDisplayChange();
         LRESULT HandlePower(WPARAM wParam);
+        void NotifySystemChange(int kind);
         void ClampToWorkArea();
         LRESULT HandleKey(int kind, WPARAM wParam, LPARAM lParam);
         LRESULT HandleComposition(LPARAM lParam);
@@ -86,6 +88,7 @@ namespace IxenWindowsNative
         void SetOnAccessibilityCallBack(__int64 __stdcall callback(__int64, __int64)) { _accessibilityCallBack = callback; }
         void SetOnDropCallBack(void __stdcall callback(int, int, const wchar_t*)) { _dropCallBack = callback; }
         void SetOnSuspendCallBack(void __stdcall callback()) { _suspendCallBack = callback; }
+        void SetOnSystemCallBack(void __stdcall callback(int)) { _systemCallBack = callback; }
         void SetAcceptsFiles(bool value);
     };
 }
