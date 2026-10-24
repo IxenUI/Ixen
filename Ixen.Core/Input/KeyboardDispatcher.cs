@@ -209,7 +209,7 @@ namespace Ixen.Core.Input
                     continue;
                 }
 
-                if (element.IsHiddenInTree || !element.IsEnabled)
+                if (!element.ShortcutReachable || !element.IsEnabled)
                 {
                     continue;
                 }

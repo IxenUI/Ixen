@@ -25,6 +25,7 @@ namespace Ixen.Controls
         {
             TypeName = nameof(Menu);
             Role = AccessibleRole.Menu;
+            ShortcutsWhenHidden = true;
 
             Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Fixed };
             Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };

@@ -324,5 +324,41 @@ namespace Ixen.Controls.UT
             Assert.IsNull(_first.ShortcutElement);
             Assert.AreEqual(0, _first.ChildElements.Count);
         }
+
+        [TestMethod]
+        public void AnItemsShortcutWorksWhileItsMenuIsClosed()
+        {
+            int invoked = 0;
+
+            _first.Shortcut = "Ctrl+O";
+            _first.Invoked += (sender, e) => invoked++;
+            Layout();
+
+            Assert.IsFalse(_menu.Open);
+
+            _surface.KeyDown(Key.O, KeyModifiers.Control);
+
+            Assert.AreEqual(1, invoked, "an accelerator is the reason to show one beside the item");
+            Assert.IsFalse(_menu.Open, "and using it does not open the menu");
+        }
+
+        [TestMethod]
+        public void ASubmenuItemsShortcutWorksToo()
+        {
+            var recent = new MenuItem { Name = "recent", Text = "Recent" };
+            var submenu = new Menu { Name = "recent_menu" };
+            var last = new MenuItem { Name = "last", Text = "Last file", Shortcut = "Ctrl+L" };
+            int invoked = 0;
+
+            last.Invoked += (sender, e) => invoked++;
+            submenu.AddChild(last);
+            recent.AddChild(submenu);
+            _menu.AddChild(recent);
+            Layout();
+
+            _surface.KeyDown(Key.L, KeyModifiers.Control);
+
+            Assert.AreEqual(1, invoked);
+        }
     }
 }

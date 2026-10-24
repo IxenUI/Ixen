@@ -449,5 +449,57 @@ namespace Ixen.Core.UT.Input
             Assert.AreEqual(1, _hits,
                 "shortcuts are collected by the layout pass, so assigning one has to ask for a pass");
         }
+
+        private VisualElement SaveInside(VisualElement outer, VisualElement inner)
+        {
+            _root.AddChild(outer);
+            outer.AddChild(inner);
+
+            VisualElement save = Box("save");
+            save.Shortcut = "Ctrl+S";
+            save.PointerClick += (sender, args) => _hits++;
+            inner.AddChild(save);
+
+            return save;
+        }
+
+        private void Hide(VisualElement element)
+        {
+            element.Styles.Visibility = new VisibilityStyleDescriptor { Value = Visibility.Hidden };
+            _root.Invalidate();
+            Layout();
+        }
+
+        [TestMethod]
+        public void AHiddenContainerThatKeepsShortcutsLetsThemThrough()
+        {
+            VisualElement page = Box("page");
+            VisualElement menu = Box("menu");
+
+            menu.ShortcutsWhenHidden = true;
+            SaveInside(page, menu);
+            Hide(menu);
+
+            Press(Key.S, KeyModifiers.Control);
+
+            Assert.AreEqual(1, _hits, "a closed menu's accelerators work, as a native menu's do");
+        }
+
+        [TestMethod]
+        public void AnyOtherHiddenAncestorStillStopsThem()
+        {
+            VisualElement page = Box("page");
+            VisualElement menu = Box("menu");
+
+            menu.ShortcutsWhenHidden = true;
+            SaveInside(page, menu);
+            Hide(menu);
+            Hide(page);
+
+            Press(Key.S, KeyModifiers.Control);
+
+            Assert.AreEqual(0, _hits,
+                "the menu of a hidden tab does not keep listening: only the opted-in layer is let through");
+        }
     }
 }

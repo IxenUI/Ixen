@@ -193,6 +193,24 @@ namespace Ixen.Core.Visual
             => StylesHandlers != null
                 && StylesHandlers.Visibility.Descriptor.Value == Ixen.Core.Visual.Styles.Descriptors.Visibility.Hidden;
 
+        public bool ShortcutsWhenHidden { get; set; }
+
+        internal bool ShortcutReachable
+        {
+            get
+            {
+                for (VisualElement element = this; element != null; element = element.Parent)
+                {
+                    if (element.IsHidden && !element.ShortcutsWhenHidden)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        }
+
         internal bool IsHiddenInTree
         {
             get
