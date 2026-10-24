@@ -329,5 +329,103 @@ namespace Ixen.Controls.UT
             Assert.AreEqual(40f, _slider.Value, "snapped to the step, as a drag would be");
             Assert.AreEqual(1, changes, "a two-way binding hears it");
         }
+
+        private void MakeVertical()
+        {
+            _slider.Vertical = true;
+            _slider.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 20 };
+            _slider.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 200 };
+            _slider.Invalidate();
+            Layout();
+        }
+
+        [TestMethod]
+        public void AVerticalSliderGrowsUpward()
+        {
+            MakeVertical();
+
+            _surface.PointerDown(_slider.X + 10, _slider.ContentY + 50, PointerButton.Left);
+
+            Assert.AreEqual(75f, _slider.Value, "a quarter of the way down is three quarters of the range");
+
+            _surface.PointerMove(_slider.X + 10, _slider.ContentY + 900);
+
+            Assert.AreEqual(0f, _slider.Value, "below the bottom is the minimum");
+        }
+
+        [TestMethod]
+        public void AVerticalSlidersPartsArePlacedAlongItsHeight()
+        {
+            MakeVertical();
+            _slider.Value = 40;
+
+            Assert.AreEqual(40f, Part(Slider.FILL).Styles.Height.Value, "the fill rises from the bottom");
+            Assert.AreEqual(60f, Part(Slider.THUMB).Styles.Top.Value, "and the thumb sits on top of it");
+            Assert.AreEqual(SizeUnit.Unset, Part(Slider.FILL).Styles.Width.Unit,
+                "the horizontal width is given back to the theme");
+        }
+
+        [TestMethod]
+        public void ThePartsCarryTheOrientation()
+        {
+            Assert.IsTrue(Part(Slider.THUMB).HasState(Slider.HORIZONTAL));
+
+            MakeVertical();
+
+            foreach (VisualElement element in _slider.ChildElements.Concat(new[] { (VisualElement)_slider }))
+            {
+                Assert.IsTrue(element.HasState(Slider.VERTICAL), element.TypeName);
+                Assert.IsFalse(element.HasState(Slider.HORIZONTAL), element.TypeName);
+            }
+        }
+
+        [TestMethod]
+        public void TheThemeDrawsAVerticalSliderUpright()
+        {
+            var registry = new StyleRegistry();
+
+            registry.AddLoadedDefaults();
+            _surface.Styles = registry;
+            _slider.Styles.Width = new WidthStyleDescriptor();
+            _slider.Styles.Height = new HeightStyleDescriptor();
+            _slider.Vertical = true;
+            _slider.Value = 25;
+            Layout();
+
+            VisualElement fill = Part(Slider.FILL);
+            VisualElement thumb = Part(Slider.THUMB);
+            float bottom = _slider.ContentY + _slider.ContentHeight;
+
+            Assert.IsTrue(_slider.ActualHeight > _slider.ActualWidth, "the theme's vertical size is tall");
+            Assert.AreEqual(_slider.ContentHeight * 0.25f, fill.ActualHeight, 0.5f);
+            Assert.AreEqual(bottom, fill.Y + fill.ActualHeight, 0.5f, "the fill sits on the bottom");
+            Assert.AreEqual(bottom - (_slider.ContentHeight * 0.25f), thumb.Y, 0.5f,
+                "the thumb is laid out at the value and its translateY(-50%) centres it there - a transform"
+                + " never moves the layout box");
+        }
+
+        [TestMethod]
+        public void TheThemeStillDrawsAHorizontalSliderFlat()
+        {
+            var registry = new StyleRegistry();
+
+            registry.AddLoadedDefaults();
+            _surface.Styles = registry;
+            _slider.Styles.Width = new WidthStyleDescriptor();
+            _slider.Styles.Height = new HeightStyleDescriptor();
+            _slider.Value = 25;
+            Layout();
+
+            VisualElement track = Part(Slider.TRACK);
+            VisualElement fill = Part(Slider.FILL);
+            VisualElement thumb = Part(Slider.THUMB);
+
+            Assert.IsTrue(_slider.ActualWidth > _slider.ActualHeight);
+            Assert.AreEqual(4f, track.ActualHeight, "a thin track across");
+            Assert.AreEqual(_slider.ContentWidth, track.ActualWidth, 0.5f);
+            Assert.AreEqual(track.Y, fill.Y, 0.5f, "the fill lies on the track");
+            Assert.AreEqual(_slider.ContentWidth * 0.25f, fill.ActualWidth, 0.5f);
+            Assert.AreEqual(_slider.ContentX + (_slider.ContentWidth * 0.25f), thumb.X, 0.5f);
+        }
     }
 }

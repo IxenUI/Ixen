@@ -12,9 +12,12 @@ namespace Ixen.Controls
         public const string TRACK = "SliderTrack";
         public const string FILL = "SliderFill";
         public const string THUMB = "SliderThumb";
+        public const string VERTICAL = "vertical";
+        public const string HORIZONTAL = "horizontal";
 
         public event EventHandler<EventArgs> ValueChanged;
 
+        private readonly VisualElement _track;
         private readonly VisualElement _fill;
         private readonly VisualElement _thumb;
 
@@ -22,6 +25,7 @@ namespace Ixen.Controls
         private float _maximum = 100;
         private float _step = 1;
         private float _value;
+        private bool _vertical;
 
         public Slider()
         {
@@ -39,27 +43,11 @@ namespace Ixen.Controls
             _fill.Role = AccessibleRole.Presentation;
             _thumb.Role = AccessibleRole.Presentation;
 
-            track.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
-            track.Styles.Right = new RightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
-
-            _fill.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
-            _fill.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 };
-
-            _thumb.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 };
-            _thumb.Styles.Transform = new TransformStyleDescriptor
-            {
-                Operations =
-                {
-                    new TransformOperation
-                    {
-                        Kind = TransformKind.Translate,
-                        XUnit = SizeUnit.Percents,
-                        X = -50
-                    }
-                }
-            };
+            _track = track;
 
             AddChildren(track, _fill, _thumb);
+
+            Orient();
 
             PointerDown += OnPointerDown;
             PointerDragStart += OnDrag;
@@ -68,6 +56,65 @@ namespace Ixen.Controls
         }
 
         private static VisualElement Part(string typeName) => new VisualElement { TypeName = typeName };
+
+        public bool Vertical
+        {
+            get => _vertical;
+            set
+            {
+                if (_vertical == value)
+                {
+                    return;
+                }
+
+                _vertical = value;
+
+                Orient();
+            }
+        }
+
+        private void Orient()
+        {
+            foreach (VisualElement element in new[] { this, _track, _fill, _thumb })
+            {
+                element.ToggleState(VERTICAL, _vertical);
+                element.ToggleState(HORIZONTAL, !_vertical);
+            }
+
+            _track.Styles.Left = _vertical ? new LeftStyleDescriptor() : new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+            _track.Styles.Right = _vertical ? new RightStyleDescriptor() : new RightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+            _track.Styles.Top = _vertical ? new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 } : new TopStyleDescriptor();
+            _track.Styles.Bottom = _vertical ? new BottomStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 } : new BottomStyleDescriptor();
+
+            _fill.Styles.Left = _vertical ? new LeftStyleDescriptor() : new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+            _fill.Styles.Width = _vertical ? new WidthStyleDescriptor() : new WidthStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 };
+            _fill.Styles.Bottom = _vertical ? new BottomStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 } : new BottomStyleDescriptor();
+            _fill.Styles.Height = _vertical ? new HeightStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 } : new HeightStyleDescriptor();
+
+            _thumb.Styles.Left = _vertical ? new LeftStyleDescriptor() : new LeftStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 };
+            _thumb.Styles.Top = _vertical ? new TopStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 } : new TopStyleDescriptor();
+            _thumb.Styles.Transform = new TransformStyleDescriptor
+            {
+                Operations =
+                {
+                    new TransformOperation
+                    {
+                        Kind = TransformKind.Translate,
+                        XUnit = SizeUnit.Percents,
+                        X = _vertical ? 0 : -50,
+                        YUnit = SizeUnit.Percents,
+                        Y = _vertical ? -50 : 0
+                    }
+                }
+            };
+
+            foreach (VisualElement part in new[] { _track, _fill, _thumb })
+            {
+                part.Invalidate();
+            }
+
+            Layout();
+        }
 
         public float Minimum
         {
@@ -162,8 +209,16 @@ namespace Ixen.Controls
         {
             float percent = Fraction * 100;
 
-            _fill.Styles.Width.Value = percent;
-            _thumb.Styles.Left.Value = percent;
+            if (_vertical)
+            {
+                _fill.Styles.Height.Value = percent;
+                _thumb.Styles.Top.Value = 100 - percent;
+            }
+            else
+            {
+                _fill.Styles.Width.Value = percent;
+                _thumb.Styles.Left.Value = percent;
+            }
 
             InvalidateLayout();
         }
@@ -178,16 +233,16 @@ namespace Ixen.Controls
             Set(value, true);
         }
 
-        private float ValueAt(float x)
+        private float ValueAt(float x, float y)
         {
-            float width = ContentWidth;
+            float length = _vertical ? ContentHeight : ContentWidth;
 
-            if (width <= 0)
+            if (length <= 0)
             {
                 return _minimum;
             }
 
-            float fraction = (x - ContentX) / width;
+            float fraction = _vertical ? 1 - ((y - ContentY) / length) : (x - ContentX) / length;
 
             return _minimum + (fraction * (_maximum - _minimum));
         }
@@ -196,14 +251,14 @@ namespace Ixen.Controls
         {
             args.Handled = true;
 
-            Interact(ValueAt(args.X));
+            Interact(ValueAt(args.X, args.Y));
         }
 
         private void OnDrag(object sender, DragEventArgs args)
         {
             args.Handled = true;
 
-            Interact(ValueAt(args.X));
+            Interact(ValueAt(args.X, args.Y));
         }
 
         private float KeyStep => _step > 0 ? _step : (_maximum - _minimum) / 100;

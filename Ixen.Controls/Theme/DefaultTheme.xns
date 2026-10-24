@@ -267,26 +267,47 @@ $control_focus_soft:   #EEF1FE
     cursor: hand
 }
 
+#Slider:vertical {
+    width: 18px
+    height: 176px
+    padding: 8px 0px 8px 0px
+}
+
 #Slider:disabled {
     cursor: not-allowed
 }
 
 #SliderTrack {
-    top: 7px
-    height: 4px
     background: $control_surface_down
     corner-radius: 2px
 }
 
 #SliderFill {
-    top: 7px
-    height: 4px
     background: $control_focus
     corner-radius: 2px
 }
 
-#SliderThumb {
+#SliderTrack:horizontal,
+#SliderFill:horizontal {
+    top: 7px
+    height: 4px
+}
+
+#SliderTrack:vertical,
+#SliderFill:vertical {
+    left: 7px
+    width: 4px
+}
+
+#SliderThumb:horizontal {
     top: 1px
+}
+
+#SliderThumb:vertical {
+    left: 1px
+}
+
+#SliderThumb {
     width: 16px
     height: 16px
     background: #FFFFFF
