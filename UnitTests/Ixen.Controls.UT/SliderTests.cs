@@ -279,5 +279,55 @@ namespace Ixen.Controls.UT
             Assert.AreEqual(-50f, operations[0].X,
                 "the shift is the control's own structure, so every theme gets it right");
         }
+
+        private AccessibleNode SliderNode()
+        {
+            Layout();
+
+            return AccessibleSearch.Find(_surface.BuildAccessibilityTree(), node => node.Element == _slider);
+        }
+
+        [TestMethod]
+        public void AScreenReaderSeesTheRangeAndTheStep()
+        {
+            _slider.Minimum = 0;
+            _slider.Maximum = 50;
+            _slider.Step = 5;
+            _slider.Value = 20;
+
+            AccessibleNode node = SliderNode();
+
+            Assert.IsTrue(node.HasRange);
+            Assert.AreEqual(0f, node.RangeMinimum);
+            Assert.AreEqual(50f, node.RangeMaximum);
+            Assert.AreEqual(20f, node.RangeValue);
+            Assert.AreEqual(5f, node.RangeStep, "the step is what one arrow press moves");
+        }
+
+        [TestMethod]
+        public void WithNoStepTheReportedStepIsWhatAnArrowMoves()
+        {
+            _slider.Minimum = 0;
+            _slider.Maximum = 200;
+            _slider.Step = 0;
+
+            Assert.AreEqual(2f, SliderNode().RangeStep, "an arrow moves a hundredth of the span");
+        }
+
+        [TestMethod]
+        public void SettingTheValueFromAReaderIsAUserChange()
+        {
+            int changes = 0;
+
+            _slider.Minimum = 0;
+            _slider.Maximum = 100;
+            _slider.Step = 10;
+            _slider.ValueChanged += (sender, e) => changes++;
+
+            Assert.IsTrue(_surface.Perform(SliderNode(), AccessibleActions.SetRangeValue, "37"));
+
+            Assert.AreEqual(40f, _slider.Value, "snapped to the step, as a drag would be");
+            Assert.AreEqual(1, changes, "a two-way binding hears it");
+        }
     }
 }

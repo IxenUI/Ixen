@@ -284,6 +284,7 @@ namespace Ixen.View.Android
             }
 
             SetExpanded(info, node);
+            SetRange(info, node);
 
             info.SetBoundsInScreen(BoundsOf(node));
 
@@ -302,6 +303,40 @@ namespace Ixen.View.Android
             }
 
             info.Checked = value;
+        }
+
+        private static void SetRange(AccessibilityNodeInfo info, AccessibleNode node)
+        {
+            if (!node.HasRange)
+            {
+                return;
+            }
+
+            info.SetRangeInfo(System.OperatingSystem.IsAndroidVersionAtLeast(30)
+                ? new AccessibilityNodeInfo.RangeInfo((int)RangeType.Float, node.RangeMinimum, node.RangeMaximum,
+                    node.RangeValue)
+                : AccessibilityNodeInfo.RangeInfo.Obtain(RangeType.Float, node.RangeMinimum,
+                    node.RangeMaximum, node.RangeValue));
+
+            if (!node.Supports(AccessibleActions.SetRangeValue))
+            {
+                return;
+            }
+
+            if (System.OperatingSystem.IsAndroidVersionAtLeast(24))
+            {
+                info.AddAction(AccessibilityNodeInfo.AccessibilityAction.ActionSetProgress);
+            }
+
+            if (node.RangeValue < node.RangeMaximum)
+            {
+                info.AddAction(AccessibilityNodeInfo.AccessibilityAction.ActionScrollForward);
+            }
+
+            if (node.RangeValue > node.RangeMinimum)
+            {
+                info.AddAction(AccessibilityNodeInfo.AccessibilityAction.ActionScrollBackward);
+            }
         }
 
         private static void SetExpanded(AccessibilityNodeInfo info, AccessibleNode node)
@@ -430,6 +465,22 @@ namespace Ixen.View.Android
                 return _surface.Perform(node, AccessibleActions.ScrollIntoView);
             }
 
+            if (node.HasRange && System.OperatingSystem.IsAndroidVersionAtLeast(24)
+                && (int)action == global::Android.Resource.Id.AccessibilityActionSetProgress)
+            {
+                float wanted = arguments?.GetFloat(AccessibilityNodeInfo.ActionArgumentProgressValue, node.RangeValue)
+                    ?? node.RangeValue;
+
+                return SetRange(node, wanted);
+            }
+
+            if (node.HasRange && (action == Action.ScrollForward || action == Action.ScrollBackward))
+            {
+                float step = node.RangeStep > 0 ? node.RangeStep : (node.RangeMaximum - node.RangeMinimum) / 100;
+
+                return SetRange(node, node.RangeValue + (action == Action.ScrollForward ? step : -step));
+            }
+
             switch (action)
             {
                 case Action.Click:
@@ -477,6 +528,10 @@ namespace Ixen.View.Android
                     return false;
             }
         }
+
+        private bool SetRange(AccessibleNode node, float value)
+            => _surface.Perform(node, AccessibleActions.SetRangeValue,
+                value.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
 
         public override AccessibilityNodeInfo FindFocus(NodeFocus focus)
         {

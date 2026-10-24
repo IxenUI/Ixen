@@ -119,5 +119,31 @@ namespace Ixen.Controls.UT
                 + "rotate - a RING that rotates is indistinguishable from a ring standing still");
             Assert.AreEqual(0, node.Children.Count, "and the dot is decoration");
         }
+
+        [TestMethod]
+        public void ADeterminateBarIsAReadOnlyRange()
+        {
+            _bar.Minimum = 0;
+            _bar.Maximum = 10;
+            _bar.Value = 4;
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            AccessibleNode node = AccessibleSearch.Find(_surface.BuildAccessibilityTree(), n => n.Element == _bar);
+
+            Assert.IsTrue(node.HasRange);
+            Assert.AreEqual(4f, node.RangeValue);
+            Assert.IsFalse(node.Supports(AccessibleActions.SetRangeValue), "progress is reported, never set");
+        }
+
+        [TestMethod]
+        public void ABusyBarHasNoRange()
+        {
+            _bar.Busy = true;
+            _surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            AccessibleNode node = AccessibleSearch.Find(_surface.BuildAccessibilityTree(), n => n.Element == _bar);
+
+            Assert.IsFalse(node.HasRange);
+        }
     }
 }

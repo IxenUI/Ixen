@@ -38,6 +38,15 @@ namespace Ixen.Core.Accessibility
                 Height = element.ActualHeight
             };
 
+            if (element is IAccessibleRange range && range.HasRange)
+            {
+                node.HasRange = true;
+                node.RangeMinimum = range.Minimum;
+                node.RangeMaximum = range.Maximum;
+                node.RangeValue = range.Value;
+                node.RangeStep = range.Step;
+            }
+
             if (!TakesNameFromContent(node.Role))
             {
                 Collect(element, focused, node.ChildList, live, accelerator);
@@ -249,6 +258,11 @@ namespace Ixen.Core.Accessibility
             if (IsSelectable(role))
             {
                 actions |= AccessibleActions.Select;
+            }
+
+            if (element is IAccessibleRange range && range.HasRange && range.CanSetValue)
+            {
+                actions |= AccessibleActions.SetRangeValue;
             }
 
             if (Input.ScrollNavigator.Find(element.Parent, 0, 1) != null

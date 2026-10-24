@@ -5,7 +5,7 @@ using System.Globalization;
 
 namespace Ixen.Controls
 {
-    public class ProgressBar : VisualElement
+    public class ProgressBar : VisualElement, IAccessibleRange
     {
         public const string FILL = "ProgressBarFill";
         public const string BUSY = "busy";
@@ -67,6 +67,16 @@ namespace Ixen.Controls
 
                 Sync();
             }
+        }
+
+        bool IAccessibleRange.HasRange => !_busy;
+
+        float IAccessibleRange.Step => 0;
+
+        bool IAccessibleRange.CanSetValue => false;
+
+        void IAccessibleRange.SetValue(float value)
+        {
         }
 
         public bool Busy

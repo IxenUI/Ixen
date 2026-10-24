@@ -140,8 +140,17 @@ namespace Ixen.Platform.Windows.Accessibility
                         break;
 
                     case AccessibilityChangeKind.Value:
-                        Raise(change.Id, UiaProperty.VALUE_VALUE, change.Previous.Value,
-                            change.Current.Value);
+                        if (change.Current.HasRange)
+                        {
+                            Raise(change.Id, UiaProperty.RANGE_VALUE_VALUE, change.Previous.RangeValue,
+                                change.Current.RangeValue);
+                        }
+                        else
+                        {
+                            Raise(change.Id, UiaProperty.VALUE_VALUE, change.Previous.Value,
+                                change.Current.Value);
+                        }
+
                         break;
 
                     case AccessibilityChangeKind.LiveRegion:

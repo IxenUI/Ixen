@@ -7,7 +7,7 @@ using System.Globalization;
 
 namespace Ixen.Controls
 {
-    public class Slider : VisualElement
+    public class Slider : VisualElement, IAccessibleRange
     {
         public const string TRACK = "SliderTrack";
         public const string FILL = "SliderFill";
@@ -206,9 +206,19 @@ namespace Ixen.Controls
             Interact(ValueAt(args.X));
         }
 
+        private float KeyStep => _step > 0 ? _step : (_maximum - _minimum) / 100;
+
+        bool IAccessibleRange.HasRange => true;
+
+        float IAccessibleRange.Step => KeyStep;
+
+        bool IAccessibleRange.CanSetValue => IsEnabled;
+
+        void IAccessibleRange.SetValue(float value) => Interact(value);
+
         private void OnKeyDown(object sender, KeyEventArgs args)
         {
-            float amount = _step > 0 ? _step : (_maximum - _minimum) / 100;
+            float amount = KeyStep;
 
             switch (args.Key)
             {

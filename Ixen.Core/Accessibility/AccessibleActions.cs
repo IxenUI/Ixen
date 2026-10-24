@@ -12,6 +12,7 @@ namespace Ixen.Core.Accessibility
         ScrollIntoView = 8,
         Expand = 16,
         Collapse = 32,
-        Select = 64
+        Select = 64,
+        SetRangeValue = 128
     }
 }

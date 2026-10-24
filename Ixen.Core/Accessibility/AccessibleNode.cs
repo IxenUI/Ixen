@@ -16,6 +16,12 @@ namespace Ixen.Core.Accessibility
         public LiveRegionKind Live { get; internal set; }
         public AccessibleActions Actions { get; internal set; }
 
+        public bool HasRange { get; internal set; }
+        public float RangeMinimum { get; internal set; }
+        public float RangeMaximum { get; internal set; }
+        public float RangeValue { get; internal set; }
+        public float RangeStep { get; internal set; }
+
         public float X { get; internal set; }
         public float Y { get; internal set; }
         public float Width { get; internal set; }

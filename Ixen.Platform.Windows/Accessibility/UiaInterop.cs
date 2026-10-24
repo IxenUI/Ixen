@@ -152,6 +152,26 @@ namespace Ixen.Platform.Windows.Accessibility
     }
 
     [GeneratedComInterface]
+    [Guid("36dc7aef-33e6-4691-afe1-2be7274b3d33")]
+    internal partial interface IRangeValueProvider
+    {
+        void SetValue(double value);
+
+        double get_Value();
+
+        [return: MarshalAs(UnmanagedType.Bool)]
+        bool get_IsReadOnly();
+
+        double get_Maximum();
+
+        double get_Minimum();
+
+        double get_LargeChange();
+
+        double get_SmallChange();
+    }
+
+    [GeneratedComInterface]
     [Guid("fb8b03af-3bdf-48d4-bd36-1a65793be168")]
     internal partial interface ISelectionProvider
     {
@@ -169,6 +189,7 @@ namespace Ixen.Platform.Windows.Accessibility
         internal const int INVOKE = 10000;
         internal const int SELECTION = 10001;
         internal const int VALUE = 10002;
+        internal const int RANGE_VALUE = 10003;
         internal const int EXPAND_COLLAPSE = 10005;
         internal const int SELECTION_ITEM = 10010;
         internal const int TOGGLE = 10015;
@@ -192,6 +213,7 @@ namespace Ixen.Platform.Windows.Accessibility
         internal const int IS_CONTENT_ELEMENT = 30017;
         internal const int VALUE_VALUE = 30045;
         internal const int VALUE_IS_READ_ONLY = 30046;
+        internal const int RANGE_VALUE_VALUE = 30047;
         internal const int LIVE_SETTING = 30135;
         internal const int SELECTION_CAN_SELECT_MULTIPLE = 30060;
         internal const int SELECTION_IS_SELECTION_REQUIRED = 30061;
@@ -400,6 +422,12 @@ namespace Ixen.Platform.Windows.Accessibility
 
                 case int number:
                     return ComVariant.Create(number);
+
+                case float real:
+                    return ComVariant.Create((double)real);
+
+                case double precise:
+                    return ComVariant.Create(precise);
 
                 default:
                     return default;

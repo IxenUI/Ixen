@@ -507,6 +507,17 @@ namespace Ixen.Core
                     node.Element.PerformClick();
                     return true;
 
+                case Accessibility.AccessibleActions.SetRangeValue:
+                    if (!(node.Element is Accessibility.IAccessibleRange range)
+                        || !float.TryParse(value, System.Globalization.NumberStyles.Float,
+                            System.Globalization.CultureInfo.InvariantCulture, out float wanted))
+                    {
+                        return false;
+                    }
+
+                    range.SetValue(wanted);
+                    return true;
+
                 default:
                     return false;
             }

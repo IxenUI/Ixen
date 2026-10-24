@@ -7,7 +7,8 @@ namespace Ixen.Platform.Windows.Accessibility
 {
     [GeneratedComClass]
     internal partial class UiaProvider : IRawElementProviderSimple, IRawElementProviderFragment, IInvokeProvider, IValueProvider,
-        IScrollItemProvider, IToggleProvider, IExpandCollapseProvider, ISelectionItemProvider, ISelectionProvider
+        IScrollItemProvider, IToggleProvider, IExpandCollapseProvider, ISelectionItemProvider, ISelectionProvider,
+        IRangeValueProvider
     {
         private readonly UiaBridge _bridge;
         private readonly int _id;
@@ -43,9 +44,12 @@ namespace Ixen.Platform.Windows.Accessibility
                     return node.Supports(AccessibleActions.Invoke) ? this : null;
 
                 case UiaPattern.VALUE:
-                    return node.Supports(AccessibleActions.SetValue) || node.Value != null
+                    return !node.HasRange && (node.Supports(AccessibleActions.SetValue) || node.Value != null)
                         ? this
                         : null;
+
+                case UiaPattern.RANGE_VALUE:
+                    return node.HasRange ? this : null;
 
                 case UiaPattern.SCROLL_ITEM:
                     return node.Supports(AccessibleActions.ScrollIntoView) ? this : null;
@@ -292,6 +296,27 @@ namespace Ixen.Platform.Windows.Accessibility
         public IRawElementProviderSimple get_SelectionContainer() => _bridge.ContainerOf(_id);
 
         public nint GetSelection() => UiaNative.ProviderArray(_bridge.SelectionOf(_id));
+
+        void IRangeValueProvider.SetValue(double value)
+            => _bridge.Post(_id, AccessibleActions.SetRangeValue,
+                value.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+
+        double IRangeValueProvider.get_Value() => Node?.RangeValue ?? 0;
+
+        bool IRangeValueProvider.get_IsReadOnly()
+        {
+            AccessibleNode node = Node;
+
+            return node == null || !node.Supports(AccessibleActions.SetRangeValue);
+        }
+
+        double IRangeValueProvider.get_Maximum() => Node?.RangeMaximum ?? 0;
+
+        double IRangeValueProvider.get_Minimum() => Node?.RangeMinimum ?? 0;
+
+        double IRangeValueProvider.get_LargeChange() => (Node?.RangeStep ?? 0) * 10;
+
+        double IRangeValueProvider.get_SmallChange() => Node?.RangeStep ?? 0;
 
         public bool get_CanSelectMultiple() => false;
 
