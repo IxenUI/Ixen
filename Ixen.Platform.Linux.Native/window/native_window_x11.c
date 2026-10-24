@@ -1309,6 +1309,36 @@ static void X11_AccessibilityNotify(NativeWindow* handle, int identifier, int ki
     }
 }
 
+static void X11_SetIcon(NativeWindow* handle, const int* cardinals, int count)
+{
+    X11Window* window = (X11Window*)handle;
+
+    if (window == NULL || cardinals == NULL || count <= 0)
+    {
+        return;
+    }
+
+    unsigned long* data = malloc(sizeof(unsigned long) * (size_t)count);
+
+    if (data == NULL)
+    {
+        return;
+    }
+
+    for (int index = 0; index < count; index++)
+    {
+        data[index] = (unsigned long)(unsigned int)cardinals[index];
+    }
+
+    Atom icon = XInternAtom(window->display, "_NET_WM_ICON", False);
+
+    XChangeProperty(window->display, window->window, icon, XA_CARDINAL, 32, PropModeReplace,
+        (const unsigned char*)data, count);
+    XFlush(window->display);
+
+    free(data);
+}
+
 static void X11_AccessibilityNotifyText(NativeWindow* handle, int identifier, int inserted, int offset,
     int length, const char* text)
 {
@@ -1345,5 +1375,6 @@ const NativeBackend X11_Backend =
     X11_AccessibilityUpdateNode,
     X11_AccessibilityCommit,
     X11_AccessibilityNotify,
-    X11_AccessibilityNotifyText
+    X11_AccessibilityNotifyText,
+    X11_SetIcon
 };

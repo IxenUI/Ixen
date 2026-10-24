@@ -66,6 +66,34 @@ namespace Ixen.Platform.Linux
             }
 
             Backend = Marshal.PtrToStringUTF8(LinuxApi.GetWindowBackend(_windowPtr));
+
+            SetIcon(_ixenSurface.InitOptions.Icon);
+        }
+
+        private void SetIcon(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return;
+            }
+
+            using (Stream stream = new LinuxImageSource().Open(name))
+            {
+                if (stream == null)
+                {
+                    return;
+                }
+
+                using (SKBitmap bitmap = SKBitmap.Decode(stream))
+                {
+                    int[] cardinals = LinuxIcon.Cardinals(bitmap);
+
+                    if (cardinals != null)
+                    {
+                        LinuxApi.SetWindowIcon(_windowPtr, cardinals, cardinals.Length);
+                    }
+                }
+            }
         }
 
         public string Backend { get; }

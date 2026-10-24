@@ -2070,6 +2070,13 @@ static void WL_AccessibilityNotify(NativeWindow* handle, int identifier, int kin
     }
 }
 
+static void WL_SetIcon(NativeWindow* handle, const int* cardinals, int count)
+{
+    (void)handle;
+    (void)cardinals;
+    (void)count;
+}
+
 static void WL_AccessibilityNotifyText(NativeWindow* handle, int identifier, int inserted, int offset,
     int length, const char* text)
 {
@@ -2106,5 +2113,6 @@ const NativeBackend WL_Backend =
     WL_AccessibilityUpdateNode,
     WL_AccessibilityCommit,
     WL_AccessibilityNotify,
-    WL_AccessibilityNotifyText
+    WL_AccessibilityNotifyText,
+    WL_SetIcon
 };

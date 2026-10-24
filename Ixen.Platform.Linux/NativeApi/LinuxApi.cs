@@ -53,6 +53,9 @@ namespace Ixen.Platform.Linux.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowCursorImage", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetWindowCursorImage(IntPtr windowPtr, byte[] pixels, int width, int height, int hotspotX, int hotspotY);
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowIcon", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetWindowIcon(IntPtr windowPtr, int[] cardinals, int count);
+
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterPaintCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterPaintCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnPaintCallBack callback);
 

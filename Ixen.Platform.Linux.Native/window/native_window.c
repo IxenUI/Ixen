@@ -338,6 +338,14 @@ int NW_IsPresentable(NativeWindow* window)
     return window == NULL ? 0 : window->backend->isPresentable(window);
 }
 
+void NW_SetIcon(NativeWindow* window, const int* cardinals, int count)
+{
+    if (window != NULL)
+    {
+        window->backend->setIcon(window, cardinals, count);
+    }
+}
+
 void NW_SetCursor(NativeWindow* window, int kind)
 {
     if (window != NULL)

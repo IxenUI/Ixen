@@ -60,6 +60,11 @@ void WA_SetWindowCursorImage(NativeWindow* window, const void* pixels, int width
     NW_SetCursorImage(window, pixels, width, height, hotspotX, hotspotY);
 }
 
+void WA_SetWindowIcon(NativeWindow* window, const int* cardinals, int count)
+{
+    NW_SetIcon(window, cardinals, count);
+}
+
 void WA_RegisterPaintCallBack(NativeWindow* window, void callBack(int, int))
 {
     NW_RegisterPaintCallBack(window, callBack);

@@ -33,6 +33,7 @@ typedef struct NativeBackend
     void (*accessibilityCommit)(NativeWindow*, int, const int*, int);
     void (*accessibilityNotify)(NativeWindow*, int, int, const char*);
     void (*accessibilityNotifyText)(NativeWindow*, int, int, int, int, const char*);
+    void (*setIcon)(NativeWindow*, const int*, int);
 } NativeBackend;
 
 struct NativeWindow
