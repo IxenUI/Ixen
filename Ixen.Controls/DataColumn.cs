@@ -9,6 +9,10 @@ namespace Ixen.Controls
 
         public float Width { get; set; }
 
+        public bool Resizable { get; set; } = true;
+
+        public float MinWidth { get; set; } = 32;
+
         public Action<VisualElement, object> Bind { get; set; }
 
         public Comparison<object> Compare { get; set; }

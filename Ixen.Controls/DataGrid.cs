@@ -13,6 +13,8 @@ namespace Ixen.Controls
         public const string HEADER = "DataGridHeader";
         public const string BODY = "DataGridBody";
 
+        private const float EDGE_GRIP = 6;
+
         public event EventHandler<EventArgs> SelectionChanged;
 
         private readonly VisualElement _header;
@@ -26,6 +28,9 @@ namespace Ixen.Controls
         private bool _descending;
         private object _selectedItem;
         private int _selected = -1;
+        private int _resizing = -1;
+        private float _resizeFrom;
+        private bool _resized;
 
         public DataGrid()
         {
@@ -175,6 +180,11 @@ namespace Ixen.Controls
                 var cell = new DataGridHeaderCell();
 
                 cell.PointerClick += OnHeaderClick;
+                cell.PointerMove += OnHeaderMove;
+                cell.PointerLeave += OnHeaderLeave;
+                cell.PointerDragStart += OnHeaderDragStart;
+                cell.PointerDrag += OnHeaderDrag;
+                cell.PointerDragEnd += OnHeaderDragEnd;
 
                 _headerCells.Add(cell);
                 _header.AddChild(cell);
@@ -294,7 +304,91 @@ namespace Ixen.Controls
 
             args.Handled = true;
 
+            if (_resized)
+            {
+                _resized = false;
+
+                return;
+            }
+
             SortBy(index);
+        }
+
+        public void ResizeColumn(int column, float width)
+        {
+            if (column < 0 || column >= _columns.Count)
+            {
+                return;
+            }
+
+            DataColumn resized = _columns[column];
+
+            resized.Width = width < resized.MinWidth ? resized.MinWidth : width;
+
+            SizeCell(_headerCells[column], resized);
+
+            _body.Refresh();
+        }
+
+        private bool AtEdge(DataGridHeaderCell cell, float x)
+        {
+            int index = _headerCells.IndexOf(cell);
+
+            return index >= 0 && index < _columns.Count && _columns[index].Resizable
+                && x >= cell.ContentX + cell.ContentWidth - EDGE_GRIP;
+        }
+
+        private void OnHeaderMove(object sender, PointerEventArgs args)
+        {
+            if (sender is DataGridHeaderCell cell && _resizing < 0)
+            {
+                cell.ToggleState(DataGridHeaderCell.EDGE, AtEdge(cell, args.X));
+            }
+        }
+
+        private void OnHeaderLeave(object sender, PointerEventArgs args)
+        {
+            if (sender is DataGridHeaderCell cell && _resizing < 0)
+            {
+                cell.ToggleState(DataGridHeaderCell.EDGE, false);
+            }
+        }
+
+        private void OnHeaderDragStart(object sender, DragEventArgs args)
+        {
+            if (!(sender is DataGridHeaderCell cell) || !AtEdge(cell, args.X - args.TotalX))
+            {
+                return;
+            }
+
+            args.Handled = true;
+
+            _resizing = _headerCells.IndexOf(cell);
+            _resizeFrom = cell.ActualWidth;
+            _resized = true;
+        }
+
+        private void OnHeaderDrag(object sender, DragEventArgs args)
+        {
+            if (_resizing < 0)
+            {
+                return;
+            }
+
+            args.Handled = true;
+
+            ResizeColumn(_resizing, _resizeFrom + args.TotalX);
+        }
+
+        private void OnHeaderDragEnd(object sender, DragEventArgs args)
+        {
+            if (_resizing < 0)
+            {
+                return;
+            }
+
+            _headerCells[_resizing].ToggleState(DataGridHeaderCell.EDGE, false);
+            _resizing = -1;
         }
 
         private void OnKeyDown(object sender, KeyEventArgs args)

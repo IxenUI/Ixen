@@ -48,10 +48,10 @@ namespace Ixen.Core.Visual
             set => _height = value < 0 ? 0 : value;
         }
 
-        internal virtual float ActualWidth
+        public float ActualWidth
             => Width;
 
-        internal virtual float ActualHeight
+        public float ActualHeight
             => Height;
 
         internal virtual void SetSize(float width, float height)

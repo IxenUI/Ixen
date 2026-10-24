@@ -229,6 +229,10 @@ $control_focus_soft:   #EEF1FE
     color: $control_text_off
 }
 
+#DataGridHeaderCell:edge {
+    cursor: ew-resize
+}
+
 #MenuItemShortcut {
     margin: 0px 0px 0px 24px
     color: $control_text_off

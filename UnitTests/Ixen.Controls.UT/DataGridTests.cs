@@ -7,6 +7,7 @@ using Ixen.Core.Visual.Styles.Descriptors;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ixen.Controls.UT
 {
@@ -345,6 +346,89 @@ namespace Ixen.Controls.UT
                 + "collapsing into one string");
             Assert.AreEqual(AccessibleRole.TableCell, row.Children[0].Role);
             Assert.AreEqual("Yeats", row.Children[0].Name);
+        }
+
+        private void DragEdge(int column, float by)
+        {
+            DataGridHeaderCell cell = HeaderCell(column);
+            float x = cell.ContentX + cell.ContentWidth - 2;
+            float y = cell.Y + cell.ActualHeight / 2;
+
+            _surface.PointerDown(x, y, PointerButton.Left);
+            _surface.PointerMove(x + by / 2, y);
+            _surface.PointerMove(x + by, y);
+            _surface.PointerUp(x + by, y, PointerButton.Left);
+            Layout();
+        }
+
+        [TestMethod]
+        public void DraggingAHeadersEdgeResizesTheColumnAndItsCells()
+        {
+            DragEdge(0, 40);
+
+            Assert.AreEqual(200f, _grid.Columns[0].Width);
+            Assert.AreEqual(200f, HeaderCell(0).ActualWidth);
+
+            DataGridRow row = (DataGridRow)_grid.Body.ChildElements.First(c => c is DataGridRow);
+
+            Assert.AreEqual(200f, row.CellAt(0).ActualWidth, "every row's cell follows its header");
+            Assert.AreEqual(-1, _grid.SortedColumn,
+                "the press that ends a resize is not also a click on the header");
+        }
+
+        [TestMethod]
+        public void AColumnStopsAtItsMinimumWidth()
+        {
+            DragEdge(0, -500);
+
+            Assert.AreEqual(_grid.Columns[0].MinWidth, _grid.Columns[0].Width);
+        }
+
+        [TestMethod]
+        public void AWeightedColumnStartsFromTheWidthItHad()
+        {
+            float before = HeaderCell(1).ActualWidth;
+
+            DragEdge(1, -30);
+
+            Assert.AreEqual(before - 30, _grid.Columns[1].Width, 0.5f,
+                "the drag is relative to what was on screen, not to a width of zero");
+        }
+
+        [TestMethod]
+        public void ANonResizableColumnIgnoresItsEdge()
+        {
+            _grid.Columns[0].Resizable = false;
+
+            DragEdge(0, 40);
+
+            Assert.AreEqual(160f, _grid.Columns[0].Width);
+        }
+
+        [TestMethod]
+        public void TheEdgeIsMarkedSoTheThemeCanShowTheResizeCursor()
+        {
+            DataGridHeaderCell cell = HeaderCell(0);
+            float y = cell.Y + cell.ActualHeight / 2;
+
+            _surface.PointerMove(cell.ContentX + cell.ContentWidth - 2, y);
+            Assert.IsTrue(cell.HasState(DataGridHeaderCell.EDGE));
+
+            _surface.PointerMove(cell.ContentX + 10, y);
+            Assert.IsFalse(cell.HasState(DataGridHeaderCell.EDGE));
+        }
+
+        [TestMethod]
+        public void AClickAwayFromTheEdgeStillSorts()
+        {
+            DataGridHeaderCell cell = HeaderCell(0);
+            float y = cell.Y + cell.ActualHeight / 2;
+
+            _surface.PointerDown(cell.ContentX + 10, y, PointerButton.Left);
+            _surface.PointerUp(cell.ContentX + 10, y, PointerButton.Left);
+
+            Assert.AreEqual(0, _grid.SortedColumn);
+            Assert.AreEqual(160f, _grid.Columns[0].Width);
         }
     }
 }

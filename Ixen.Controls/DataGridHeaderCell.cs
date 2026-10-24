@@ -11,6 +11,7 @@ namespace Ixen.Controls
         public const string MARK = "DataGridSortMark";
         public const string SORTED = "sorted";
         public const string DESCENDING = "descending";
+        public const string EDGE = "edge";
 
 
         private readonly VisualElement _label;
