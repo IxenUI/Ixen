@@ -468,6 +468,64 @@ static const char* ValueOf(AtspiBridge* bridge, int identifier)
     return node == NULL ? "" : Text(node->value);
 }
 
+static int Utf8Count(const char* text)
+{
+    int count = 0;
+
+    for (const unsigned char* at = (const unsigned char*)text; *at != '\0'; at++)
+    {
+        if ((*at & 0xC0) != 0x80)
+        {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+static int Utf8Byte(const char* text, int characters)
+{
+    int index = 0;
+    int seen = 0;
+
+    while (text[index] != '\0')
+    {
+        if (((unsigned char)text[index] & 0xC0) != 0x80)
+        {
+            if (seen == characters)
+            {
+                return index;
+            }
+
+            seen++;
+        }
+
+        index++;
+    }
+
+    return index;
+}
+
+static dbus_int32_t Utf8At(const char* text, int byteIndex)
+{
+    const unsigned char* at = (const unsigned char*)text + byteIndex;
+
+    if (*at < 0x80)
+    {
+        return *at;
+    }
+
+    int extra = *at >= 0xF0 ? 3 : *at >= 0xE0 ? 2 : 1;
+    dbus_int32_t code = *at & (0x3F >> extra);
+
+    for (int index = 1; index <= extra && (at[index] & 0xC0) == 0x80; index++)
+    {
+        code = (code << 6) | (at[index] & 0x3F);
+    }
+
+    return code;
+}
+
 static int HasText(AtspiBridge* bridge, int identifier)
 {
     AtspiNode* node = identifier == APP_NODE ? NULL : NodeAt(bridge, identifier);
@@ -723,11 +781,11 @@ static DBusHandlerResult TextProperty(AtspiBridge* bridge, DBusMessage* message,
 
     if (strcmp(property, "CharacterCount") == 0)
     {
-        AppendVariantInt(&iter, (int)strlen(ValueOf(bridge, identifier)));
+        AppendVariantInt(&iter, Utf8Count(ValueOf(bridge, identifier)));
     }
     else if (strcmp(property, "CaretOffset") == 0)
     {
-        AppendVariantInt(&iter, (int)strlen(ValueOf(bridge, identifier)));
+        AppendVariantInt(&iter, Utf8Count(ValueOf(bridge, identifier)));
     }
     else
     {
@@ -813,7 +871,7 @@ static DBusHandlerResult GetAll(AtspiBridge* bridge, DBusMessage* message, int i
     }
     else if (strcmp(interface, IFACE_TEXT) == 0)
     {
-        int length = (int)strlen(ValueOf(bridge, identifier));
+        int length = Utf8Count(ValueOf(bridge, identifier));
 
         AppendDictInt(&dict, "CharacterCount", length);
         AppendDictInt(&dict, "CaretOffset", length);
@@ -1330,7 +1388,7 @@ static DBusHandlerResult TextInterface(AtspiBridge* bridge, DBusMessage* message
 {
     const char* member = dbus_message_get_member(message);
     const char* value = ValueOf(bridge, identifier);
-    int length = (int)strlen(value);
+    int length = Utf8Count(value);
     DBusMessage* reply = dbus_message_new_method_return(message);
 
     if (reply == NULL)
@@ -1367,7 +1425,9 @@ static DBusHandlerResult TextInterface(AtspiBridge* bridge, DBusMessage* message
             end = start;
         }
 
-        char* slice = (char*)malloc((size_t)(end - start) + 1);
+        int from = Utf8Byte(value, start);
+        int to = Utf8Byte(value, end);
+        char* slice = (char*)malloc((size_t)(to - from) + 1);
 
         if (slice == NULL)
         {
@@ -1377,8 +1437,8 @@ static DBusHandlerResult TextInterface(AtspiBridge* bridge, DBusMessage* message
             return DBUS_HANDLER_RESULT_NEED_MEMORY;
         }
 
-        memcpy(slice, value + start, (size_t)(end - start));
-        slice[end - start] = '\0';
+        memcpy(slice, value + from, (size_t)(to - from));
+        slice[to - from] = '\0';
 
         const char* text = slice;
 
@@ -1400,7 +1460,7 @@ static DBusHandlerResult TextInterface(AtspiBridge* bridge, DBusMessage* message
 
         dbus_message_get_args(message, &error, DBUS_TYPE_INT32, &offset, DBUS_TYPE_INVALID);
 
-        dbus_int32_t character = offset >= 0 && offset < length ? (unsigned char)value[offset] : 0;
+        dbus_int32_t character = offset >= 0 && offset < length ? Utf8At(value, Utf8Byte(value, offset)) : 0;
 
         dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &character);
     }
@@ -2236,6 +2296,50 @@ void Atspi_Notify(AtspiBridge* bridge, int identifier, int kind, const char* tex
     {
         AppendVariantString(&iter, "0");
     }
+
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "{sv}", &properties);
+    dbus_message_iter_close_container(&iter, &properties);
+
+    Send(bridge, signal);
+
+    dbus_connection_flush(bridge->bus);
+}
+
+void Atspi_NotifyText(AtspiBridge* bridge, int identifier, int inserted, int offset, int length, const char* text)
+{
+    if (bridge == NULL || !bridge->registered || bridge->bus == NULL || length <= 0)
+    {
+        return;
+    }
+
+    if (NodeAt(bridge, identifier) == NULL)
+    {
+        return;
+    }
+
+    char path[64];
+
+    PathOf(identifier, path, sizeof(path));
+
+    DBusMessage* signal = dbus_message_new_signal(path, IFACE_EVENT_OBJECT, "TextChanged");
+
+    if (signal == NULL)
+    {
+        return;
+    }
+
+    const char* detail = inserted ? "insert" : "delete";
+    dbus_int32_t first = offset;
+    dbus_int32_t second = length;
+    DBusMessageIter iter;
+    DBusMessageIter properties;
+
+    dbus_message_iter_init_append(signal, &iter);
+    dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &detail);
+    dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &first);
+    dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &second);
+
+    AppendVariantString(&iter, Text(text));
 
     dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "{sv}", &properties);
     dbus_message_iter_close_container(&iter, &properties);

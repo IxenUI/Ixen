@@ -1299,6 +1299,17 @@ static void X11_AccessibilityNotify(NativeWindow* handle, int identifier, int ki
     }
 }
 
+static void X11_AccessibilityNotifyText(NativeWindow* handle, int identifier, int inserted, int offset,
+    int length, const char* text)
+{
+    X11Window* window = (X11Window*)handle;
+
+    if (window != NULL)
+    {
+        Atspi_NotifyText(window->accessibility, identifier, inserted, offset, length, text);
+    }
+}
+
 const NativeBackend X11_Backend =
 {
     "X11",
@@ -1323,5 +1334,6 @@ const NativeBackend X11_Backend =
     X11_AccessibilityIsActive,
     X11_AccessibilityUpdateNode,
     X11_AccessibilityCommit,
-    X11_AccessibilityNotify
+    X11_AccessibilityNotify,
+    X11_AccessibilityNotifyText
 };

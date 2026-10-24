@@ -342,5 +342,53 @@ namespace Ixen.Core.UT.Native
 
             Assert.AreEqual(0, notices.Count, "focus has its own notice already");
         }
+
+        private static List<LinuxTextChange> Edits(string before, string after)
+            => new List<LinuxTextChange>(LinuxAccessibility.TextChanges(new AccessibilityChange
+            {
+                Kind = AccessibilityChangeKind.Value,
+                Previous = new AccessibleNode { Role = AccessibleRole.TextField, Value = before },
+                Current = new AccessibleNode { Role = AccessibleRole.TextField, Value = after }
+            }));
+
+        [TestMethod]
+        public void TypingIsOneInsertAtTheCaret()
+        {
+            List<LinuxTextChange> edits = Edits("Ad", "Ada");
+
+            Assert.AreEqual(1, edits.Count);
+            Assert.IsTrue(edits[0].Inserted);
+            Assert.AreEqual(2, edits[0].Offset);
+            Assert.AreEqual(1, edits[0].Length);
+            Assert.AreEqual("a", edits[0].Text);
+        }
+
+        [TestMethod]
+        public void AReplacementIsADeleteThenAnInsert()
+        {
+            List<LinuxTextChange> edits = Edits("Hello Ada", "Hello Zoe");
+
+            Assert.AreEqual(2, edits.Count);
+            Assert.IsFalse(edits[0].Inserted, "what went is said before what came, as GTK does");
+            Assert.AreEqual("Ada", edits[0].Text);
+            Assert.IsTrue(edits[1].Inserted);
+            Assert.AreEqual("Zoe", edits[1].Text);
+            Assert.AreEqual(6, edits[1].Offset);
+        }
+
+        [TestMethod]
+        public void OffsetsCountCharactersNotUtf16Units()
+        {
+            List<LinuxTextChange> edits = Edits("\U0001F600", "\U0001F600!");
+
+            Assert.AreEqual(1, edits[0].Offset,
+                "AT-SPI offsets are characters; the emoji before the caret is two UTF-16 units "
+                + "and one character");
+            Assert.AreEqual(1, edits[0].Length);
+
+            List<LinuxTextChange> emoji = Edits("a", "a\U0001F600");
+
+            Assert.AreEqual(1, emoji[0].Length, "and an inserted emoji is one character long");
+        }
     }
 }

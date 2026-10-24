@@ -404,3 +404,12 @@ void NW_AccessibilityNotify(NativeWindow* window, int identifier, int kind, cons
         window->backend->accessibilityNotify(window, identifier, kind, text);
     }
 }
+
+void NW_AccessibilityNotifyText(NativeWindow* window, int identifier, int inserted, int offset, int length,
+    const char* text)
+{
+    if (window != NULL)
+    {
+        window->backend->accessibilityNotifyText(window, identifier, inserted, offset, length, text);
+    }
+}

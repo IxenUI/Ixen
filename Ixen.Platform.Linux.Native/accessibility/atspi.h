@@ -40,5 +40,6 @@ void Atspi_UpdateNode(AtspiBridge* bridge, int identifier, int parent, int role,
 
 void Atspi_Commit(AtspiBridge* bridge, int root, const int* order, int count);
 void Atspi_Notify(AtspiBridge* bridge, int identifier, int kind, const char* text);
+void Atspi_NotifyText(AtspiBridge* bridge, int identifier, int inserted, int offset, int length, const char* text);
 
 #endif

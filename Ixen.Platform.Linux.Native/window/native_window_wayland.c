@@ -2058,6 +2058,17 @@ static void WL_AccessibilityNotify(NativeWindow* handle, int identifier, int kin
     }
 }
 
+static void WL_AccessibilityNotifyText(NativeWindow* handle, int identifier, int inserted, int offset,
+    int length, const char* text)
+{
+    WLWindow* window = (WLWindow*)handle;
+
+    if (window != NULL)
+    {
+        Atspi_NotifyText(window->accessibility, identifier, inserted, offset, length, text);
+    }
+}
+
 const NativeBackend WL_Backend =
 {
     "Wayland",
@@ -2082,5 +2093,6 @@ const NativeBackend WL_Backend =
     WL_AccessibilityIsActive,
     WL_AccessibilityUpdateNode,
     WL_AccessibilityCommit,
-    WL_AccessibilityNotify
+    WL_AccessibilityNotify,
+    WL_AccessibilityNotifyText
 };

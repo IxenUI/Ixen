@@ -147,3 +147,9 @@ void WA_AccessibilityNotify(NativeWindow* window, int identifier, int kind, cons
 {
     NW_AccessibilityNotify(window, identifier, kind, text);
 }
+
+void WA_AccessibilityNotifyText(NativeWindow* window, int identifier, int inserted, int offset, int length,
+    const char* text)
+{
+    NW_AccessibilityNotifyText(window, identifier, inserted, offset, length, text);
+}

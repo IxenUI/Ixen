@@ -64,6 +64,7 @@ int NW_AccessibilityIsActive(NativeWindow* window);
 void NW_AccessibilityUpdateNode(NativeWindow* window, int identifier, int parent, int role, long long states, int actions, int x, int y, int width, int height, const char* name, const char* description, const char* value, const char* shortcut);
 void NW_AccessibilityCommit(NativeWindow* window, int root, const int* order, int count);
 void NW_AccessibilityNotify(NativeWindow* window, int identifier, int kind, const char* text);
+void NW_AccessibilityNotifyText(NativeWindow* window, int identifier, int inserted, int offset, int length, const char* text);
 
 long NW_Schedule(int delayMilliseconds, int repeat, void callBack(long));
 void NW_Cancel(long identifier);

@@ -29,6 +29,7 @@ IXEN_API_ENTRY int WA_AccessibilityIsActive(NativeWindow* window);
 IXEN_API_ENTRY void WA_AccessibilityUpdateNode(NativeWindow* window, int identifier, int parent, int role, long long states, int actions, int x, int y, int width, int height, const char* name, const char* description, const char* value, const char* shortcut);
 IXEN_API_ENTRY void WA_AccessibilityCommit(NativeWindow* window, int root, const int* order, int count);
 IXEN_API_ENTRY void WA_AccessibilityNotify(NativeWindow* window, int identifier, int kind, const char* text);
+IXEN_API_ENTRY void WA_AccessibilityNotifyText(NativeWindow* window, int identifier, int inserted, int offset, int length, const char* text);
 
 IXEN_API_ENTRY long WA_Schedule(int delayMilliseconds, int repeat, void callBack(long));
 IXEN_API_ENTRY void WA_Cancel(long identifier);

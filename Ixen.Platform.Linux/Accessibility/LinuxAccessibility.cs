@@ -148,6 +148,16 @@ namespace Ixen.Platform.Linux.Accessibility
 
                     case AccessibilityChangeKind.Value:
                         Notify(window, change.Id, LinuxAccessibilityNotice.Value, null);
+
+                        if (change.Current.Role == AccessibleRole.TextField)
+                        {
+                            foreach (LinuxTextChange edit in TextChanges(change))
+                            {
+                                LinuxApi.AccessibilityNotifyText(window, change.Id, edit.Inserted ? 1 : 0,
+                                    edit.Offset, edit.Length, edit.Text);
+                            }
+                        }
+
                         break;
 
                     case AccessibilityChangeKind.Focus:
@@ -179,6 +189,43 @@ namespace Ixen.Platform.Linux.Accessibility
                         break;
                 }
             }
+        }
+
+        internal static IEnumerable<LinuxTextChange> TextChanges(AccessibilityChange change)
+        {
+            string before = change.Previous.Value ?? string.Empty;
+            string after = change.Current.Value ?? string.Empty;
+            TextDelta delta = TextDelta.Of(before, after);
+            int offset = CodePoints(before, 0, delta.Start);
+
+            if (delta.Removed > 0)
+            {
+                string removed = before.Substring(delta.Start, delta.Removed);
+
+                yield return new LinuxTextChange(false, offset, CodePoints(removed, 0, removed.Length), removed);
+            }
+
+            if (delta.Added > 0)
+            {
+                string added = after.Substring(delta.Start, delta.Added);
+
+                yield return new LinuxTextChange(true, offset, CodePoints(added, 0, added.Length), added);
+            }
+        }
+
+        private static int CodePoints(string text, int start, int length)
+        {
+            int count = 0;
+
+            for (int index = start; index < start + length; index++)
+            {
+                if (!char.IsLowSurrogate(text[index]))
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         internal static IEnumerable<LinuxAccessibilityNotice> StateNotices(AccessibilityChange change)

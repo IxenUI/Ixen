@@ -88,6 +88,9 @@ namespace Ixen.Platform.Linux.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_AccessibilityNotify", CallingConvention = CallingConvention.Cdecl)]
         public static extern void AccessibilityNotify(IntPtr windowPtr, int identifier, int kind, [MarshalAs(UnmanagedType.LPUTF8Str)] string text);
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_AccessibilityNotifyText", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void AccessibilityNotifyText(IntPtr windowPtr, int identifier, int inserted, int offset, int length, [MarshalAs(UnmanagedType.LPUTF8Str)] string text);
+
         [DllImport(LIB_NAME, EntryPoint = "WA_Schedule", CallingConvention = CallingConvention.Cdecl)]
         public static extern long Schedule(int delayMilliseconds, int repeat, [MarshalAs(UnmanagedType.FunctionPtr)] OnTimerCallBack callback);
 
