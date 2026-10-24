@@ -33,7 +33,8 @@ namespace Ixen.Platform.Linux.NativeApi
         ScrollIntoView = 8,
         Expand = 16,
         Collapse = 32,
-        Select = 64
+        Select = 64,
+        SetRangeValue = 128
     }
 
     internal enum LinuxAccessibilityNotice

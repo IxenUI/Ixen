@@ -2070,6 +2070,17 @@ static void WL_AccessibilityNotify(NativeWindow* handle, int identifier, int kin
     }
 }
 
+static void WL_AccessibilityUpdateRange(NativeWindow* handle, int identifier, int hasRange, double minimum,
+    double maximum, double value, double step)
+{
+    WLWindow* window = (WLWindow*)handle;
+
+    if (window != NULL)
+    {
+        Atspi_UpdateRange(window->accessibility, identifier, hasRange, minimum, maximum, value, step);
+    }
+}
+
 static void WL_SetIcon(NativeWindow* handle, const int* cardinals, int count)
 {
     (void)handle;
@@ -2114,5 +2125,6 @@ const NativeBackend WL_Backend =
     WL_AccessibilityCommit,
     WL_AccessibilityNotify,
     WL_AccessibilityNotifyText,
-    WL_SetIcon
+    WL_SetIcon,
+    WL_AccessibilityUpdateRange
 };

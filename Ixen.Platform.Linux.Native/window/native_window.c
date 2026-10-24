@@ -338,6 +338,15 @@ int NW_IsPresentable(NativeWindow* window)
     return window == NULL ? 0 : window->backend->isPresentable(window);
 }
 
+void NW_AccessibilityUpdateRange(NativeWindow* window, int identifier, int hasRange, double minimum,
+    double maximum, double value, double step)
+{
+    if (window != NULL)
+    {
+        window->backend->accessibilityUpdateRange(window, identifier, hasRange, minimum, maximum, value, step);
+    }
+}
+
 void NW_SetIcon(NativeWindow* window, const int* cardinals, int count)
 {
     if (window != NULL)

@@ -18,6 +18,7 @@
 #define IXEN_AXA_EXPAND 16
 #define IXEN_AXA_COLLAPSE 32
 #define IXEN_AXA_SELECT 64
+#define IXEN_AXA_SET_RANGE 128
 
 #define ATSPI_MAX_FDS 2
 
@@ -39,6 +40,8 @@ void Atspi_UpdateNode(AtspiBridge* bridge, int identifier, int parent, int role,
     const char* name, const char* description, const char* value, const char* shortcut);
 
 void Atspi_Commit(AtspiBridge* bridge, int root, const int* order, int count);
+void Atspi_UpdateRange(AtspiBridge* bridge, int identifier, int hasRange, double minimum, double maximum,
+    double value, double step);
 void Atspi_Notify(AtspiBridge* bridge, int identifier, int kind, const char* text);
 void Atspi_NotifyText(AtspiBridge* bridge, int identifier, int inserted, int offset, int length, const char* text);
 

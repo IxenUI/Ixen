@@ -63,6 +63,7 @@ namespace Ixen.Core.UT.Native
             { "IXEN_AXA_EXPAND", "Expand" },
             { "IXEN_AXA_COLLAPSE", "Collapse" },
             { "IXEN_AXA_SELECT", "Select" },
+            { "IXEN_AXA_SET_RANGE", "SetRangeValue" },
 
             { "IXEN_AXN_NAME", "Name" },
             { "IXEN_AXN_VALUE", "Value" },

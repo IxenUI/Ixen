@@ -92,6 +92,9 @@ namespace Ixen.Platform.Linux.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_AccessibilityCommit", CallingConvention = CallingConvention.Cdecl)]
         public static extern void AccessibilityCommit(IntPtr windowPtr, int root, int[] order, int count);
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_AccessibilityUpdateRange", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void AccessibilityUpdateRange(IntPtr windowPtr, int identifier, int hasRange, double minimum, double maximum, double value, double step);
+
         [DllImport(LIB_NAME, EntryPoint = "WA_AccessibilityNotify", CallingConvention = CallingConvention.Cdecl)]
         public static extern void AccessibilityNotify(IntPtr windowPtr, int identifier, int kind, [MarshalAs(UnmanagedType.LPUTF8Str)] string text);
 

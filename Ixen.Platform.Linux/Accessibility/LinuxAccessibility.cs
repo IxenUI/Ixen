@@ -95,6 +95,8 @@ namespace Ixen.Platform.Linux.Accessibility
                 LinuxApi.AccessibilityUpdateNode(window, id, node.Parent, node.Role, node.States,
                     node.Actions, node.X, node.Y, node.Width, node.Height,
                     node.Name, node.Description, node.Value, node.Shortcut);
+                LinuxApi.AccessibilityUpdateRange(window, id, node.HasRange ? 1 : 0, node.RangeMinimum,
+                    node.RangeMaximum, node.RangeValue, node.RangeStep);
 
                 moved = true;
             }

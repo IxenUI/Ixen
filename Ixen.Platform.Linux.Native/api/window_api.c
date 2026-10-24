@@ -65,6 +65,12 @@ void WA_SetWindowIcon(NativeWindow* window, const int* cardinals, int count)
     NW_SetIcon(window, cardinals, count);
 }
 
+void WA_AccessibilityUpdateRange(NativeWindow* window, int identifier, int hasRange, double minimum,
+    double maximum, double value, double step)
+{
+    NW_AccessibilityUpdateRange(window, identifier, hasRange, minimum, maximum, value, step);
+}
+
 void WA_RegisterPaintCallBack(NativeWindow* window, void callBack(int, int))
 {
     NW_RegisterPaintCallBack(window, callBack);

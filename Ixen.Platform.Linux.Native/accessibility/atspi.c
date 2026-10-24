@@ -25,6 +25,7 @@
 #define IFACE_TEXT "org.a11y.atspi.Text"
 #define IFACE_EDITABLE "org.a11y.atspi.EditableText"
 #define IFACE_SELECTION "org.a11y.atspi.Selection"
+#define IFACE_VALUE "org.a11y.atspi.Value"
 #define IFACE_SOCKET "org.a11y.atspi.Socket"
 #define IFACE_CACHE "org.a11y.atspi.Cache"
 #define IFACE_EVENT_OBJECT "org.a11y.atspi.Event.Object"
@@ -61,6 +62,11 @@ typedef struct AtspiNode
     int childCount;
     int childCapacity;
     int indexInParent;
+    int hasRange;
+    double rangeMinimum;
+    double rangeMaximum;
+    double rangeValue;
+    double rangeStep;
 } AtspiNode;
 
 struct AtspiBridge
@@ -325,6 +331,25 @@ static void AppendDictInt(DBusMessageIter* dict, const char* key, int value)
     dbus_message_iter_open_container(dict, DBUS_TYPE_DICT_ENTRY, NULL, &entry);
     dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &key);
     AppendVariantInt(&entry, value);
+    dbus_message_iter_close_container(dict, &entry);
+}
+
+static void AppendVariantDouble(DBusMessageIter* iter, double value)
+{
+    DBusMessageIter variant;
+
+    dbus_message_iter_open_container(iter, DBUS_TYPE_VARIANT, "d", &variant);
+    dbus_message_iter_append_basic(&variant, DBUS_TYPE_DOUBLE, &value);
+    dbus_message_iter_close_container(iter, &variant);
+}
+
+static void AppendDictDouble(DBusMessageIter* dict, const char* key, double value)
+{
+    DBusMessageIter entry;
+
+    dbus_message_iter_open_container(dict, DBUS_TYPE_DICT_ENTRY, NULL, &entry);
+    dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &key);
+    AppendVariantDouble(&entry, value);
     dbus_message_iter_close_container(dict, &entry);
 }
 
@@ -880,6 +905,81 @@ static int SelectedChild(AtspiBridge* bridge, int identifier, int nth)
     return -1;
 }
 
+static int Perform(AtspiBridge* bridge, int identifier, int action, const char* value);
+
+static AtspiNode* RangedNode(AtspiBridge* bridge, int identifier)
+{
+    AtspiNode* node = identifier == APP_NODE ? NULL : NodeAt(bridge, identifier);
+
+    return node != NULL && node->hasRange ? node : NULL;
+}
+
+static DBusHandlerResult ValueProperty(AtspiBridge* bridge, DBusMessage* message, int identifier,
+    const char* property)
+{
+    AtspiNode* node = RangedNode(bridge, identifier);
+    double value;
+
+    if (node == NULL)
+    {
+        return Unknown(bridge, message);
+    }
+
+    if (strcmp(property, "MinimumValue") == 0)
+    {
+        value = node->rangeMinimum;
+    }
+    else if (strcmp(property, "MaximumValue") == 0)
+    {
+        value = node->rangeMaximum;
+    }
+    else if (strcmp(property, "MinimumIncrement") == 0)
+    {
+        value = node->rangeStep;
+    }
+    else if (strcmp(property, "CurrentValue") == 0)
+    {
+        value = node->rangeValue;
+    }
+    else
+    {
+        return Unknown(bridge, message);
+    }
+
+    DBusMessage* reply = dbus_message_new_method_return(message);
+
+    if (reply == NULL)
+    {
+        return DBUS_HANDLER_RESULT_NEED_MEMORY;
+    }
+
+    DBusMessageIter iter;
+
+    dbus_message_iter_init_append(reply, &iter);
+    AppendVariantDouble(&iter, value);
+
+    return Answer(bridge, message, reply);
+}
+
+static void SetRange(AtspiBridge* bridge, int identifier, DBusMessageIter* variant)
+{
+    AtspiNode* node = RangedNode(bridge, identifier);
+
+    if (node == NULL || (node->actions & IXEN_AXA_SET_RANGE) == 0
+        || dbus_message_iter_get_arg_type(variant) != DBUS_TYPE_DOUBLE)
+    {
+        return;
+    }
+
+    double wanted = 0;
+    char text[64];
+
+    dbus_message_iter_get_basic(variant, &wanted);
+    snprintf(text, sizeof(text), "%.17g", wanted);
+
+    Perform(bridge, identifier, IXEN_AXA_SET_RANGE, text);
+}
+
 static DBusHandlerResult SelectionProperty(AtspiBridge* bridge, DBusMessage* message, int identifier,
     const char* property)
 {
@@ -967,6 +1067,15 @@ static DBusHandlerResult GetAll(AtspiBridge* bridge, DBusMessage* message, int i
     {
         AppendDictInt(&dict, "NSelectedChildren", SelectedCount(bridge, identifier));
     }
+    else if (strcmp(interface, IFACE_VALUE) == 0 && RangedNode(bridge, identifier) != NULL)
+    {
+        AtspiNode* ranged = RangedNode(bridge, identifier);
+
+        AppendDictDouble(&dict, "MinimumValue", ranged->rangeMinimum);
+        AppendDictDouble(&dict, "MaximumValue", ranged->rangeMaximum);
+        AppendDictDouble(&dict, "MinimumIncrement", ranged->rangeStep);
+        AppendDictDouble(&dict, "CurrentValue", ranged->rangeValue);
+    }
 
     dbus_message_iter_close_container(&iter, &dict);
 
@@ -1018,6 +1127,14 @@ static DBusHandlerResult Properties(AtspiBridge* bridge, DBusMessage* message, i
 
                 bridge->applicationId = (int)value;
             }
+            else if (interface != NULL && name != NULL
+                && strcmp(interface, IFACE_VALUE) == 0 && strcmp(name, "CurrentValue") == 0)
+            {
+                DBusMessageIter variant;
+
+                dbus_message_iter_recurse(&iter, &variant);
+                SetRange(bridge, identifier, &variant);
+            }
         }
 
         return Answer(bridge, message, dbus_message_new_method_return(message));
@@ -1059,6 +1176,11 @@ static DBusHandlerResult Properties(AtspiBridge* bridge, DBusMessage* message, i
     if (strcmp(interface, IFACE_SELECTION) == 0)
     {
         return SelectionProperty(bridge, message, identifier, property);
+    }
+
+    if (strcmp(interface, IFACE_VALUE) == 0)
+    {
+        return ValueProperty(bridge, message, identifier, property);
     }
 
     return Unknown(bridge, message);
@@ -1213,6 +1335,12 @@ static DBusHandlerResult Accessible(AtspiBridge* bridge, DBusMessage* message, i
             if (HasSelection(bridge, identifier))
             {
                 name = IFACE_SELECTION;
+                dbus_message_iter_append_basic(&array, DBUS_TYPE_STRING, &name);
+            }
+
+            if (RangedNode(bridge, identifier) != NULL)
+            {
+                name = IFACE_VALUE;
                 dbus_message_iter_append_basic(&array, DBUS_TYPE_STRING, &name);
             }
         }
@@ -1700,6 +1828,8 @@ static DBusHandlerResult Introspect(AtspiBridge* bridge, DBusMessage* message, i
         "<interface name=\"org.a11y.atspi.Action\"/>"
         "<interface name=\"org.a11y.atspi.Text\"/>"
         "<interface name=\"org.a11y.atspi.EditableText\"/>"
+        "<interface name=\"org.a11y.atspi.Selection\"/>"
+        "<interface name=\"org.a11y.atspi.Value\"/>"
         "<interface name=\"org.a11y.atspi.Application\"/>"
         "<interface name=\"org.freedesktop.DBus.Properties\"/>"
         "</node>";
@@ -2523,4 +2653,21 @@ void Atspi_NotifyText(AtspiBridge* bridge, int identifier, int inserted, int off
     Send(bridge, signal);
 
     dbus_connection_flush(bridge->bus);
+}
+
+void Atspi_UpdateRange(AtspiBridge* bridge, int identifier, int hasRange, double minimum, double maximum,
+    double value, double step)
+{
+    AtspiNode* node = bridge == NULL ? NULL : NodeAt(bridge, identifier);
+
+    if (node == NULL)
+    {
+        return;
+    }
+
+    node->hasRange = hasRange;
+    node->rangeMinimum = minimum;
+    node->rangeMaximum = maximum;
+    node->rangeValue = value;
+    node->rangeStep = step;
 }

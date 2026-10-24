@@ -50,6 +50,8 @@ int NW_IsPresentable(NativeWindow* window);
 void NW_SetCursor(NativeWindow* window, int kind);
 void NW_SetCursorImage(NativeWindow* window, const void* pixels, int width, int height, int hotspotX, int hotspotY);
 void NW_SetIcon(NativeWindow* window, const int* cardinals, int count);
+void NW_AccessibilityUpdateRange(NativeWindow* window, int identifier, int hasRange, double minimum,
+    double maximum, double value, double step);
 
 void NW_RegisterPaintCallBack(NativeWindow* window, void callBack(int, int));
 void NW_RegisterPointerCallBack(NativeWindow* window, void callBack(int, int, int, int));

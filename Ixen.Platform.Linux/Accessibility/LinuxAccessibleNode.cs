@@ -20,6 +20,11 @@ namespace Ixen.Platform.Linux.Accessibility
             Description = node.Description;
             Value = node.Value;
             Shortcut = node.Shortcut;
+            HasRange = node.HasRange;
+            RangeMinimum = node.RangeMinimum;
+            RangeMaximum = node.RangeMaximum;
+            RangeValue = node.RangeValue;
+            RangeStep = node.RangeStep;
         }
 
         internal int Parent { get; }
@@ -34,6 +39,11 @@ namespace Ixen.Platform.Linux.Accessibility
         internal string Description { get; }
         internal string Value { get; }
         internal string Shortcut { get; }
+        internal bool HasRange { get; }
+        internal float RangeMinimum { get; }
+        internal float RangeMaximum { get; }
+        internal float RangeValue { get; }
+        internal float RangeStep { get; }
 
         internal bool SameAs(LinuxAccessibleNode other)
             => Parent == other.Parent
@@ -47,6 +57,11 @@ namespace Ixen.Platform.Linux.Accessibility
                 && Name == other.Name
                 && Description == other.Description
                 && Value == other.Value
-                && Shortcut == other.Shortcut;
+                && Shortcut == other.Shortcut
+                && HasRange == other.HasRange
+                && RangeMinimum == other.RangeMinimum
+                && RangeMaximum == other.RangeMaximum
+                && RangeValue == other.RangeValue
+                && RangeStep == other.RangeStep;
     }
 }
