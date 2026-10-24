@@ -24,6 +24,7 @@
 #define IFACE_APPLICATION "org.a11y.atspi.Application"
 #define IFACE_TEXT "org.a11y.atspi.Text"
 #define IFACE_EDITABLE "org.a11y.atspi.EditableText"
+#define IFACE_SELECTION "org.a11y.atspi.Selection"
 #define IFACE_SOCKET "org.a11y.atspi.Socket"
 #define IFACE_CACHE "org.a11y.atspi.Cache"
 #define IFACE_EVENT_OBJECT "org.a11y.atspi.Event.Object"
@@ -820,6 +821,88 @@ static DBusHandlerResult ActionProperty(AtspiBridge* bridge, DBusMessage* messag
     return Answer(bridge, message, reply);
 }
 
+#define ATSPI_ROLE_RADIO_BUTTON 44
+
+static int IsSelectable(AtspiNode* node)
+{
+    return node != NULL && node->role != ATSPI_ROLE_RADIO_BUTTON
+        && ((node->actions & IXEN_AXA_SELECT) != 0 || ((node->states >> ATSPI_STATE_SELECTED) & 1ull) != 0);
+}
+
+static int IsSelected(AtspiNode* node)
+{
+    return IsSelectable(node) && ((node->states >> ATSPI_STATE_SELECTED) & 1ull) != 0;
+}
+
+static int HasSelection(AtspiBridge* bridge, int identifier)
+{
+    AtspiNode* node = identifier == APP_NODE ? NULL : NodeAt(bridge, identifier);
+
+    for (int index = 0; node != NULL && index < node->childCount; index++)
+    {
+        if (IsSelectable(NodeAt(bridge, node->children[index])))
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static int SelectedCount(AtspiBridge* bridge, int identifier)
+{
+    AtspiNode* node = NodeAt(bridge, identifier);
+    int count = 0;
+
+    for (int index = 0; node != NULL && index < node->childCount; index++)
+    {
+        if (IsSelected(NodeAt(bridge, node->children[index])))
+        {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+static int SelectedChild(AtspiBridge* bridge, int identifier, int nth)
+{
+    AtspiNode* node = NodeAt(bridge, identifier);
+
+    for (int index = 0; node != NULL && index < node->childCount; index++)
+    {
+        if (IsSelected(NodeAt(bridge, node->children[index])) && nth-- == 0)
+        {
+            return node->children[index];
+        }
+    }
+
+    return -1;
+}
+
+static DBusHandlerResult SelectionProperty(AtspiBridge* bridge, DBusMessage* message, int identifier,
+    const char* property)
+{
+    if (strcmp(property, "NSelectedChildren") != 0)
+    {
+        return Unknown(bridge, message);
+    }
+
+    DBusMessage* reply = dbus_message_new_method_return(message);
+
+    if (reply == NULL)
+    {
+        return DBUS_HANDLER_RESULT_NEED_MEMORY;
+    }
+
+    DBusMessageIter iter;
+
+    dbus_message_iter_init_append(reply, &iter);
+    AppendVariantInt(&iter, SelectedCount(bridge, identifier));
+
+    return Answer(bridge, message, reply);
+}
+
 static DBusHandlerResult GetAll(AtspiBridge* bridge, DBusMessage* message, int identifier,
     const char* interface)
 {
@@ -879,6 +962,10 @@ static DBusHandlerResult GetAll(AtspiBridge* bridge, DBusMessage* message, int i
     else if (strcmp(interface, IFACE_ACTION) == 0)
     {
         AppendDictInt(&dict, "NActions", ActionCount(bridge, identifier));
+    }
+    else if (strcmp(interface, IFACE_SELECTION) == 0)
+    {
+        AppendDictInt(&dict, "NSelectedChildren", SelectedCount(bridge, identifier));
     }
 
     dbus_message_iter_close_container(&iter, &dict);
@@ -967,6 +1054,11 @@ static DBusHandlerResult Properties(AtspiBridge* bridge, DBusMessage* message, i
     if (strcmp(interface, IFACE_ACTION) == 0)
     {
         return ActionProperty(bridge, message, identifier, property);
+    }
+
+    if (strcmp(interface, IFACE_SELECTION) == 0)
+    {
+        return SelectionProperty(bridge, message, identifier, property);
     }
 
     return Unknown(bridge, message);
@@ -1115,6 +1207,12 @@ static DBusHandlerResult Accessible(AtspiBridge* bridge, DBusMessage* message, i
             if (HasEditable(bridge, identifier))
             {
                 name = IFACE_EDITABLE;
+                dbus_message_iter_append_basic(&array, DBUS_TYPE_STRING, &name);
+            }
+
+            if (HasSelection(bridge, identifier))
+            {
+                name = IFACE_SELECTION;
                 dbus_message_iter_append_basic(&array, DBUS_TYPE_STRING, &name);
             }
         }
@@ -1384,6 +1482,79 @@ static DBusHandlerResult Action(AtspiBridge* bridge, DBusMessage* message, int i
     return Answer(bridge, message, reply);
 }
 
+static DBusHandlerResult Selection(AtspiBridge* bridge, DBusMessage* message, int identifier)
+{
+    const char* member = dbus_message_get_member(message);
+    AtspiNode* node = identifier == APP_NODE ? NULL : NodeAt(bridge, identifier);
+
+    if (node == NULL)
+    {
+        return Unknown(bridge, message);
+    }
+
+    dbus_int32_t index = 0;
+    DBusError error;
+
+    dbus_error_init(&error);
+    dbus_message_get_args(message, &error, DBUS_TYPE_INT32, &index, DBUS_TYPE_INVALID);
+    dbus_error_free(&error);
+
+    int child = index >= 0 && index < node->childCount ? node->children[index] : -1;
+
+    DBusMessage* reply = dbus_message_new_method_return(message);
+
+    if (reply == NULL)
+    {
+        return DBUS_HANDLER_RESULT_NEED_MEMORY;
+    }
+
+    DBusMessageIter iter;
+
+    dbus_message_iter_init_append(reply, &iter);
+
+    if (strcmp(member, "GetSelectedChild") == 0)
+    {
+        int selected = SelectedChild(bridge, identifier, index);
+
+        if (selected < 0)
+        {
+            AppendNullRef(&iter);
+        }
+        else
+        {
+            AppendSelfRef(bridge, &iter, selected);
+        }
+    }
+    else if (strcmp(member, "SelectChild") == 0)
+    {
+        dbus_bool_t done = child >= 0 && IsSelectable(NodeAt(bridge, child))
+            && Perform(bridge, child, IXEN_AXA_SELECT, NULL) != 0;
+
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &done);
+    }
+    else if (strcmp(member, "IsChildSelected") == 0)
+    {
+        dbus_bool_t selected = child >= 0 && IsSelected(NodeAt(bridge, child));
+
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &selected);
+    }
+    else if (strcmp(member, "DeselectSelectedChild") == 0 || strcmp(member, "DeselectChild") == 0
+        || strcmp(member, "SelectAll") == 0 || strcmp(member, "ClearSelection") == 0)
+    {
+        dbus_bool_t done = 0;
+
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &done);
+    }
+    else
+    {
+        dbus_message_unref(reply);
+
+        return Unknown(bridge, message);
+    }
+
+    return Answer(bridge, message, reply);
+}
+
 static DBusHandlerResult TextInterface(AtspiBridge* bridge, DBusMessage* message, int identifier)
 {
     const char* member = dbus_message_get_member(message);
@@ -1639,6 +1810,11 @@ static DBusHandlerResult Handle(DBusConnection* connection, DBusMessage* message
     if (strcmp(interface, IFACE_EDITABLE) == 0)
     {
         return Editable(bridge, message, identifier);
+    }
+
+    if (strcmp(interface, IFACE_SELECTION) == 0)
+    {
+        return Selection(bridge, message, identifier);
     }
 
     if (strcmp(interface, IFACE_INTROSPECTABLE) == 0)
