@@ -1551,7 +1551,7 @@ static int WL_Run(NativeWindow* handle)
         return 0;
     }
 
-    struct pollfd watched[2 + ATSPI_MAX_FDS];
+    struct pollfd watched[2 + ATSPI_MAX_FDS + NW_PREFERENCE_MAX_FDS];
     int painted = 1;
 
     while (!window->closed)
@@ -1623,6 +1623,17 @@ static int WL_Run(NativeWindow* handle)
             count++;
         }
 
+        int preferenceFds[NW_PREFERENCE_MAX_FDS];
+        int preferences = NW_PreferenceFds(preferenceFds, NW_PREFERENCE_MAX_FDS);
+
+        for (int index = 0; index < preferences; index++)
+        {
+            watched[count].fd = preferenceFds[index];
+            watched[count].events = POLLIN;
+            watched[count].revents = 0;
+            count++;
+        }
+
         int timeout = NT_Timeout(window->dirty && painted);
         int repeat = RepeatWait(window);
 
@@ -1648,6 +1659,7 @@ static int WL_Run(NativeWindow* handle)
         }
 
         Atspi_Pump(window->accessibility);
+        NW_PumpPreferences(&window->base);
     }
 
     return 0;

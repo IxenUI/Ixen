@@ -13,6 +13,7 @@ namespace Ixen.Platform.Linux.NativeApi
         public delegate void OnTextCallBack([MarshalAs(UnmanagedType.LPUTF8Str)] string text);
         public delegate void OnWheelCallBack(int x, int y, int deltaX, int deltaY, int modifiers);
         public delegate void OnTimerCallBack(long id);
+        public delegate void OnPreferencesCallBack();
         public delegate int OnAccessibilityCallBack(int identifier, int action,
             [MarshalAs(UnmanagedType.LPUTF8Str)] string value);
 
@@ -66,6 +67,9 @@ namespace Ixen.Platform.Linux.NativeApi
 
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterWheelCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterWheelCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnWheelCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterPreferencesCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterPreferencesCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnPreferencesCallBack callback);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_GetClipboardText", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr GetClipboardText(IntPtr windowPtr);

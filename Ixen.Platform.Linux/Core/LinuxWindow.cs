@@ -30,6 +30,7 @@ namespace Ixen.Platform.Linux
         private readonly LinuxApi.OnKeyCallBack _onKey;
         private readonly LinuxApi.OnTextCallBack _onText;
         private readonly LinuxApi.OnWheelCallBack _onWheel;
+        private readonly LinuxApi.OnPreferencesCallBack _onPreferences;
 
         private readonly IxenSurface _ixenSurface;
         private readonly IxenHost _host;
@@ -38,9 +39,7 @@ namespace Ixen.Platform.Linux
         public LinuxWindow(IxenSurface ixenSurface)
         {
             _ixenSurface = ixenSurface;
-            _ixenSurface.ReducedMotion = LinuxApi.PrefersReducedMotion() != 0;
-            _ixenSurface.HighContrast = LinuxApi.PrefersHighContrast() != 0;
-            _ixenSurface.FontScale = LinuxApi.TextScale() / (float)PERCENT;
+            ReadPreferences();
             _ixenSurface.PreservesFrame = true;
 
             _host = new IxenHost(ixenSurface, RequestRepaint, new LinuxScheduler(),
@@ -56,6 +55,7 @@ namespace Ixen.Platform.Linux
             _onKey = OnKey;
             _onText = OnText;
             _onWheel = OnWheel;
+            _onPreferences = OnPreferences;
 
             _windowPtr = LinuxApi.CreateWindow(_ixenSurface.InitOptions.Title,
                 _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
@@ -77,6 +77,7 @@ namespace Ixen.Platform.Linux
             LinuxApi.RegisterKeyCallBack(_windowPtr, _onKey);
             LinuxApi.RegisterTextCallBack(_windowPtr, _onText);
             LinuxApi.RegisterWheelCallBack(_windowPtr, _onWheel);
+            LinuxApi.RegisterPreferencesCallBack(_windowPtr, _onPreferences);
 
             _accessibility.Register();
 
@@ -239,6 +240,24 @@ namespace Ixen.Platform.Linux
             }
 
             _host.TextInput(text);
+        }
+
+        private void ReadPreferences()
+        {
+            _ixenSurface.ReducedMotion = LinuxApi.PrefersReducedMotion() != 0;
+            _ixenSurface.HighContrast = LinuxApi.PrefersHighContrast() != 0;
+            _ixenSurface.FontScale = LinuxApi.TextScale() / (float)PERCENT;
+        }
+
+        private void OnPreferences()
+        {
+            if (_capturePath != null)
+            {
+                return;
+            }
+
+            ReadPreferences();
+            RequestRepaint();
         }
 
         private void OnWheel(int x, int y, int deltaX, int deltaY, int modifiers)

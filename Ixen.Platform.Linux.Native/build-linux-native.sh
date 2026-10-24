@@ -70,7 +70,7 @@ if [ "$CONFIG" = "Debug" ]; then
 fi
 
 SOURCES="window/native_window.c window/native_window_x11.c window/native_window_wayland.c"
-SOURCES="$SOURCES $GENERATED/xdg-shell-protocol.c accessibility/atspi.c api/window_api.c"
+SOURCES="$SOURCES $GENERATED/xdg-shell-protocol.c accessibility/atspi.c preferences/portal.c api/window_api.c"
 FLAGS="-std=gnu11 -fPIC -fvisibility=hidden -Wall -Wextra $OPT -shared -I$GENERATED"
 LIBS="$(pkg-config --cflags --libs x11 xcursor dbus-1 wayland-client wayland-cursor xkbcommon)"
 

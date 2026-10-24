@@ -36,5 +36,6 @@ IXEN_API_ENTRY void WA_Cancel(long identifier);
 IXEN_API_ENTRY int WA_PrefersReducedMotion(void);
 IXEN_API_ENTRY int WA_PrefersHighContrast(void);
 IXEN_API_ENTRY int WA_TextScale(void);
+IXEN_API_ENTRY void WA_RegisterPreferencesCallBack(NativeWindow* window, void callBack(void));
 
 #endif

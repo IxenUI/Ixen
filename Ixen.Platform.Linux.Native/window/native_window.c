@@ -1,5 +1,6 @@
 #include "native_window.h"
 #include "native_backend.h"
+#include "../preferences/portal.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -177,12 +178,31 @@ static int ReadFlag(const char* name)
 
 int NW_PrefersReducedMotion(void)
 {
-    return ReadFlag("IXEN_REDUCED_MOTION");
+    if (getenv("IXEN_REDUCED_MOTION") != NULL)
+    {
+        return ReadFlag("IXEN_REDUCED_MOTION");
+    }
+
+    int portal = Portal_ReducedMotion(Portal_Get());
+
+    return portal < 0 ? 0 : portal;
 }
 
 int NW_PrefersHighContrast(void)
 {
-    return ReadFlag("IXEN_HIGH_CONTRAST");
+    if (getenv("IXEN_HIGH_CONTRAST") != NULL)
+    {
+        return ReadFlag("IXEN_HIGH_CONTRAST");
+    }
+
+    int portal = Portal_HighContrast(Portal_Get());
+
+    return portal < 0 ? 0 : portal;
+}
+
+static int InRange(int percent)
+{
+    return percent >= 50 && percent <= 400;
 }
 
 int NW_TextScale(void)
@@ -193,17 +213,40 @@ int NW_TextScale(void)
 
     if (preference == NULL)
     {
-        return 100;
+        int portal = Portal_TextScale(Portal_Get());
+
+        return InRange(portal) ? portal : 100;
     }
 
     percent = strtol(preference, &end, 10);
 
-    if (end == preference || percent < 50 || percent > 400)
+    if (end == preference || !InRange((int)percent))
     {
         return 100;
     }
 
     return (int)percent;
+}
+
+void NW_RegisterPreferencesCallBack(NativeWindow* window, void callBack(void))
+{
+    if (window != NULL)
+    {
+        window->preferencesCallBack = callBack;
+    }
+}
+
+int NW_PreferenceFds(int* fds, int max)
+{
+    return Portal_Fds(Portal_Get(), fds, max);
+}
+
+void NW_PumpPreferences(NativeWindow* window)
+{
+    if (Portal_Pump(Portal_Get()) && window != NULL && window->preferencesCallBack != NULL)
+    {
+        window->preferencesCallBack();
+    }
 }
 
 static int PrefersWayland(void)

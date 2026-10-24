@@ -1046,7 +1046,7 @@ static int X11_Run(NativeWindow* handle)
     XMapWindow(window->display, window->window);
     XFlush(window->display);
 
-    struct pollfd watched[2 + ATSPI_MAX_FDS];
+    struct pollfd watched[2 + ATSPI_MAX_FDS + NW_PREFERENCE_MAX_FDS];
 
     watched[0].fd = ConnectionNumber(window->display);
     watched[0].events = POLLIN;
@@ -1098,11 +1098,20 @@ static int X11_Run(NativeWindow* handle)
 
         int fds[ATSPI_MAX_FDS];
         int count = 2 + Atspi_Fds(window->accessibility, fds, ATSPI_MAX_FDS);
-
         for (int index = 2; index < count; index++)
         {
             watched[index].fd = fds[index - 2];
             watched[index].events = POLLIN;
+        }
+
+        int preferenceFds[NW_PREFERENCE_MAX_FDS];
+        int preferences = NW_PreferenceFds(preferenceFds, NW_PREFERENCE_MAX_FDS);
+
+        for (int index = 0; index < preferences; index++)
+        {
+            watched[count].fd = preferenceFds[index];
+            watched[count].events = POLLIN;
+            count++;
         }
 
         for (int index = 0; index < count; index++)
@@ -1114,6 +1123,7 @@ static int X11_Run(NativeWindow* handle)
 
         Drain(window);
         Atspi_Pump(window->accessibility);
+        NW_PumpPreferences(&window->base);
     }
 
     return 0;

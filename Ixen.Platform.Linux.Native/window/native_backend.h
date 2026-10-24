@@ -38,6 +38,7 @@ typedef struct NativeBackend
 struct NativeWindow
 {
     const NativeBackend* backend;
+    void (*preferencesCallBack)(void);
 };
 
 extern const NativeBackend X11_Backend;

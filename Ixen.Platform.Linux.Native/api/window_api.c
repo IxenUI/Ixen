@@ -120,6 +120,11 @@ int WA_TextScale(void)
     return NW_TextScale();
 }
 
+void WA_RegisterPreferencesCallBack(NativeWindow* window, void callBack(void))
+{
+    NW_RegisterPreferencesCallBack(window, callBack);
+}
+
 void WA_RegisterAccessibilityCallBack(NativeWindow* window, int callBack(int, int, const char*))
 {
     NW_RegisterAccessibilityCallBack(window, callBack);

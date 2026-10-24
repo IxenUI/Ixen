@@ -71,5 +71,10 @@ void NW_Cancel(long identifier);
 int NW_PrefersReducedMotion(void);
 int NW_PrefersHighContrast(void);
 int NW_TextScale(void);
+void NW_RegisterPreferencesCallBack(NativeWindow* window, void callBack(void));
+int NW_PreferenceFds(int* fds, int max);
+void NW_PumpPreferences(NativeWindow* window);
+
+#define NW_PREFERENCE_MAX_FDS 1
 
 #endif
