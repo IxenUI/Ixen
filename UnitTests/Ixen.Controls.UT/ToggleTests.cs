@@ -5,6 +5,7 @@ using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles.Descriptors;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace Ixen.Controls.UT
 {
@@ -347,6 +348,104 @@ namespace Ixen.Controls.UT
                 + "should report rather than a decoration.");
             Assert.IsTrue(node.States.HasFlag(AccessibleStates.Checked),
                 "the state is where being checked belongs, and it survives having no name");
+        }
+
+        private RadioButton[] SizeGroup()
+        {
+            RadioButton small = Add<RadioButton>("small");
+            RadioButton medium = Add<RadioButton>("medium");
+            RadioButton large = Add<RadioButton>("large");
+
+            foreach (RadioButton radio in new[] { small, medium, large })
+            {
+                radio.Group = "size";
+            }
+
+            return new[] { small, medium, large };
+        }
+
+        [TestMethod]
+        public void TheArrowsMoveTheChoiceAndTheFocusThroughTheGroup()
+        {
+            RadioButton[] group = SizeGroup();
+
+            group[0].Checked = true;
+            Layout();
+            group[0].Focus();
+
+            _surface.KeyDown(Key.Down, KeyModifiers.None);
+
+            Assert.IsTrue(group[1].Checked);
+            Assert.IsFalse(group[0].Checked);
+            Assert.AreSame(group[1], _surface.FocusedElement);
+
+            _surface.KeyDown(Key.Right, KeyModifiers.None);
+            _surface.KeyDown(Key.Right, KeyModifiers.None);
+
+            Assert.IsTrue(group[0].Checked, "past the last one it comes back to the first");
+
+            _surface.KeyDown(Key.Up, KeyModifiers.None);
+
+            Assert.IsTrue(group[2].Checked, "and before the first one it goes to the last");
+        }
+
+        [TestMethod]
+        public void TheArrowsSkipADisabledRadio()
+        {
+            RadioButton[] group = SizeGroup();
+
+            group[0].Checked = true;
+            group[1].Enabled = false;
+            Layout();
+            group[0].Focus();
+
+            _surface.KeyDown(Key.Down, KeyModifiers.None);
+
+            Assert.IsTrue(group[2].Checked);
+            Assert.IsFalse(group[1].Checked);
+        }
+
+        [TestMethod]
+        public void AnArrowIsAUserChoiceSoBothSidesAreReported()
+        {
+            RadioButton[] group = SizeGroup();
+            int changes = 0;
+
+            group[0].Checked = true;
+            group[0].CheckedChanged += (sender, e) => changes++;
+            group[1].CheckedChanged += (sender, e) => changes++;
+            Layout();
+            group[0].Focus();
+
+            _surface.KeyDown(Key.Down, KeyModifiers.None);
+
+            Assert.AreEqual(2, changes, "a two-way binding on either radio has to hear it");
+        }
+
+        [TestMethod]
+        public void OnlyTheCheckedRadioIsATabStop()
+        {
+            RadioButton[] group = SizeGroup();
+
+            group[1].Checked = true;
+            Layout();
+
+            CollectionAssert.AreEqual(new[] { -1, 0, -1 }, group.Select(radio => radio.TabIndex).ToArray(),
+                "Tab enters a group once, on its answer, and the arrows do the rest");
+
+            group[2].Activate();
+
+            CollectionAssert.AreEqual(new[] { -1, -1, 0 }, group.Select(radio => radio.TabIndex).ToArray());
+        }
+
+        [TestMethod]
+        public void WithNoAnswerTheFirstRadioIsTheTabStop()
+        {
+            RadioButton[] group = SizeGroup();
+
+            Layout();
+
+            CollectionAssert.AreEqual(new[] { 0, -1, -1 }, group.Select(radio => radio.TabIndex).ToArray());
         }
     }
 }

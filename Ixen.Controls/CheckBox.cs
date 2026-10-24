@@ -67,6 +67,8 @@ namespace Ixen.Controls
 
             _mark.ToggleState(CHECKED, value);
 
+            OnCheckedSet();
+
             if (_interacting)
             {
                 CheckedChanged?.Invoke(this, EventArgs.Empty);
@@ -90,6 +92,10 @@ namespace Ixen.Controls
         }
 
         protected virtual void OnActivated() => Set(!_checked);
+
+        protected virtual void OnCheckedSet()
+        {
+        }
 
         public void Activate()
         {
