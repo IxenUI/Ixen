@@ -48,6 +48,7 @@ namespace Ixen.View.Android
         private bool _softKeyboardShown;
         private bool _backHandled;
         private BackGesture _backGesture;
+        private PreferenceObserver _preferences;
         private TextField _editing;
         private IxenAccessibilityProvider _accessibility;
 
@@ -64,9 +65,6 @@ namespace Ixen.View.Android
                 () => IsShown);
 
             IxenSynchronizationContext.Install(_host.Surface);
-
-            _host.Surface.ReducedMotion = PrefersReducedMotion();
-            _host.Surface.HighContrast = PrefersHighContrast();
 
             _skCanvasView.PaintSurface += OnPaintSurface;
             _skCanvasView.Touch += OnTouch;
@@ -262,10 +260,30 @@ namespace Ixen.View.Android
             base.OnAttachedToWindow();
 
             _backGesture = BackGesture.Register(this);
+            _preferences = PreferenceObserver.Register(Context, OnPreferences,
+                global::Android.Provider.Settings.Global.GetUriFor(
+                    global::Android.Provider.Settings.Global.AnimatorDurationScale),
+                global::Android.Provider.Settings.Secure.GetUriFor(HIGH_TEXT_CONTRAST));
+
+            OnPreferences();
+        }
+
+        private void OnPreferences()
+        {
+            if (_captured != null)
+            {
+                return;
+            }
+
+            _host.Surface.ReducedMotion = PrefersReducedMotion();
+            _host.Surface.HighContrast = PrefersHighContrast();
+            _skCanvasView.Invalidate();
         }
 
         protected override void OnDetachedFromWindow()
         {
+            _preferences?.Release();
+            _preferences = null;
             _backGesture?.Release();
             _backGesture = null;
 
