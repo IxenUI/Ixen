@@ -225,6 +225,45 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
+        public void OpenAtNearTheRightEdgeSlidesTheMenuBackIn()
+        {
+            _menu.OpenAt(VIEWPORT - 50, 90);
+            Layout();
+
+            Assert.AreEqual(VIEWPORT - _menu.Panel.BoxWidth, _menu.Panel.X,
+                "the menu ends at the window's edge instead of past it");
+            Assert.AreEqual(90f, _menu.Panel.Y);
+        }
+
+        [TestMethod]
+        public void OpenAtNearTheBottomOpensAboveThePoint()
+        {
+            _menu.OpenAt(100, VIEWPORT - 10);
+            Layout();
+
+            Assert.AreEqual(100f, _menu.Panel.X);
+            Assert.AreEqual(VIEWPORT - 10 - _menu.Panel.BoxHeight, _menu.Panel.Y,
+                "with no room below, the menu hangs above the pointer, as a native context menu does");
+        }
+
+        [TestMethod]
+        public void AnchoringToAnElementForgetsThePoint()
+        {
+            _menu.OpenAt(40, 40);
+            _menu.Close();
+            Layout();
+
+            _menu.AnchorElement = _page;
+            _menu.AnchorElement = null;
+            _menu.Open = true;
+            Layout();
+
+            Assert.AreEqual(0f, _menu.Panel.X,
+                "an element anchor replaces the point, so taking it away leaves nothing to hang from");
+            Assert.AreEqual(0f, _menu.Panel.Y);
+        }
+
+        [TestMethod]
         public void OpenAtDropsAnyAnchor()
         {
             _menu.AnchorElement = _page;

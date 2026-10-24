@@ -435,5 +435,19 @@ namespace Ixen.Core.UT.Input
 
             return null;
         }
+
+        [TestMethod]
+        public void AShortcutAssignedAfterTheFirstPassStillWorks()
+        {
+            VisualElement element = Save(null);
+
+            element.Shortcut = "Ctrl+K";
+            Layout();
+
+            Press(Key.K, KeyModifiers.Control);
+
+            Assert.AreEqual(1, _hits,
+                "shortcuts are collected by the layout pass, so assigning one has to ask for a pass");
+        }
     }
 }

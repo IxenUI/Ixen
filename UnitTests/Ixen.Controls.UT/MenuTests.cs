@@ -268,5 +268,61 @@ namespace Ixen.Controls.UT
                 "the coordinates are taken while it is open, so this really is a click where "
                 + "the item used to be - hidden means the hit test does not see it either");
         }
+
+        [TestMethod]
+        public void AShortcutIsWrittenAtTheEndOfItsItem()
+        {
+            _first.Shortcut = "Accel+O";
+            _menu.Open = true;
+            Layout();
+
+            VisualElement shortcut = _first.ShortcutElement;
+
+            Assert.IsNotNull(shortcut);
+            Assert.AreEqual("Ctrl+O", shortcut.Text);
+            Assert.AreEqual(_first.X + _first.ActualWidth, shortcut.X + shortcut.BoxWidth, 0.5f,
+                "the label takes the slack, so the shortcut sits against the item's far edge");
+            Assert.IsNull(_second.ShortcutElement, "an item with no shortcut gets nothing");
+        }
+
+        [TestMethod]
+        public void TheShortcutNamesThePlatformsAccelerator()
+        {
+            _first.Shortcut = "Accel+O";
+            _surface.AcceleratorModifier = KeyModifiers.Meta;
+            _menu.Open = true;
+            Layout();
+
+            Assert.AreEqual("Cmd+O", _first.ShortcutElement.Text);
+        }
+
+        [TestMethod]
+        public void TheShortcutIsAnnouncedOnceNotAsPartOfTheName()
+        {
+            _first.Shortcut = "Accel+O";
+            _menu.Open = true;
+            Layout();
+
+            AccessibleNode item = AccessibleSearch.Find(_surface.BuildAccessibilityTree(),
+                node => node.Element == _first);
+
+            Assert.AreEqual("Open", item.Name,
+                "the visible shortcut is decoration; a reader hears it from the node's shortcut");
+            Assert.AreEqual("Ctrl+O", item.Shortcut);
+        }
+
+        [TestMethod]
+        public void RemovingTheShortcutRemovesItsText()
+        {
+            _first.Shortcut = "Accel+O";
+            _menu.Open = true;
+            Layout();
+
+            _first.Shortcut = null;
+            Layout();
+
+            Assert.IsNull(_first.ShortcutElement);
+            Assert.AreEqual(0, _first.ChildElements.Count);
+        }
     }
 }

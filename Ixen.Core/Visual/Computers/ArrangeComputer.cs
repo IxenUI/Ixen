@@ -33,7 +33,26 @@ namespace Ixen.Core.Visual.Computers
                 VisualElement anchor = layer.AnchorElement
                     ?? _root?.FindByName(layer.StylesHandlers.Anchor.Descriptor.Name);
 
-                if (anchor == null || anchor == layer)
+                float anchorX;
+                float anchorY;
+                float anchorWidth;
+                float anchorHeight;
+
+                if (anchor != null && anchor != layer)
+                {
+                    anchorX = anchor.X;
+                    anchorY = anchor.Y;
+                    anchorWidth = anchor.ActualWidth;
+                    anchorHeight = anchor.ActualHeight;
+                }
+                else if (layer.HasAnchorPoint)
+                {
+                    anchorX = layer.AnchorPointX;
+                    anchorY = layer.AnchorPointY;
+                    anchorWidth = 0;
+                    anchorHeight = 0;
+                }
+                else
                 {
                     ArrangePlaced(layer, 0, 0);
                     continue;
@@ -42,12 +61,12 @@ namespace Ixen.Core.Visual.Computers
                 AnchorPlacementStyleDescriptor placement = layer.StylesHandlers.AnchorPlacement.Descriptor;
 
                 ArrangePlaced(layer,
-                    AnchorOriginX(layer, anchor, placement),
-                    AnchorOriginY(layer, anchor, placement));
+                    AnchorOriginX(layer, anchorX, anchorWidth, placement),
+                    AnchorOriginY(layer, anchorY, anchorHeight, placement));
             }
         }
 
-        private float AnchorOriginX(VisualElement layer, VisualElement anchor,
+        private float AnchorOriginX(VisualElement layer, float anchorX, float anchorWidth,
             AnchorPlacementStyleDescriptor placement)
         {
             float extent = PlacedExtentWidth(layer);
@@ -55,31 +74,31 @@ namespace Ixen.Core.Visual.Computers
 
             if (placement.Side == AnchorSide.Left)
             {
-                origin = anchor.X - extent;
+                origin = anchorX - extent;
 
-                if (!placement.NoFlip && origin < 0 && anchor.X + anchor.ActualWidth + extent <= _viewportWidth)
+                if (!placement.NoFlip && origin < 0 && anchorX + anchorWidth + extent <= _viewportWidth)
                 {
-                    origin = anchor.X + anchor.ActualWidth;
+                    origin = anchorX + anchorWidth;
                 }
             }
             else if (placement.Side == AnchorSide.Right)
             {
-                origin = anchor.X + anchor.ActualWidth;
+                origin = anchorX + anchorWidth;
 
-                if (!placement.NoFlip && origin + extent > _viewportWidth && anchor.X - extent >= 0)
+                if (!placement.NoFlip && origin + extent > _viewportWidth && anchorX - extent >= 0)
                 {
-                    origin = anchor.X - extent;
+                    origin = anchorX - extent;
                 }
             }
             else
             {
-                origin = Aligned(anchor.X, anchor.ActualWidth, extent, placement.Align);
+                origin = Aligned(anchorX, anchorWidth, extent, placement.Align);
             }
 
             return placement.NoFlip ? origin : Clamped(origin, extent, _viewportWidth);
         }
 
-        private float AnchorOriginY(VisualElement layer, VisualElement anchor,
+        private float AnchorOriginY(VisualElement layer, float anchorY, float anchorHeight,
             AnchorPlacementStyleDescriptor placement)
         {
             float extent = PlacedExtentHeight(layer);
@@ -87,25 +106,25 @@ namespace Ixen.Core.Visual.Computers
 
             if (placement.Side == AnchorSide.Below)
             {
-                origin = anchor.Y + anchor.ActualHeight;
+                origin = anchorY + anchorHeight;
 
-                if (!placement.NoFlip && origin + extent > _viewportHeight && anchor.Y - extent >= 0)
+                if (!placement.NoFlip && origin + extent > _viewportHeight && anchorY - extent >= 0)
                 {
-                    origin = anchor.Y - extent;
+                    origin = anchorY - extent;
                 }
             }
             else if (placement.Side == AnchorSide.Above)
             {
-                origin = anchor.Y - extent;
+                origin = anchorY - extent;
 
-                if (!placement.NoFlip && origin < 0 && anchor.Y + anchor.ActualHeight + extent <= _viewportHeight)
+                if (!placement.NoFlip && origin < 0 && anchorY + anchorHeight + extent <= _viewportHeight)
                 {
-                    origin = anchor.Y + anchor.ActualHeight;
+                    origin = anchorY + anchorHeight;
                 }
             }
             else
             {
-                origin = Aligned(anchor.Y, anchor.ActualHeight, extent, placement.Align);
+                origin = Aligned(anchorY, anchorHeight, extent, placement.Align);
             }
 
             return placement.NoFlip ? origin : Clamped(origin, extent, _viewportHeight);

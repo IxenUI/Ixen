@@ -153,11 +153,14 @@ namespace Ixen.Controls
 
         public void OpenAt(float x, float y)
         {
-            AnchorElement = null;
+            Styles.AnchorPlacement = new AnchorPlacementStyleDescriptor
+            {
+                Side = AnchorSide.Below,
+                Align = AnchorAlign.Start
+            };
 
-            _panel.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = x };
-            _panel.Styles.Top = new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = y };
-            _panel.Invalidate();
+            AnchorAt(x, y);
+            Invalidate();
 
             Open = true;
         }

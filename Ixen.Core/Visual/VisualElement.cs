@@ -233,14 +233,27 @@ namespace Ixen.Core.Visual
             get => _shortcut;
             set
             {
-                _shortcut = string.IsNullOrWhiteSpace(value) ? null : value;
-                _parsedShortcut = _shortcut == null
+                string shortcut = string.IsNullOrWhiteSpace(value) ? null : value;
+
+                if (shortcut == _shortcut)
+                {
+                    return;
+                }
+
+                _parsedShortcut = shortcut == null
                     ? default
-                    : Input.KeyShortcut.Parse(_shortcut);
+                    : Input.KeyShortcut.Parse(shortcut);
+                _shortcut = shortcut;
+
+                InvalidateLayout();
             }
         }
 
         internal bool HasShortcut => _shortcut != null;
+
+        public string ShortcutText
+            => Input.KeyShortcut.Describe(_shortcut,
+                Host == null ? Input.KeyShortcut.DEFAULT_ACCELERATOR : Host.AcceleratorModifier);
 
         internal bool MatchesShortcut(Input.Key key, Input.KeyModifiers modifiers,
             Input.KeyModifiers accelerator)
@@ -691,7 +704,45 @@ namespace Ixen.Core.Visual
                 && Computers.MeasureComputer.LayoutTypeOf(this)
                     == Ixen.Core.Visual.Styles.Descriptors.LayoutType.Fixed;
 
-        public VisualElement AnchorElement { get; set; }
+        private VisualElement _anchorElement;
+        private bool _hasAnchorPoint;
+
+        public VisualElement AnchorElement
+        {
+            get => _anchorElement;
+            set
+            {
+                _anchorElement = value;
+
+                if (value != null)
+                {
+                    _hasAnchorPoint = false;
+                }
+            }
+        }
+
+        public void AnchorAt(float x, float y)
+        {
+            _anchorElement = null;
+            _hasAnchorPoint = true;
+            AnchorPointX = x;
+            AnchorPointY = y;
+
+            InvalidateLayout();
+        }
+
+        public void ClearAnchorPoint()
+        {
+            _hasAnchorPoint = false;
+
+            InvalidateLayout();
+        }
+
+        internal bool HasAnchorPoint => _hasAnchorPoint;
+
+        internal float AnchorPointX { get; private set; }
+
+        internal float AnchorPointY { get; private set; }
 
         public string AccessibleValue { get; set; }
 
@@ -703,6 +754,7 @@ namespace Ixen.Core.Visual
 
         internal bool IsAnchored
             => AnchorElement != null
+                || _hasAnchorPoint
                 || (StylesHandlers != null
                     && !string.IsNullOrEmpty(StylesHandlers.Anchor.Descriptor.Name));
 

@@ -12,12 +12,17 @@ namespace Ixen.Controls
         public const string SUBMENU = "submenu";
         public const string MARKER = "MenuItemMarker";
         public const string HORIZONTAL = "horizontal";
+        public const string SHORTCUT = "MenuItemShortcut";
 
         public event EventHandler<EventArgs> Invoked;
 
         private Menu _submenu;
         private Path _marker;
         private bool _looked;
+        private VisualElement _shortcutElement;
+        private string _describedShortcut;
+        private KeyModifiers _describedAccelerator;
+        private bool _described;
 
         public MenuItem()
         {
@@ -83,6 +88,68 @@ namespace Ixen.Controls
             ToggleState(HORIZONTAL, !Vertical);
 
             SyncMarker();
+        }
+
+        public VisualElement ShortcutElement => _shortcutElement;
+
+        protected override void OnPrepass(float viewportWidth, float viewportHeight)
+        {
+            base.OnPrepass(viewportWidth, viewportHeight);
+
+            KeyModifiers accelerator = Host == null ? KeyModifiers.Control : Host.AcceleratorModifier;
+
+            if (_described && ReferenceEquals(Shortcut, _describedShortcut) && accelerator == _describedAccelerator)
+            {
+                return;
+            }
+
+            _described = true;
+            _describedShortcut = Shortcut;
+            _describedAccelerator = accelerator;
+
+            SyncShortcut();
+        }
+
+        private void SyncShortcut()
+        {
+            if (Shortcut == null || !Vertical)
+            {
+                if (_shortcutElement != null)
+                {
+                    RemoveChild(_shortcutElement);
+                    _shortcutElement = null;
+                }
+
+                return;
+            }
+
+            if (_shortcutElement == null)
+            {
+                _shortcutElement = new VisualElement { TypeName = SHORTCUT, Role = AccessibleRole.Presentation };
+                _shortcutElement.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Content };
+                _shortcutElement.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Content };
+
+                int markerAt = -1;
+
+                for (int index = 0; index < ChildElements.Count; index++)
+                {
+                    if (ChildElements[index] == _marker)
+                    {
+                        markerAt = index;
+                    }
+                }
+
+                if (markerAt >= 0)
+                {
+                    InsertChild(markerAt, _shortcutElement);
+                }
+                else
+                {
+                    AddChild(_shortcutElement);
+                }
+            }
+
+            _shortcutElement.Text = ShortcutText;
         }
 
         private void SyncMarker()

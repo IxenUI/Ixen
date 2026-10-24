@@ -229,6 +229,13 @@ $control_focus_soft:   #EEF1FE
     color: $control_text_off
 }
 
+#MenuItemShortcut {
+    margin: 0px 0px 0px 24px
+    color: $control_text_off
+    font-size: 12px
+    text-align: right middle
+}
+
 #MenuBar {
     width: 1*
     height: ?
