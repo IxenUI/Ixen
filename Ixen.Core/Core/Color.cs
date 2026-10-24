@@ -123,7 +123,7 @@ namespace Ixen.Core
         public static readonly Color DarkGray             = new Color(0xA9, 0xA9, 0xA9);
         public static readonly Color DarkGreen            = new Color(0x0, 0x64, 0x0);
         public static readonly Color DarkKhaki            = new Color(0xBD, 0xB7, 0x6B);
-        public static readonly Color DarkMagena           = new Color(0x8B, 0x0, 0x8B);
+        public static readonly Color DarkMagenta          = new Color(0x8B, 0x0, 0x8B);
         public static readonly Color DarkOliveGreen       = new Color(0x55, 0x6B, 0x2F);
         public static readonly Color DarkOrange           = new Color(0xFF, 0x8C, 0x0);
         public static readonly Color DarkOrchid           = new Color(0x99, 0x32, 0xCC);
@@ -141,7 +141,7 @@ namespace Ixen.Core
         public static readonly Color Firebrick            = new Color(0xB2, 0x22, 0x22);
         public static readonly Color FloralWhite          = new Color(0xFF, 0xFA, 0xF0);
         public static readonly Color ForestGreen          = new Color(0x22, 0x8B, 0x22);
-        public static readonly Color Fuschia              = new Color(0xFF, 0x0, 0xFF);
+        public static readonly Color Fuchsia              = new Color(0xFF, 0x0, 0xFF);
         public static readonly Color Gainsboro            = new Color(0xDC, 0xDC, 0xDC);
         public static readonly Color GhostWhite           = new Color(0xF8, 0xF8, 0xFF);
         public static readonly Color Gold                 = new Color(0xFF, 0xD7, 0x0);
