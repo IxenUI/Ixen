@@ -325,7 +325,51 @@ namespace Ixen.Core.Visual.Computers
                     Nth((index + 1).ToString(CultureInfo.InvariantCulture)),
                     element, scoped, defaults);
             }
+
+            ApplyStructuralFromEnd(handlers, registry, target, name, element, scoped, defaults,
+                kinds, index, count);
         }
+
+        private void ApplyStructuralFromEnd(VisualElementStylesHandlers handlers, StyleRegistry registry,
+            StyleClassTarget target, string name, VisualElement element, bool scoped, bool defaults,
+            StructuralKinds kinds, int index, int count)
+        {
+            if (Wanted(kinds, StructuralKinds.OddLast, index, count))
+            {
+                ApplyVariant(handlers, registry, target, name, NthLast(StyleStructural.ODD),
+                    element, scoped, defaults);
+            }
+
+            if (Wanted(kinds, StructuralKinds.EvenLast, index, count))
+            {
+                ApplyVariant(handlers, registry, target, name, NthLast(StyleStructural.EVEN),
+                    element, scoped, defaults);
+            }
+
+            if ((kinds & StructuralKinds.FormulaLast) != 0)
+            {
+                IReadOnlyList<NthFormula> formulas = registry.NthLastFormulas;
+
+                for (int i = 0; i < formulas.Count; i++)
+                {
+                    if (formulas[i].Matches(count - index))
+                    {
+                        ApplyVariant(handlers, registry, target, name,
+                            NthLast(formulas[i].Argument), element, scoped, defaults);
+                    }
+                }
+            }
+
+            if ((kinds & StructuralKinds.NthLast) != 0)
+            {
+                ApplyVariant(handlers, registry, target, name,
+                    NthLast((count - index).ToString(CultureInfo.InvariantCulture)),
+                    element, scoped, defaults);
+            }
+        }
+
+        private static string NthLast(string argument)
+            => StyleStructural.NTH_LAST_CHILD + "(" + argument + ")";
 
         private static bool Wanted(StructuralKinds declared, StructuralKinds kind,
             int index, int count)

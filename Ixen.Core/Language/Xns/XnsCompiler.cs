@@ -138,9 +138,17 @@ namespace Ixen.Core.Language.Xns
 
         private static void ReportBadNth(XnsNode node, List<LanguageError> errors)
         {
+            if (!ReportBadNth(node, StyleStructural.NTH_CHILD, StyleStructural.NTH_OPEN, errors))
+            {
+                ReportBadNth(node, StyleStructural.NTH_LAST_CHILD, StyleStructural.NTH_LAST_OPEN, errors);
+            }
+        }
+
+        private static bool ReportBadNth(XnsNode node, string pseudo, string opening, List<LanguageError> errors)
+        {
             int at = 0;
 
-            while (StyleStructural.NextArgument(node.Name, ref at, out string argument))
+            while (StyleStructural.NextArgument(node.Name, opening, ref at, out string argument))
             {
                 if (StyleStructural.IsArgumentValid(argument))
                 {
@@ -148,12 +156,14 @@ namespace Ixen.Core.Language.Xns
                 }
 
                 errors.Add(new LanguageError(LanguageErrorCode.SYNTAX,
-                    "':" + StyleStructural.NTH_CHILD + "(" + argument + ")' takes a whole "
+                    "':" + pseudo + "(" + argument + ")' takes a whole "
                     + "number, 'odd', 'even', or a formula like '2n+1'.",
                     node.NameIndex, node.Name == null ? 1 : node.Name.Length));
 
-                return;
+                return true;
             }
+
+            return false;
         }
 
         private static bool IsNegationValid(XnsNode selector, string name, string negations,

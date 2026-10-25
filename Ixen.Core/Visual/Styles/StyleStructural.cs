@@ -14,7 +14,11 @@ namespace Ixen.Core.Visual.Styles
         Nth = 8,
         Odd = 16,
         Even = 32,
-        Formula = 64
+        Formula = 64,
+        NthLast = 128,
+        OddLast = 256,
+        EvenLast = 512,
+        FormulaLast = 1024
     }
 
     internal readonly struct NthFormula
@@ -39,6 +43,7 @@ namespace Ixen.Core.Visual.Styles
         internal const string LAST_CHILD = "last-child";
         internal const string ONLY_CHILD = "only-child";
         internal const string NTH_CHILD = "nth-child";
+        internal const string NTH_LAST_CHILD = "nth-last-child";
         internal const string ODD = "odd";
         internal const string EVEN = "even";
 
@@ -46,11 +51,12 @@ namespace Ixen.Core.Visual.Styles
         private const char PLUS = '+';
         private const char MINUS = '-';
         private const char CLOSE = ')';
-        private const string NTH_OPEN = NTH_CHILD + "(";
+        internal const string NTH_OPEN = NTH_CHILD + "(";
+        internal const string NTH_LAST_OPEN = NTH_LAST_CHILD + "(";
 
         internal static readonly string[] All =
         {
-            FIRST_CHILD, LAST_CHILD, ONLY_CHILD, NTH_CHILD
+            FIRST_CHILD, LAST_CHILD, ONLY_CHILD, NTH_CHILD, NTH_LAST_CHILD
         };
 
         internal static bool Position(VisualElement element, out int index, out int count)
@@ -98,27 +104,32 @@ namespace Ixen.Core.Visual.Styles
                     return Holds(StructuralKinds.Only, index, count);
             }
 
-            if (!IsNth(pseudo, out string argument))
+            if (IsNth(pseudo, NTH_OPEN, out string argument))
             {
-                return false;
+                return HoldsArgument(argument, index + 1);
             }
 
+            return IsNth(pseudo, NTH_LAST_OPEN, out argument) && HoldsArgument(argument, count - index);
+        }
+
+        private static bool HoldsArgument(string argument, int position)
+        {
             switch (argument)
             {
                 case ODD:
-                    return Holds(StructuralKinds.Odd, index, count);
+                    return position % 2 == 1;
 
                 case EVEN:
-                    return Holds(StructuralKinds.Even, index, count);
+                    return position % 2 == 0;
             }
 
             if (TryWhole(argument, out int wanted))
             {
-                return wanted == index + 1;
+                return wanted == position;
             }
 
             return TryFormula(argument, out int step, out int offset)
-                && Matches(step, offset, index + 1);
+                && Matches(step, offset, position);
         }
 
         internal static bool Holds(StructuralKinds kind, int index, int count)
@@ -139,6 +150,12 @@ namespace Ixen.Core.Visual.Styles
 
                 case StructuralKinds.Even:
                     return (index + 1) % 2 == 0;
+
+                case StructuralKinds.OddLast:
+                    return (count - index) % 2 == 1;
+
+                case StructuralKinds.EvenLast:
+                    return (count - index) % 2 == 0;
             }
 
             return false;
@@ -208,6 +225,9 @@ namespace Ixen.Core.Visual.Styles
         }
 
         internal static bool NextArgument(string selector, ref int at, out string argument)
+            => NextArgument(selector, NTH_OPEN, ref at, out argument);
+
+        internal static bool NextArgument(string selector, string opening, ref int at, out string argument)
         {
             argument = null;
 
@@ -216,14 +236,14 @@ namespace Ixen.Core.Visual.Styles
                 return false;
             }
 
-            int open = selector.IndexOf(NTH_OPEN, at, StringComparison.Ordinal);
+            int open = selector.IndexOf(opening, at, StringComparison.Ordinal);
 
             if (open < 0)
             {
                 return false;
             }
 
-            open += NTH_OPEN.Length;
+            open += opening.Length;
 
             int close = selector.IndexOf(CLOSE, open);
 
@@ -238,7 +258,8 @@ namespace Ixen.Core.Visual.Styles
             return true;
         }
 
-        internal static StructuralKinds Scan(string selector, List<NthFormula> formulas)
+        internal static StructuralKinds Scan(string selector, List<NthFormula> formulas,
+            List<NthFormula> lastFormulas = null)
         {
             if (selector == null || selector.IndexOf(':') < 0)
             {
@@ -285,6 +306,29 @@ namespace Ixen.Core.Visual.Styles
                 }
             }
 
+            at = 0;
+
+            while (NextArgument(selector, NTH_LAST_OPEN, ref at, out string argument))
+            {
+                if (argument == ODD)
+                {
+                    kinds |= StructuralKinds.OddLast;
+                }
+                else if (argument == EVEN)
+                {
+                    kinds |= StructuralKinds.EvenLast;
+                }
+                else if (TryWhole(argument, out _))
+                {
+                    kinds |= StructuralKinds.NthLast;
+                }
+                else if (TryFormula(argument, out int step, out int offset))
+                {
+                    kinds |= StructuralKinds.FormulaLast;
+                    Remember(lastFormulas, argument, step, offset);
+                }
+            }
+
             return kinds;
         }
 
@@ -306,17 +350,17 @@ namespace Ixen.Core.Visual.Styles
             formulas.Add(new NthFormula(argument, step, offset));
         }
 
-        private static bool IsNth(string pseudo, out string argument)
+        private static bool IsNth(string pseudo, string opening, out string argument)
         {
             argument = null;
 
-            if (!pseudo.StartsWith(NTH_OPEN, StringComparison.Ordinal)
+            if (!pseudo.StartsWith(opening, StringComparison.Ordinal)
                 || pseudo[pseudo.Length - 1] != CLOSE)
             {
                 return false;
             }
 
-            argument = pseudo.Substring(NTH_OPEN.Length, pseudo.Length - NTH_OPEN.Length - 1);
+            argument = pseudo.Substring(opening.Length, pseudo.Length - opening.Length - 1);
 
             return true;
         }

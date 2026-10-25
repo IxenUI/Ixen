@@ -122,7 +122,7 @@ namespace Ixen.Core.UT.Xns
                 {
                     "hover", "pressed", "focus", "disabled", "checked", "selected", "expanded",
                     "invalid", "dragover",
-                    "first-child", "last-child", "only-child", "nth-child", "not"
+                    "first-child", "last-child", "only-child", "nth-child", "nth-last-child", "not"
                 },
                 context.Items.ToArray(),
                 "hover, pressed, focus, disabled, invalid and dragover are maintained by the framework; "

@@ -171,6 +171,10 @@ generated_striped:nth-child(2n+1) {
     background: #556677
 }
 
+generated_tail:nth-last-child(-n+2) {
+    background: #556678
+}
+
 generated_head {
     + generated_next {
         background: #667788

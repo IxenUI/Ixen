@@ -17,7 +17,7 @@ namespace Ixen.Core.Visual.Styles
         {
             HOVER, PRESSED, FOCUS, DISABLED, CHECKED, SELECTED, EXPANDED, INVALID, DRAG_OVER,
             StyleStructural.FIRST_CHILD, StyleStructural.LAST_CHILD,
-            StyleStructural.ONLY_CHILD, StyleStructural.NTH_CHILD, NOT
+            StyleStructural.ONLY_CHILD, StyleStructural.NTH_CHILD, StyleStructural.NTH_LAST_CHILD, NOT
         };
     }
 }

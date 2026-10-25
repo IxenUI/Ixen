@@ -53,6 +53,7 @@ namespace Ixen.Core.Visual.Classes
         private readonly List<MediaQuery> _queries = new();
         private readonly List<MediaQuery> _containerQueries = new();
         private readonly List<NthFormula> _nth = new();
+        private readonly List<NthFormula> _nthLast = new();
         private readonly StyleTokens _tokens = new();
 
         private int _count;
@@ -78,6 +79,8 @@ namespace Ixen.Core.Visual.Classes
         internal bool HasStructuralClasses => _structural != StructuralKinds.None;
 
         internal IReadOnlyList<NthFormula> NthFormulas => _nth;
+
+        internal IReadOnlyList<NthFormula> NthLastFormulas => _nthLast;
 
         internal bool HasFocusClasses => _hasFocusClasses;
 
@@ -164,8 +167,8 @@ namespace Ixen.Core.Visual.Classes
                 _hasSiblingClasses = true;
             }
 
-            _structural |= StyleStructural.Scan(styleClass.Name, _nth)
-                | StyleStructural.Scan(styleClass.Scope, _nth);
+            _structural |= StyleStructural.Scan(styleClass.Name, _nth, _nthLast)
+                | StyleStructural.Scan(styleClass.Scope, _nth, _nthLast);
 
             IndexCompound(styleClass);
 
