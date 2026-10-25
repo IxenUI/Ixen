@@ -33,14 +33,80 @@ namespace Ixen.Core.Visual
         {
             PointerClick?.Invoke(this, args);
 
-            if (_command == null || !IsEnabled)
+            if (_command != null && IsEnabled)
+            {
+                args.Handled = true;
+
+                _command.Execute();
+                return;
+            }
+
+            if (LabelFor != null && !args.Handled)
+            {
+                RedirectClick(args);
+            }
+        }
+
+        private static bool _redirecting;
+
+        public string LabelFor { get; set; }
+
+        internal VisualElement LabelTarget
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(LabelFor))
+                {
+                    return null;
+                }
+
+                for (VisualElement scope = Parent; scope != null; scope = scope.Parent)
+                {
+                    VisualElement found = scope.FindByName(LabelFor);
+
+                    if (found != null && found != this)
+                    {
+                        return found;
+                    }
+                }
+
+                return null;
+            }
+        }
+
+        private void RedirectClick(PointerEventArgs args)
+        {
+            VisualElement target = LabelTarget;
+
+            if (target == null || _redirecting || !target.IsEnabled || target.IsHiddenInTree)
             {
                 return;
             }
 
-            args.Handled = true;
+            for (VisualElement source = args.Source; source != null; source = source.Parent)
+            {
+                if (source == target)
+                {
+                    return;
+                }
+            }
 
-            _command.Execute();
+            args.Handled = true;
+            _redirecting = true;
+
+            try
+            {
+                if (target.Focusable)
+                {
+                    Host?.Focus(target);
+                }
+
+                target.PerformClick();
+            }
+            finally
+            {
+                _redirecting = false;
+            }
         }
         internal void RaisePointerEnter(PointerEventArgs args) => PointerEnter?.Invoke(this, args);
         internal void RaisePointerLeave(PointerEventArgs args) => PointerLeave?.Invoke(this, args);

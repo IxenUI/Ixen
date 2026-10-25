@@ -438,6 +438,72 @@ namespace Ixen.Controls.UT
             CollectionAssert.AreEqual(new[] { -1, -1, 0 }, group.Select(radio => radio.TabIndex).ToArray());
         }
 
+        private VisualElement Caption(string text, string target)
+        {
+            var caption = new VisualElement { Name = text, Text = text, LabelFor = target };
+
+            caption.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 18 };
+            caption.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 80 };
+
+            _root.AddChild(caption);
+
+            return caption;
+        }
+
+        private void Click(VisualElement element)
+        {
+            Layout();
+
+            _surface.PointerDown(element.X + 2, element.Y + 2, PointerButton.Left);
+            _surface.PointerUp(element.X + 2, element.Y + 2, PointerButton.Left);
+        }
+
+        [TestMethod]
+        public void ClickingItsCaptionTogglesTheBoxAsTheUser()
+        {
+            CheckBox box = Add<CheckBox>("agree");
+            VisualElement caption = Caption("I agree", "agree");
+            int changes = 0;
+
+            box.CheckedChanged += (sender, e) => changes++;
+
+            Click(caption);
+
+            Assert.IsTrue(box.Checked);
+            Assert.AreEqual(1, changes, "a two-way binding hears a caption click, as it hears a click on the box");
+            Assert.AreSame(box, _surface.FocusedElement, "and the box takes the focus, as a click on it would");
+
+            Click(caption);
+
+            Assert.IsFalse(box.Checked);
+        }
+
+        [TestMethod]
+        public void ClickingARadiosCaptionChoosesIt()
+        {
+            RadioButton[] group = SizeGroup();
+            VisualElement caption = Caption("large", "large");
+
+            group[0].Checked = true;
+            Click(caption);
+
+            Assert.IsTrue(group[2].Checked);
+            Assert.IsFalse(group[0].Checked, "and the group lets the old answer go");
+        }
+
+        [TestMethod]
+        public void ACaptionNamesItsToggle()
+        {
+            CheckBox box = Add<CheckBox>("agree");
+            Caption("I agree", "agree");
+
+            Layout();
+
+            AccessibleNode node = AccessibleSearch.Find(_surface.BuildAccessibilityTree(), n => n.Role == AccessibleRole.CheckBox);
+
+            Assert.AreEqual("I agree", node.Name, "no need to write label: beside the caption any more");
+        }
+
         [TestMethod]
         public void WithNoAnswerTheFirstRadioIsTheTabStop()
         {

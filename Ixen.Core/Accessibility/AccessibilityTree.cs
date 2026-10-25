@@ -10,11 +10,82 @@ namespace Ixen.Core.Accessibility
         internal static AccessibleNode Build(VisualElement root, VisualElement focused,
             KeyModifiers accelerator = KeyShortcut.DEFAULT_ACCELERATOR)
         {
-            return root == null ? null : NodeFor(root, focused, LiveRegionKind.None, accelerator);
+            if (root == null)
+            {
+                return null;
+            }
+
+            Dictionary<VisualElement, VisualElement> labels = null;
+
+            FindLabels(root, ref labels);
+
+            return NodeFor(root, focused, LiveRegionKind.None, accelerator, labels);
+        }
+
+        private static void FindLabels(VisualElement element, ref Dictionary<VisualElement, VisualElement> labels)
+        {
+            foreach (VisualElement child in element.Children)
+            {
+                if (child.IsHidden)
+                {
+                    continue;
+                }
+
+                VisualElement target = child.LabelFor == null ? null : child.LabelTarget;
+
+                if (target != null && string.IsNullOrEmpty(target.Label))
+                {
+                    labels = labels ?? new Dictionary<VisualElement, VisualElement>();
+
+                    if (!labels.ContainsKey(target))
+                    {
+                        labels.Add(target, child);
+                    }
+                }
+
+                FindLabels(child, ref labels);
+            }
+        }
+
+        private static bool IsLabel(VisualElement element, Dictionary<VisualElement, VisualElement> labels)
+        {
+            if (labels == null || element.LabelFor == null)
+            {
+                return false;
+            }
+
+            foreach (VisualElement label in labels.Values)
+            {
+                if (label == element)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static string LabelTextOf(VisualElement element, Dictionary<VisualElement, VisualElement> labels)
+        {
+            if (labels == null || !labels.TryGetValue(element, out VisualElement label))
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrEmpty(label.Text))
+            {
+                return label.Text;
+            }
+
+            var builder = new StringBuilder();
+
+            AppendDescendantText(label, builder);
+
+            return builder.Length == 0 ? null : builder.ToString();
         }
 
         private static AccessibleNode NodeFor(VisualElement element, VisualElement focused,
-            LiveRegionKind inherited, KeyModifiers accelerator)
+            LiveRegionKind inherited, KeyModifiers accelerator, Dictionary<VisualElement, VisualElement> labels)
         {
             AccessibleRole role = RoleOf(element);
             LiveRegionKind live = element.LiveRegion == LiveRegionKind.None
@@ -25,7 +96,7 @@ namespace Ixen.Core.Accessibility
             {
                 Element = element,
                 Role = role == AccessibleRole.None ? AccessibleRole.Group : role,
-                Name = NameOf(element),
+                Name = NameOf(element, labels),
                 Description = DescriptionOf(element),
                 Value = ValueOf(element),
                 Shortcut = KeyShortcut.Describe(element.Shortcut, accelerator),
@@ -49,14 +120,15 @@ namespace Ixen.Core.Accessibility
 
             if (!TakesNameFromContent(node.Role))
             {
-                Collect(element, focused, node.ChildList, live, accelerator);
+                Collect(element, focused, node.ChildList, live, accelerator, labels);
             }
 
             return node;
         }
 
         private static void Collect(VisualElement element, VisualElement focused,
-            List<AccessibleNode> into, LiveRegionKind inherited, KeyModifiers accelerator)
+            List<AccessibleNode> into, LiveRegionKind inherited, KeyModifiers accelerator,
+            Dictionary<VisualElement, VisualElement> labels)
         {
             foreach (VisualElement child in element.Children)
             {
@@ -69,13 +141,13 @@ namespace Ixen.Core.Accessibility
                     ? inherited
                     : child.LiveRegion;
 
-                if (IsExposed(child))
+                if (IsExposed(child) && !IsLabel(child, labels))
                 {
-                    into.Add(NodeFor(child, focused, inherited, accelerator));
+                    into.Add(NodeFor(child, focused, inherited, accelerator, labels));
                 }
                 else
                 {
-                    Collect(child, focused, into, live, accelerator);
+                    Collect(child, focused, into, live, accelerator, labels);
                 }
             }
         }
@@ -119,11 +191,18 @@ namespace Ixen.Core.Accessibility
             return string.IsNullOrEmpty(element.Text) ? AccessibleRole.None : AccessibleRole.Text;
         }
 
-        private static string NameOf(VisualElement element)
+        private static string NameOf(VisualElement element, Dictionary<VisualElement, VisualElement> labels)
         {
             if (!string.IsNullOrEmpty(element.Label))
             {
                 return element.Label;
+            }
+
+            string labelled = LabelTextOf(element, labels);
+
+            if (labelled != null)
+            {
+                return labelled;
             }
 
             if (element is TextField field)
