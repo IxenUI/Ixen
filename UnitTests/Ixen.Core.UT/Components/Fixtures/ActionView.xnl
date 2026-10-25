@@ -4,4 +4,5 @@ action_root {} [
 	action_direct { pointer-long-press: "{Reset()}" }
 	action_with_args { pointer-down: "{Track(e.X, e.Y)}" }
 	action_field<TextField> { text-changed: "{Capture()}" }
+	action_animated { animation-ended: "{Ended(e.Name)}" }
 ]

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Ixen.Core.Visual
 {
@@ -508,8 +509,64 @@ namespace Ixen.Core.Visual
             return false;
         }
 
+        private void Ended(bool running, string identifier, ref List<string> ended)
+        {
+            if (!running || !_element.HasTransitionEndedHandler)
+            {
+                return;
+            }
+
+            (ended ?? (ended = new List<string>())).Add(identifier);
+        }
+
+        private void Report(List<string> transitions, List<string> animations)
+        {
+            IElementHost host = _element.Host;
+
+            if (host == null || (transitions == null && (animations == null || animations.Count == 0)))
+            {
+                return;
+            }
+
+            VisualElement element = _element;
+
+            host.Post(() =>
+            {
+                if (transitions != null)
+                {
+                    foreach (string identifier in transitions)
+                    {
+                        element.RaiseTransitionEnded(new TransitionEventArgs(identifier, element));
+                    }
+                }
+
+                if (animations != null)
+                {
+                    foreach (string name in animations)
+                    {
+                        element.RaiseAnimationEnded(new AnimationEventArgs(name, element));
+                    }
+                }
+            });
+        }
+
         internal void Finish()
         {
+            List<string> transitions = null;
+
+            Ended(Background != null && Background.Running, Styles.StyleIdentifier.BACKGROUND, ref transitions);
+            Ended(Color != null && Color.Running, Styles.StyleIdentifier.COLOR, ref transitions);
+            Ended(Border != null && Border.Running, Styles.StyleIdentifier.BORDER, ref transitions);
+            Ended(Width != null && Width.Running, Styles.StyleIdentifier.WIDTH, ref transitions);
+            Ended(Height != null && Height.Running, Styles.StyleIdentifier.HEIGHT, ref transitions);
+            Ended(Left != null && Left.Running, Styles.StyleIdentifier.LEFT, ref transitions);
+            Ended(Top != null && Top.Running, Styles.StyleIdentifier.TOP, ref transitions);
+            Ended(Right != null && Right.Running, Styles.StyleIdentifier.RIGHT, ref transitions);
+            Ended(Bottom != null && Bottom.Running, Styles.StyleIdentifier.BOTTOM, ref transitions);
+            Ended(Transform != null && Transform.Running, Styles.StyleIdentifier.TRANSFORM, ref transitions);
+
+            List<string> animations = _element.HasAnimationEndedHandler ? new List<string>() : null;
+
             Background?.Jump(Background.To);
             Color?.Jump(Color.To);
             Border?.Jump(Border.To);
@@ -529,7 +586,9 @@ namespace Ixen.Core.Visual
                 Scroll.Stop();
             }
 
-            _keyframes?.Complete();
+            _keyframes?.Complete(animations);
+
+            Report(transitions, animations);
         }
     }
 }

@@ -838,6 +838,12 @@ namespace Ixen.Core.Visual
 
         internal void RaiseTransitionEnded(TransitionEventArgs args) => TransitionEnded?.Invoke(this, args);
 
+        public event EventHandler<AnimationEventArgs> AnimationEnded;
+
+        internal bool HasAnimationEndedHandler => AnimationEnded != null;
+
+        internal void RaiseAnimationEnded(AnimationEventArgs args) => AnimationEnded?.Invoke(this, args);
+
         internal Styles.Descriptors.SizeStyleDescriptor AnimatedSize(string identifier)
         {
             SizeTransition transition = _animations?.SizeIfAny(identifier);

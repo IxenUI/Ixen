@@ -24,5 +24,9 @@ namespace Ixen.Core.UT.Components.Fixtures
         }
 
         public void Capture() => Captured = true;
+
+        public string EndedAnimation { get; set; }
+
+        public void Ended(string name) => EndedAnimation = name;
     }
 }

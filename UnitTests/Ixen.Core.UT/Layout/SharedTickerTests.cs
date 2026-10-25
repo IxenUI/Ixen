@@ -187,11 +187,12 @@ namespace Ixen.Core.UT.Layout
             VisualElement first = Animated(1);
             VisualElement second = Animated(AnimationStyleDescriptor.INFINITE);
 
-            first.TransitionEnded += (sender, e) => _root.RemoveChild(first);
+            first.AnimationEnded += (sender, e) => _root.RemoveChild(first);
 
             Layout();
             Tick(4);
 
+            Assert.IsNull(first.Parent, "the handler ran during the tick");
             Assert.AreEqual(1, _surface.AnimatingCount,
                 "the tick iterates a snapshot, so mutating the list from a handler is safe");
             Assert.AreEqual(1, _scheduler.PendingCount);

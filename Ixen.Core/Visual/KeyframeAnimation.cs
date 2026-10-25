@@ -145,12 +145,18 @@ namespace Ixen.Core.Visual
             _started = null;
         }
 
-        internal void Complete()
+        internal void Complete(List<string> finished)
         {
             var held = new List<Instance>();
 
             foreach (Instance instance in _instances)
             {
+                if (finished != null && instance.Running
+                    && instance.Spec.Iterations != AnimationStyleDescriptor.INFINITE)
+                {
+                    finished.Add(instance.Spec.Name);
+                }
+
                 if (instance.Spec.Fill != AnimationFill.Forwards
                     || instance.Spec.Iterations == AnimationStyleDescriptor.INFINITE)
                 {
@@ -231,6 +237,7 @@ namespace Ixen.Core.Visual
         internal void Advance()
         {
             bool ended = false;
+            List<string> finished = null;
 
             foreach (Instance instance in _instances)
             {
@@ -262,6 +269,12 @@ namespace Ixen.Core.Visual
                     instance.Running = false;
                     instance.Holding = instance.Spec.Fill == AnimationFill.Forwards;
                     ended = true;
+
+                    if (_element.HasAnimationEndedHandler)
+                    {
+                        (finished ?? (finished = new List<string>())).Add(instance.Spec.Name);
+                    }
+
                     continue;
                 }
 
@@ -278,6 +291,16 @@ namespace Ixen.Core.Visual
             if (ended)
             {
                 _element.Invalidate();
+            }
+
+            if (finished == null)
+            {
+                return;
+            }
+
+            foreach (string name in finished)
+            {
+                _element.RaiseAnimationEnded(new AnimationEventArgs(name, _element));
             }
         }
 

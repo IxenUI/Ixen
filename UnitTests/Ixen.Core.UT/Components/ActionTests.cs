@@ -72,6 +72,17 @@ namespace Ixen.Core.UT.Components
         }
 
         [TestMethod]
+        public void TheEndOfAnAnimationReachesTheModel()
+        {
+            var component = new ActionComponent();
+            VisualElement element = Element(component, "action_animated");
+
+            element.RaiseAnimationEnded(new AnimationEventArgs("fade", element));
+
+            Assert.AreEqual("fade", component.EndedAnimation);
+        }
+
+        [TestMethod]
         public void AnEventDeclaredByASubclassIsReachable()
         {
             var component = new ActionComponent();
