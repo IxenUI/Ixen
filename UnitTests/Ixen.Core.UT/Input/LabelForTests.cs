@@ -220,6 +220,67 @@ namespace Ixen.Core.UT.Input
                 "a caption that does not become the name is still read, or what it says would be lost");
         }
 
+        private void Hover(VisualElement element)
+        {
+            Layout();
+            _surface.PointerMove(element.X + 2, element.Y + 2);
+        }
+
+        [TestMethod]
+        public void TheCaptionShowsTheCursorItsTargetShows()
+        {
+            VisualElement target = Box(_root, "target");
+            target.Styles.Cursor = new CursorStyleDescriptor { Value = CursorKind.Hand };
+            VisualElement label = Box(_root, "label", "Remember me");
+            label.LabelFor = "target";
+
+            Hover(label);
+
+            Assert.AreEqual(CursorKind.Hand, _surface.Cursor, "what can be clicked like the box looks like the box");
+        }
+
+        [TestMethod]
+        public void ACursorTheCaptionStatesItselfWins()
+        {
+            VisualElement target = Box(_root, "target");
+            target.Styles.Cursor = new CursorStyleDescriptor { Value = CursorKind.Hand };
+            VisualElement label = Box(_root, "label", "Remember me");
+            label.LabelFor = "target";
+            label.Styles.Cursor = new CursorStyleDescriptor { Value = CursorKind.Text };
+
+            Hover(label);
+
+            Assert.AreEqual(CursorKind.Text, _surface.Cursor);
+        }
+
+        [TestMethod]
+        public void ADisabledTargetLendsNoCursor()
+        {
+            VisualElement target = Box(_root, "target");
+            target.Styles.Cursor = new CursorStyleDescriptor { Value = CursorKind.NotAllowed };
+            target.Enabled = false;
+            VisualElement label = Box(_root, "label", "Remember me");
+            label.LabelFor = "target";
+
+            Hover(label);
+
+            Assert.AreEqual(CursorKind.Default, _surface.Cursor,
+                "the caption of a box that cannot be ticked is plain text, not a refusal");
+        }
+
+        [TestMethod]
+        public void CaptionsNamingEachOtherBorrowOnlyOnce()
+        {
+            VisualElement first = Box(_root, "first", "one");
+            VisualElement second = Box(_root, "second", "two");
+            first.LabelFor = "second";
+            second.LabelFor = "first";
+
+            Hover(first);
+
+            Assert.AreEqual(CursorKind.Default, _surface.Cursor);
+        }
+
         [TestMethod]
         public void ALabelWithNoTargetIsOrdinaryText()
         {
