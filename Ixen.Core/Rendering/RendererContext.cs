@@ -47,6 +47,10 @@ namespace Ixen.Core.Rendering
 
         private readonly SKPaint _layerPaint = new SKPaint { Color = SKColors.Black };
 
+        private readonly SKRoundRect _outerEdge = new();
+        private readonly SKRoundRect _innerEdge = new();
+        private readonly SKPaint _ringPaint = new SKPaint { IsStroke = false, IsAntialias = true };
+
         private readonly SKSamplingOptions _sampling =
             new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
 
@@ -114,6 +118,107 @@ namespace Ixen.Core.Rendering
 
             SKCanvas.ClipRect(new SKRect(x, y, x + width, y + height), SKClipOperation.Intersect, false);
         }
+
+        internal void PushClip(float x, float y, float width, float height, CornerRadiusStyleDescriptor radius,
+            Edges inside)
+        {
+            if (inside.IsZero)
+            {
+                PushClip(x, y, width, height, radius);
+                return;
+            }
+
+            SKCanvas.Save();
+            _clipDepth++;
+
+            if (!BuildEdge(_innerEdge, x, y, width, height, radius, inside.Negated))
+            {
+                SKCanvas.ClipRect(SKRect.Empty, SKClipOperation.Intersect, false);
+                return;
+            }
+
+            if (radius != null && radius.HasRadius)
+            {
+                SKCanvas.ClipRoundRect(_innerEdge, SKClipOperation.Intersect, true);
+                return;
+            }
+
+            SKCanvas.ClipRect(_innerEdge.Rect, SKClipOperation.Intersect, false);
+        }
+
+        internal void PushRing(float x, float y, float width, float height, CornerRadiusStyleDescriptor radius,
+            Edges outside, Edges inside)
+        {
+            SKCanvas.Save();
+            _clipDepth++;
+
+            if (!BuildEdge(_outerEdge, x, y, width, height, radius, outside))
+            {
+                SKCanvas.ClipRect(SKRect.Empty, SKClipOperation.Intersect, false);
+                return;
+            }
+
+            SKCanvas.ClipRoundRect(_outerEdge, SKClipOperation.Intersect, true);
+
+            if (BuildEdge(_innerEdge, x, y, width, height, radius, inside.Negated))
+            {
+                SKCanvas.ClipRoundRect(_innerEdge, SKClipOperation.Difference, true);
+            }
+        }
+
+        internal void FillRing(float x, float y, float width, float height, CornerRadiusStyleDescriptor radius,
+            Edges outside, Edges inside, Color color)
+        {
+            if (!BuildEdge(_outerEdge, x, y, width, height, radius, outside))
+            {
+                return;
+            }
+
+            _ringPaint.Color = color.SKColor;
+
+            if (!BuildEdge(_innerEdge, x, y, width, height, radius, inside.Negated))
+            {
+                SKCanvas.DrawRoundRect(_outerEdge, _ringPaint);
+                return;
+            }
+
+            SKCanvas.Save();
+            SKCanvas.ClipRoundRect(_innerEdge, SKClipOperation.Difference, true);
+            SKCanvas.DrawRoundRect(_outerEdge, _ringPaint);
+            SKCanvas.Restore();
+        }
+
+        private bool BuildEdge(SKRoundRect target, float x, float y, float width, float height,
+            CornerRadiusStyleDescriptor radius, Edges grow)
+        {
+            var rect = new SKRect(x - grow.Left, y - grow.Top, x + width + grow.Right, y + height + grow.Bottom);
+
+            if (rect.Width <= 0 || rect.Height <= 0)
+            {
+                return false;
+            }
+
+            if (radius == null || !radius.HasRadius)
+            {
+                target.SetRect(rect);
+                return true;
+            }
+
+            float scale = radius.ScaleFor(width, height);
+
+            _radii[0] = Corner(radius.TopLeft * scale, grow.Left, grow.Top);
+            _radii[1] = Corner(radius.TopRight * scale, grow.Right, grow.Top);
+            _radii[2] = Corner(radius.BottomRight * scale, grow.Right, grow.Bottom);
+            _radii[3] = Corner(radius.BottomLeft * scale, grow.Left, grow.Bottom);
+
+            target.SetRectRadii(rect, _radii);
+            return true;
+        }
+
+        private static SKPoint Corner(float radius, float growX, float growY)
+            => radius <= 0
+                ? SKPoint.Empty
+                : new SKPoint(Math.Max(0, radius + growX), Math.Max(0, radius + growY));
 
         internal bool Transformed => _transformDepths.Count > 0;
 
@@ -538,10 +643,13 @@ namespace Ixen.Core.Rendering
                 offset = -pen.Width / 2;
             }
 
+            if (!BuildEdge(_roundRect, x, y, width, height, radius, Edges.All(-offset)))
+            {
+                return;
+            }
+
             pen.Antialisasing = true;
-            SKCanvas.DrawRoundRect(
-                BuildRoundRect(x + offset, y + offset, width - offset * 2, height - offset * 2, radius),
-                pen.SKPaint);
+            SKCanvas.DrawRoundRect(_roundRect, pen.SKPaint);
         }
 
         internal void FillGradient(float x, float y, float width, float height,

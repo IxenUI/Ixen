@@ -1,6 +1,7 @@
 using Ixen.Core.Rendering;
 using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Styles.Descriptors;
+using System;
 
 namespace Ixen.Core.Visual.Styles.Handlers
 {
@@ -92,6 +93,13 @@ namespace Ixen.Core.Visual.Styles.Handlers
                 return;
             }
 
+            if (radius.HasRadius && Descriptor.Style == BorderStyle.Solid)
+            {
+                context.FillRing(element.X, element.Y, element.ActualWidth, element.ActualHeight, radius,
+                    element.BorderOutside, element.BorderInside, pen.Color);
+                return;
+            }
+
             if (radius.HasRadius)
             {
                 context.DrawRoundRectangle(element.X, element.Y, element.ActualWidth, element.ActualHeight,
@@ -128,9 +136,17 @@ namespace Ixen.Core.Visual.Styles.Handlers
 
             bool clipped = radius.HasRadius;
 
+            if (clipped && Descriptor.IsOneColor && Descriptor.Style == BorderStyle.Solid)
+            {
+                context.FillRing(element.X, element.Y, element.ActualWidth, element.ActualHeight, radius,
+                    element.BorderOutside, element.BorderInside, color);
+                return;
+            }
+
             if (clipped)
             {
-                context.PushClip(element.X, element.Y, element.ActualWidth, element.ActualHeight, radius);
+                context.PushRing(element.X, element.Y, element.ActualWidth, element.ActualHeight, radius,
+                    element.BorderOutside, element.BorderInside);
             }
 
             if (Descriptor.Style != BorderStyle.Solid)
@@ -174,24 +190,37 @@ namespace Ixen.Core.Visual.Styles.Handlers
             }
             else
             {
+                float tlX = innerLeft, tlY = innerTop, trX = innerRight, trY = innerTop;
+                float brX = innerRight, brY = innerBottom, blX = innerLeft, blY = innerBottom;
+
+                if (clipped)
+                {
+                    float scale = radius.ScaleFor(element.ActualWidth, element.ActualHeight);
+
+                    Mitre(left, top, ref tlX, ref tlY, radius.TopLeft * scale, insideLeft, insideTop);
+                    Mitre(right, top, ref trX, ref trY, radius.TopRight * scale, insideRight, insideTop);
+                    Mitre(right, bottom, ref brX, ref brY, radius.BottomRight * scale, insideRight, insideBottom);
+                    Mitre(left, bottom, ref blX, ref blY, radius.BottomLeft * scale, insideLeft, insideBottom);
+                }
+
                 if (Descriptor.Top > 0)
                 {
-                    context.FillQuad(left, top, right, top, innerRight, innerTop, innerLeft, innerTop, _top);
+                    context.FillQuad(left, top, right, top, trX, trY, tlX, tlY, _top);
                 }
 
                 if (Descriptor.Right > 0)
                 {
-                    context.FillQuad(right, top, right, bottom, innerRight, innerBottom, innerRight, innerTop, _right);
+                    context.FillQuad(right, top, right, bottom, brX, brY, trX, trY, _right);
                 }
 
                 if (Descriptor.Bottom > 0)
                 {
-                    context.FillQuad(right, bottom, left, bottom, innerLeft, innerBottom, innerRight, innerBottom, _bottom);
+                    context.FillQuad(right, bottom, left, bottom, blX, blY, brX, brY, _bottom);
                 }
 
                 if (Descriptor.Left > 0)
                 {
-                    context.FillQuad(left, bottom, left, top, innerLeft, innerTop, innerLeft, innerBottom, _left);
+                    context.FillQuad(left, bottom, left, top, tlX, tlY, blX, blY, _left);
                 }
             }
 
@@ -199,6 +228,26 @@ namespace Ixen.Core.Visual.Styles.Handlers
             {
                 context.PopClip();
             }
+        }
+
+        private static void Mitre(float outerX, float outerY, ref float innerX, ref float innerY,
+            float radius, float insideX, float insideY)
+        {
+            float radiusX = Math.Max(0, radius - insideX);
+            float radiusY = Math.Max(0, radius - insideY);
+
+            if (radiusX <= 0 && radiusY <= 0)
+            {
+                return;
+            }
+
+            float spanX = Math.Abs(innerX - outerX);
+            float spanY = Math.Abs(innerY - outerY);
+
+            float reach = Math.Max(spanX > 0 ? radiusX / spanX : 0, spanY > 0 ? radiusY / spanY : 0);
+
+            innerX += (innerX - outerX) * reach;
+            innerY += (innerY - outerY) * reach;
         }
 
         private void RenderDashedSides(VisualElement element, RendererContext context,

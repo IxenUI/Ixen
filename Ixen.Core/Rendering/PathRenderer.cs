@@ -51,7 +51,8 @@ namespace Ixen.Core.Rendering
 
             if (rounded)
             {
-                context.PushClip(element.X, element.Y, element.ActualWidth, element.ActualHeight, radius);
+                context.PushClip(element.X, element.Y, element.ActualWidth, element.ActualHeight, radius,
+                    element.BorderInside);
             }
 
             if (overflows)

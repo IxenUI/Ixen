@@ -46,6 +46,12 @@
         internal float BorderOutsideBottom { get; set; }
         internal float BorderOutsideLeft { get; set; }
 
+        internal Rendering.Edges BorderInside
+            => new Rendering.Edges(BorderInsideTop, BorderInsideRight, BorderInsideBottom, BorderInsideLeft);
+
+        internal Rendering.Edges BorderOutside
+            => new Rendering.Edges(BorderOutsideTop, BorderOutsideRight, BorderOutsideBottom, BorderOutsideLeft);
+
         internal float PaddingTop
         {
             get => _paddingTop;

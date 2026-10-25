@@ -114,7 +114,7 @@ namespace Ixen.Core.Rendering
             else
             {
                 context.PushClip(element.X, element.Y, element.ActualWidth, element.ActualHeight,
-                    element.StylesHandlers.CornerRadius.Descriptor);
+                    element.StylesHandlers.CornerRadius.Descriptor, element.BorderInside);
             }
 
             foreach (VisualElement child in element.Children)
