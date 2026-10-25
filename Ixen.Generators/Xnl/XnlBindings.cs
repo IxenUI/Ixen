@@ -279,7 +279,9 @@ namespace Ixen.Generators.Xnl
                     continue;
                 }
 
-                sb.Append(SymbolDisplay.FormatLiteral(part.Text, false)
+                string quoted = SymbolDisplay.FormatLiteral(part.Text, true);
+
+                sb.Append(quoted.Substring(1, quoted.Length - 2)
                     .Replace("{", "{{")
                     .Replace("}", "}}"));
             }

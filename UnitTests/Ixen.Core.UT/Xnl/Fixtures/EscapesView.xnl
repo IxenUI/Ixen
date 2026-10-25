@@ -1,0 +1,10 @@
+escapes_root {} [
+	escapes_lines { text: "Line one\nLine two" }
+	escapes_tab { text: "a\tb" }
+	escapes_quote { text: "Say \"hi\"" }
+	escapes_backslash { text: "a\b" }
+	escapes_unknown { text: "C:\Users" }
+	escapes_char <XnlTestWidget> { initial: "\"" }
+	escapes_mixed { text: "Total:\n{Count} \"done\"" }
+	escapes_expression { text: "{Label(\"x\")}" }
+]

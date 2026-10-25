@@ -1,7 +1,7 @@
 holder {} [
 	widget<XnlTestWidget> {
 		label: "Coucou"
-		path: "C:\temp\new"
+		path: "C:\\temp\\new"
 		count: "42"
 		enabled: "true"
 		ratio: "1.5"

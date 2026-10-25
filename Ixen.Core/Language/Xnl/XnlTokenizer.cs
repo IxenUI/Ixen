@@ -1,6 +1,7 @@
 ﻿using Ixen.Core.Language.Base;
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Ixen.Core.Language.Xnl
 {
@@ -601,11 +602,49 @@ namespace Ixen.Core.Language.Xnl
             return false;
         }
 
+        internal static bool IsEscaped(char c) => c == 'n' || c == 't' || c == '"' || c == '\\';
+
+        internal static string Unescape(string raw)
+        {
+            var builder = new StringBuilder(raw.Length);
+
+            for (int index = 0; index < raw.Length; index++)
+            {
+                char c = raw[index];
+
+                if (c != '\\' || index + 1 >= raw.Length || !IsEscaped(raw[index + 1]))
+                {
+                    builder.Append(c);
+                    continue;
+                }
+
+                index++;
+
+                switch (raw[index])
+                {
+                    case 'n':
+                        builder.Append('\n');
+                        break;
+
+                    case 't':
+                        builder.Append('\t');
+                        break;
+
+                    default:
+                        builder.Append(raw[index]);
+                        break;
+                }
+            }
+
+            return builder.ToString();
+        }
+
         private bool ReadPropertyValue()
         {
             int index = _index;
             int tokenIndex = _index + 1;
             bool terminated = false;
+            bool escaped = false;
 
             while (true)
             {
@@ -623,11 +662,19 @@ namespace Ixen.Core.Language.Xnl
                 }
 
                 MoveCursor();
+
+                if (c == '\\' && IsEscaped(PeekChar()))
+                {
+                    escaped = true;
+                    MoveCursor();
+                }
             }
 
             if (terminated)
             {
-                AddToken(tokenIndex, XnlTokenType.PropertyValue, Slice(tokenIndex, _index));
+                string raw = Slice(tokenIndex, _index);
+
+                AddToken(tokenIndex, XnlTokenType.PropertyValue, escaped ? Unescape(raw) : raw, raw.Length);
                 return true;
             }
 

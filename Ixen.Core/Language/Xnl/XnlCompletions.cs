@@ -113,6 +113,12 @@ namespace Ixen.Core.Language.Xnl
                         continue;
 
                     case ScanState.Value:
+                        if (c == '\\' && index + 1 < end && XnlTokenizer.IsEscaped(content[index + 1]))
+                        {
+                            index += 2;
+                            continue;
+                        }
+
                         if (c == '"' || c == '\r' || c == '\n')
                         {
                             state = ScanState.Text;

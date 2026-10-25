@@ -119,6 +119,14 @@ namespace Ixen.Core.UT.Xnl
         }
 
         [TestMethod]
+        public void AnEscapedQuoteDoesNotCloseTheValue()
+        {
+            Assert.AreEqual(XnlCompletionKind.PropertyName, At("header { text: \"5\\\" tall\" foc| }").Kind);
+            Assert.AreEqual(XnlCompletionKind.PropertyName, At("header { text: \"a\\\\\" foc| }").Kind,
+                "an escaped backslash leaves the closing quote a quote");
+        }
+
+        [TestMethod]
         public void ABindingIsNotACompletionPosition()
         {
             Assert.AreEqual(XnlCompletionKind.None, At("header { focusable: \"{IsEdi|}\" }").Kind);

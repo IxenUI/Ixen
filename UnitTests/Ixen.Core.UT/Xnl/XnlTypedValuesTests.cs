@@ -28,7 +28,7 @@ namespace Ixen.Core.UT.Xnl
         public void BackslashesAreEscapedRatherThanInterpreted()
         {
             Assert.AreEqual(@"C:\temp\new", Widget().Path,
-                "a raw interpolation would have turned \\t and \\n into a tab and a newline");
+                "the decoded value holds backslashes, and the generated literal must escape them again");
         }
 
         [TestMethod]

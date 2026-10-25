@@ -213,6 +213,55 @@ layout<VisualElement>{class: ""layout"" truc: ""chose""}
         }
 
         [TestMethod]
+        public void EscapesAreDecodedInTheContent()
+        {
+            Assert.AreEqual("one\ntwo", PropertyValueOf("el { text: \"one\\ntwo\" }").Content);
+            Assert.AreEqual("a\tb", PropertyValueOf("el { text: \"a\\tb\" }").Content);
+            Assert.AreEqual("say \"hi\"", PropertyValueOf("el { text: \"say \\\"hi\\\"\" }").Content);
+            Assert.AreEqual("a\\b", PropertyValueOf("el { text: \"a\\\\b\" }").Content);
+            Assert.AreEqual("\\n", PropertyValueOf("el { text: \"\\\\n\" }").Content);
+        }
+
+        [TestMethod]
+        public void AnEscapedQuoteDoesNotEndTheValue()
+        {
+            var xnlSource = new XnlSource("el { text: \"\\\"\" class: \"x\" }");
+            var tokens = xnlSource.Tokenize();
+
+            Assert.IsFalse(xnlSource.HasErrors);
+            Assert.AreEqual(2, tokens.Count(t => t.Type == XnlTokenType.PropertyValue));
+            Assert.AreEqual("\"", tokens.First(t => t.Type == XnlTokenType.PropertyValue).Content);
+        }
+
+        [TestMethod]
+        public void AnUnknownEscapeIsKeptAsWritten()
+        {
+            Assert.AreEqual("C:\\Users\\x", PropertyValueOf("el { path: \"C:\\Users\\x\" }").Content);
+            Assert.AreEqual("a\\qb", PropertyValueOf("el { text: \"a\\qb\" }").Content);
+            Assert.AreEqual("end\\", PropertyValueOf("el { text: \"end\\\\\" }").Content);
+        }
+
+        [TestMethod]
+        public void TheSpanCoversWhatWasWritten()
+        {
+            string source = "el { text: \"one\\ntwo\" }";
+            XnlToken token = PropertyValueOf(source);
+
+            Assert.AreEqual("one\\ntwo".Length, token.Length);
+            Assert.AreEqual("one\\ntwo", source.Substring(token.Index, token.Length));
+        }
+
+        [TestMethod]
+        public void AValueStillEndsAtTheLineBreak()
+        {
+            var xnlSource = new XnlSource("el { text: \"one\\\r\ntwo\" }");
+
+            xnlSource.Tokenize();
+
+            Assert.IsTrue(xnlSource.HasErrors, "a backslash before the line break does not continue the value");
+        }
+
+        [TestMethod]
         public void ASemicolonInsideAStringDoesNotEndACodeStatement()
         {
             var xnlSource = new XnlSource("root {} [\r\n@var label = \"a;b\";\r\nel {}\r\n]");
