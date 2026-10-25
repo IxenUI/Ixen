@@ -328,7 +328,8 @@ namespace Ixen.Core.Rendering
             SKCanvas.DrawBitmap(bitmap, new SKRect(x, y, x + width, y + height), _sampling, _imagePaint);
         }
 
-        internal void TileImage(SKPaint tile, float x, float y, float width, float height)
+        internal void TileImage(SKPaint tile, float x, float y, float width, float height,
+            float phaseX = 0, float phaseY = 0)
         {
             if (tile == null || width <= 0 || height <= 0)
             {
@@ -336,8 +337,8 @@ namespace Ixen.Core.Rendering
             }
 
             SKCanvas.Save();
-            SKCanvas.Translate(x, y);
-            SKCanvas.DrawRect(new SKRect(0, 0, width, height), tile);
+            SKCanvas.Translate(x + phaseX, y + phaseY);
+            SKCanvas.DrawRect(new SKRect(-phaseX, -phaseY, width - phaseX, height - phaseY), tile);
             SKCanvas.Restore();
         }
 

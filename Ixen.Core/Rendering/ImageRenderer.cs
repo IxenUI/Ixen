@@ -95,10 +95,12 @@ namespace Ixen.Core.Rendering
                 float bandHeight = layer.RepeatY ? height : Math.Min(height, naturalHeight);
 
                 context.TileImage(_images.GetTile(layer.ImageUrl),
-                    element.X + (width - bandWidth) * layer.AnchorX,
-                    element.Y + (height - bandHeight) * layer.AnchorY,
+                    element.X + (width - bandWidth) * layer.AnchorX + (layer.RepeatX ? 0 : layer.OffsetX),
+                    element.Y + (height - bandHeight) * layer.AnchorY + (layer.RepeatY ? 0 : layer.OffsetY),
                     bandWidth,
-                    bandHeight);
+                    bandHeight,
+                    layer.RepeatX ? layer.OffsetX : 0,
+                    layer.RepeatY ? layer.OffsetY : 0);
 
                 if (rounded)
                 {
@@ -130,7 +132,8 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            bool overflows = drawWidth > width + EPSILON || drawHeight > height + EPSILON;
+            bool overflows = drawWidth > width + EPSILON || drawHeight > height + EPSILON
+                || layer.OffsetX != 0 || layer.OffsetY != 0;
 
             if (overflows)
             {
@@ -138,8 +141,8 @@ namespace Ixen.Core.Rendering
             }
 
             context.DrawImage(bitmap,
-                element.X + (width - drawWidth) * layer.AnchorX,
-                element.Y + (height - drawHeight) * layer.AnchorY,
+                element.X + (width - drawWidth) * layer.AnchorX + layer.OffsetX,
+                element.Y + (height - drawHeight) * layer.AnchorY + layer.OffsetY,
                 drawWidth,
                 drawHeight);
 
@@ -189,9 +192,11 @@ namespace Ixen.Core.Rendering
             }
 
             CornerRadiusStyleDescriptor radius = element.StylesHandlers.CornerRadius.Descriptor;
+            ObjectPositionStyleDescriptor position = element.StylesHandlers.ObjectPosition.Descriptor;
 
             bool rounded = radius.HasRadius;
-            bool overflows = width > boxWidth + EPSILON || height > boxHeight + EPSILON;
+            bool overflows = width > boxWidth + EPSILON || height > boxHeight + EPSILON
+                || position.OffsetX != 0 || position.OffsetY != 0;
 
             if (rounded)
             {
@@ -204,11 +209,9 @@ namespace Ixen.Core.Rendering
                 context.PushClip(boxX, boxY, boxWidth, boxHeight, null);
             }
 
-            ObjectPositionStyleDescriptor position = element.StylesHandlers.ObjectPosition.Descriptor;
-
             context.DrawImage(bitmap,
-                boxX + (boxWidth - width) * position.X,
-                boxY + (boxHeight - height) * position.Y,
+                boxX + (boxWidth - width) * position.X + position.OffsetX,
+                boxY + (boxHeight - height) * position.Y + position.OffsetY,
                 width,
                 height);
 

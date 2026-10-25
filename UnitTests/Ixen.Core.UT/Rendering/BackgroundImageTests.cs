@@ -387,5 +387,114 @@ namespace Ixen.Core.UT.Rendering
                 Assert.IsTrue(pixel.Blue > 0xC0, "a host with no image source degrades to the colour");
             }
         }
+
+        private static BackgroundStyleDescriptor Parsed(string value)
+        {
+            var parser = new Visual.Styles.Parsers.BackgroundStyleParser(value);
+
+            Assert.IsTrue(parser.IsValid, value);
+            return parser.Descriptor;
+        }
+
+        [TestMethod]
+        public void ALengthIsADistanceFromTheLeftAndTheTop()
+        {
+            using (SKBitmap rendered = Render(Parsed("tile.png 5px 7px")))
+            {
+                Assert.IsTrue(IsRed(rendered, 6, 8), "the picture starts 5 across and 7 down");
+                Assert.IsFalse(IsRed(rendered, 3, 10));
+                Assert.IsFalse(IsRed(rendered, 10, 5));
+            }
+        }
+
+        [TestMethod]
+        public void AnEdgeFollowedByALengthIsADistanceFromThatEdge()
+        {
+            using (SKBitmap rendered = Render(Parsed("tile.png right 10px bottom 5px")))
+            {
+                Assert.IsTrue(IsRed(rendered, 40, 45), "20 wide, 10 short of the right: from 30 to 50");
+                Assert.IsFalse(IsRed(rendered, 52, 45), "nothing in the last 10");
+                Assert.IsFalse(IsRed(rendered, 40, 57), "nor in the last 5 at the bottom");
+            }
+        }
+
+        [TestMethod]
+        public void AnOffsetDoesNotPaintOutsideTheElement()
+        {
+            using (SKBitmap rendered = Render(Parsed("tile.png 50px 0px")))
+            {
+                Assert.IsTrue(IsRed(rendered, 55, 5), "the part still inside the element is drawn");
+                Assert.IsFalse(IsRed(rendered, 65, 5), "a picture pushed past the edge is cut there");
+            }
+        }
+
+        [TestMethod]
+        public void AnOffsetMovesTheBandOfAOneAxisRepeat()
+        {
+            using (SKBitmap rendered = Render(Parsed("tile.png repeat-x top 10px")))
+            {
+                Assert.IsTrue(IsRed(rendered, 30, 15));
+                Assert.IsFalse(IsRed(rendered, 30, 5), "the band starts 10 down");
+                Assert.IsFalse(IsRed(rendered, 30, 35));
+            }
+        }
+
+        [TestMethod]
+        public void AnOffsetOnTheRepeatingAxisShiftsThePattern()
+        {
+            using (var bitmap = new SKBitmap(TILE_SIZE, TILE_SIZE))
+            {
+                using (var canvas = new SKCanvas(bitmap))
+                using (var blue = new SKPaint { Color = SKColors.Blue })
+                {
+                    canvas.Clear(SKColors.Red);
+                    canvas.DrawRect(new SKRect(TILE_SIZE / 2, 0, TILE_SIZE, TILE_SIZE), blue);
+                }
+
+                using (SKImage image = SKImage.FromBitmap(bitmap))
+                using (SKData data = image.Encode(SKEncodedImageFormat.Png, 100))
+                {
+                    var images = new FakeImages();
+                    images.Files["halves.png"] = data.ToArray();
+                    _surface.ImageSource = images;
+                }
+            }
+
+            using (SKBitmap plain = Render(Parsed("halves.png repeat-x")))
+            {
+                Assert.IsTrue(IsRed(plain, 2, 10), "a tile starts at the left edge with its red half");
+            }
+
+            using (SKBitmap shifted = Render(Parsed("halves.png repeat-x 5px 0px")))
+            {
+                Assert.IsTrue(IsRed(shifted, 7, 10), "the first whole tile now starts 5 across");
+                Assert.IsFalse(IsRed(shifted, 2, 10), "and what comes before it is the blue end of the one before");
+                Assert.IsTrue(IsRed(shifted, 47, 10), "the third tile starts at 45");
+                Assert.IsTrue(shifted.GetPixel(58, 10).Blue > 0xC0,
+                    "and the pattern still covers the band to the right edge");
+            }
+        }
+
+        [TestMethod]
+        public void PositionsParseIntoAFractionAndAnOffset()
+        {
+            BackgroundLayer edge = Parsed("tile.png right 12px middle").First;
+
+            Assert.AreEqual(1f, edge.PositionX);
+            Assert.AreEqual(-12f, edge.OffsetX, "a distance from the right is a negative offset from the right");
+            Assert.AreEqual(0.5f, edge.PositionY);
+            Assert.AreEqual(0f, edge.OffsetY);
+
+            BackgroundLayer lengths = Parsed("tile.png 4px 12.5%").First;
+
+            Assert.AreEqual(0f, lengths.PositionX);
+            Assert.AreEqual(4f, lengths.OffsetX);
+            Assert.AreEqual(0.125f, lengths.PositionY, 0.0001f, "a fractional percentage is a position, not a file name");
+
+            Assert.IsFalse(new Visual.Styles.Parsers.BackgroundStyleParser("tile.png -10%").IsValid,
+                "a negative fraction would read as no position at all");
+            Assert.IsFalse(new Visual.Styles.Parsers.BackgroundStyleParser("tile.png 1px 2px 3px").IsValid);
+            Assert.IsFalse(new Visual.Styles.Parsers.BackgroundStyleParser("tile.png right 4px 5px right").IsValid);
+        }
     }
 }

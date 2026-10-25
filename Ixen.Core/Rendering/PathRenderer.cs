@@ -45,9 +45,11 @@ namespace Ixen.Core.Rendering
                 out float width, out float height);
 
             CornerRadiusStyleDescriptor radius = element.StylesHandlers.CornerRadius.Descriptor;
+            ObjectPositionStyleDescriptor position = element.StylesHandlers.ObjectPosition.Descriptor;
 
             bool rounded = radius.HasRadius;
-            bool overflows = width > boxWidth + EPSILON || height > boxHeight + EPSILON;
+            bool overflows = width > boxWidth + EPSILON || height > boxHeight + EPSILON
+                || position.OffsetX != 0 || position.OffsetY != 0;
 
             if (rounded)
             {
@@ -60,11 +62,9 @@ namespace Ixen.Core.Rendering
                 context.PushClip(boxX, boxY, boxWidth, boxHeight, null);
             }
 
-            ObjectPositionStyleDescriptor position = element.StylesHandlers.ObjectPosition.Descriptor;
-
             context.DrawPath(geometry,
-                boxX + (boxWidth - width) * position.X,
-                boxY + (boxHeight - height) * position.Y,
+                boxX + (boxWidth - width) * position.X + position.OffsetX,
+                boxY + (boxHeight - height) * position.Y + position.OffsetY,
                 width / viewWidth,
                 height / viewHeight,
                 shape.ViewLeft,

@@ -60,7 +60,17 @@ namespace Ixen.Core.UT.Xns
             var descriptor = Style<ObjectPositionStyleDescriptor>();
 
             Assert.AreEqual(1f, descriptor.X);
+            Assert.AreEqual(-10f, descriptor.OffsetX, "the distance from the right edge survives too");
             Assert.AreEqual(0.25f, descriptor.Y);
+        }
+
+        [TestMethod]
+        public void ABackgroundOffsetSurvivesGeneration()
+        {
+            BackgroundLayer layer = Style<BackgroundStyleDescriptor>().First;
+
+            Assert.AreEqual(1f, layer.PositionY);
+            Assert.AreEqual(-6f, layer.OffsetY);
         }
 
         [TestMethod]

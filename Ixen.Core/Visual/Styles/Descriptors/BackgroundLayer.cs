@@ -11,6 +11,8 @@ namespace Ixen.Core.Visual.Styles.Descriptors
         public ObjectFit Fit { get; set; } = ObjectFit.None;
         public float PositionX { get; set; } = UNSET_POSITION;
         public float PositionY { get; set; } = UNSET_POSITION;
+        public float OffsetX { get; set; }
+        public float OffsetY { get; set; }
 
         public bool IsScaled => Fit != ObjectFit.None;
 
@@ -33,7 +35,9 @@ namespace Ixen.Core.Visual.Styles.Descriptors
                     $"{nameof(RepeatY)} = {(RepeatY ? "true" : "false")}, " +
                     $"{nameof(Fit)} = {nameof(ObjectFit)}.{Fit}, " +
                     $"{nameof(PositionX)} = {Source(PositionX)}, " +
-                    $"{nameof(PositionY)} = {Source(PositionY)} " +
+                    $"{nameof(PositionY)} = {Source(PositionY)}, " +
+                    $"{nameof(OffsetX)} = {Source(OffsetX)}, " +
+                    $"{nameof(OffsetY)} = {Source(OffsetY)} " +
                 "}";
 
         private static string Source(float value)

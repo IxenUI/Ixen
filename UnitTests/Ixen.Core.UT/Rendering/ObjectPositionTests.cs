@@ -184,9 +184,74 @@ namespace Ixen.Core.UT.Rendering
             Refuse("top bottom");
             Refuse("left center");
             Refuse("left top right");
-            Refuse("30px");
+            Refuse("30em");
             Refuse("middle-ish");
             Refuse("");
+            Refuse("center 10px 20px");
+            Refuse("right 10px right");
+            Refuse("left 10px 20px 30px");
+        }
+
+        [TestMethod]
+        public void ALengthIsADistanceAndAnEdgeCanPrecedeIt()
+        {
+            ObjectPositionStyleDescriptor one = Parse("10px");
+
+            Assert.AreEqual(0f, one.X);
+            Assert.AreEqual(10f, one.OffsetX);
+            Assert.AreEqual(0.5f, one.Y, "the axis nobody named keeps the centre");
+            Assert.AreEqual(0f, one.OffsetY);
+
+            ObjectPositionStyleDescriptor edges = Parse("bottom 8px right 10px");
+
+            Assert.AreEqual(1f, edges.X);
+            Assert.AreEqual(-10f, edges.OffsetX);
+            Assert.AreEqual(1f, edges.Y);
+            Assert.AreEqual(-8f, edges.OffsetY, "in either order, as for the keywords alone");
+
+            ObjectPositionStyleDescriptor centred = Parse("center 6px");
+
+            Assert.AreEqual(0.5f, centred.X);
+            Assert.AreEqual(0f, centred.Y, "a length after center is the other axis: centre has no edge to measure from");
+            Assert.AreEqual(6f, centred.OffsetY);
+
+            Assert.AreEqual(-6f, Parse("-6px 0px").OffsetX, "a negative length moves the other way");
+        }
+
+        [TestMethod]
+        public void AnOffsetFromTheTopMovesThePictureDown()
+        {
+            _image.Styles.ObjectPosition = Parse("center top 2px");
+            _image.Invalidate();
+            Frame();
+
+            Assert.IsFalse(IsRed(At(10, 0)), "the first two rows of the box are left uncovered");
+            Assert.IsTrue(IsRed(At(10, 3)), "and the red stripe has moved down with the picture");
+        }
+
+        [TestMethod]
+        public void AnOffsetFromTheBottomLiftsThePicture()
+        {
+            _image.Styles.ObjectPosition = Parse("center bottom 2px");
+            _image.Invalidate();
+            Frame();
+
+            Assert.IsTrue(IsBlue(At(10, 16)), "the blue stripe sits two rows above the bottom");
+            Assert.IsFalse(IsBlue(At(10, 19)));
+        }
+
+        [TestMethod]
+        public void APictureThatFitsIsStillCutWhenAnOffsetPushesItOut()
+        {
+            _image.Styles.ObjectFit = new ObjectFitStyleDescriptor { Value = ObjectFit.Contain };
+            _image.Styles.ObjectPosition = Parse("10px 0px");
+            _image.Invalidate();
+            Frame();
+
+            SKColor outside = At(25, 10);
+
+            Assert.IsTrue(outside.Green > 200 && outside.Red < 80,
+                $"past the box is the parent's green, not the picture: {outside}");
         }
 
         private static ObjectPositionStyleDescriptor Parse(string value)

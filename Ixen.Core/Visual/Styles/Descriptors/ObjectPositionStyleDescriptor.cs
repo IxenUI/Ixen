@@ -8,15 +8,22 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 
         public float X { get; set; } = CENTRE;
         public float Y { get; set; } = CENTRE;
+        public float OffsetX { get; set; }
+        public float OffsetY { get; set; }
 
-        internal bool IsDefault => X == CENTRE && Y == CENTRE;
+        internal bool IsDefault => X == CENTRE && Y == CENTRE && OffsetX == 0 && OffsetY == 0;
 
         internal override bool CanGenerateSource => true;
         internal override string ToSource()
             => $"new {nameof(ObjectPositionStyleDescriptor)} " +
                 "{ " +
-                    $"{nameof(X)} = {X.ToString("R", global::System.Globalization.CultureInfo.InvariantCulture)}f, " +
-                    $"{nameof(Y)} = {Y.ToString("R", global::System.Globalization.CultureInfo.InvariantCulture)}f " +
+                    $"{nameof(X)} = {Source(X)}, " +
+                    $"{nameof(Y)} = {Source(Y)}, " +
+                    $"{nameof(OffsetX)} = {Source(OffsetX)}, " +
+                    $"{nameof(OffsetY)} = {Source(OffsetY)} " +
                 "}";
+
+        private static string Source(float value)
+            => value.ToString("R", global::System.Globalization.CultureInfo.InvariantCulture) + "f";
     }
 }

@@ -1,20 +1,19 @@
 using Ixen.Core.Visual.Styles.Descriptors;
 using System;
-using System.Globalization;
-using System.Text.RegularExpressions;
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
     internal class ObjectPositionStyleParser : StyleParser
     {
-        internal const string LEFT = "left";
-        internal const string CENTER = "center";
-        internal const string RIGHT = "right";
-        internal const string TOP = "top";
-        internal const string MIDDLE = "middle";
-        internal const string BOTTOM = "bottom";
+        internal const string LEFT = PositionReader.LEFT;
+        internal const string CENTER = PositionReader.CENTER;
+        internal const string RIGHT = PositionReader.RIGHT;
+        internal const string TOP = PositionReader.TOP;
+        internal const string MIDDLE = PositionReader.MIDDLE;
+        internal const string BOTTOM = PositionReader.BOTTOM;
 
-        private static readonly Regex _percent = new Regex(@"^(-?[0-9]+(?:\.[0-9]+)?)%$");
+        private const int MAX_PARTS = 4;
+
         private static readonly char[] _separators = { ' ', '\t' };
 
         public ObjectPositionStyleDescriptor Descriptor { get; } = new();
@@ -34,66 +33,31 @@ namespace Ixen.Core.Visual.Styles.Parsers
 
             string[] parts = content.ToLower().Split(_separators, StringSplitOptions.RemoveEmptyEntries);
 
-            if (parts.Length == 0 || parts.Length > 2)
+            if (parts.Length == 0 || parts.Length > MAX_PARTS)
             {
                 return false;
             }
 
-            bool horizontal = false;
-            bool vertical = false;
+            var reader = new PositionReader();
 
             foreach (string part in parts)
             {
-                if (part == LEFT || part == CENTER || part == RIGHT)
-                {
-                    if (horizontal)
-                    {
-                        return false;
-                    }
-
-                    horizontal = true;
-                    Descriptor.X = part == LEFT ? 0f : part == RIGHT ? 1f : 0.5f;
-
-                    continue;
-                }
-
-                if (part == TOP || part == MIDDLE || part == BOTTOM)
-                {
-                    if (vertical)
-                    {
-                        return false;
-                    }
-
-                    vertical = true;
-                    Descriptor.Y = part == TOP ? 0f : part == BOTTOM ? 1f : 0.5f;
-
-                    continue;
-                }
-
-                Match match = _percent.Match(part);
-
-                if (!match.Success || !float.TryParse(match.Groups[1].Value, NumberStyles.Float,
-                    CultureInfo.InvariantCulture, out float value))
+                if (!reader.Accept(part))
                 {
                     return false;
                 }
+            }
 
-                value /= 100f;
+            if (reader.HasX)
+            {
+                Descriptor.X = reader.X;
+                Descriptor.OffsetX = reader.OffsetX;
+            }
 
-                if (!horizontal)
-                {
-                    horizontal = true;
-                    Descriptor.X = value;
-                }
-                else if (!vertical)
-                {
-                    vertical = true;
-                    Descriptor.Y = value;
-                }
-                else
-                {
-                    return false;
-                }
+            if (reader.HasY)
+            {
+                Descriptor.Y = reader.Y;
+                Descriptor.OffsetY = reader.OffsetY;
             }
 
             return true;

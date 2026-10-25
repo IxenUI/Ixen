@@ -1,16 +1,12 @@
 using Ixen.Core.Visual.Styles.Descriptors;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Ixen.Core.Visual.Styles.Parsers
 {
     internal class BackgroundStyleParser : StyleParser
     {
-        private static readonly Regex _percent = new Regex(@"^([0-9]+(?:\.[0-9]+)?)%$");
-
         internal const string REPEAT = "repeat";
         internal const string REPEAT_X = "repeat-x";
         internal const string REPEAT_Y = "repeat-y";
@@ -21,13 +17,6 @@ namespace Ixen.Core.Visual.Styles.Parsers
         internal const string CONTAIN = "contain";
         internal const string FILL = "fill";
         internal const string STRETCH = "stretch";
-
-        internal const string LEFT = "left";
-        internal const string CENTER = "center";
-        internal const string RIGHT = "right";
-        internal const string TOP = "top";
-        internal const string MIDDLE = "middle";
-        internal const string BOTTOM = "bottom";
 
         public BackgroundStyleDescriptor Descriptor { get; } = new BackgroundStyleDescriptor();
 
@@ -74,9 +63,20 @@ namespace Ixen.Core.Visual.Styles.Parsers
             }
 
             bool repeatSeen = false;
+            var position = new PositionReader();
 
             foreach (string part in parts)
             {
+                if (position.Accept(part.ToLower()))
+                {
+                    continue;
+                }
+
+                if (position.IsInvalid)
+                {
+                    return false;
+                }
+
                 if (GradientParser.IsCall(part))
                 {
                     if (layer.Gradient != null)
@@ -119,11 +119,6 @@ namespace Ixen.Core.Visual.Styles.Parsers
                     continue;
                 }
 
-                if (TryPosition(layer, part.ToLower()))
-                {
-                    continue;
-                }
-
                 if (IsImageName(part))
                 {
                     if (layer.ImageUrl != null)
@@ -138,78 +133,29 @@ namespace Ixen.Core.Visual.Styles.Parsers
                 return false;
             }
 
+            if ((position.HasX && position.X < 0) || (position.HasY && position.Y < 0))
+            {
+                return false;
+            }
+
+            if (position.HasX)
+            {
+                layer.PositionX = position.X;
+                layer.OffsetX = position.OffsetX;
+            }
+
+            if (position.HasY)
+            {
+                layer.PositionY = position.Y;
+                layer.OffsetY = position.OffsetY;
+            }
+
             if (layer.ImageUrl == null)
             {
                 return !repeatSeen && !layer.IsScaled && !layer.HasPosition;
             }
 
             return !((layer.RepeatX || layer.RepeatY) && layer.IsScaled);
-        }
-
-        private bool TryPosition(BackgroundLayer layer, string value)
-        {
-            switch (value)
-            {
-                case LEFT:
-                    return SetX(layer, 0f);
-
-                case CENTER:
-                    return SetX(layer, 0.5f);
-
-                case RIGHT:
-                    return SetX(layer, 1f);
-
-                case TOP:
-                    return SetY(layer, 0f);
-
-                case MIDDLE:
-                    return SetY(layer, 0.5f);
-
-                case BOTTOM:
-                    return SetY(layer, 1f);
-
-                default:
-                    return TryPercentPosition(layer, value);
-            }
-        }
-
-        private static bool SetX(BackgroundLayer layer, float value)
-        {
-            if (layer.PositionX >= 0f)
-            {
-                return false;
-            }
-
-            layer.PositionX = value;
-
-            return true;
-        }
-
-        private static bool SetY(BackgroundLayer layer, float value)
-        {
-            if (layer.PositionY >= 0f)
-            {
-                return false;
-            }
-
-            layer.PositionY = value;
-
-            return true;
-        }
-
-        private static bool TryPercentPosition(BackgroundLayer layer, string value)
-        {
-            Match match = _percent.Match(value);
-
-            if (!match.Success || !float.TryParse(match.Groups[1].Value, NumberStyles.Float,
-                CultureInfo.InvariantCulture, out float percent))
-            {
-                return false;
-            }
-
-            float fraction = percent / 100f;
-
-            return SetX(layer, fraction) || SetY(layer, fraction);
         }
 
         private static bool TryFit(BackgroundLayer layer, string value)

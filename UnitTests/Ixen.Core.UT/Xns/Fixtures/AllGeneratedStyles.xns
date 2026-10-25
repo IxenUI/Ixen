@@ -10,7 +10,7 @@ generated_root {
     layout: row
     width: ?
     height: ?
-    background: #FF0000 Assets/Images/logo.png repeat-x bottom  // a path, a keyword and a position
+    background: #FF0000 Assets/Images/logo.png repeat-x bottom 6px  // a path, a keyword and a position with its offset
     border: #CCCCCC 1.5px inner
     box-shadow: -1px 2.5px 6px 3px #40112233, 0px 1px 2px #20445566
     text-shadow: 0px 1px 2.5px #80445566
@@ -41,7 +41,7 @@ generated_root {
     scroll-behavior: smooth
     pointer-events: auto
     backdrop-filter: blur(3px)
-    object-position: right 25%
+    object-position: right 10px 25%
     animation: generated_pulse 480ms ease-out 60ms infinite alternate
 
     generated_child {
