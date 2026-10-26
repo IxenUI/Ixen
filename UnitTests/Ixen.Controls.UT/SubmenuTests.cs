@@ -314,5 +314,28 @@ namespace Ixen.Controls.UT
 
             Assert.IsTrue(parent.HasState(AccessibleStates.Expanded));
         }
+
+        [TestMethod]
+        public void AnOpenSubmenuIsReachableUnderItsItem()
+        {
+            _menu.Open = true;
+            Layout();
+
+            AccessibleNode closed = AccessibleSearch.Find(_surface.BuildAccessibilityTree(), node => node.Element == _parent);
+
+            Assert.AreEqual(0, closed.Children.Count, "a closed submenu is hidden, so it is not there to reach");
+
+            _surface.Perform(closed, AccessibleActions.Expand);
+            Layout();
+
+            AccessibleNode parent = AccessibleSearch.Find(_surface.BuildAccessibilityTree(), node => node.Element == _parent);
+            AccessibleNode deep = AccessibleSearch.Find(parent, node => node.Element == _deep);
+
+            Assert.IsNotNull(deep,
+                "an item is named from its content, which once meant none of its children were walked, "
+                + "so a screen reader could expand Recent and find nothing in it");
+            Assert.AreEqual("First file", deep.Name);
+            Assert.AreEqual("Recent", parent.Name, "and the submenu's text does not leak into the item's name");
+        }
     }
 }

@@ -1,0 +1,9 @@
+menu_root {} [
+	menu<RoutedPanel> {} [
+		first { text: "first" }
+		@foreach (var command in Commands) key (command.Label) {
+			item { command: "{command}" }
+		@}
+		last { text: "last" }
+	]
+]

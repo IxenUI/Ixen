@@ -306,7 +306,7 @@ namespace Ixen.Generators.Xnl
 
             sb.AppendLine($"{tabs}var {region.Prefix}_source = " +
                 $"{XnlBindings.Qualify(region.Source, file.ModelMembers)};");
-            sb.AppendLine($"{tabs}int {counter} = {region.Prefix}_source == null ? 0 : {region.Prefix}_source.Count;");
+            sb.AppendLine($"{tabs}int {counter} = {region.Prefix}_source == null ? 0 : global::System.Linq.Enumerable.Count({region.Prefix}_source);");
 
             if (region.Key == null)
             {
@@ -365,7 +365,7 @@ namespace Ixen.Generators.Xnl
             sb.AppendLine($"{tabs}var {source} = {XnlBindings.Qualify(region.Source, file.ModelMembers)};");
             sb.AppendLine();
             sb.AppendLine($"{tabs}{prefix}{region.ParentId}.SetRegion(");
-            sb.AppendLine($"{inner}() => {source} == null ? 0 : {source}.Count,");
+            sb.AppendLine($"{inner}() => {source} == null ? 0 : global::System.Linq.Enumerable.Count({source}),");
             sb.AppendLine($"{inner}() => new {region.RowType}(),");
             sb.AppendLine($"{inner}({slot}, {at}) =>");
             sb.AppendLine($"{inner}{{");

@@ -122,6 +122,10 @@ namespace Ixen.Core.Accessibility
             {
                 Collect(element, focused, node.ChildList, live, accelerator, labels);
             }
+            else
+            {
+                CollectLayers(element, focused, node.ChildList, live, accelerator, labels);
+            }
 
             return node;
         }
@@ -148,6 +152,34 @@ namespace Ixen.Core.Accessibility
                 else
                 {
                     Collect(child, focused, into, live, accelerator, labels);
+                }
+            }
+        }
+
+        private static void CollectLayers(VisualElement element, VisualElement focused,
+            List<AccessibleNode> into, LiveRegionKind inherited, KeyModifiers accelerator,
+            Dictionary<VisualElement, VisualElement> labels)
+        {
+            foreach (VisualElement child in element.Children)
+            {
+                if (child.IsHidden || child.Role == AccessibleRole.Presentation)
+                {
+                    continue;
+                }
+
+                if (!child.IsOverlay)
+                {
+                    CollectLayers(child, focused, into, inherited, accelerator, labels);
+                    continue;
+                }
+
+                if (IsExposed(child))
+                {
+                    into.Add(NodeFor(child, focused, inherited, accelerator, labels));
+                }
+                else
+                {
+                    Collect(child, focused, into, inherited, accelerator, labels);
                 }
             }
         }

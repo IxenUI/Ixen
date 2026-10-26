@@ -1,0 +1,17 @@
+loops_root {} [
+	names {} [
+		@foreach (var name in Names) {
+			name_item { text: "{name}" }
+		@}
+	]
+	items {} [
+		@foreach (var item in Items) key (item.Id) {
+			item_row { text: "{item.Name}" }
+		@}
+	]
+	host<RecordingHost> {} [
+		@foreach (var name in Names) {
+			host_row { text: "{name}" }
+		@}
+	]
+]
