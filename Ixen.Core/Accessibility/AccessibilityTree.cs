@@ -136,23 +136,35 @@ namespace Ixen.Core.Accessibility
         {
             foreach (VisualElement child in element.Children)
             {
-                if (child.IsHidden || child.Role == AccessibleRole.Presentation)
-                {
-                    continue;
-                }
+                Visit(child, focused, into, inherited, accelerator, labels);
+            }
 
-                LiveRegionKind live = child.LiveRegion == LiveRegionKind.None
-                    ? inherited
-                    : child.LiveRegion;
+            foreach (VisualElement chrome in element.ChromeElements)
+            {
+                Visit(chrome, focused, into, inherited, accelerator, labels);
+            }
+        }
 
-                if (IsExposed(child) && !IsLabel(child, labels))
-                {
-                    into.Add(NodeFor(child, focused, inherited, accelerator, labels));
-                }
-                else
-                {
-                    Collect(child, focused, into, live, accelerator, labels);
-                }
+        private static void Visit(VisualElement child, VisualElement focused,
+            List<AccessibleNode> into, LiveRegionKind inherited, KeyModifiers accelerator,
+            Dictionary<VisualElement, VisualElement> labels)
+        {
+            if (child.IsHidden || child.Role == AccessibleRole.Presentation)
+            {
+                return;
+            }
+
+            LiveRegionKind live = child.LiveRegion == LiveRegionKind.None
+                ? inherited
+                : child.LiveRegion;
+
+            if (IsExposed(child) && !IsLabel(child, labels))
+            {
+                into.Add(NodeFor(child, focused, inherited, accelerator, labels));
+            }
+            else
+            {
+                Collect(child, focused, into, live, accelerator, labels);
             }
         }
 

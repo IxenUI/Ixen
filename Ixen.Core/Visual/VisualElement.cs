@@ -974,8 +974,21 @@ namespace Ixen.Core.Visual
                 : null;
         }
 
-        internal void AddChrome(VisualElement element)
+        private static readonly List<VisualElement> _noChrome = new List<VisualElement>();
+
+        public IReadOnlyList<VisualElement> ChromeElements => _chrome ?? _noChrome;
+
+        public void AddChrome(VisualElement element)
         {
+            CheckAdoptable(element);
+
+            if (element.Parent != null)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot add '{Naming(element)}' as chrome of '{Naming(this)}': it already belongs to "
+                    + $"'{Naming(element.Parent)}'. Remove it from there first.");
+            }
+
             if (_chrome == null)
             {
                 _chrome = new List<VisualElement>();
@@ -985,6 +998,23 @@ namespace Ixen.Core.Visual
             element.MarkStylesDirty();
             element.AttachHost(Host);
             _chrome.Add(element);
+
+            InvalidateLayout();
+        }
+
+        public bool RemoveChrome(VisualElement element)
+        {
+            if (element == null || _chrome == null || !_chrome.Remove(element))
+            {
+                return false;
+            }
+
+            element.Parent = null;
+            element.DetachHost();
+
+            InvalidateLayout();
+
+            return true;
         }
 
         protected virtual VisualElement ContentHost => this;

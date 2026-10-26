@@ -137,6 +137,7 @@ namespace Ixen.Core.Visual.Computers
             if (element.HasChrome)
             {
                 MeasureScrollbars(element, scrollable);
+                MeasureChrome(element);
             }
         }
 
@@ -1686,34 +1687,56 @@ namespace Ixen.Core.Visual.Computers
 
             foreach (VisualElement child in element.Children)
             {
-                ResolveAnchor(AnimatedOffset(child, StyleIdentifier.LEFT, child.StylesHandlers.Left.Descriptor),
-                    contentWidth, out float left, out bool hasLeft);
-
-                ResolveAnchor(AnimatedOffset(child, StyleIdentifier.RIGHT, child.StylesHandlers.Right.Descriptor),
-                    contentWidth, out float right, out bool hasRight);
-
-                ResolveAnchor(AnimatedOffset(child, StyleIdentifier.TOP, child.StylesHandlers.Top.Descriptor),
-                    contentHeight, out float top, out bool hasTop);
-
-                ResolveAnchor(AnimatedOffset(child, StyleIdentifier.BOTTOM, child.StylesHandlers.Bottom.Descriptor),
-                    contentHeight, out float bottom, out bool hasBottom);
-
-                float horizontalSpacing = child.HorizontalMargin + child.HorizontalBorderOutside;
-                float verticalSpacing = child.VerticalMargin + child.VerticalBorderOutside;
-
-                ResolveAnchoredAxis(GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width),
-                    contentWidth, horizontalSpacing, left, right,
-                    out float availableWidth, out bool widthIsDefinite);
-
-                ResolveAnchoredAxis(GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Height),
-                    contentHeight, verticalSpacing, top, bottom,
-                    out float availableHeight, out bool heightIsDefinite);
-
-                Measure(child, availableWidth, availableHeight, widthIsDefinite, heightIsDefinite);
-
-                child.LayoutOffsetX = AnchoredOffset(left, right, hasLeft, hasRight, contentWidth, child.BoxWidth);
-                child.LayoutOffsetY = AnchoredOffset(top, bottom, hasTop, hasBottom, contentHeight, child.BoxHeight);
+                MeasureAnchoredChild(child, contentWidth, contentHeight);
             }
+        }
+
+        private void MeasureChrome(VisualElement element)
+        {
+            foreach (VisualElement chrome in element.Chrome)
+            {
+                if (chrome is Scrollbar || chrome.StylesHandlers == null)
+                {
+                    continue;
+                }
+
+                ResolveBorders(chrome);
+                ResolveHorizontalSpacing(chrome, element.ActualWidth);
+                ResolveVerticalSpacing(chrome, element.ActualHeight);
+
+                MeasureAnchoredChild(chrome, element.ActualWidth, element.ActualHeight);
+            }
+        }
+
+        private void MeasureAnchoredChild(VisualElement child, float contentWidth, float contentHeight)
+        {
+            ResolveAnchor(AnimatedOffset(child, StyleIdentifier.LEFT, child.StylesHandlers.Left.Descriptor),
+                contentWidth, out float left, out bool hasLeft);
+
+            ResolveAnchor(AnimatedOffset(child, StyleIdentifier.RIGHT, child.StylesHandlers.Right.Descriptor),
+                contentWidth, out float right, out bool hasRight);
+
+            ResolveAnchor(AnimatedOffset(child, StyleIdentifier.TOP, child.StylesHandlers.Top.Descriptor),
+                contentHeight, out float top, out bool hasTop);
+
+            ResolveAnchor(AnimatedOffset(child, StyleIdentifier.BOTTOM, child.StylesHandlers.Bottom.Descriptor),
+                contentHeight, out float bottom, out bool hasBottom);
+
+            float horizontalSpacing = child.HorizontalMargin + child.HorizontalBorderOutside;
+            float verticalSpacing = child.VerticalMargin + child.VerticalBorderOutside;
+
+            ResolveAnchoredAxis(GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width),
+                contentWidth, horizontalSpacing, left, right,
+                out float availableWidth, out bool widthIsDefinite);
+
+            ResolveAnchoredAxis(GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Height),
+                contentHeight, verticalSpacing, top, bottom,
+                out float availableHeight, out bool heightIsDefinite);
+
+            Measure(child, availableWidth, availableHeight, widthIsDefinite, heightIsDefinite);
+
+            child.LayoutOffsetX = AnchoredOffset(left, right, hasLeft, hasRight, contentWidth, child.BoxWidth);
+            child.LayoutOffsetY = AnchoredOffset(top, bottom, hasTop, hasBottom, contentHeight, child.BoxHeight);
         }
 
         private void ResolveAnchor(OffsetStyleDescriptor style, float contentAvailable, out float value, out bool isSet)
