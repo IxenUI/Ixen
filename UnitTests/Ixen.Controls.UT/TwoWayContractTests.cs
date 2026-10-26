@@ -111,6 +111,8 @@ namespace Ixen.Controls.UT
                     "Dialog.Open",
                     "Menu.Open",
                     "RadioButton.Checked",
+                    "RangeSlider.Lower",
+                    "RangeSlider.Upper",
                     "Slider.Value",
                     "Switch.Checked",
                     "TabControl.SelectedIndex",

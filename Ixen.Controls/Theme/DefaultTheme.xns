@@ -277,6 +277,23 @@ $control_focus_soft:   #EEF1FE
     cursor: not-allowed
 }
 
+#RangeSlider {
+    width: 176px
+    height: 18px
+    padding: 0px 8px 0px 8px
+    cursor: hand
+}
+
+#RangeSlider:vertical {
+    width: 18px
+    height: 176px
+    padding: 8px 0px 8px 0px
+}
+
+#RangeSlider:disabled {
+    cursor: not-allowed
+}
+
 #SliderTrack {
     background: $control_surface_down
     corner-radius: 2px

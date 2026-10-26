@@ -1261,10 +1261,11 @@ namespace Ixen.Core
             PointerKind kind = PointerKind.Mouse, int pointerId = 0)
         {
             bool primary = _pointerDispatcher.PointerCount == 0;
+            VisualElement focusedBefore = FocusedElement;
 
             _pointerDispatcher.Down(Root, ToLogical(x), ToLogical(y), button, TrackStates, kind, pointerId);
 
-            if (primary)
+            if (primary && FocusedElement == focusedBefore)
             {
                 _keyboardDispatcher.FocusFromPointer(_pointerDispatcher.Pressed, TrackStates);
             }

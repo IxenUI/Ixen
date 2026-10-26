@@ -182,6 +182,24 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void AFocusAHandlerGivesDuringTheDownIsKept()
+        {
+            VisualElement root = Element("root");
+            VisualElement track = Box("track", 100, 40);
+            VisualElement thumb = Box("thumb", 10, 10, true);
+            root.AddChildren(track, thumb);
+
+            IxenSurface surface = Laid(root);
+            track.PointerDown += (sender, e) => surface.Focus(thumb);
+
+            surface.PointerDown(50, 20, PointerButton.Left);
+
+            Assert.AreSame(thumb, surface.FocusedElement,
+                "a control that decides where its focus goes on a press must not have it taken back "
+                + "because what was hit is not focusable itself");
+        }
+
+        [TestMethod]
         public void ADownOnNothingAtAllClearsTheFocus()
         {
             VisualElement root = Element("root");
