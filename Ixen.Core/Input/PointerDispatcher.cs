@@ -55,6 +55,8 @@ namespace Ixen.Core.Input
 
         private VisualElement _hovered;
         private VisualElement _pressed;
+        private VisualElement _lentHover;
+        private VisualElement _lentPressed;
         private VisualElement _captured;
 
         private PointerButton _pressedButton;
@@ -415,6 +417,7 @@ namespace Ixen.Core.Input
             EndDrag(_lastDragX, _lastDragY);
 
             SetState(_pressed, StyleStates.PRESSED, false);
+            ReleaseLentPressed();
 
             _pressed = null;
             _captured = null;
@@ -626,6 +629,7 @@ namespace Ixen.Core.Input
             CancelLongPress();
             EndDrag(_lastDragX, _lastDragY);
             SetState(_pressed, StyleStates.PRESSED, false);
+            ReleaseLentPressed();
             _pressed = null;
         }
 
@@ -640,6 +644,18 @@ namespace Ixen.Core.Input
             {
                 SetState(element, StyleStates.HOVER, false);
                 _hovered = null;
+            }
+
+            if (_lentHover == element)
+            {
+                SetState(element, StyleStates.HOVER, false);
+                _lentHover = null;
+            }
+
+            if (_lentPressed == element)
+            {
+                SetState(element, StyleStates.PRESSED, false);
+                _lentPressed = null;
             }
 
             if (_pressed == element)
@@ -741,6 +757,7 @@ namespace Ixen.Core.Input
             _dragging = false;
 
             SetState(hit, StyleStates.PRESSED, true);
+            LendPressed(hit);
 
             Bubble(hit, new PointerEventArgs(x, y, button, hit), PointerEventKind.Down);
 
@@ -1044,6 +1061,7 @@ namespace Ixen.Core.Input
 
             _captured = null;
             SetState(_pressed, StyleStates.PRESSED, false);
+            ReleaseLentPressed();
             _pressed = null;
 
             _lastDragX = _baseCentroidX;
@@ -1359,6 +1377,7 @@ namespace Ixen.Core.Input
             _captured = null;
 
             SetState(_pressed, StyleStates.PRESSED, false);
+            ReleaseLentPressed();
 
             UpdateHover(hit, x, y);
             Bubble(target, new PointerEventArgs(x, y, button, target), PointerEventKind.Up);
@@ -1578,6 +1597,62 @@ namespace Ixen.Core.Input
                     _enteredChain[i].RaisePointerEnter(enterArgs);
                 }
             }
+
+            LendHover(hit);
+        }
+
+        private void LendHover(VisualElement hit)
+        {
+            VisualElement target = hit == null ? null : VisualElement.CaptionTargetOf(hit);
+
+            if (_lentHover != null && _lentHover != target && !IsHovered(_lentHover))
+            {
+                SetState(_lentHover, StyleStates.HOVER, false);
+            }
+
+            _lentHover = target;
+
+            if (target != null)
+            {
+                SetState(target, StyleStates.HOVER, true);
+            }
+        }
+
+        private bool IsHovered(VisualElement element)
+        {
+            for (VisualElement current = _hovered; current != null; current = current.Parent)
+            {
+                if (current == element)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void LendPressed(VisualElement hit)
+        {
+            VisualElement target = hit == null ? null : VisualElement.CaptionTargetOf(hit);
+
+            if (target == null || target == hit)
+            {
+                return;
+            }
+
+            _lentPressed = target;
+            SetState(target, StyleStates.PRESSED, true);
+        }
+
+        private void ReleaseLentPressed()
+        {
+            if (_lentPressed == null)
+            {
+                return;
+            }
+
+            SetState(_lentPressed, StyleStates.PRESSED, false);
+            _lentPressed = null;
         }
     }
 }

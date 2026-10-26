@@ -74,6 +74,23 @@ namespace Ixen.Core.Visual
             }
         }
 
+        internal static VisualElement CaptionTargetOf(VisualElement element)
+        {
+            for (VisualElement caption = element; caption != null; caption = caption.Parent)
+            {
+                if (caption.LabelFor == null)
+                {
+                    continue;
+                }
+
+                VisualElement target = caption.LabelTarget;
+
+                return target != null && target.IsEnabled && !target.IsHiddenInTree ? target : null;
+            }
+
+            return null;
+        }
+
         private void RedirectClick(PointerEventArgs args)
         {
             VisualElement target = LabelTarget;

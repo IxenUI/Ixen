@@ -226,6 +226,110 @@ namespace Ixen.Core.UT.Input
             _surface.PointerMove(element.X + 2, element.Y + 2);
         }
 
+        private void TrackStates()
+        {
+            var source = new Ixen.Core.Language.Xns.XnsSource("target:hover { background: #FF0000 }");
+            var registry = new StyleRegistry();
+
+            registry.Add(source.Compile());
+            _surface.Styles = registry;
+        }
+
+        private VisualElement Plain()
+        {
+            var plain = new VisualElement { Name = "plain" };
+            plain.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 100 };
+            plain.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 20 };
+
+            _root.AddChild(plain);
+            return plain;
+        }
+
+        [TestMethod]
+        public void HoveringTheCaptionHoversTheTarget()
+        {
+            TrackStates();
+            VisualElement target = Box(_root, "target");
+            VisualElement label = Box(_root, "label", "Remember me");
+            label.LabelFor = "target";
+            VisualElement plain = Plain();
+
+            Hover(label);
+
+            Assert.IsTrue(target.HasState("hover"), "the box lights up as the browser does under its label");
+            Assert.IsTrue(label.HasState("hover"), "and the caption keeps its own");
+
+            Hover(plain);
+
+            Assert.IsFalse(target.HasState("hover"), "leaving the caption takes it back");
+        }
+
+        [TestMethod]
+        public void MovingFromTheCaptionOntoTheTargetKeepsItHovered()
+        {
+            TrackStates();
+            VisualElement target = Box(_root, "target");
+            VisualElement label = Box(_root, "label", "Remember me");
+            label.LabelFor = "target";
+
+            Hover(label);
+            Hover(target);
+
+            Assert.IsTrue(target.HasState("hover"), "the loan ends, but the pointer is on it now");
+
+            Hover(label);
+
+            Assert.IsTrue(target.HasState("hover"));
+        }
+
+        [TestMethod]
+        public void ACaptionAroundItsTargetKeepsItHoveredAcrossBoth()
+        {
+            TrackStates();
+            VisualElement label = Group("label");
+            label.LabelFor = "target";
+            VisualElement target = Box(label, "target");
+            VisualElement caption = Box(label, "caption", "Remember me");
+
+            Hover(target);
+            Hover(caption);
+
+            Assert.IsTrue(target.HasState("hover"),
+                "the pointer leaving the target for the caption's text must not switch the box off");
+        }
+
+        [TestMethod]
+        public void PressingTheCaptionPressesTheTargetUntilRelease()
+        {
+            TrackStates();
+            VisualElement target = Box(_root, "target");
+            VisualElement label = Box(_root, "label", "Remember me");
+            label.LabelFor = "target";
+
+            Layout();
+            _surface.PointerDown(label.X + 2, label.Y + 2, PointerButton.Left);
+
+            Assert.IsTrue(target.HasState("pressed"));
+
+            _surface.PointerUp(label.X + 2, label.Y + 2, PointerButton.Left);
+
+            Assert.IsFalse(target.HasState("pressed"));
+        }
+
+        [TestMethod]
+        public void ADisabledTargetIsNotLit()
+        {
+            TrackStates();
+            VisualElement target = Box(_root, "target");
+            target.Enabled = false;
+            VisualElement label = Box(_root, "label", "Remember me");
+            label.LabelFor = "target";
+
+            Hover(label);
+
+            Assert.IsFalse(target.HasState("hover"));
+        }
+
         [TestMethod]
         public void TheCaptionShowsTheCursorItsTargetShows()
         {

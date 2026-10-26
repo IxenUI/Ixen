@@ -1023,7 +1023,7 @@ namespace Ixen.Core
 
             if (resolved == CursorKind.Unset && borrow)
             {
-                VisualElement target = CaptionTarget(element);
+                VisualElement target = VisualElement.CaptionTargetOf(element);
 
                 if (target != null)
                 {
@@ -1046,23 +1046,6 @@ namespace Ixen.Core
             image = Picture(descriptor, bitmap);
 
             return CursorKind.Image;
-        }
-
-        private static VisualElement CaptionTarget(VisualElement element)
-        {
-            for (VisualElement caption = element; caption != null; caption = caption.Parent)
-            {
-                if (caption.LabelFor == null)
-                {
-                    continue;
-                }
-
-                VisualElement target = caption.LabelTarget;
-
-                return target != null && target.IsEnabled && !target.IsHiddenInTree ? target : null;
-            }
-
-            return null;
         }
 
         private CursorImage Picture(CursorStyleDescriptor descriptor, SKBitmap bitmap)
