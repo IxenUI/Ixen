@@ -410,6 +410,8 @@ namespace Ixen.Controls
                 cell.PointerDragStart += OnHeaderDragStart;
                 cell.PointerDrag += OnHeaderDrag;
                 cell.PointerDragEnd += OnHeaderDragEnd;
+                cell.KeyDown += OnHeaderKeyDown;
+                cell.GotFocus += OnHeaderFocused;
 
                 _headerCells.Add(cell);
                 _header.AddChild(cell);
@@ -424,7 +426,99 @@ namespace Ixen.Controls
 
                 cell.SetHeader(column?.Header);
                 cell.SetSort(false, false);
-                cell.Focusable = column != null && column.IsSortable;
+                cell.Focusable = column != null && (column.IsSortable || column.Resizable);
+            }
+
+            _headerStop = -1;
+            Rove(NextHeader(-1, 1));
+        }
+
+        private const float KEY_RESIZE = 10;
+
+        private int _headerStop = -1;
+
+        private int NextHeader(int from, int direction)
+        {
+            for (int i = from + direction; i >= 0 && i < _headerCells.Count; i += direction)
+            {
+                if (_headerCells[i].Focusable)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private void Rove(int stop)
+        {
+            if (stop < 0)
+            {
+                return;
+            }
+
+            _headerStop = stop;
+
+            for (int i = 0; i < _headerCells.Count; i++)
+            {
+                _headerCells[i].TabIndex = i == stop ? 0 : -1;
+            }
+        }
+
+        private void OnHeaderFocused(object sender, EventArgs args)
+            => Rove(_headerCells.IndexOf(sender as DataGridHeaderCell));
+
+        private void OnHeaderKeyDown(object sender, KeyEventArgs args)
+        {
+            int index = _headerCells.IndexOf(sender as DataGridHeaderCell);
+
+            if (index < 0 || index >= _columns.Count)
+            {
+                return;
+            }
+
+            DataColumn column = _columns[index];
+            bool control = (args.Modifiers & KeyModifiers.Control) != 0;
+
+            switch (args.Key)
+            {
+                case Key.Enter:
+                case Key.Space:
+                    if (column.IsSortable)
+                    {
+                        args.Handled = true;
+                        SortBy(index);
+                    }
+
+                    break;
+
+                case Key.Left:
+                case Key.Right:
+                    args.Handled = true;
+
+                    int direction = args.Key == Key.Left ? -1 : 1;
+
+                    if (control)
+                    {
+                        if (column.Resizable)
+                        {
+                            float width = column.Width > 0 ? column.Width : _headerCells[index].ActualWidth;
+
+                            ResizeColumn(index, width + (direction * KEY_RESIZE));
+                        }
+
+                        break;
+                    }
+
+                    int next = NextHeader(index, direction);
+
+                    if (next >= 0)
+                    {
+                        Rove(next);
+                        Host?.Focus(_headerCells[next]);
+                    }
+
+                    break;
             }
         }
 
@@ -611,6 +705,7 @@ namespace Ixen.Controls
             resized.Width = width < resized.MinWidth ? resized.MinWidth : width;
 
             SizeCell(_headerCells[column], resized);
+            _headerCells[column].Invalidate();
 
             _body.Refresh();
         }

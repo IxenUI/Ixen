@@ -174,12 +174,90 @@ namespace Ixen.Controls.UT
             Assert.AreEqual(-1, _grid.SortedColumn);
             CollectionAssert.AreEqual(new[] { "Yeats", "Blake", "Keats" }, Order(),
                 "a header with nothing to sort by must do nothing rather than pretend");
-            Assert.IsTrue(HeaderCell(0).Focusable,
-                "a header that sorts is reachable by keyboard, since a click is not the only "
-                + "way anyone gets there");
+        }
+
+        [TestMethod]
+        public void AHeaderIsReachableOnlyIfItSortsOrResizes()
+        {
+            _grid.SetSource(_people,
+                NameColumn(),
+                new DataColumn { Header = "Fixed", Resizable = false, Bind = (cell, item) => cell.Text = "-" },
+                new DataColumn { Header = "Wide", Bind = (cell, item) => cell.Text = "-" });
+            Layout();
+
+            Assert.IsTrue(HeaderCell(0).Focusable, "it sorts");
             Assert.IsFalse(HeaderCell(1).Focusable,
-                "and one that does not must not be a tab stop, or the keyboard offers an action "
-                + "that does not exist");
+                "neither sorts nor resizes, so the keyboard would offer an action that does not exist");
+            Assert.IsTrue(HeaderCell(2).Focusable, "it resizes from the keyboard");
+        }
+
+        [TestMethod]
+        public void TheHeaderRowIsOneTabStopAndTheArrowsWalkIt()
+        {
+            Layout();
+
+            Assert.AreEqual(0, HeaderCell(0).TabIndex);
+            Assert.AreEqual(-1, HeaderCell(1).TabIndex, "one stop for the whole row, as a radio group");
+
+            _surface.Focus(HeaderCell(0));
+            _surface.KeyDown(Key.Right, KeyModifiers.None);
+
+            Assert.AreSame(HeaderCell(1), _surface.FocusedElement);
+            Assert.AreEqual(0, HeaderCell(1).TabIndex, "and the stop moves with the focus");
+            Assert.AreEqual(-1, HeaderCell(0).TabIndex);
+
+            _surface.KeyDown(Key.Left, KeyModifiers.None);
+
+            Assert.AreSame(HeaderCell(0), _surface.FocusedElement);
+        }
+
+        [TestMethod]
+        public void EnterOrSpaceOnAHeaderSorts()
+        {
+            Layout();
+            _surface.Focus(HeaderCell(0));
+
+            _surface.KeyDown(Key.Enter, KeyModifiers.None);
+
+            Assert.AreEqual(0, _grid.SortedColumn,
+                "a sortable header was a tab stop with nothing to press; the keyboard now does what a click does");
+
+            _surface.KeyDown(Key.Space, KeyModifiers.None);
+
+            Assert.IsTrue(_grid.IsDescending);
+        }
+
+        [TestMethod]
+        public void AResizeFromCodeReachesTheHeaderAtTheNextLayout()
+        {
+            Layout();
+
+            _grid.ResizeColumn(0, 200);
+            Layout();
+
+            Assert.AreEqual(200f, HeaderCell(0).ActualWidth,
+                "replacing the header cell's width descriptor told nothing to re-measure it");
+        }
+
+        [TestMethod]
+        public void ControlAndTheArrowsResizeTheFocusedColumn()
+        {
+            Layout();
+            _surface.Focus(HeaderCell(0));
+
+            _surface.KeyDown(Key.Right, KeyModifiers.Control);
+            Layout();
+
+            Assert.AreEqual(170f, _grid.Columns[0].Width, "ten units wider");
+            Assert.AreSame(HeaderCell(0), _surface.FocusedElement, "and the focus stays put");
+
+            for (int i = 0; i < 30; i++)
+            {
+                _surface.KeyDown(Key.Left, KeyModifiers.Control);
+                Layout();
+            }
+
+            Assert.AreEqual(_grid.Columns[0].MinWidth, _grid.Columns[0].Width, "and it stops at its minimum");
         }
 
         [TestMethod]
