@@ -12,6 +12,7 @@ namespace Ixen.Controls
     {
         public const string HEADER = "DataGridHeader";
         public const string BODY = "DataGridBody";
+        public const string EDITOR = "DataGridEditor";
 
         private const float EDGE_GRIP = 6;
 
@@ -31,6 +32,11 @@ namespace Ixen.Controls
         private int _resizing = -1;
         private float _resizeFrom;
         private bool _resized;
+
+        private TextField _editor;
+        private object _editItem;
+        private int _editColumn = -1;
+        private bool _focusEditor;
 
         public DataGrid()
         {
@@ -144,6 +150,225 @@ namespace Ixen.Controls
         }
 
         public void Refresh() => Rebuild();
+
+        public bool IsEditing => _editItem != null;
+
+        public int EditingColumn => _editItem == null ? -1 : _editColumn;
+
+        public object EditingItem => _editItem;
+
+        public TextField Editor => _editor;
+
+        public void BeginEdit(int index, int column)
+        {
+            if (index < 0 || index >= _view.Count || column < 0 || column >= _columns.Count
+                || !_columns[column].IsEditable || !IsEnabled)
+            {
+                return;
+            }
+
+            if (IsEditing)
+            {
+                CommitEdit(false);
+                index = IndexOf(ItemAt(index));
+            }
+
+            Select(index);
+
+            object item = _view[index];
+            DataColumn edited = _columns[column];
+
+            EnsureEditor();
+
+            _editItem = item;
+            _editColumn = column;
+            _focusEditor = true;
+
+            _editor.Text = edited.Value?.Invoke(item) ?? RealisedCellText(index, column) ?? string.Empty;
+
+            DataGridRow row = RealisedRow(index);
+
+            if (row != null)
+            {
+                Place(row.CellAt(column));
+            }
+
+            _body.Refresh();
+        }
+
+        public void CommitEdit() => CommitEdit(true);
+
+        public void CancelEdit()
+        {
+            if (!IsEditing)
+            {
+                return;
+            }
+
+            EndEdit();
+            Rebuild();
+            Focus();
+        }
+
+        private void CommitEdit(bool refocus)
+        {
+            if (!IsEditing)
+            {
+                return;
+            }
+
+            object item = _editItem;
+            DataColumn column = _columns[_editColumn];
+            string text = _editor.Text ?? string.Empty;
+
+            EndEdit();
+
+            column.Commit(item, text);
+
+            Rebuild();
+
+            if (refocus)
+            {
+                Focus();
+            }
+        }
+
+        private void EndEdit()
+        {
+            _editItem = null;
+            _focusEditor = false;
+
+            _editor?.Parent?.RemoveChild(_editor);
+        }
+
+        private void EnsureEditor()
+        {
+            if (_editor != null)
+            {
+                return;
+            }
+
+            _editor = new TextField { TypeName = EDITOR };
+            _editor.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Weight, Value = 1 };
+            _editor.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Weight, Value = 1 };
+
+            _editor.KeyDown += OnEditorKeyDown;
+            _editor.LostFocus += OnEditorLostFocus;
+            _editor.PointerDoubleClick += (sender, args) => args.Handled = true;
+        }
+
+        private void Place(VisualElement cell)
+        {
+            cell.Text = null;
+
+            if (_editor.Parent != cell)
+            {
+                Unplace();
+                cell.AddChild(_editor);
+            }
+
+            if (_focusEditor && Host != null)
+            {
+                _focusEditor = false;
+                Host.Focus(_editor);
+                _editor.SelectAll();
+            }
+        }
+
+        private void Unplace()
+        {
+            if (_editor.Parent == null)
+            {
+                return;
+            }
+
+            if (IsEditing && Host != null && Host.FocusedElement == _editor)
+            {
+                _focusEditor = true;
+            }
+
+            _editor.Parent.RemoveChild(_editor);
+        }
+
+        private DataGridRow RealisedRow(int index)
+        {
+            foreach (VisualElement element in _body.RealisedRows)
+            {
+                if (_body.IndexOfRow(element) == index)
+                {
+                    return element as DataGridRow;
+                }
+            }
+
+            return null;
+        }
+
+        private string RealisedCellText(int index, int column)
+        {
+            DataGridRow row = RealisedRow(index);
+
+            return row == null || column >= row.Cells.Count ? null : row.CellAt(column).Text;
+        }
+
+        private int NextEditable(int from, int direction)
+        {
+            for (int i = from + direction; i >= 0 && i < _columns.Count; i += direction)
+            {
+                if (_columns[i].IsEditable)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private void OnEditorKeyDown(object sender, KeyEventArgs args)
+        {
+            switch (args.Key)
+            {
+                case Key.Enter:
+                    args.Handled = true;
+                    CommitEdit(true);
+                    break;
+
+                case Key.Escape:
+                    args.Handled = true;
+                    CancelEdit();
+                    break;
+
+                case Key.Tab:
+                    args.Handled = true;
+                    MoveEdit((args.Modifiers & KeyModifiers.Shift) != 0 ? -1 : 1);
+                    break;
+            }
+        }
+
+        private void MoveEdit(int direction)
+        {
+            object item = _editItem;
+            int next = NextEditable(_editColumn, direction);
+
+            if (next < 0)
+            {
+                CommitEdit(true);
+                return;
+            }
+
+            CommitEdit(false);
+            BeginEdit(IndexOf(item), next);
+        }
+
+        private void OnEditorLostFocus(object sender, EventArgs args)
+        {
+            Host?.Post(() =>
+            {
+                if (IsEditing && Host?.FocusedElement != _editor)
+                {
+                    CommitEdit(false);
+                }
+            });
+        }
 
         internal static void SizeCell(VisualElement cell, DataColumn column)
         {
@@ -260,6 +485,7 @@ namespace Ixen.Controls
             var row = new DataGridRow();
 
             row.PointerClick += OnRowClick;
+            row.PointerDoubleClick += OnRowDoubleClick;
 
             return row;
         }
@@ -269,6 +495,7 @@ namespace Ixen.Controls
             var row = (DataGridRow)element;
             object item = _view[index];
 
+            row.Item = item;
             row.Fit(_columns);
             row.ToggleState(DataGridRow.SELECTED, index == _selected);
 
@@ -276,11 +503,69 @@ namespace Ixen.Controls
             {
                 _columns[i].Bind?.Invoke(row.CellAt(i), item);
             }
+
+            if (_editor == null)
+            {
+                return;
+            }
+
+            if (IsEditing && ReferenceEquals(item, _editItem) && _editColumn < row.Cells.Count)
+            {
+                Place(row.CellAt(_editColumn));
+                return;
+            }
+
+            if (_editor.Parent != null && _editor.Parent.Parent == row)
+            {
+                Unplace();
+
+                Host?.Post(() =>
+                {
+                    if (IsEditing && _editor.Parent == null)
+                    {
+                        CommitEdit(false);
+                    }
+                });
+            }
+        }
+
+        private void OnRowDoubleClick(object sender, PointerEventArgs args)
+        {
+            if (!(sender is DataGridRow row))
+            {
+                return;
+            }
+
+            for (VisualElement cell = args.Source; cell != null; cell = cell.Parent)
+            {
+                if (cell.Parent != row)
+                {
+                    continue;
+                }
+
+                int column = -1;
+
+                for (int i = 0; i < row.Cells.Count; i++)
+                {
+                    if (row.Cells[i] == cell)
+                    {
+                        column = i;
+                    }
+                }
+
+                if (column >= 0 && column < _columns.Count && _columns[column].IsEditable)
+                {
+                    args.Handled = true;
+                    BeginEdit(IndexOf(row.Item), column);
+                }
+
+                return;
+            }
         }
 
         private void OnRowClick(object sender, PointerEventArgs args)
         {
-            int index = _body.IndexOfRow(sender as VisualElement);
+            int index = IndexOf((sender as DataGridRow)?.Item);
 
             if (index < 0)
             {
@@ -393,8 +678,25 @@ namespace Ixen.Controls
 
         private void OnKeyDown(object sender, KeyEventArgs args)
         {
+            if (IsEditing)
+            {
+                return;
+            }
+
             switch (args.Key)
             {
+                case Key.F2:
+                case Key.Enter:
+                    int column = NextEditable(-1, 1);
+
+                    if (_selected >= 0 && column >= 0)
+                    {
+                        args.Handled = true;
+                        BeginEdit(_selected, column);
+                    }
+
+                    break;
+
                 case Key.Down:
                     args.Handled = true;
                     Select(_selected + 1);

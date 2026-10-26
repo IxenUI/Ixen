@@ -17,6 +17,12 @@ namespace Ixen.Controls
 
         public Comparison<object> Compare { get; set; }
 
+        public Func<object, string> Value { get; set; }
+
+        public Action<object, string> Commit { get; set; }
+
         public bool IsSortable => Compare != null;
+
+        public bool IsEditable => Commit != null;
     }
 }

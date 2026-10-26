@@ -545,6 +545,15 @@ $control_focus_soft:   #EEF1FE
     text-align: left middle
 }
 
+#DataGridEditor {
+    background: $control_field
+    color: $control_text
+    border: $control_focus 1px inner
+    corner-radius: 2px
+    padding: 0px 4px
+    margin: 2px 0px
+}
+
 #DatePicker {
     width: ?
     height: ?

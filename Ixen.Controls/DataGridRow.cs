@@ -20,6 +20,8 @@ namespace Ixen.Controls
             Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Row };
         }
 
+        internal object Item { get; set; }
+
         public IReadOnlyList<VisualElement> Cells => _cells;
 
         public VisualElement CellAt(int index) => _cells[index];
