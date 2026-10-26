@@ -121,7 +121,7 @@ namespace Ixen.Core.Language.Xnl
         {
             Type target = Nullable.GetUnderlyingType(type) ?? type;
 
-            if (target.IsEnum)
+            if (target.IsEnum || target == typeof(object))
             {
                 return true;
             }

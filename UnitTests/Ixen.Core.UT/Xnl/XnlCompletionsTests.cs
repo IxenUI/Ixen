@@ -249,7 +249,7 @@ namespace Ixen.Core.UT.Xnl
             CollectionAssert.AreEqual(
                 new[]
                 {
-                    "accessible-value", "allow-drop", "animation-ended", "class", "click", "description",
+                    "accessible-value", "allow-drop", "animation-ended", "class", "click", "command-parameter", "description",
                     "double-click", "drag",
                     "drag-end", "drag-enter", "drag-leave", "drag-over", "drag-start", "drop",
                     "enabled", "error", "focusable", "got-focus", "id", "invalid", "key-down",

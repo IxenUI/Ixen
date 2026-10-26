@@ -40,6 +40,7 @@
     <AdditionalFiles Include="Components\Fixtures\BoundView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\GranularityView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\ListView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\RowCommandView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\CounterView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\LibraryHostView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\HostView.xnl" />

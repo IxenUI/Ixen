@@ -2036,6 +2036,7 @@ namespace Ixen.Generators.Xnl
             switch (target.SpecialType)
             {
                 case SpecialType.System_String:
+                case SpecialType.System_Object:
                     literal = StringLiteral(value);
                     return true;
 

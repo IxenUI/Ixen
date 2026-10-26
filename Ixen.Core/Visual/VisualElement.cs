@@ -37,7 +37,7 @@ namespace Ixen.Core.Visual
             {
                 args.Handled = true;
 
-                _command.Execute();
+                _command.Execute(_commandParameter);
                 return;
             }
 
@@ -181,6 +181,7 @@ namespace Ixen.Core.Visual
             {
                 if (_command == value)
                 {
+                    SyncAllowed();
                     return;
                 }
 
@@ -200,7 +201,21 @@ namespace Ixen.Core.Visual
             }
         }
 
-        private bool CommandEnabled => _command == null || _command.Enabled;
+        private bool _commandAllowed = true;
+        private object _commandParameter;
+
+        public object CommandParameter
+        {
+            get => _commandParameter;
+            set
+            {
+                _commandParameter = value;
+
+                SyncAllowed();
+            }
+        }
+
+        private bool CommandEnabled => _command == null || _commandAllowed;
 
         private void OnCommandChanged(object sender, EventArgs args) => SyncCommand();
 
@@ -248,6 +263,13 @@ namespace Ixen.Core.Visual
                 Shortcut = null;
                 _commandShortcut = false;
             }
+
+            SyncAllowed();
+        }
+
+        private void SyncAllowed()
+        {
+            _commandAllowed = _command == null || _command.CanExecute(_commandParameter);
 
             SyncDisabledState();
         }

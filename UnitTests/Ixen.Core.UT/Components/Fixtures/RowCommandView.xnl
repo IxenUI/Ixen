@@ -1,0 +1,6 @@
+rows_root {} [
+	@foreach (var row in Rows) key (row.Id) {
+		row_remove { text: "{row.Name}" command: "{Remove}" command-parameter: "{row}" }
+	@}
+	row_literal { command: "{Echo}" command-parameter: "pears" }
+]
