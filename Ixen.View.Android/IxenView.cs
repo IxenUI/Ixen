@@ -49,6 +49,7 @@ namespace Ixen.View.Android
         private bool _backHandled;
         private BackGesture _backGesture;
         private PreferenceObserver _preferences;
+        private MemoryTrimObserver _trim;
         private TextField _editing;
         private IxenAccessibilityProvider _accessibility;
 
@@ -264,6 +265,7 @@ namespace Ixen.View.Android
                 global::Android.Provider.Settings.Global.GetUriFor(
                     global::Android.Provider.Settings.Global.AnimatorDurationScale),
                 global::Android.Provider.Settings.Secure.GetUriFor(HIGH_TEXT_CONTRAST));
+            _trim = MemoryTrimObserver.Register(Context, _host.ReleaseCaches);
 
             OnPreferences();
         }
@@ -284,6 +286,8 @@ namespace Ixen.View.Android
         {
             _preferences?.Release();
             _preferences = null;
+            _trim?.Release();
+            _trim = null;
             _backGesture?.Release();
             _backGesture = null;
 
