@@ -42,6 +42,8 @@ void Atspi_UpdateNode(AtspiBridge* bridge, int identifier, int parent, int role,
     const char* name, const char* description, const char* value, const char* shortcut);
 
 void Atspi_Commit(AtspiBridge* bridge, int root, const int* order, int count);
+void Atspi_UpdateTable(AtspiBridge* bridge, int identifier, int rowCount, int columnCount, int rowIndex,
+    int columnIndex);
 void Atspi_UpdateRange(AtspiBridge* bridge, int identifier, int hasRange, double minimum, double maximum,
     double value, double step);
 void Atspi_Notify(AtspiBridge* bridge, int identifier, int kind, const char* text);

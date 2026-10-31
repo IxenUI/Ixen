@@ -184,6 +184,59 @@ namespace Ixen.Platform.Windows.Accessibility
         bool get_IsSelectionRequired();
     }
 
+    [GeneratedComInterface]
+    [Guid("b17d6187-0907-464b-a168-0ef17a1572b1")]
+    internal partial interface IGridProvider
+    {
+        IRawElementProviderSimple GetItem(int row, int column);
+
+        int get_RowCount();
+
+        int get_ColumnCount();
+    }
+
+    [GeneratedComInterface]
+    [Guid("d02541f1-fb81-4d64-ae32-f520f8a6dbd1")]
+    internal partial interface IGridItemProvider
+    {
+        int get_Row();
+
+        int get_Column();
+
+        int get_RowSpan();
+
+        int get_ColumnSpan();
+
+        IRawElementProviderSimple get_ContainingGrid();
+    }
+
+    internal enum RowOrColumnMajor
+    {
+        RowMajor = 0,
+        ColumnMajor = 1,
+        Indeterminate = 2
+    }
+
+    [GeneratedComInterface]
+    [Guid("9c860395-97b3-490a-b52a-858cc22af166")]
+    internal partial interface ITableProvider
+    {
+        nint GetRowHeaders();
+
+        nint GetColumnHeaders();
+
+        RowOrColumnMajor get_RowOrColumnMajor();
+    }
+
+    [GeneratedComInterface]
+    [Guid("b9734fa6-771f-4d78-9c90-2517999349cd")]
+    internal partial interface ITableItemProvider
+    {
+        nint GetRowHeaderItems();
+
+        nint GetColumnHeaderItems();
+    }
+
     internal static class UiaPattern
     {
         internal const int INVOKE = 10000;
@@ -191,6 +244,10 @@ namespace Ixen.Platform.Windows.Accessibility
         internal const int VALUE = 10002;
         internal const int RANGE_VALUE = 10003;
         internal const int EXPAND_COLLAPSE = 10005;
+        internal const int GRID = 10006;
+        internal const int GRID_ITEM = 10007;
+        internal const int TABLE = 10012;
+        internal const int TABLE_ITEM = 10013;
         internal const int SELECTION_ITEM = 10010;
         internal const int TOGGLE = 10015;
         internal const int SCROLL_ITEM = 10017;

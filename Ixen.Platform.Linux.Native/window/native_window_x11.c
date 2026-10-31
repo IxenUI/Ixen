@@ -1320,6 +1320,17 @@ static void X11_AccessibilityUpdateRange(NativeWindow* handle, int identifier, i
     }
 }
 
+static void X11_AccessibilityUpdateTable(NativeWindow* handle, int identifier, int rowCount, int columnCount,
+    int rowIndex, int columnIndex)
+{
+    X11Window* window = (X11Window*)handle;
+
+    if (window != NULL)
+    {
+        Atspi_UpdateTable(window->accessibility, identifier, rowCount, columnCount, rowIndex, columnIndex);
+    }
+}
+
 static void X11_SetIcon(NativeWindow* handle, const int* cardinals, int count)
 {
     X11Window* window = (X11Window*)handle;
@@ -1388,5 +1399,6 @@ const NativeBackend X11_Backend =
     X11_AccessibilityNotify,
     X11_AccessibilityNotifyText,
     X11_SetIcon,
-    X11_AccessibilityUpdateRange
+    X11_AccessibilityUpdateRange,
+    X11_AccessibilityUpdateTable
 };

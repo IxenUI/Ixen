@@ -26,6 +26,8 @@
 #define IFACE_EDITABLE "org.a11y.atspi.EditableText"
 #define IFACE_SELECTION "org.a11y.atspi.Selection"
 #define IFACE_VALUE "org.a11y.atspi.Value"
+#define IFACE_TABLE "org.a11y.atspi.Table"
+#define IFACE_TABLE_CELL "org.a11y.atspi.TableCell"
 #define IFACE_SOCKET "org.a11y.atspi.Socket"
 #define IFACE_CACHE "org.a11y.atspi.Cache"
 #define IFACE_EVENT_OBJECT "org.a11y.atspi.Event.Object"
@@ -67,6 +69,10 @@ typedef struct AtspiNode
     double rangeMaximum;
     double rangeValue;
     double rangeStep;
+    int rowCount;
+    int columnCount;
+    int rowIndex;
+    int columnIndex;
 } AtspiNode;
 
 struct AtspiBridge
@@ -1029,6 +1035,468 @@ static DBusHandlerResult SelectionProperty(AtspiBridge* bridge, DBusMessage* mes
     return Answer(bridge, message, reply);
 }
 
+#define ATSPI_ROLE_COLUMN_HEADER 10
+
+static AtspiNode* TableNode(AtspiBridge* bridge, int identifier)
+{
+    AtspiNode* node = identifier == APP_NODE ? NULL : NodeAt(bridge, identifier);
+
+    return node != NULL && node->rowCount > 0 ? node : NULL;
+}
+
+static AtspiNode* CellNode(AtspiBridge* bridge, int identifier)
+{
+    AtspiNode* node = identifier == APP_NODE ? NULL : NodeAt(bridge, identifier);
+
+    return node != NULL && node->rowIndex >= 0 && node->columnIndex >= 0 ? node : NULL;
+}
+
+static int TableOf(AtspiBridge* bridge, int identifier)
+{
+    AtspiNode* node = NodeAt(bridge, identifier);
+    int at = node == NULL ? NO_NODE : node->parent;
+
+    while (at >= 0)
+    {
+        AtspiNode* ancestor = NodeAt(bridge, at);
+
+        if (ancestor == NULL)
+        {
+            return NO_NODE;
+        }
+
+        if (ancestor->rowCount > 0)
+        {
+            return at;
+        }
+
+        at = ancestor->parent;
+    }
+
+    return NO_NODE;
+}
+
+static int FindInTable(AtspiBridge* bridge, int identifier, int row, int column, int headersOnly)
+{
+    AtspiNode* node = NodeAt(bridge, identifier);
+
+    for (int index = 0; node != NULL && index < node->childCount; index++)
+    {
+        int child = node->children[index];
+        AtspiNode* found = NodeAt(bridge, child);
+
+        if (found == NULL || found->rowCount > 0)
+        {
+            continue;
+        }
+
+        if ((row < 0 || found->rowIndex == row) && found->columnIndex == column
+            && (!headersOnly || found->role == ATSPI_ROLE_COLUMN_HEADER))
+        {
+            return child;
+        }
+
+        int deeper = FindInTable(bridge, child, row, column, headersOnly);
+
+        if (deeper != NO_NODE)
+        {
+            return deeper;
+        }
+    }
+
+    return NO_NODE;
+}
+
+static int IsRowSelected(AtspiBridge* bridge, int table, int row)
+{
+    AtspiNode* node = NodeAt(bridge, FindInTable(bridge, table, row, -1, 0));
+
+    return node != NULL && ((node->states >> ATSPI_STATE_SELECTED) & 1ull) != 0;
+}
+
+static void CollectSelectedRows(AtspiBridge* bridge, int identifier, DBusMessageIter* array, int* count)
+{
+    AtspiNode* node = NodeAt(bridge, identifier);
+
+    for (int index = 0; node != NULL && index < node->childCount; index++)
+    {
+        AtspiNode* found = NodeAt(bridge, node->children[index]);
+
+        if (found == NULL || found->rowCount > 0)
+        {
+            continue;
+        }
+
+        if (found->rowIndex >= 0 && found->columnIndex < 0
+            && ((found->states >> ATSPI_STATE_SELECTED) & 1ull) != 0)
+        {
+            if (array != NULL)
+            {
+                dbus_int32_t row = found->rowIndex;
+
+                dbus_message_iter_append_basic(array, DBUS_TYPE_INT32, &row);
+            }
+
+            (*count)++;
+        }
+
+        CollectSelectedRows(bridge, node->children[index], array, count);
+    }
+}
+
+static int SelectedRowCount(AtspiBridge* bridge, int table)
+{
+    int count = 0;
+
+    CollectSelectedRows(bridge, table, NULL, &count);
+
+    return count;
+}
+
+static void AppendRefOrNull(AtspiBridge* bridge, DBusMessageIter* iter, int identifier)
+{
+    if (identifier == NO_NODE)
+    {
+        AppendNullRef(iter);
+    }
+    else
+    {
+        AppendSelfRef(bridge, iter, identifier);
+    }
+}
+
+static void AppendVariantPosition(DBusMessageIter* iter, int row, int column)
+{
+    DBusMessageIter variant;
+    DBusMessageIter structure;
+    dbus_int32_t first = row;
+    dbus_int32_t second = column;
+
+    dbus_message_iter_open_container(iter, DBUS_TYPE_VARIANT, "(ii)", &variant);
+    dbus_message_iter_open_container(&variant, DBUS_TYPE_STRUCT, NULL, &structure);
+    dbus_message_iter_append_basic(&structure, DBUS_TYPE_INT32, &first);
+    dbus_message_iter_append_basic(&structure, DBUS_TYPE_INT32, &second);
+    dbus_message_iter_close_container(&variant, &structure);
+    dbus_message_iter_close_container(iter, &variant);
+}
+
+static int AppendTableProperty(AtspiBridge* bridge, DBusMessageIter* iter, int identifier, const char* property)
+{
+    AtspiNode* table = TableNode(bridge, identifier);
+
+    if (table == NULL)
+    {
+        return 0;
+    }
+
+    if (strcmp(property, "NRows") == 0)
+    {
+        AppendVariantInt(iter, table->rowCount);
+    }
+    else if (strcmp(property, "NColumns") == 0)
+    {
+        AppendVariantInt(iter, table->columnCount);
+    }
+    else if (strcmp(property, "NSelectedRows") == 0)
+    {
+        AppendVariantInt(iter, SelectedRowCount(bridge, identifier));
+    }
+    else if (strcmp(property, "NSelectedColumns") == 0)
+    {
+        AppendVariantInt(iter, 0);
+    }
+    else if (strcmp(property, "Caption") == 0 || strcmp(property, "Summary") == 0)
+    {
+        AppendVariantRef(bridge, iter, NO_NODE);
+    }
+    else
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+static int AppendCellProperty(AtspiBridge* bridge, DBusMessageIter* iter, int identifier, const char* property)
+{
+    AtspiNode* cell = CellNode(bridge, identifier);
+
+    if (cell == NULL)
+    {
+        return 0;
+    }
+
+    if (strcmp(property, "RowSpan") == 0 || strcmp(property, "ColumnSpan") == 0)
+    {
+        AppendVariantInt(iter, 1);
+    }
+    else if (strcmp(property, "Position") == 0)
+    {
+        AppendVariantPosition(iter, cell->rowIndex, cell->columnIndex);
+    }
+    else if (strcmp(property, "Table") == 0)
+    {
+        AppendVariantRef(bridge, iter, TableOf(bridge, identifier));
+    }
+    else
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+static DBusHandlerResult TableProperty(AtspiBridge* bridge, DBusMessage* message, int identifier,
+    const char* property, int cell)
+{
+    DBusMessage* reply = dbus_message_new_method_return(message);
+
+    if (reply == NULL)
+    {
+        return DBUS_HANDLER_RESULT_NEED_MEMORY;
+    }
+
+    DBusMessageIter iter;
+
+    dbus_message_iter_init_append(reply, &iter);
+
+    int answered = cell
+        ? AppendCellProperty(bridge, &iter, identifier, property)
+        : AppendTableProperty(bridge, &iter, identifier, property);
+
+    if (!answered)
+    {
+        dbus_message_unref(reply);
+
+        return Unknown(bridge, message);
+    }
+
+    return Answer(bridge, message, reply);
+}
+
+static void AppendTableDict(AtspiBridge* bridge, DBusMessageIter* dict, int identifier, int cell)
+{
+    static const char* TABLE_KEYS[] = { "NRows", "NColumns", "NSelectedRows", "NSelectedColumns", "Caption", "Summary" };
+    static const char* CELL_KEYS[] = { "RowSpan", "ColumnSpan", "Position", "Table" };
+
+    const char** keys = cell ? CELL_KEYS : TABLE_KEYS;
+    int count = cell ? 4 : 6;
+
+    for (int index = 0; index < count; index++)
+    {
+        DBusMessageIter entry;
+        const char* key = keys[index];
+
+        dbus_message_iter_open_container(dict, DBUS_TYPE_DICT_ENTRY, NULL, &entry);
+        dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &key);
+
+        if (cell)
+        {
+            AppendCellProperty(bridge, &entry, identifier, key);
+        }
+        else
+        {
+            AppendTableProperty(bridge, &entry, identifier, key);
+        }
+
+        dbus_message_iter_close_container(dict, &entry);
+    }
+}
+
+static DBusHandlerResult TableInterface(AtspiBridge* bridge, DBusMessage* message, int identifier)
+{
+    const char* member = dbus_message_get_member(message);
+    AtspiNode* table = TableNode(bridge, identifier);
+
+    if (table == NULL)
+    {
+        return Unknown(bridge, message);
+    }
+
+    dbus_int32_t first = 0;
+    dbus_int32_t second = 0;
+    DBusError error;
+
+    dbus_error_init(&error);
+
+    if (!dbus_message_get_args(message, &error, DBUS_TYPE_INT32, &first, DBUS_TYPE_INT32, &second,
+        DBUS_TYPE_INVALID))
+    {
+        dbus_error_free(&error);
+        dbus_error_init(&error);
+        dbus_message_get_args(message, &error, DBUS_TYPE_INT32, &first, DBUS_TYPE_INVALID);
+    }
+
+    dbus_error_free(&error);
+
+    DBusMessage* reply = dbus_message_new_method_return(message);
+
+    if (reply == NULL)
+    {
+        return DBUS_HANDLER_RESULT_NEED_MEMORY;
+    }
+
+    DBusMessageIter iter;
+    int columns = table->columnCount > 0 ? table->columnCount : 1;
+
+    dbus_message_iter_init_append(reply, &iter);
+
+    if (strcmp(member, "GetAccessibleAt") == 0)
+    {
+        AppendRefOrNull(bridge, &iter, FindInTable(bridge, identifier, first, second, 0));
+    }
+    else if (strcmp(member, "GetIndexAt") == 0)
+    {
+        dbus_int32_t index = first * columns + second;
+
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &index);
+    }
+    else if (strcmp(member, "GetRowAtIndex") == 0 || strcmp(member, "GetColumnAtIndex") == 0)
+    {
+        dbus_int32_t answer = first < 0 ? -1
+            : strcmp(member, "GetRowAtIndex") == 0 ? first / columns : first % columns;
+
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &answer);
+    }
+    else if (strcmp(member, "GetRowExtentAt") == 0 || strcmp(member, "GetColumnExtentAt") == 0)
+    {
+        dbus_int32_t one = 1;
+
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &one);
+    }
+    else if (strcmp(member, "GetRowDescription") == 0)
+    {
+        const char* empty = "";
+
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &empty);
+    }
+    else if (strcmp(member, "GetColumnDescription") == 0)
+    {
+        AtspiNode* header = NodeAt(bridge, FindInTable(bridge, identifier, -1, first, 1));
+        const char* name = header == NULL || header->name == NULL ? "" : header->name;
+
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &name);
+    }
+    else if (strcmp(member, "GetRowHeader") == 0)
+    {
+        AppendNullRef(&iter);
+    }
+    else if (strcmp(member, "GetColumnHeader") == 0)
+    {
+        AppendRefOrNull(bridge, &iter, FindInTable(bridge, identifier, -1, first, 1));
+    }
+    else if (strcmp(member, "GetSelectedRows") == 0 || strcmp(member, "GetSelectedColumns") == 0)
+    {
+        DBusMessageIter array;
+        int count = 0;
+
+        dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "i", &array);
+
+        if (strcmp(member, "GetSelectedRows") == 0)
+        {
+            CollectSelectedRows(bridge, identifier, &array, &count);
+        }
+
+        dbus_message_iter_close_container(&iter, &array);
+    }
+    else if (strcmp(member, "IsRowSelected") == 0 || strcmp(member, "IsSelected") == 0)
+    {
+        dbus_bool_t selected = IsRowSelected(bridge, identifier, first);
+
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &selected);
+    }
+    else if (strcmp(member, "IsColumnSelected") == 0 || strcmp(member, "AddRowSelection") == 0
+        || strcmp(member, "AddColumnSelection") == 0 || strcmp(member, "RemoveRowSelection") == 0
+        || strcmp(member, "RemoveColumnSelection") == 0)
+    {
+        dbus_bool_t done = 0;
+
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &done);
+    }
+    else if (strcmp(member, "GetRowColumnExtentsAtIndex") == 0)
+    {
+        dbus_bool_t valid = first >= 0 && first < table->rowCount * columns;
+        dbus_int32_t row = valid ? first / columns : -1;
+        dbus_int32_t column = valid ? first % columns : -1;
+        dbus_int32_t one = 1;
+        dbus_bool_t selected = valid && IsRowSelected(bridge, identifier, row);
+
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &valid);
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &row);
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &column);
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &one);
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &one);
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &selected);
+    }
+    else
+    {
+        dbus_message_unref(reply);
+
+        return Unknown(bridge, message);
+    }
+
+    return Answer(bridge, message, reply);
+}
+
+static DBusHandlerResult TableCellInterface(AtspiBridge* bridge, DBusMessage* message, int identifier)
+{
+    const char* member = dbus_message_get_member(message);
+    AtspiNode* cell = CellNode(bridge, identifier);
+
+    if (cell == NULL)
+    {
+        return Unknown(bridge, message);
+    }
+
+    DBusMessage* reply = dbus_message_new_method_return(message);
+
+    if (reply == NULL)
+    {
+        return DBUS_HANDLER_RESULT_NEED_MEMORY;
+    }
+
+    DBusMessageIter iter;
+
+    dbus_message_iter_init_append(reply, &iter);
+
+    if (strcmp(member, "GetRowHeaderCells") == 0 || strcmp(member, "GetColumnHeaderCells") == 0)
+    {
+        DBusMessageIter array;
+        int table = TableOf(bridge, identifier);
+        int header = table == NO_NODE || cell->role == ATSPI_ROLE_COLUMN_HEADER
+            ? NO_NODE
+            : FindInTable(bridge, table, -1, cell->columnIndex, 1);
+
+        dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "(so)", &array);
+
+        if (strcmp(member, "GetColumnHeaderCells") == 0 && header != NO_NODE)
+        {
+            AppendSelfRef(bridge, &array, header);
+        }
+
+        dbus_message_iter_close_container(&iter, &array);
+    }
+    else if (strcmp(member, "GetRowColumnSpan") == 0)
+    {
+        dbus_int32_t row = cell->rowIndex;
+        dbus_int32_t column = cell->columnIndex;
+        dbus_int32_t one = 1;
+
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &row);
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &column);
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &one);
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT32, &one);
+    }
+    else
+    {
+        dbus_message_unref(reply);
+
+        return Unknown(bridge, message);
+    }
+
+    return Answer(bridge, message, reply);
+}
+
 static DBusHandlerResult GetAll(AtspiBridge* bridge, DBusMessage* message, int identifier,
     const char* interface)
 {
@@ -1101,6 +1569,14 @@ static DBusHandlerResult GetAll(AtspiBridge* bridge, DBusMessage* message, int i
         AppendDictDouble(&dict, "MaximumValue", ranged->rangeMaximum);
         AppendDictDouble(&dict, "MinimumIncrement", ranged->rangeStep);
         AppendDictDouble(&dict, "CurrentValue", ranged->rangeValue);
+    }
+    else if (strcmp(interface, IFACE_TABLE) == 0 && TableNode(bridge, identifier) != NULL)
+    {
+        AppendTableDict(bridge, &dict, identifier, 0);
+    }
+    else if (strcmp(interface, IFACE_TABLE_CELL) == 0 && CellNode(bridge, identifier) != NULL)
+    {
+        AppendTableDict(bridge, &dict, identifier, 1);
     }
 
     dbus_message_iter_close_container(&iter, &dict);
@@ -1202,6 +1678,16 @@ static DBusHandlerResult Properties(AtspiBridge* bridge, DBusMessage* message, i
     if (strcmp(interface, IFACE_SELECTION) == 0)
     {
         return SelectionProperty(bridge, message, identifier, property);
+    }
+
+    if (strcmp(interface, IFACE_TABLE) == 0)
+    {
+        return TableProperty(bridge, message, identifier, property, 0);
+    }
+
+    if (strcmp(interface, IFACE_TABLE_CELL) == 0)
+    {
+        return TableProperty(bridge, message, identifier, property, 1);
     }
 
     if (strcmp(interface, IFACE_VALUE) == 0)
@@ -1367,6 +1853,18 @@ static DBusHandlerResult Accessible(AtspiBridge* bridge, DBusMessage* message, i
             if (RangedNode(bridge, identifier) != NULL)
             {
                 name = IFACE_VALUE;
+                dbus_message_iter_append_basic(&array, DBUS_TYPE_STRING, &name);
+            }
+
+            if (TableNode(bridge, identifier) != NULL)
+            {
+                name = IFACE_TABLE;
+                dbus_message_iter_append_basic(&array, DBUS_TYPE_STRING, &name);
+            }
+
+            if (CellNode(bridge, identifier) != NULL)
+            {
+                name = IFACE_TABLE_CELL;
                 dbus_message_iter_append_basic(&array, DBUS_TYPE_STRING, &name);
             }
         }
@@ -1866,6 +2364,8 @@ static DBusHandlerResult Introspect(AtspiBridge* bridge, DBusMessage* message, i
         "<interface name=\"org.a11y.atspi.EditableText\"/>"
         "<interface name=\"org.a11y.atspi.Selection\"/>"
         "<interface name=\"org.a11y.atspi.Value\"/>"
+        "<interface name=\"org.a11y.atspi.Table\"/>"
+        "<interface name=\"org.a11y.atspi.TableCell\"/>"
         "<interface name=\"org.a11y.atspi.Application\"/>"
         "<interface name=\"org.freedesktop.DBus.Properties\"/>"
         "</node>";
@@ -1981,6 +2481,16 @@ static DBusHandlerResult Handle(DBusConnection* connection, DBusMessage* message
     if (strcmp(interface, IFACE_SELECTION) == 0)
     {
         return Selection(bridge, message, identifier);
+    }
+
+    if (strcmp(interface, IFACE_TABLE) == 0)
+    {
+        return TableInterface(bridge, message, identifier);
+    }
+
+    if (strcmp(interface, IFACE_TABLE_CELL) == 0)
+    {
+        return TableCellInterface(bridge, message, identifier);
     }
 
     if (strcmp(interface, IFACE_INTROSPECTABLE) == 0)
@@ -2440,6 +2950,8 @@ void Atspi_UpdateNode(AtspiBridge* bridge, int identifier, int parent, int role,
     node->children = children;
     node->childCount = childCount;
     node->childCapacity = childCapacity;
+    node->rowIndex = -1;
+    node->columnIndex = -1;
 }
 
 static void AddChild(AtspiNode* node, int child)
@@ -2706,4 +3218,20 @@ void Atspi_UpdateRange(AtspiBridge* bridge, int identifier, int hasRange, double
     node->rangeMaximum = maximum;
     node->rangeValue = value;
     node->rangeStep = step;
+}
+
+void Atspi_UpdateTable(AtspiBridge* bridge, int identifier, int rowCount, int columnCount, int rowIndex,
+    int columnIndex)
+{
+    AtspiNode* node = bridge == NULL ? NULL : NodeAt(bridge, identifier);
+
+    if (node == NULL)
+    {
+        return;
+    }
+
+    node->rowCount = rowCount;
+    node->columnCount = columnCount;
+    node->rowIndex = rowIndex;
+    node->columnIndex = columnIndex;
 }

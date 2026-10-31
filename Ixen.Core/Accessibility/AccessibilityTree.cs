@@ -118,6 +118,8 @@ namespace Ixen.Core.Accessibility
                 node.RangeStep = range.Step;
             }
 
+            SetTablePosition(element, node);
+
             if (!TakesNameFromContent(node.Role))
             {
                 Collect(element, focused, node.ChildList, live, accelerator, labels);
@@ -450,6 +452,49 @@ namespace Ixen.Core.Accessibility
             }
 
             return null;
+        }
+
+        private static void SetTablePosition(VisualElement element, AccessibleNode node)
+        {
+            if (element is IAccessibleTable own)
+            {
+                node.RowCount = own.RowCount;
+                node.ColumnCount = own.ColumnCount;
+
+                return;
+            }
+
+            bool isRow = node.Role == AccessibleRole.TableRow;
+
+            if (!isRow && node.Role != AccessibleRole.TableCell && node.Role != AccessibleRole.ColumnHeader)
+            {
+                return;
+            }
+
+            IAccessibleTable table = null;
+            VisualElement row = isRow ? element : null;
+
+            for (VisualElement ancestor = element.Parent; ancestor != null && table == null; ancestor = ancestor.Parent)
+            {
+                if (row == null && ancestor.Role == AccessibleRole.TableRow)
+                {
+                    row = ancestor;
+                }
+
+                table = ancestor as IAccessibleTable;
+            }
+
+            if (table == null)
+            {
+                return;
+            }
+
+            node.RowIndex = row == null ? -1 : table.RowIndexOf(row);
+
+            if (!isRow)
+            {
+                node.ColumnIndex = table.ColumnIndexOf(element);
+            }
         }
 
         internal static IAccessibleSelection MultipleSelectionOf(VisualElement item)

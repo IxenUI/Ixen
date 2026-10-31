@@ -374,6 +374,89 @@ namespace Ixen.Platform.Windows.Accessibility
             return null;
         }
 
+        internal int TableIdOf(int id)
+        {
+            AccessibilitySnapshot snapshot = _snapshot;
+
+            for (int at = snapshot.ParentOf(id); at >= 0; at = snapshot.ParentOf(at))
+            {
+                AccessibleNode node = snapshot.NodeOf(at);
+
+                if (node != null && node.RowCount > 0)
+                {
+                    return at;
+                }
+            }
+
+            return -1;
+        }
+
+        internal IRawElementProviderSimple TableOf(int id)
+        {
+            int table = TableIdOf(id);
+
+            return table < 0 ? null : ProviderFor(table);
+        }
+
+        internal IRawElementProviderSimple CellAt(int tableId, int row, int column)
+        {
+            AccessibilitySnapshot snapshot = _snapshot;
+            var found = new List<int>();
+
+            if (snapshot.Contains(tableId))
+            {
+                CollectCells(snapshot, tableId,
+                    node => node.RowIndex == row && node.ColumnIndex == column, found);
+            }
+
+            return found.Count == 0 ? null : ProviderFor(found[0]);
+        }
+
+        internal IRawElementProviderSimple[] ColumnHeadersOf(int tableId, int column)
+        {
+            AccessibilitySnapshot snapshot = _snapshot;
+            var found = new List<int>();
+
+            if (tableId >= 0 && snapshot.Contains(tableId))
+            {
+                CollectCells(snapshot, tableId, node => node.Role == AccessibleRole.ColumnHeader
+                    && (column < 0 || node.ColumnIndex == column), found);
+            }
+
+            var headers = new IRawElementProviderSimple[found.Count];
+
+            for (int index = 0; index < found.Count; index++)
+            {
+                headers[index] = ProviderFor(found[index]);
+            }
+
+            return headers;
+        }
+
+        private static void CollectCells(AccessibilitySnapshot snapshot, int id, Func<AccessibleNode, bool> match,
+            List<int> into)
+        {
+            IReadOnlyList<int> children = snapshot.ChildrenOf(id);
+
+            for (int index = 0; index < children.Count; index++)
+            {
+                int child = children[index];
+                AccessibleNode node = snapshot.NodeOf(child);
+
+                if (node == null || node.RowCount > 0)
+                {
+                    continue;
+                }
+
+                if (match(node))
+                {
+                    into.Add(child);
+                }
+
+                CollectCells(snapshot, child, match, into);
+            }
+        }
+
         internal IRawElementProviderSimple[] SelectionOf(int id)
         {
             AccessibilitySnapshot snapshot = _snapshot;

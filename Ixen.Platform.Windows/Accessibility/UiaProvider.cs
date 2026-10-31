@@ -8,7 +8,7 @@ namespace Ixen.Platform.Windows.Accessibility
     [GeneratedComClass]
     internal partial class UiaProvider : IRawElementProviderSimple, IRawElementProviderFragment, IInvokeProvider, IValueProvider,
         IScrollItemProvider, IToggleProvider, IExpandCollapseProvider, ISelectionItemProvider, ISelectionProvider,
-        IRangeValueProvider
+        IRangeValueProvider, IGridProvider, IGridItemProvider, ITableProvider, ITableItemProvider
     {
         private readonly UiaBridge _bridge;
         private readonly int _id;
@@ -66,6 +66,14 @@ namespace Ixen.Platform.Windows.Accessibility
                 case UiaPattern.SELECTION:
                     return IsSelectionContainer(node.Role) ? this : null;
 
+                case UiaPattern.GRID:
+                case UiaPattern.TABLE:
+                    return node.RowCount > 0 ? this : null;
+
+                case UiaPattern.GRID_ITEM:
+                case UiaPattern.TABLE_ITEM:
+                    return IsGridItem(node) ? this : null;
+
                 default:
                     return null;
             }
@@ -106,6 +114,9 @@ namespace Ixen.Platform.Windows.Accessibility
                 || role == AccessibleRole.Tree
                 || role == AccessibleRole.Table;
         }
+
+        internal static bool IsGridItem(AccessibleNode node)
+            => node.RowIndex >= 0 && node.ColumnIndex >= 0;
 
         internal static ToggleState ToggleOf(AccessibleNode node)
             => node.HasState(AccessibleStates.Checked) ? ToggleState.On : ToggleState.Off;
@@ -348,6 +359,52 @@ namespace Ixen.Platform.Windows.Accessibility
         public bool get_CanSelectMultiple() => Node?.HasState(AccessibleStates.MultiSelectable) == true;
 
         public bool get_IsSelectionRequired() => Node?.Role == AccessibleRole.TabList;
+
+        public IRawElementProviderSimple GetItem(int row, int column)
+        {
+            AccessibleNode node = Node;
+
+            if (node == null || row < 0 || column < 0 || row >= node.RowCount || column >= node.ColumnCount)
+            {
+                throw new ArgumentException();
+            }
+
+            return _bridge.CellAt(_id, row, column);
+        }
+
+        public int get_RowCount() => Node?.RowCount ?? 0;
+
+        public int get_ColumnCount() => Node?.ColumnCount ?? 0;
+
+        public int get_Row() => Node?.RowIndex ?? -1;
+
+        public int get_Column() => Node?.ColumnIndex ?? -1;
+
+        public int get_RowSpan() => 1;
+
+        public int get_ColumnSpan() => 1;
+
+        public IRawElementProviderSimple get_ContainingGrid() => _bridge.TableOf(_id);
+
+        public nint GetRowHeaders() => UiaNative.ProviderArray(Array.Empty<IRawElementProviderSimple>());
+
+        public nint GetColumnHeaders() => UiaNative.ProviderArray(_bridge.ColumnHeadersOf(_id, -1));
+
+        public RowOrColumnMajor get_RowOrColumnMajor() => RowOrColumnMajor.RowMajor;
+
+        public nint GetRowHeaderItems() => UiaNative.ProviderArray(Array.Empty<IRawElementProviderSimple>());
+
+        public nint GetColumnHeaderItems()
+        {
+            AccessibleNode node = Node;
+
+            if (node == null || node.Role == AccessibleRole.ColumnHeader)
+            {
+                return UiaNative.ProviderArray(Array.Empty<IRawElementProviderSimple>());
+            }
+
+            return UiaNative.ProviderArray(_bridge.ColumnHeadersOf(_bridge.TableIdOf(_id), node.ColumnIndex));
+        }
     }
 
     [GeneratedComClass]

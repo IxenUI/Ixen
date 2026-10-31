@@ -291,6 +291,7 @@ namespace Ixen.View.Android
 
             SetExpanded(info, node);
             SetRange(info, node);
+            SetCollection(info, node);
 
             info.SetBoundsInScreen(BoundsOf(node));
 
@@ -309,6 +310,35 @@ namespace Ixen.View.Android
             }
 
             info.Checked = value;
+        }
+
+        private static void SetCollection(AccessibilityNodeInfo info, AccessibleNode node)
+        {
+            if (node.RowCount > 0)
+            {
+                SelectionMode mode = node.HasState(AccessibleStates.MultiSelectable)
+                    ? SelectionMode.Multiple
+                    : SelectionMode.Single;
+
+                info.SetCollectionInfo(System.OperatingSystem.IsAndroidVersionAtLeast(30)
+                    ? new AccessibilityNodeInfo.CollectionInfo(node.RowCount, node.ColumnCount, false, (int)mode)
+                    : AccessibilityNodeInfo.CollectionInfo.Obtain(node.RowCount, node.ColumnCount, false, mode));
+
+                return;
+            }
+
+            if (node.RowIndex < 0)
+            {
+                return;
+            }
+
+            int column = node.ColumnIndex < 0 ? 0 : node.ColumnIndex;
+            bool heading = node.Role == AccessibleRole.ColumnHeader;
+            bool selected = node.HasState(AccessibleStates.Selected);
+
+            info.SetCollectionItemInfo(System.OperatingSystem.IsAndroidVersionAtLeast(33)
+                ? new AccessibilityNodeInfo.CollectionItemInfo(node.RowIndex, 1, column, 1, heading, selected)
+                : AccessibilityNodeInfo.CollectionItemInfo.Obtain(node.RowIndex, 1, column, 1, heading, selected));
         }
 
         private static void SetRange(AccessibilityNodeInfo info, AccessibleNode node)

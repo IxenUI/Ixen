@@ -25,6 +25,10 @@ namespace Ixen.Platform.Linux.Accessibility
             RangeMaximum = node.RangeMaximum;
             RangeValue = node.RangeValue;
             RangeStep = node.RangeStep;
+            RowCount = node.RowCount;
+            ColumnCount = node.ColumnCount;
+            RowIndex = node.RowIndex;
+            ColumnIndex = node.ColumnIndex;
         }
 
         internal int Parent { get; }
@@ -44,6 +48,10 @@ namespace Ixen.Platform.Linux.Accessibility
         internal float RangeMaximum { get; }
         internal float RangeValue { get; }
         internal float RangeStep { get; }
+        internal int RowCount { get; }
+        internal int ColumnCount { get; }
+        internal int RowIndex { get; }
+        internal int ColumnIndex { get; }
 
         internal bool SameAs(LinuxAccessibleNode other)
             => Parent == other.Parent
@@ -62,6 +70,10 @@ namespace Ixen.Platform.Linux.Accessibility
                 && RangeMinimum == other.RangeMinimum
                 && RangeMaximum == other.RangeMaximum
                 && RangeValue == other.RangeValue
-                && RangeStep == other.RangeStep;
+                && RangeStep == other.RangeStep
+                && RowCount == other.RowCount
+                && ColumnCount == other.ColumnCount
+                && RowIndex == other.RowIndex
+                && ColumnIndex == other.ColumnIndex;
     }
 }

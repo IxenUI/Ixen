@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Ixen.Controls
 {
-    public class DataGrid : VisualElement, IAccessibleSelection
+    public class DataGrid : VisualElement, IAccessibleSelection, IAccessibleTable
     {
         public const string HEADER = "DataGridHeader";
         public const string BODY = "DataGridBody";
@@ -166,6 +166,43 @@ namespace Ixen.Controls
 
         bool IAccessibleSelection.RemoveFromSelection(VisualElement item)
             => _selection.Remove(IndexOf((item as DataGridRow)?.Item));
+
+        int IAccessibleTable.RowCount => _view.Count + 1;
+
+        int IAccessibleTable.ColumnCount => _columns.Count;
+
+        int IAccessibleTable.RowIndexOf(VisualElement row)
+        {
+            if (row == _header)
+            {
+                return 0;
+            }
+
+            int index = IndexOf((row as DataGridRow)?.Item);
+
+            return index < 0 ? -1 : index + 1;
+        }
+
+        int IAccessibleTable.ColumnIndexOf(VisualElement cell)
+        {
+            if (cell is DataGridHeaderCell header)
+            {
+                return _headerCells.IndexOf(header);
+            }
+
+            if (cell?.Parent is DataGridRow row)
+            {
+                for (int i = 0; i < row.Cells.Count; i++)
+                {
+                    if (row.Cells[i] == cell)
+                    {
+                        return i;
+                    }
+                }
+            }
+
+            return -1;
+        }
 
         public void Refresh() => Rebuild();
 

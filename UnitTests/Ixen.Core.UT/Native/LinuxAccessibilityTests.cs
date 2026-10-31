@@ -277,18 +277,41 @@ namespace Ixen.Core.UT.Native
         {
             var mutations = new Dictionary<string, Action<AccessibleNode>>
             {
-                { "role", node => node.Role = AccessibleRole.Slider },
-                { "states", node => node.States = AccessibleStates.Disabled },
-                { "actions", node => node.Actions = AccessibleActions.Focus },
-                { "name", node => node.Name = "Open" },
-                { "value", node => node.Value = "other" },
-                { "description", node => node.Description = "other" },
-                { "shortcut", node => node.Shortcut = "Ctrl+O" },
-                { "x", node => node.X = 99 },
-                { "y", node => node.Y = 99 },
-                { "width", node => node.Width = 99 },
-                { "height", node => node.Height = 99 }
+                { "Role", node => node.Role = AccessibleRole.Slider },
+                { "States", node => node.States = AccessibleStates.Disabled },
+                { "Actions", node => node.Actions = AccessibleActions.Focus },
+                { "Name", node => node.Name = "Open" },
+                { "Value", node => node.Value = "other" },
+                { "Description", node => node.Description = "other" },
+                { "Shortcut", node => node.Shortcut = "Ctrl+O" },
+                { "X", node => node.X = 99 },
+                { "Y", node => node.Y = 99 },
+                { "Width", node => node.Width = 99 },
+                { "Height", node => node.Height = 99 },
+                { "HasRange", node => node.HasRange = true },
+                { "RangeMinimum", node => node.RangeMinimum = -5 },
+                { "RangeMaximum", node => node.RangeMaximum = 50 },
+                { "RangeValue", node => node.RangeValue = 7 },
+                { "RangeStep", node => node.RangeStep = 2 },
+                { "RowCount", node => node.RowCount = 9 },
+                { "ColumnCount", node => node.ColumnCount = 3 },
+                { "RowIndex", node => node.RowIndex = 2 },
+                { "ColumnIndex", node => node.ColumnIndex = 1 }
             };
+
+            var unguarded = new List<string>();
+
+            foreach (System.Reflection.PropertyInfo property in typeof(LinuxAccessibleNode).GetProperties(
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic))
+            {
+                if (property.Name != "Parent" && !mutations.ContainsKey(property.Name))
+                {
+                    unguarded.Add(property.Name);
+                }
+            }
+
+            Assert.AreEqual(0, unguarded.Count,
+                "every field pushed to the bridge needs a mutation here: " + string.Join(", ", unguarded));
 
             var reference = new LinuxAccessibleNode(3, Node(), false, 1f);
 

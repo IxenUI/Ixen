@@ -347,6 +347,15 @@ void NW_AccessibilityUpdateRange(NativeWindow* window, int identifier, int hasRa
     }
 }
 
+void NW_AccessibilityUpdateTable(NativeWindow* window, int identifier, int rowCount, int columnCount,
+    int rowIndex, int columnIndex)
+{
+    if (window != NULL)
+    {
+        window->backend->accessibilityUpdateTable(window, identifier, rowCount, columnCount, rowIndex, columnIndex);
+    }
+}
+
 void NW_SetIcon(NativeWindow* window, const int* cardinals, int count)
 {
     if (window != NULL)

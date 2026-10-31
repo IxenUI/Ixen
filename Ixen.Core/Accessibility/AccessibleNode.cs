@@ -22,6 +22,11 @@ namespace Ixen.Core.Accessibility
         public float RangeValue { get; internal set; }
         public float RangeStep { get; internal set; }
 
+        public int RowCount { get; internal set; }
+        public int ColumnCount { get; internal set; }
+        public int RowIndex { get; internal set; } = -1;
+        public int ColumnIndex { get; internal set; } = -1;
+
         public float X { get; internal set; }
         public float Y { get; internal set; }
         public float Width { get; internal set; }

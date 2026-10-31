@@ -71,6 +71,12 @@ void WA_AccessibilityUpdateRange(NativeWindow* window, int identifier, int hasRa
     NW_AccessibilityUpdateRange(window, identifier, hasRange, minimum, maximum, value, step);
 }
 
+void WA_AccessibilityUpdateTable(NativeWindow* window, int identifier, int rowCount, int columnCount,
+    int rowIndex, int columnIndex)
+{
+    NW_AccessibilityUpdateTable(window, identifier, rowCount, columnCount, rowIndex, columnIndex);
+}
+
 void WA_RegisterPaintCallBack(NativeWindow* window, void callBack(int, int))
 {
     NW_RegisterPaintCallBack(window, callBack);
