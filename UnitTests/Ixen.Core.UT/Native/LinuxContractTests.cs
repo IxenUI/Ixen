@@ -64,6 +64,8 @@ namespace Ixen.Core.UT.Native
             { "IXEN_AXA_COLLAPSE", "Collapse" },
             { "IXEN_AXA_SELECT", "Select" },
             { "IXEN_AXA_SET_RANGE", "SetRangeValue" },
+            { "IXEN_AXA_ADD_SELECTION", "AddToSelection" },
+            { "IXEN_AXA_REMOVE_SELECTION", "RemoveFromSelection" },
 
             { "IXEN_AXN_NAME", "Name" },
             { "IXEN_AXN_VALUE", "Value" },

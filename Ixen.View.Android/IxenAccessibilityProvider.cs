@@ -278,9 +278,15 @@ namespace Ixen.View.Android
                 info.AddAction(AccessibilityNodeInfo.AccessibilityAction.ActionCollapse);
             }
 
-            if (node.Supports(AccessibleActions.Select))
+            if (node.Supports(AccessibleActions.AddToSelection)
+                || (node.Supports(AccessibleActions.Select) && !node.Supports(AccessibleActions.RemoveFromSelection)))
             {
                 info.AddAction(AccessibilityNodeInfo.AccessibilityAction.ActionSelect);
+            }
+
+            if (node.Supports(AccessibleActions.RemoveFromSelection))
+            {
+                info.AddAction(AccessibilityNodeInfo.AccessibilityAction.ActionClearSelection);
             }
 
             SetExpanded(info, node);
@@ -493,7 +499,16 @@ namespace Ixen.View.Android
                     return _surface.Perform(node, AccessibleActions.Collapse);
 
                 case Action.Select:
-                    return _surface.Perform(node, AccessibleActions.Select);
+                    if (node.Supports(AccessibleActions.AddToSelection))
+                    {
+                        return _surface.Perform(node, AccessibleActions.AddToSelection);
+                    }
+
+                    return !node.Supports(AccessibleActions.RemoveFromSelection)
+                        && _surface.Perform(node, AccessibleActions.Select);
+
+                case Action.ClearSelection:
+                    return _surface.Perform(node, AccessibleActions.RemoveFromSelection);
 
                 case Action.Focus:
                     if (!_surface.Perform(node, AccessibleActions.Focus))

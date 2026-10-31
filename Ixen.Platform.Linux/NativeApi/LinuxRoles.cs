@@ -18,6 +18,7 @@ namespace Ixen.Platform.Linux.NativeApi
         private const int STATE_FOCUSABLE = 11;
         private const int STATE_FOCUSED = 12;
         private const int STATE_MULTI_LINE = 17;
+        private const int STATE_MULTISELECTABLE = 18;
         private const int STATE_SELECTABLE = 22;
         private const int STATE_SELECTED = 23;
         private const int STATE_SENSITIVE = 24;
@@ -113,6 +114,17 @@ namespace Ixen.Platform.Linux.NativeApi
                 mask |= Bit(STATE_SELECTED) | Bit(STATE_SELECTABLE);
             }
 
+            if (node.Role != AccessibleRole.RadioButton
+                && (node.Supports(AccessibleActions.Select) || node.Supports(AccessibleActions.AddToSelection)))
+            {
+                mask |= Bit(STATE_SELECTABLE);
+            }
+
+            if (node.HasState(AccessibleStates.MultiSelectable) || HoldsMultipleSelection(node))
+            {
+                mask |= Bit(STATE_MULTISELECTABLE);
+            }
+
             if ((states & AccessibleStates.Expanded) != 0)
             {
                 mask |= Bit(STATE_EXPANDED) | Bit(STATE_EXPANDABLE);
@@ -138,6 +150,20 @@ namespace Ixen.Platform.Linux.NativeApi
             }
 
             return mask;
+        }
+
+        private static bool HoldsMultipleSelection(AccessibleNode node)
+        {
+            for (int index = 0; index < node.Children.Count; index++)
+            {
+                if (node.Children[index].Supports(AccessibleActions.AddToSelection)
+                    || node.Children[index].Supports(AccessibleActions.RemoveFromSelection))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static long Bit(int state) => 1L << state;

@@ -851,7 +851,35 @@ static DBusHandlerResult ActionProperty(AtspiBridge* bridge, DBusMessage* messag
 static int IsSelectable(AtspiNode* node)
 {
     return node != NULL && node->role != ATSPI_ROLE_RADIO_BUTTON
-        && ((node->actions & IXEN_AXA_SELECT) != 0 || ((node->states >> ATSPI_STATE_SELECTED) & 1ull) != 0);
+        && ((node->actions & (IXEN_AXA_SELECT | IXEN_AXA_ADD_SELECTION | IXEN_AXA_REMOVE_SELECTION)) != 0
+            || ((node->states >> ATSPI_STATE_SELECTED) & 1ull) != 0);
+}
+
+static int Perform(AtspiBridge* bridge, int identifier, int action, const char* value);
+
+static int SelectionPerform(AtspiBridge* bridge, int child, int add)
+{
+    AtspiNode* node = child < 0 ? NULL : NodeAt(bridge, child);
+
+    if (!IsSelectable(node))
+    {
+        return 0;
+    }
+
+    if (add && (node->actions & IXEN_AXA_REMOVE_SELECTION) != 0)
+    {
+        return 1;
+    }
+
+    if (add)
+    {
+        int action = (node->actions & IXEN_AXA_ADD_SELECTION) != 0 ? IXEN_AXA_ADD_SELECTION : IXEN_AXA_SELECT;
+
+        return (node->actions & action) != 0 && Perform(bridge, child, action, NULL) != 0;
+    }
+
+    return (node->actions & IXEN_AXA_REMOVE_SELECTION) != 0
+        && Perform(bridge, child, IXEN_AXA_REMOVE_SELECTION, NULL) != 0;
 }
 
 static int IsSelected(AtspiNode* node)
@@ -904,8 +932,6 @@ static int SelectedChild(AtspiBridge* bridge, int identifier, int nth)
 
     return -1;
 }
-
-static int Perform(AtspiBridge* bridge, int identifier, int action, const char* value);
 
 static AtspiNode* RangedNode(AtspiBridge* bridge, int identifier)
 {
@@ -1655,8 +1681,19 @@ static DBusHandlerResult Selection(AtspiBridge* bridge, DBusMessage* message, in
     }
     else if (strcmp(member, "SelectChild") == 0)
     {
-        dbus_bool_t done = child >= 0 && IsSelectable(NodeAt(bridge, child))
-            && Perform(bridge, child, IXEN_AXA_SELECT, NULL) != 0;
+        dbus_bool_t done = SelectionPerform(bridge, child, 1);
+
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &done);
+    }
+    else if (strcmp(member, "DeselectChild") == 0)
+    {
+        dbus_bool_t done = SelectionPerform(bridge, child, 0);
+
+        dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &done);
+    }
+    else if (strcmp(member, "DeselectSelectedChild") == 0)
+    {
+        dbus_bool_t done = SelectionPerform(bridge, SelectedChild(bridge, identifier, index), 0);
 
         dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &done);
     }
@@ -1666,8 +1703,7 @@ static DBusHandlerResult Selection(AtspiBridge* bridge, DBusMessage* message, in
 
         dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &selected);
     }
-    else if (strcmp(member, "DeselectSelectedChild") == 0 || strcmp(member, "DeselectChild") == 0
-        || strcmp(member, "SelectAll") == 0 || strcmp(member, "ClearSelection") == 0)
+    else if (strcmp(member, "SelectAll") == 0 || strcmp(member, "ClearSelection") == 0)
     {
         dbus_bool_t done = 0;
 

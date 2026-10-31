@@ -26,6 +26,7 @@ namespace Ixen.Core.UT.Native
         private const int STATE_FOCUSABLE = 11;
         private const int STATE_FOCUSED = 12;
         private const int STATE_MULTI_LINE = 17;
+        private const int STATE_MULTISELECTABLE = 18;
         private const int STATE_SELECTABLE = 22;
         private const int STATE_SELECTED = 23;
         private const int STATE_SENSITIVE = 24;
@@ -204,6 +205,49 @@ namespace Ixen.Core.UT.Native
             Assert.IsFalse(Has(leaf, STATE_EXPANDABLE),
                 "claiming EXPANDABLE on a leaf would make Orca announce 'collapsed' on every "
                     + "leaf of a tree");
+        }
+
+        [TestMethod]
+        public void SomethingThatCanBeSelectedIsSelectableBeforeItIsSelected()
+        {
+            Assert.IsTrue(Has(StatesOf(AccessibleStates.None, AccessibleActions.Select), STATE_SELECTABLE),
+                "SELECTABLE says a row could be selected, not that it is; only selected rows carried it");
+            Assert.IsTrue(Has(StatesOf(AccessibleStates.None, AccessibleActions.AddToSelection), STATE_SELECTABLE));
+            Assert.IsFalse(Has(StatesOf(AccessibleStates.None, AccessibleActions.Invoke), STATE_SELECTABLE));
+        }
+
+        [TestMethod]
+        public void ARadioButtonIsCheckedRatherThanSelectable()
+        {
+            AccessibleNode radio = Node(AccessibleRole.RadioButton);
+
+            radio.States = AccessibleStates.None;
+            radio.Actions = AccessibleActions.Select;
+
+            Assert.IsFalse(Has(LinuxRoles.StatesOf(radio), STATE_SELECTABLE));
+        }
+
+        [TestMethod]
+        public void TheParentOfRowsThatAddAndRemoveIsMultiSelectable()
+        {
+            AccessibleNode body = Node(AccessibleRole.Group);
+            AccessibleNode row = Node(AccessibleRole.TableRow);
+
+            body.States = AccessibleStates.None;
+            row.Actions = AccessibleActions.Select | AccessibleActions.AddToSelection;
+            body.ChildList.Add(row);
+
+            Assert.IsTrue(Has(LinuxRoles.StatesOf(body), STATE_MULTISELECTABLE),
+                "the Selection interface lives on the rows' parent, so that node must say it holds several");
+
+            row.Actions = AccessibleActions.Select;
+
+            Assert.IsFalse(Has(LinuxRoles.StatesOf(body), STATE_MULTISELECTABLE));
+
+            body.States = AccessibleStates.MultiSelectable;
+
+            Assert.IsTrue(Has(LinuxRoles.StatesOf(body), STATE_MULTISELECTABLE),
+                "the table itself says so too");
         }
 
         [TestMethod]
