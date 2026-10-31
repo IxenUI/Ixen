@@ -79,7 +79,7 @@ struct X11Window
     unsigned char down[KEYCODE_COUNT];
 
     void (*paintCallBack)(int, int);
-    void (*pointerCallBack)(int, int, int, int);
+    void (*pointerCallBack)(int, int, int, int, int);
     void (*keyCallBack)(int, int, int, int);
     void (*textCallBack)(const char*);
     void (*wheelCallBack)(int, int, int, int, int);
@@ -846,11 +846,11 @@ static void SendKey(X11Window* window, XKeyEvent* key, int kind, int repeat)
     window->keyCallBack(kind, KeySymOf(key), Modifiers(key->state), repeat);
 }
 
-static void SendPointer(X11Window* window, int kind, int x, int y, int button)
+static void SendPointer(X11Window* window, int kind, int x, int y, int button, int modifiers)
 {
     if (window->pointerCallBack != NULL)
     {
-        window->pointerCallBack(kind, x, y, button);
+        window->pointerCallBack(kind, x, y, button, modifiers);
     }
 }
 
@@ -938,17 +938,17 @@ static void Dispatch(X11Window* window, XEvent* event)
 
         case MotionNotify:
             SendPointer(window, IXEN_POINTER_MOVE, event->xmotion.x, event->xmotion.y,
-                IXEN_BUTTON_NONE);
+                IXEN_BUTTON_NONE, Modifiers(event->xmotion.state));
             break;
 
         case EnterNotify:
             SendPointer(window, IXEN_POINTER_MOVE, event->xcrossing.x, event->xcrossing.y,
-                IXEN_BUTTON_NONE);
+                IXEN_BUTTON_NONE, Modifiers(event->xcrossing.state));
             break;
 
         case LeaveNotify:
             SendPointer(window, IXEN_POINTER_LEAVE, event->xcrossing.x, event->xcrossing.y,
-                IXEN_BUTTON_NONE);
+                IXEN_BUTTON_NONE, Modifiers(event->xcrossing.state));
             break;
 
         case ButtonPress:
@@ -966,7 +966,7 @@ static void Dispatch(X11Window* window, XEvent* event)
             }
 
             SendPointer(window, IXEN_POINTER_DOWN, event->xbutton.x, event->xbutton.y,
-                ButtonOf(event->xbutton.button));
+                ButtonOf(event->xbutton.button), Modifiers(event->xbutton.state));
             break;
 
         case ButtonRelease:
@@ -976,7 +976,7 @@ static void Dispatch(X11Window* window, XEvent* event)
             }
 
             SendPointer(window, IXEN_POINTER_UP, event->xbutton.x, event->xbutton.y,
-                ButtonOf(event->xbutton.button));
+                ButtonOf(event->xbutton.button), Modifiers(event->xbutton.state));
 
             Ungrab(window);
             break;
@@ -997,7 +997,7 @@ static void Dispatch(X11Window* window, XEvent* event)
             if (window->grabbed)
             {
                 Ungrab(window);
-                SendPointer(window, IXEN_POINTER_CAPTURELOST, 0, 0, IXEN_BUTTON_NONE);
+                SendPointer(window, IXEN_POINTER_CAPTURELOST, 0, 0, IXEN_BUTTON_NONE, 0);
             }
             break;
 
@@ -1218,7 +1218,7 @@ static void X11_RegisterPaintCallBack(NativeWindow* handle, void callBack(int, i
     }
 }
 
-static void X11_RegisterPointerCallBack(NativeWindow* handle, void callBack(int, int, int, int))
+static void X11_RegisterPointerCallBack(NativeWindow* handle, void callBack(int, int, int, int, int))
 {
     X11Window* window = (X11Window*)handle;
 

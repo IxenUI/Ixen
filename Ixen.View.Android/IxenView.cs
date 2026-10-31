@@ -154,7 +154,7 @@ namespace Ixen.View.Android
                 case MotionEventActions.Down:
                 case MotionEventActions.PointerDown:
                     _host.PointerDown(motion.GetX(index), motion.GetY(index), PointerButton.Left,
-                        PointerKind.Touch, motion.GetPointerId(index));
+                        PointerKind.Touch, motion.GetPointerId(index), AndroidKeys.ToModifiers(motion.MetaState));
                     break;
 
                 case MotionEventActions.Move:
@@ -167,12 +167,12 @@ namespace Ixen.View.Android
 
                 case MotionEventActions.PointerUp:
                     _host.PointerUp(motion.GetX(index), motion.GetY(index), PointerButton.Left,
-                        PointerKind.Touch, motion.GetPointerId(index));
+                        PointerKind.Touch, motion.GetPointerId(index), AndroidKeys.ToModifiers(motion.MetaState));
                     break;
 
                 case MotionEventActions.Up:
                     _host.PointerUp(motion.GetX(index), motion.GetY(index), PointerButton.Left,
-                        PointerKind.Touch, motion.GetPointerId(index));
+                        PointerKind.Touch, motion.GetPointerId(index), AndroidKeys.ToModifiers(motion.MetaState));
                     _host.PointerLeave();
                     SyncSoftKeyboard();
                     break;

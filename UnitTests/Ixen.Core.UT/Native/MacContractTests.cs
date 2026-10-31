@@ -357,6 +357,45 @@ namespace Ixen.Core.UT.Native
         }
 
         [TestMethod]
+        public void EveryCallbackTakesTheSameNumberOfArgumentsOnEachSide()
+        {
+            string header = Read(HEADER);
+            string api = Read(API);
+            int compared = 0;
+
+            foreach (Match native in Regex.Matches(header,
+                @"IXEN_API_ENTRY\s+void\s+(WA_Register\w+CallBack)\s*\([^;]*?\bcallBack\s*\(([^)]*)\)\s*\)\s*;"))
+            {
+                string entry = native.Groups[1].Value;
+
+                Match import = Regex.Match(api,
+                    @"EntryPoint\s*=\s*""" + entry + @"""[^;]*?\bextern\s+void\s+\w+\s*\(\s*IntPtr\s+\w+\s*,\s*(?:\[[^\]]*\]\s*)?(\w+)\s+\w+\s*\)\s*;");
+
+                Assert.IsTrue(import.Success, entry + " has no DllImport handing it a delegate in MacApi.cs");
+
+                string type = import.Groups[1].Value;
+                Match managed = Regex.Match(api, @"delegate\s+\w+\s+" + type + @"\s*\((.*?)\)\s*;",
+                    RegexOptions.Singleline);
+
+                Assert.IsTrue(managed.Success, type + " is not declared in MacApi.cs");
+
+                string nativeList = native.Groups[2].Value.Trim();
+                int expected = nativeList == "void" ? 0 : ArgumentsOf(nativeList);
+                int actual = ArgumentsOf(managed.Groups[1].Value);
+
+                Assert.AreEqual(expected, actual,
+                    $"the callback {entry} hands over takes {expected} arguments in window_api.h and "
+                    + $"{type} takes {actual} in MacApi.cs. The entry point itself still takes two on "
+                    + "each side, so the entry point test sees nothing.");
+
+                compared++;
+            }
+
+            Assert.IsTrue(compared >= 10, $"only {compared} callbacks were compared, so the parser has "
+                + "stopped matching window_api.h rather than proving anything");
+        }
+
+        [TestMethod]
         public void TheLetterCodesAgreeWithTheKeycodeTable()
         {
             Match body = Regex.Match(Read(NATIVE),

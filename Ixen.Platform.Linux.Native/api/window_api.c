@@ -76,7 +76,7 @@ void WA_RegisterPaintCallBack(NativeWindow* window, void callBack(int, int))
     NW_RegisterPaintCallBack(window, callBack);
 }
 
-void WA_RegisterPointerCallBack(NativeWindow* window, void callBack(int, int, int, int))
+void WA_RegisterPointerCallBack(NativeWindow* window, void callBack(int, int, int, int, int))
 {
     NW_RegisterPointerCallBack(window, callBack);
 }

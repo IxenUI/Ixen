@@ -499,13 +499,13 @@ namespace Ixen.Core.Input
             if (_captured != null)
             {
                 UpdateHover(CaptureHoverTarget(hit), x, y);
-                Bubble(_captured, new PointerEventArgs(x, y, PointerButton.None, _captured), PointerEventKind.Move);
+                Bubble(_captured, Args(x, y, PointerButton.None, _captured), PointerEventKind.Move);
                 UpdateDrag(hit, x, y);
                 return;
             }
 
             UpdateHover(hit, x, y);
-            Bubble(hit, new PointerEventArgs(x, y, PointerButton.None, hit), PointerEventKind.Move);
+            Bubble(hit, Args(x, y, PointerButton.None, hit), PointerEventKind.Move);
         }
 
         internal void Wheel(VisualElement root, float x, float y, float deltaX, float deltaY,
@@ -714,8 +714,10 @@ namespace Ixen.Core.Input
         }
 
         internal void Down(VisualElement root, float x, float y, PointerButton button, bool trackStates,
-            PointerKind kind = PointerKind.Mouse, int pointerId = 0)
+            PointerKind kind = PointerKind.Mouse, int pointerId = 0, KeyModifiers modifiers = KeyModifiers.None)
         {
+            _modifiers = modifiers;
+
             if (_pointers.Count > 0 && Find(pointerId) == null)
             {
                 AddPointer(root, pointerId, x, y, Enabled(HitTester.HitTest(root, x, y)));
@@ -733,7 +735,7 @@ namespace Ixen.Core.Input
 
             if (_captured != null)
             {
-                Bubble(_captured, new PointerEventArgs(x, y, button, _captured), PointerEventKind.Down);
+                Bubble(_captured, Args(x, y, button, _captured), PointerEventKind.Down);
                 return;
             }
 
@@ -759,7 +761,7 @@ namespace Ixen.Core.Input
             SetState(hit, StyleStates.PRESSED, true);
             LendPressed(hit);
 
-            Bubble(hit, new PointerEventArgs(x, y, button, hit), PointerEventKind.Down);
+            Bubble(hit, Args(x, y, button, hit), PointerEventKind.Down);
 
             StartLongPress(x, y, button);
         }
@@ -784,7 +786,7 @@ namespace Ixen.Core.Input
                     return;
                 }
 
-                var args = new PointerEventArgs(x, y, button, pressed);
+                var args = Args(x, y, button, pressed);
                 Bubble(pressed, args, PointerEventKind.LongPress);
                 _longPressHandled = args.Handled;
             });
@@ -1317,8 +1319,10 @@ namespace Ixen.Core.Input
         }
 
         internal void Up(VisualElement root, float x, float y, PointerButton button, bool trackStates,
-            PointerKind kind = PointerKind.Mouse, int pointerId = 0)
+            PointerKind kind = PointerKind.Mouse, int pointerId = 0, KeyModifiers modifiers = KeyModifiers.None)
         {
+            _modifiers = modifiers;
+
             ActivePointer pointer = Find(pointerId);
 
             if (pointer != null)
@@ -1358,7 +1362,7 @@ namespace Ixen.Core.Input
 
             if (_captured != null && button != _pressedButton)
             {
-                Bubble(_captured, new PointerEventArgs(x, y, button, _captured), PointerEventKind.Up);
+                Bubble(_captured, Args(x, y, button, _captured), PointerEventKind.Up);
                 return;
             }
 
@@ -1380,7 +1384,7 @@ namespace Ixen.Core.Input
             ReleaseLentPressed();
 
             UpdateHover(hit, x, y);
-            Bubble(target, new PointerEventArgs(x, y, button, target), PointerEventKind.Up);
+            Bubble(target, Args(x, y, button, target), PointerEventKind.Up);
 
             CancelLongPress();
             PerformDrop(x, y);
@@ -1395,11 +1399,11 @@ namespace Ixen.Core.Input
                 return;
             }
 
-            Bubble(hit, new PointerEventArgs(x, y, button, hit), PointerEventKind.Click);
+            Bubble(hit, Args(x, y, button, hit), PointerEventKind.Click);
 
             if (IsDoubleClick(hit, x, y))
             {
-                Bubble(hit, new PointerEventArgs(x, y, button, hit), PointerEventKind.DoubleClick);
+                Bubble(hit, Args(x, y, button, hit), PointerEventKind.DoubleClick);
             }
         }
 
@@ -1475,6 +1479,11 @@ namespace Ixen.Core.Input
 
         private static VisualElement Enabled(VisualElement hit)
             => hit == null || hit.IsEnabled ? hit : null;
+
+        private KeyModifiers _modifiers;
+
+        private PointerEventArgs Args(float x, float y, PointerButton button, VisualElement source)
+            => new PointerEventArgs(x, y, button, source) { Modifiers = _modifiers };
 
         private static void Bubble(VisualElement hit, PointerEventArgs args, PointerEventKind kind)
         {

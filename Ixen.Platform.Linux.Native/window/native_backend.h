@@ -22,7 +22,7 @@ typedef struct NativeBackend
     const char* (*getClipboardText)(NativeWindow*);
     void (*setClipboardText)(NativeWindow*, const char*);
     void (*registerPaintCallBack)(NativeWindow*, void (*)(int, int));
-    void (*registerPointerCallBack)(NativeWindow*, void (*)(int, int, int, int));
+    void (*registerPointerCallBack)(NativeWindow*, void (*)(int, int, int, int, int));
     void (*registerKeyCallBack)(NativeWindow*, void (*)(int, int, int, int));
     void (*registerTextCallBack)(NativeWindow*, void (*)(const char*));
     void (*registerWheelCallBack)(NativeWindow*, void (*)(int, int, int, int, int));

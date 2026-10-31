@@ -13,6 +13,8 @@ namespace Ixen.Core.Accessibility
         Expand = 16,
         Collapse = 32,
         Select = 64,
-        SetRangeValue = 128
+        SetRangeValue = 128,
+        AddToSelection = 256,
+        RemoveFromSelection = 512
     }
 }

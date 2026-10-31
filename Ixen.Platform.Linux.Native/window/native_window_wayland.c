@@ -135,7 +135,7 @@ struct WLWindow
     struct wl_data_source* source;
 
     void (*paintCallBack)(int, int);
-    void (*pointerCallBack)(int, int, int, int);
+    void (*pointerCallBack)(int, int, int, int, int);
     void (*keyCallBack)(int, int, int, int);
     void (*textCallBack)(const char*);
     void (*wheelCallBack)(int, int, int, int, int);
@@ -461,7 +461,7 @@ static void SendPointer(WLWindow* window, int kind, int x, int y, int button)
 {
     if (window->pointerCallBack != NULL)
     {
-        window->pointerCallBack(kind, x, y, button);
+        window->pointerCallBack(kind, x, y, button, window->modifiers);
     }
 }
 
@@ -1978,7 +1978,7 @@ static void WL_RegisterPaintCallBack(NativeWindow* handle, void callBack(int, in
     }
 }
 
-static void WL_RegisterPointerCallBack(NativeWindow* handle, void callBack(int, int, int, int))
+static void WL_RegisterPointerCallBack(NativeWindow* handle, void callBack(int, int, int, int, int))
 {
     WLWindow* window = (WLWindow*)handle;
 

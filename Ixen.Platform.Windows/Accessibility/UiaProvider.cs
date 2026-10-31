@@ -272,6 +272,14 @@ namespace Ixen.Platform.Windows.Accessibility
 
         public void AddToSelection()
         {
+            AccessibleNode node = Node;
+
+            if (node != null && node.Supports(AccessibleActions.AddToSelection))
+            {
+                _bridge.Post(_id, AccessibleActions.AddToSelection, null);
+                return;
+            }
+
             if (!get_IsSelected())
             {
                 Select();
@@ -280,6 +288,14 @@ namespace Ixen.Platform.Windows.Accessibility
 
         public void RemoveFromSelection()
         {
+            AccessibleNode node = Node;
+
+            if (node != null && node.Supports(AccessibleActions.RemoveFromSelection))
+            {
+                _bridge.Post(_id, AccessibleActions.RemoveFromSelection, null);
+                return;
+            }
+
             if (get_IsSelected())
             {
                 throw new InvalidOperationException();
@@ -318,7 +334,7 @@ namespace Ixen.Platform.Windows.Accessibility
 
         double IRangeValueProvider.get_SmallChange() => Node?.RangeStep ?? 0;
 
-        public bool get_CanSelectMultiple() => false;
+        public bool get_CanSelectMultiple() => Node?.HasState(AccessibleStates.MultiSelectable) == true;
 
         public bool get_IsSelectionRequired() => Node?.Role == AccessibleRole.TabList;
     }

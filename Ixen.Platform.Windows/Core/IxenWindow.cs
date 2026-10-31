@@ -202,11 +202,11 @@ namespace Ixen.Platform.Windows
                     break;
 
                 case NativePointerKind.Down:
-                    _host.PointerDown(x, y, ToButton(button));
+                    _host.PointerDown(x, y, ToButton(button), PointerKind.Mouse, 0, HeldModifiers());
                     break;
 
                 case NativePointerKind.Up:
-                    _host.PointerUp(x, y, ToButton(button));
+                    _host.PointerUp(x, y, ToButton(button), PointerKind.Mouse, 0, HeldModifiers());
                     break;
 
                 case NativePointerKind.Leave:
@@ -244,6 +244,44 @@ namespace Ixen.Platform.Windows
 
         [DllImport("user32.dll")]
         private static extern bool IsIconic(IntPtr window);
+
+        private const int VK_SHIFT = 0x10;
+        private const int VK_CONTROL = 0x11;
+        private const int VK_MENU = 0x12;
+        private const int VK_LWIN = 0x5B;
+        private const int VK_RWIN = 0x5C;
+
+        [DllImport("user32.dll")]
+        private static extern short GetKeyState(int virtualKey);
+
+        private static bool Held(int virtualKey) => GetKeyState(virtualKey) < 0;
+
+        private static KeyModifiers HeldModifiers()
+        {
+            KeyModifiers modifiers = KeyModifiers.None;
+
+            if (Held(VK_SHIFT))
+            {
+                modifiers |= KeyModifiers.Shift;
+            }
+
+            if (Held(VK_CONTROL))
+            {
+                modifiers |= KeyModifiers.Control;
+            }
+
+            if (Held(VK_MENU))
+            {
+                modifiers |= KeyModifiers.Alt;
+            }
+
+            if (Held(VK_LWIN) || Held(VK_RWIN))
+            {
+                modifiers |= KeyModifiers.Meta;
+            }
+
+            return modifiers;
+        }
 
         private static readonly char[] _dropSeparator = { '\n' };
 

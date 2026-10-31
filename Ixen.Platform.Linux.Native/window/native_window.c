@@ -393,7 +393,7 @@ void NW_RegisterPaintCallBack(NativeWindow* window, void callBack(int, int))
     }
 }
 
-void NW_RegisterPointerCallBack(NativeWindow* window, void callBack(int, int, int, int))
+void NW_RegisterPointerCallBack(NativeWindow* window, void callBack(int, int, int, int, int))
 {
     if (window != NULL)
     {

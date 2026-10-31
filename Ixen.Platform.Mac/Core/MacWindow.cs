@@ -334,11 +334,11 @@ namespace Ixen.Platform.Mac
                     break;
 
                 case MacPointerKind.Down:
-                    _host.PointerDown(x, y, ToButton(button));
+                    _host.PointerDown(x, y, ToButton(button), PointerKind.Mouse, 0, MacModifiers.Held());
                     break;
 
                 case MacPointerKind.Up:
-                    _host.PointerUp(x, y, ToButton(button));
+                    _host.PointerUp(x, y, ToButton(button), PointerKind.Mouse, 0, MacModifiers.Held());
                     break;
 
                 case MacPointerKind.Leave:

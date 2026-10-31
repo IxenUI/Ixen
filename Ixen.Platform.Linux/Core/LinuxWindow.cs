@@ -201,7 +201,7 @@ namespace Ixen.Platform.Linux
             return _surface;
         }
 
-        private void OnPointer(int kind, int x, int y, int button)
+        private void OnPointer(int kind, int x, int y, int button, int modifiers)
         {
             switch ((LinuxPointerKind)kind)
             {
@@ -210,11 +210,11 @@ namespace Ixen.Platform.Linux
                     break;
 
                 case LinuxPointerKind.Down:
-                    _host.PointerDown(x, y, ToButton(button));
+                    _host.PointerDown(x, y, ToButton(button), PointerKind.Mouse, 0, LinuxKeys.ToModifiers(modifiers));
                     break;
 
                 case LinuxPointerKind.Up:
-                    _host.PointerUp(x, y, ToButton(button));
+                    _host.PointerUp(x, y, ToButton(button), PointerKind.Mouse, 0, LinuxKeys.ToModifiers(modifiers));
                     break;
 
                 case LinuxPointerKind.Leave:

@@ -378,9 +378,18 @@ namespace Ixen.Core.Accessibility
                     : AccessibleActions.Expand;
             }
 
-            if (IsSelectable(role))
+            IAccessibleSelection selection = SelectionOf(element);
+
+            if (IsSelectable(role) && (selection == null || selection.IsSelectable(element)))
             {
                 actions |= AccessibleActions.Select;
+
+                if (selection != null && selection.CanSelectMultiple)
+                {
+                    actions |= element.Selected
+                        ? AccessibleActions.RemoveFromSelection
+                        : AccessibleActions.AddToSelection;
+                }
             }
 
             if (element is IAccessibleRange range && range.HasRange && range.CanSetValue)
@@ -430,9 +439,36 @@ namespace Ixen.Core.Accessibility
             return string.IsNullOrEmpty(element.Description) ? null : element.Description;
         }
 
+        private static IAccessibleSelection SelectionOf(VisualElement item)
+        {
+            for (VisualElement container = item.Parent; container != null; container = container.Parent)
+            {
+                if (container is IAccessibleSelection selection)
+                {
+                    return selection;
+                }
+            }
+
+            return null;
+        }
+
+        internal static IAccessibleSelection MultipleSelectionOf(VisualElement item)
+        {
+            IAccessibleSelection selection = SelectionOf(item);
+
+            return selection != null && selection.CanSelectMultiple && selection.IsSelectable(item)
+                ? selection
+                : null;
+        }
+
         private static AccessibleStates StatesOf(VisualElement element, VisualElement focused)
         {
             AccessibleStates states = AccessibleStates.None;
+
+            if (element is IAccessibleSelection selection && selection.CanSelectMultiple)
+            {
+                states |= AccessibleStates.MultiSelectable;
+            }
 
             if (element.Focusable)
             {

@@ -20,7 +20,7 @@ IXEN_API_ENTRY void WA_SetWindowCursorImage(NativeWindow* window, const void* pi
 IXEN_API_ENTRY void WA_SetWindowIcon(NativeWindow* window, const int* cardinals, int count);
 IXEN_API_ENTRY void WA_AccessibilityUpdateRange(NativeWindow* window, int identifier, int hasRange, double minimum, double maximum, double value, double step);
 IXEN_API_ENTRY void WA_RegisterPaintCallBack(NativeWindow* window, void callBack(int, int));
-IXEN_API_ENTRY void WA_RegisterPointerCallBack(NativeWindow* window, void callBack(int, int, int, int));
+IXEN_API_ENTRY void WA_RegisterPointerCallBack(NativeWindow* window, void callBack(int, int, int, int, int));
 IXEN_API_ENTRY void WA_RegisterKeyCallBack(NativeWindow* window, void callBack(int, int, int, int));
 IXEN_API_ENTRY void WA_RegisterTextCallBack(NativeWindow* window, void callBack(const char*));
 IXEN_API_ENTRY void WA_RegisterWheelCallBack(NativeWindow* window, void callBack(int, int, int, int, int));

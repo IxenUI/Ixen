@@ -54,7 +54,7 @@ void NW_AccessibilityUpdateRange(NativeWindow* window, int identifier, int hasRa
     double maximum, double value, double step);
 
 void NW_RegisterPaintCallBack(NativeWindow* window, void callBack(int, int));
-void NW_RegisterPointerCallBack(NativeWindow* window, void callBack(int, int, int, int));
+void NW_RegisterPointerCallBack(NativeWindow* window, void callBack(int, int, int, int, int));
 void NW_RegisterKeyCallBack(NativeWindow* window, void callBack(int, int, int, int));
 void NW_RegisterTextCallBack(NativeWindow* window, void callBack(const char*));
 void NW_RegisterWheelCallBack(NativeWindow* window, void callBack(int, int, int, int, int));

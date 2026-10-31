@@ -10,6 +10,7 @@ namespace Ixen.Core.Input
         public PointerButton Button { get; private set; }
         public PointerKind Kind { get; private set; }
         public VisualElement Source { get; private set; }
+        public KeyModifiers Modifiers { get; internal set; }
 
         public bool Handled { get; set; }
 

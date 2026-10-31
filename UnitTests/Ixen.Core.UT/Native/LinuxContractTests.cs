@@ -362,6 +362,46 @@ namespace Ixen.Core.UT.Native
         }
 
         [TestMethod]
+        public void EveryCallbackTakesTheSameNumberOfArgumentsOnEachSide()
+        {
+            string header = Read(HEADER);
+            string api = Read(API);
+            int compared = 0;
+
+            foreach (Match native in Regex.Matches(header,
+                @"IXEN_API_ENTRY\s+void\s+(WA_Register\w+CallBack)\s*\([^;]*?\bcallBack\s*\(([^)]*)\)\s*\)\s*;"))
+            {
+                string entry = native.Groups[1].Value;
+
+                Match import = Regex.Match(api,
+                    @"EntryPoint\s*=\s*""" + entry + @"""[^;]*?\bextern\s+void\s+\w+\s*\(\s*IntPtr\s+\w+\s*,\s*(?:\[[^\]]*\]\s*)?(\w+)\s+\w+\s*\)\s*;");
+
+                Assert.IsTrue(import.Success, entry + " has no DllImport handing it a delegate in LinuxApi.cs");
+
+                string type = import.Groups[1].Value;
+                Match managed = Regex.Match(api, @"delegate\s+\w+\s+" + type + @"\s*\((.*?)\)\s*;",
+                    RegexOptions.Singleline);
+
+                Assert.IsTrue(managed.Success, type + " is not declared in LinuxApi.cs");
+
+                string nativeList = native.Groups[2].Value.Trim();
+                int expected = nativeList == "void" ? 0 : ArgumentsOf(nativeList);
+                int actual = ArgumentsOf(managed.Groups[1].Value);
+
+                Assert.AreEqual(expected, actual,
+                    $"the callback {entry} hands over takes {expected} arguments in window_api.h and "
+                    + $"{type} takes {actual} in LinuxApi.cs. The entry point itself still takes two "
+                    + "on each side, so the older test saw nothing; widening one callback alone is a "
+                    + "compile error nowhere, and the delegate reads whatever the C never pushed.");
+
+                compared++;
+            }
+
+            Assert.IsTrue(compared >= 7, $"only {compared} callbacks were compared, so the parser has "
+                + "stopped matching window_api.h rather than proving anything");
+        }
+
+        [TestMethod]
         public void TheCursorNamesAreInTheOrderTheDefinesSay()
         {
             Match body = Regex.Match(Read(WINDOW),

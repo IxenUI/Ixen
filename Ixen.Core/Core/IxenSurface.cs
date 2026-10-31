@@ -507,6 +507,12 @@ namespace Ixen.Core
                     node.Element.PerformClick();
                     return true;
 
+                case Accessibility.AccessibleActions.AddToSelection:
+                    return Accessibility.AccessibilityTree.MultipleSelectionOf(node.Element)?.AddToSelection(node.Element) == true;
+
+                case Accessibility.AccessibleActions.RemoveFromSelection:
+                    return Accessibility.AccessibilityTree.MultipleSelectionOf(node.Element)?.RemoveFromSelection(node.Element) == true;
+
                 case Accessibility.AccessibleActions.SetRangeValue:
                     if (!(node.Element is Accessibility.IAccessibleRange range)
                         || !float.TryParse(value, System.Globalization.NumberStyles.Float,
@@ -1258,12 +1264,12 @@ namespace Ixen.Core
         }
 
         internal void PointerDown(float x, float y, PointerButton button,
-            PointerKind kind = PointerKind.Mouse, int pointerId = 0)
+            PointerKind kind = PointerKind.Mouse, int pointerId = 0, KeyModifiers modifiers = KeyModifiers.None)
         {
             bool primary = _pointerDispatcher.PointerCount == 0;
             VisualElement focusedBefore = FocusedElement;
 
-            _pointerDispatcher.Down(Root, ToLogical(x), ToLogical(y), button, TrackStates, kind, pointerId);
+            _pointerDispatcher.Down(Root, ToLogical(x), ToLogical(y), button, TrackStates, kind, pointerId, modifiers);
 
             if (primary && FocusedElement == focusedBefore)
             {
@@ -1274,9 +1280,9 @@ namespace Ixen.Core
         }
 
         internal void PointerUp(float x, float y, PointerButton button,
-            PointerKind kind = PointerKind.Mouse, int pointerId = 0)
+            PointerKind kind = PointerKind.Mouse, int pointerId = 0, KeyModifiers modifiers = KeyModifiers.None)
         {
-            _pointerDispatcher.Up(Root, ToLogical(x), ToLogical(y), button, TrackStates, kind, pointerId);
+            _pointerDispatcher.Up(Root, ToLogical(x), ToLogical(y), button, TrackStates, kind, pointerId, modifiers);
             SyncCursor();
         }
 

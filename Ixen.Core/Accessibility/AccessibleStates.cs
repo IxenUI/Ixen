@@ -17,6 +17,7 @@ namespace Ixen.Core.Accessibility
         Selected = 256,
         Expanded = 512,
         Invalid = 1024,
-        Expandable = 2048
+        Expandable = 2048,
+        MultiSelectable = 4096
     }
 }

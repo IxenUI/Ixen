@@ -8,7 +8,7 @@ namespace Ixen.Platform.Linux.NativeApi
         const string LIB_NAME = "libixen";
 
         public delegate void OnPaintCallBack(int width, int height);
-        public delegate void OnPointerCallBack(int kind, int x, int y, int button);
+        public delegate void OnPointerCallBack(int kind, int x, int y, int button, int modifiers);
         public delegate void OnKeyCallBack(int kind, int keySymbol, int modifiers, int repeat);
         public delegate void OnTextCallBack([MarshalAs(UnmanagedType.LPUTF8Str)] string text);
         public delegate void OnWheelCallBack(int x, int y, int deltaX, int deltaY, int modifiers);
