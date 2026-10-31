@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Ixen.Controls
 {
-    public class TreeView : VisualElement
+    public class TreeView : VisualElement, IAccessibleSelection
     {
         public const string ROWS = "TreeRows";
 
@@ -25,8 +25,7 @@ namespace Ixen.Controls
         private Func<VisualElement> _create;
         private Action<VisualElement, TreeNode> _bind;
 
-        private object _selectedItem;
-        private int _selected = -1;
+        private readonly ItemSelection _selection;
 
         public TreeView()
         {
@@ -37,6 +36,7 @@ namespace Ixen.Controls
             Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
 
             _list = new VirtualList { TypeName = ROWS, Role = AccessibleRole.None };
+            _selection = new ItemSelection(() => _flat.Count, index => _flat[index].Item, OnSelectionMoved);
 
             AddChild(_list);
 
@@ -55,10 +55,25 @@ namespace Ixen.Controls
 
         public int Count => _flat.Count;
 
-        public int SelectedIndex => _selected;
+        public int SelectedIndex => _selection.Current;
 
-        public TreeNode SelectedNode
-            => _selected >= 0 && _selected < _flat.Count ? _flat[_selected] : null;
+        public TreeNode SelectedNode => NodeAt(_selection.Current);
+
+        public bool MultiSelect
+        {
+            get => _selection.Multiple;
+            set => _selection.Multiple = value;
+        }
+
+        public IReadOnlyList<object> SelectedItems => _selection.Items;
+
+        public bool IsSelected(object item) => _selection.Contains(item);
+
+        public void ToggleSelection(int index) => _selection.Toggle(index);
+
+        public void SelectRange(int index) => _selection.Range(index);
+
+        public void SelectAll() => _selection.All();
 
         public TreeNode NodeAt(int index)
             => index >= 0 && index < _flat.Count ? _flat[index] : null;
@@ -138,46 +153,29 @@ namespace Ixen.Controls
             }
         }
 
-        public void Select(int index)
+        public void Select(int index) => _selection.Select(index);
+
+        private void OnSelectionMoved(int index)
         {
-            int clamped = index < 0 || index >= _flat.Count ? -1 : index;
-
-            if (clamped == _selected)
-            {
-                return;
-            }
-
-            _selected = clamped;
-            _selectedItem = clamped < 0 ? null : _flat[clamped].Item;
-
             _list.Refresh();
 
-            if (clamped >= 0)
+            if (index >= 0)
             {
-                _list.ScrollIntoView(clamped);
+                _list.ScrollIntoView(index);
             }
 
             SelectionChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        private void Rebuild()
-        {
-            _flat.Clear();
+        bool IAccessibleSelection.CanSelectMultiple => _selection.Multiple;
 
-            if (_roots != null)
-            {
-                Flatten(_roots, 0);
-            }
+        bool IAccessibleSelection.IsSelectable(VisualElement item) => item is TreeRow;
 
-            _selected = IndexOf(_selectedItem);
+        bool IAccessibleSelection.AddToSelection(VisualElement item)
+            => _selection.Add(IndexOf((item as TreeRow)?.Item));
 
-            if (_selected < 0)
-            {
-                _selectedItem = null;
-            }
-
-            _list.Refresh();
-        }
+        bool IAccessibleSelection.RemoveFromSelection(VisualElement item)
+            => _selection.Remove(IndexOf((item as TreeRow)?.Item));
 
         private int IndexOf(object item)
         {
@@ -195,6 +193,20 @@ namespace Ixen.Controls
             }
 
             return -1;
+        }
+
+        private void Rebuild()
+        {
+            _flat.Clear();
+
+            if (_roots != null)
+            {
+                Flatten(_roots, 0);
+            }
+
+            _selection.Rebuilt();
+
+            _list.Refresh();
         }
 
         private void Flatten(IList items, int depth)
@@ -239,14 +251,15 @@ namespace Ixen.Controls
 
             row.SetDepth(node.Depth * Indent);
             row.SetBranch(node.HasChildren, node.Expanded);
-            row.ToggleState(TreeRow.SELECTED, index == _selected);
+            row.Item = node.Item;
+            row.ToggleState(TreeRow.SELECTED, _selection.Contains(node.Item));
 
             _bind(row.Content, node);
         }
 
         private void OnRowClick(object sender, PointerEventArgs args)
         {
-            int index = _list.IndexOfRow(sender as VisualElement);
+            int index = IndexOf((sender as TreeRow)?.Item);
 
             if (index < 0)
             {
@@ -255,7 +268,7 @@ namespace Ixen.Controls
 
             args.Handled = true;
 
-            Select(index);
+            _selection.Click(index, args.Modifiers, Host?.AcceleratorModifier ?? KeyModifiers.Control);
             Focus();
         }
 
@@ -283,12 +296,31 @@ namespace Ixen.Controls
             {
                 case Key.Down:
                     args.Handled = true;
-                    Select(_selected + 1);
+                    _selection.Walk(Math.Min(_selection.Current + 1, _flat.Count - 1), args.Modifiers);
                     break;
 
                 case Key.Up:
                     args.Handled = true;
-                    Select(_selected <= 0 ? 0 : _selected - 1);
+                    _selection.Walk(_selection.Current <= 0 ? 0 : _selection.Current - 1, args.Modifiers);
+                    break;
+
+                case Key.Home:
+                    args.Handled = true;
+                    _selection.Walk(0, args.Modifiers);
+                    break;
+
+                case Key.End:
+                    args.Handled = true;
+                    _selection.Walk(_flat.Count - 1, args.Modifiers);
+                    break;
+
+                case Key.A:
+                    if (_selection.Multiple && (args.Modifiers & (Host?.AcceleratorModifier ?? KeyModifiers.Control)) != 0)
+                    {
+                        args.Handled = true;
+                        SelectAll();
+                    }
+
                     break;
 
                 case Key.Right:
@@ -324,7 +356,7 @@ namespace Ixen.Controls
                     if (node != null && node.HasChildren)
                     {
                         args.Handled = true;
-                        Toggle(_selected);
+                        Toggle(_selection.Current);
                     }
 
                     break;
@@ -333,7 +365,7 @@ namespace Ixen.Controls
 
         private void SelectParent(TreeNode node)
         {
-            for (int i = _selected - 1; i >= 0; i--)
+            for (int i = _selection.Current - 1; i >= 0; i--)
             {
                 if (_flat[i].Depth < node.Depth)
                 {

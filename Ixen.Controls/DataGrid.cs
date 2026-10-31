@@ -27,11 +27,7 @@ namespace Ixen.Controls
         private IList _items;
         private int _sorted = -1;
         private bool _descending;
-        private object _selectedItem;
-        private int _selected = -1;
-        private readonly HashSet<object> _chosen = new HashSet<object>(ReferenceComparer.Instance);
-        private object _anchor;
-        private bool _multiSelect;
+        private readonly ItemSelection _selection;
         private int _resizing = -1;
         private float _resizeFrom;
         private bool _resized;
@@ -58,6 +54,7 @@ namespace Ixen.Controls
             _header.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Row };
 
             _body = new VirtualList { TypeName = BODY, Role = AccessibleRole.None };
+            _selection = new ItemSelection(() => _view.Count, index => _view[index], OnSelectionMoved);
 
             AddChild(_header);
             AddChild(_body);
@@ -83,9 +80,9 @@ namespace Ixen.Controls
 
         public bool IsDescending => _descending;
 
-        public int SelectedIndex => _selected;
+        public int SelectedIndex => _selection.Current;
 
-        public object SelectedItem => _selectedItem;
+        public object SelectedItem => _selection.CurrentItem;
 
         public object ItemAt(int index)
             => index >= 0 && index < _view.Count ? _view[index] : null;
@@ -130,139 +127,26 @@ namespace Ixen.Controls
             Rebuild();
         }
 
-        public void Select(int index)
-        {
-            int clamped = index < 0 || index >= _view.Count ? -1 : index;
-            object item = clamped < 0 ? null : _view[clamped];
-
-            if (clamped == _selected && (_chosen.Count == 0 || (_chosen.Count == 1 && _chosen.Contains(item))))
-            {
-                return;
-            }
-
-            _chosen.Clear();
-
-            if (item != null)
-            {
-                _chosen.Add(item);
-            }
-
-            _anchor = item;
-            MoveCurrent(clamped);
-        }
+        public void Select(int index) => _selection.Select(index);
 
         public bool MultiSelect
         {
-            get => _multiSelect;
-            set
-            {
-                if (_multiSelect == value)
-                {
-                    return;
-                }
-
-                _multiSelect = value;
-
-                if (!value && _chosen.Count > 1)
-                {
-                    Select(_selected);
-                }
-            }
+            get => _selection.Multiple;
+            set => _selection.Multiple = value;
         }
 
-        public IReadOnlyList<object> SelectedItems
+        public IReadOnlyList<object> SelectedItems => _selection.Items;
+
+        public bool IsSelected(object item) => _selection.Contains(item);
+
+        public void ToggleSelection(int index) => _selection.Toggle(index);
+
+        public void SelectRange(int index) => _selection.Range(index);
+
+        public void SelectAll() => _selection.All();
+
+        private void OnSelectionMoved(int index)
         {
-            get
-            {
-                var items = new List<object>();
-
-                foreach (object item in _view)
-                {
-                    if (_chosen.Contains(item))
-                    {
-                        items.Add(item);
-                    }
-                }
-
-                return items;
-            }
-        }
-
-        public bool IsSelected(object item) => item != null && _chosen.Contains(item);
-
-        public void ToggleSelection(int index)
-        {
-            if (!_multiSelect)
-            {
-                Select(index);
-                return;
-            }
-
-            if (index < 0 || index >= _view.Count)
-            {
-                return;
-            }
-
-            object item = _view[index];
-
-            if (!_chosen.Remove(item))
-            {
-                _chosen.Add(item);
-            }
-
-            _anchor = item;
-            MoveCurrent(index);
-        }
-
-        public void SelectRange(int index)
-        {
-            if (!_multiSelect || _anchor == null || IndexOf(_anchor) < 0)
-            {
-                Select(index);
-                return;
-            }
-
-            if (index < 0 || index >= _view.Count)
-            {
-                return;
-            }
-
-            int from = IndexOf(_anchor);
-            int low = Math.Min(from, index);
-            int high = Math.Max(from, index);
-
-            _chosen.Clear();
-
-            for (int i = low; i <= high; i++)
-            {
-                _chosen.Add(_view[i]);
-            }
-
-            MoveCurrent(index);
-        }
-
-        public void SelectAll()
-        {
-            if (!_multiSelect || _view.Count == 0)
-            {
-                return;
-            }
-
-            _chosen.Clear();
-
-            foreach (object item in _view)
-            {
-                _chosen.Add(item);
-            }
-
-            MoveCurrent(_selected < 0 ? 0 : _selected);
-        }
-
-        private void MoveCurrent(int index)
-        {
-            _selected = index;
-            _selectedItem = index < 0 ? null : _view[index];
-
             _body.Refresh();
 
             if (index >= 0)
@@ -273,35 +157,15 @@ namespace Ixen.Controls
             SelectionChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        bool IAccessibleSelection.CanSelectMultiple => _multiSelect;
+        bool IAccessibleSelection.CanSelectMultiple => _selection.Multiple;
 
         bool IAccessibleSelection.IsSelectable(VisualElement item) => item is DataGridRow;
 
         bool IAccessibleSelection.AddToSelection(VisualElement item)
-        {
-            int index = IndexOf((item as DataGridRow)?.Item);
-
-            if (!_multiSelect || index < 0 || IsSelected(_view[index]))
-            {
-                return false;
-            }
-
-            ToggleSelection(index);
-            return true;
-        }
+            => _selection.Add(IndexOf((item as DataGridRow)?.Item));
 
         bool IAccessibleSelection.RemoveFromSelection(VisualElement item)
-        {
-            int index = IndexOf((item as DataGridRow)?.Item);
-
-            if (!_multiSelect || index < 0 || !IsSelected(_view[index]))
-            {
-                return false;
-            }
-
-            ToggleSelection(index);
-            return true;
-        }
+            => _selection.Remove(IndexOf((item as DataGridRow)?.Item));
 
         public void Refresh() => Rebuild();
 
@@ -695,23 +559,7 @@ namespace Ixen.Controls
                 _view.Sort(_descending ? (a, b) => compare(b, a) : compare);
             }
 
-            _selected = IndexOf(_selectedItem);
-
-            if (_selected < 0)
-            {
-                _selectedItem = null;
-            }
-
-            if (_chosen.Count > 0)
-            {
-                var present = new HashSet<object>(_view, ReferenceComparer.Instance);
-                _chosen.RemoveWhere(item => !present.Contains(item));
-            }
-
-            if (_anchor != null && IndexOf(_anchor) < 0)
-            {
-                _anchor = _selectedItem;
-            }
+            _selection.Rebuilt();
 
             for (int i = 0; i < _headerCells.Count; i++)
             {
@@ -756,7 +604,7 @@ namespace Ixen.Controls
 
             row.Item = item;
             row.Fit(_columns);
-            row.ToggleState(DataGridRow.SELECTED, _chosen.Contains(item));
+            row.ToggleState(DataGridRow.SELECTED, _selection.Contains(item));
 
             for (int i = 0; i < _columns.Count; i++)
             {
@@ -833,21 +681,7 @@ namespace Ixen.Controls
 
             args.Handled = true;
 
-            KeyModifiers accelerator = Host?.AcceleratorModifier ?? KeyModifiers.Control;
-
-            if (_multiSelect && (args.Modifiers & accelerator) != 0)
-            {
-                ToggleSelection(index);
-            }
-            else if (_multiSelect && (args.Modifiers & KeyModifiers.Shift) != 0)
-            {
-                SelectRange(index);
-            }
-            else
-            {
-                Select(index);
-            }
-
+            _selection.Click(index, args.Modifiers, Host?.AcceleratorModifier ?? KeyModifiers.Control);
             Focus();
         }
 
@@ -963,36 +797,36 @@ namespace Ixen.Controls
                 case Key.Enter:
                     int column = NextEditable(-1, 1);
 
-                    if (_selected >= 0 && column >= 0)
+                    if (_selection.Current >= 0 && column >= 0)
                     {
                         args.Handled = true;
-                        BeginEdit(_selected, column);
+                        BeginEdit(_selection.Current, column);
                     }
 
                     break;
 
                 case Key.Down:
                     args.Handled = true;
-                    Walk(Math.Min(_selected + 1, _view.Count - 1), args.Modifiers);
+                    _selection.Walk(Math.Min(_selection.Current + 1, _view.Count - 1), args.Modifiers);
                     break;
 
                 case Key.Up:
                     args.Handled = true;
-                    Walk(_selected <= 0 ? 0 : _selected - 1, args.Modifiers);
+                    _selection.Walk(_selection.Current <= 0 ? 0 : _selection.Current - 1, args.Modifiers);
                     break;
 
                 case Key.Home:
                     args.Handled = true;
-                    Walk(0, args.Modifiers);
+                    _selection.Walk(0, args.Modifiers);
                     break;
 
                 case Key.End:
                     args.Handled = true;
-                    Walk(_view.Count - 1, args.Modifiers);
+                    _selection.Walk(_view.Count - 1, args.Modifiers);
                     break;
 
                 case Key.A:
-                    if (_multiSelect && (args.Modifiers & (Host?.AcceleratorModifier ?? KeyModifiers.Control)) != 0)
+                    if (_selection.Multiple && (args.Modifiers & (Host?.AcceleratorModifier ?? KeyModifiers.Control)) != 0)
                     {
                         args.Handled = true;
                         SelectAll();
@@ -1000,22 +834,6 @@ namespace Ixen.Controls
 
                     break;
             }
-        }
-
-        private void Walk(int index, KeyModifiers modifiers)
-        {
-            if (_multiSelect && (modifiers & KeyModifiers.Shift) != 0)
-            {
-                if (_anchor == null)
-                {
-                    _anchor = _selectedItem ?? ItemAt(index);
-                }
-
-                SelectRange(index);
-                return;
-            }
-
-            Select(index);
         }
     }
 }

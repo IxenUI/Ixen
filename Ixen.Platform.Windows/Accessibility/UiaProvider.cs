@@ -61,7 +61,7 @@ namespace Ixen.Platform.Windows.Accessibility
                     return IsExpandCollapse(node) ? this : null;
 
                 case UiaPattern.SELECTION_ITEM:
-                    return IsSelectionItem(node.Role) ? this : null;
+                    return IsSelectionItem(node) ? this : null;
 
                 case UiaPattern.SELECTION:
                     return IsSelectionContainer(node.Role) ? this : null;
@@ -79,13 +79,24 @@ namespace Ixen.Platform.Windows.Accessibility
                 || node.HasState(AccessibleStates.Expandable)
                 || node.HasState(AccessibleStates.Expanded);
 
-        internal static bool IsSelectionItem(AccessibleRole role)
+        internal static bool IsSelectionItem(AccessibleNode node)
         {
-            return role == AccessibleRole.Tab
-                || role == AccessibleRole.RadioButton
-                || role == AccessibleRole.ListItem
-                || role == AccessibleRole.TreeItem
-                || role == AccessibleRole.TableRow;
+            AccessibleRole role = node.Role;
+
+            if (role != AccessibleRole.Tab
+                && role != AccessibleRole.RadioButton
+                && role != AccessibleRole.ListItem
+                && role != AccessibleRole.TreeItem
+                && role != AccessibleRole.TableRow)
+            {
+                return false;
+            }
+
+            return node.Supports(AccessibleActions.Select)
+                || node.Supports(AccessibleActions.AddToSelection)
+                || node.Supports(AccessibleActions.RemoveFromSelection)
+                || node.HasState(AccessibleStates.Disabled)
+                || IsSelected(node);
         }
 
         internal static bool IsSelectionContainer(AccessibleRole role)

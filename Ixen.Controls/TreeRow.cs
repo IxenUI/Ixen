@@ -57,6 +57,8 @@ namespace Ixen.Controls
 
         internal TreeView Owner { get; set; }
 
+        internal object Item { get; set; }
+
         bool IExpandable.CanExpand => _hasChildren;
 
         bool IExpandable.IsExpanded => _hasChildren && _expanded;

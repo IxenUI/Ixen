@@ -197,7 +197,7 @@ namespace Ixen.Platform.Windows.Accessibility
                     (int)UiaProvider.ExpansionOf(now));
             }
 
-            if (UiaProvider.IsSelectionItem(now.Role)
+            if (UiaProvider.IsSelectionItem(now)
                 && UiaProvider.IsSelected(was) != UiaProvider.IsSelected(now))
             {
                 Raise(change.Id, UiaProperty.SELECTION_ITEM_IS_SELECTED, UiaProvider.IsSelected(was),
@@ -402,7 +402,7 @@ namespace Ixen.Platform.Windows.Accessibility
                     continue;
                 }
 
-                if (UiaProvider.IsSelectionItem(node.Role) && UiaProvider.IsSelected(node))
+                if (UiaProvider.IsSelectionItem(node) && UiaProvider.IsSelected(node))
                 {
                     into.Add(ProviderFor(child));
                 }
