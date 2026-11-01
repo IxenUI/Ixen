@@ -2,6 +2,7 @@ using Ixen.Core.Visual;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Runtime.ExceptionServices;
 
@@ -18,6 +19,7 @@ namespace Ixen.Core.Components
         private bool _pendingAttach;
         private bool _notifiedAttach;
         private List<IObservableState> _followed;
+        private List<IAsyncLoad> _loads;
 
         internal abstract VisualElement GetVisualElement();
 
@@ -188,6 +190,14 @@ namespace Ixen.Core.Components
             _pendingAttach = false;
             _notifiedAttach = false;
 
+            if (_loads != null)
+            {
+                foreach (IAsyncLoad load in _loads)
+                {
+                    load.CancelLoading();
+                }
+            }
+
             if (notified)
             {
                 OnDetached();
@@ -307,6 +317,9 @@ namespace Ixen.Core.Components
         }
 
         protected void Load<T>(AsyncValue<T> value, Func<Task<T>> work)
+            => Load(value, work == null ? (Func<CancellationToken, Task<T>>)null : token => work());
+
+        protected void Load<T>(AsyncValue<T> value, Func<CancellationToken, Task<T>> work)
         {
             if (value == null)
             {
@@ -320,14 +333,22 @@ namespace Ixen.Core.Components
                 return;
             }
 
-            int generation = value.Begin();
+            int generation = value.Begin(() => Load(value, work), out CancellationToken token);
+
+            _loads = _loads ?? new List<IAsyncLoad>();
+
+            if (!_loads.Contains(value))
+            {
+                _loads.Add(value);
+            }
+
             SetState();
 
             Task<T> task;
 
             try
             {
-                task = work();
+                task = work(token);
             }
             catch (Exception error)
             {

@@ -40,6 +40,11 @@ namespace Ixen.Core.UT.Threading
                 Load(Poems, work);
             }
 
+            internal void StartCancellable(Func<CancellationToken, Task<string>> work)
+            {
+                Load(Poems, work);
+            }
+
             internal void StartWithNoSlot()
             {
                 Load((AsyncValue<string>)null, () => Task.FromResult("x"));
@@ -417,6 +422,139 @@ namespace Ixen.Core.UT.Threading
             _component.StartWith(null);
 
             Assert.IsTrue(Poems.IsIdle, "nothing was asked, so nothing is loading");
+        }
+
+        private readonly List<CancellationToken> _tokens = new List<CancellationToken>();
+        private TaskCompletionSource<string> _gate;
+
+        private void StartCancellable()
+        {
+            _gate = new TaskCompletionSource<string>();
+            _component.StartCancellable(token =>
+            {
+                _tokens.Add(token);
+                return _gate.Task;
+            });
+        }
+
+        private void Settle(string value)
+        {
+            _gate.SetResult(value);
+
+            for (int frame = 0; frame < 3; frame++)
+            {
+                Paint();
+            }
+        }
+
+        [TestMethod]
+        public void ANewerLoadCancelsTheOneItSupersedes()
+        {
+            StartCancellable();
+            StartCancellable();
+
+            Assert.IsTrue(_tokens[0].IsCancellationRequested,
+                "a search typed letter by letter used to run every request to its end");
+            Assert.IsFalse(_tokens[1].IsCancellationRequested);
+        }
+
+        [TestMethod]
+        public void CancellingFallsBackToWhatWasThereBefore()
+        {
+            StartCancellable();
+            Settle("the second coming");
+
+            StartCancellable();
+            Poems.Cancel();
+
+            Assert.IsTrue(_tokens[1].IsCancellationRequested);
+            Assert.IsTrue(Poems.IsReady, "a cancelled reload keeps the value it was reloading");
+            Assert.AreEqual("the second coming", Poems.Value);
+
+            Settle("too late");
+
+            Assert.AreEqual("the second coming", Poems.Value, "what arrives after a cancel is dropped");
+        }
+
+        [TestMethod]
+        public void CancellingAFirstLoadIsIdleAgain()
+        {
+            StartCancellable();
+            Poems.Cancel();
+
+            Assert.IsTrue(Poems.IsIdle);
+            Assert.IsTrue(Poems.CanRetry, "a cancelled load can be asked for again");
+        }
+
+        [TestMethod]
+        public void CancellingWithNothingLoadingChangesNothing()
+        {
+            int announced = 0;
+
+            Poems.Changed += (sender, e) => announced++;
+            Poems.Cancel();
+
+            Assert.AreEqual(0, announced);
+            Assert.IsTrue(Poems.IsIdle);
+        }
+
+        [TestMethod]
+        public void ResettingCancelsTheLoadInFlight()
+        {
+            StartCancellable();
+            Poems.Reset();
+
+            Assert.IsTrue(_tokens[0].IsCancellationRequested);
+        }
+
+        [TestMethod]
+        public void LeavingTheScreenCancelsWhatTheComponentWasLoading()
+        {
+            StartCancellable();
+
+            _host.Root = new VisualElement { Name = "elsewhere" };
+
+            Assert.IsTrue(_tokens[0].IsCancellationRequested,
+                "a page navigated away from has no one to show its answer to");
+            Assert.IsFalse(Poems.IsLoading);
+        }
+
+        [TestMethod]
+        public void RetryRunsTheSameWorkAgain()
+        {
+            int calls = 0;
+
+            _component.StartWith(() =>
+            {
+                calls++;
+                return calls == 1
+                    ? Task.FromException<string>(new InvalidOperationException("offline"))
+                    : Task.FromResult("back online");
+            });
+            Paint();
+
+            Assert.IsTrue(Poems.IsFailed);
+            Assert.IsTrue(Poems.CanRetry);
+
+            Poems.Retry();
+            Paint();
+
+            Assert.AreEqual(2, calls);
+            Assert.AreEqual("back online", Poems.Value);
+        }
+
+        [TestMethod]
+        public void NothingToRetryBeforeAnythingWasAskedOrWhileLoading()
+        {
+            Assert.IsFalse(Poems.CanRetry);
+
+            StartCancellable();
+
+            Assert.IsFalse(Poems.CanRetry, "retrying a load still running would only supersede it");
+
+            Poems.Retry();
+
+            Assert.AreEqual(1, _tokens.Count);
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 
 namespace Ixen.Core.Components
 {
@@ -10,9 +11,16 @@ namespace Ixen.Core.Components
         Failed
     }
 
-    public class AsyncValue<T> : IObservableState
+    internal interface IAsyncLoad
+    {
+        void CancelLoading();
+    }
+
+    public class AsyncValue<T> : IObservableState, IAsyncLoad
     {
         private int _generation;
+        private CancellationTokenSource _cancellation;
+        private Action _retry;
 
         public event EventHandler Changed;
 
@@ -34,9 +42,12 @@ namespace Ixen.Core.Components
 
         public string Message => Error?.Message;
 
+        public bool CanRetry => _retry != null && State != AsyncState.Loading;
+
         public void Reset()
         {
             _generation++;
+            Abandon();
             State = AsyncState.Idle;
             Value = default(T);
             Error = null;
@@ -45,8 +56,40 @@ namespace Ixen.Core.Components
             Announce();
         }
 
-        internal int Begin()
+        public void Cancel()
         {
+            if (State != AsyncState.Loading)
+            {
+                return;
+            }
+
+            _generation++;
+            Abandon();
+            State = HasValue ? AsyncState.Ready : AsyncState.Idle;
+
+            Announce();
+        }
+
+        public void Retry()
+        {
+            if (CanRetry)
+            {
+                _retry();
+            }
+        }
+
+        void IAsyncLoad.CancelLoading() => Cancel();
+
+        internal int Begin() => Begin(null, out CancellationToken _);
+
+        internal int Begin(Action retry, out CancellationToken token)
+        {
+            Abandon();
+
+            _retry = retry;
+            _cancellation = new CancellationTokenSource();
+            token = _cancellation.Token;
+
             State = AsyncState.Loading;
             Error = null;
 
@@ -64,6 +107,7 @@ namespace Ixen.Core.Components
                 return false;
             }
 
+            _cancellation = null;
             State = AsyncState.Ready;
             Value = value;
             HasValue = true;
@@ -80,12 +124,21 @@ namespace Ixen.Core.Components
                 return false;
             }
 
+            _cancellation = null;
             State = AsyncState.Failed;
             Error = error;
 
             Announce();
 
             return true;
+        }
+
+        private void Abandon()
+        {
+            CancellationTokenSource running = _cancellation;
+
+            _cancellation = null;
+            running?.Cancel();
         }
 
         private void Announce()
