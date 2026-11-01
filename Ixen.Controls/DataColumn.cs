@@ -21,8 +21,16 @@ namespace Ixen.Controls
 
         public Action<object, string> Commit { get; set; }
 
+        public Func<object, bool> Checked { get; set; }
+
+        public Action<object, bool> Toggle { get; set; }
+
         public bool IsSortable => Compare != null;
 
-        public bool IsEditable => Commit != null;
+        public bool IsEditable => Commit != null && Checked == null;
+
+        public bool IsCheck => Checked != null;
+
+        public bool IsToggleable => Checked != null && Toggle != null;
     }
 }

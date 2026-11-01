@@ -543,6 +543,7 @@ $control_focus_soft:   #EEF1FE
     height: 1*
     padding: 0px 10px
     text-align: left middle
+    content-align: left middle
 }
 
 #DataGridEditor {

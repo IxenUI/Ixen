@@ -645,7 +645,10 @@ namespace Ixen.Controls
 
             for (int i = 0; i < _columns.Count; i++)
             {
-                _columns[i].Bind?.Invoke(row.CellAt(i), item);
+                VisualElement cell = row.CellAt(i);
+
+                FitCheck(cell, _columns[i], item);
+                _columns[i].Bind?.Invoke(cell, item);
             }
 
             if (_editor == null)
@@ -671,6 +674,101 @@ namespace Ixen.Controls
                     }
                 });
             }
+        }
+
+        private static DataGridCheckBox CheckIn(VisualElement cell)
+        {
+            foreach (VisualElement child in cell.ChildElements)
+            {
+                if (child is DataGridCheckBox check)
+                {
+                    return check;
+                }
+            }
+
+            return null;
+        }
+
+        private void FitCheck(VisualElement cell, DataColumn column, object item)
+        {
+            DataGridCheckBox check = CheckIn(cell);
+
+            if (!column.IsCheck)
+            {
+                check?.Parent?.RemoveChild(check);
+                return;
+            }
+
+            if (check == null)
+            {
+                check = new DataGridCheckBox();
+                check.CheckedChanged += OnCheckToggled;
+                cell.AddChild(check);
+            }
+
+            check.Checked = column.Checked(item);
+            check.Enabled = column.IsToggleable;
+        }
+
+        private void OnCheckToggled(object sender, EventArgs args)
+        {
+            var check = (CheckBox)sender;
+            VisualElement cell = check.Parent;
+
+            if (!(cell?.Parent is DataGridRow row))
+            {
+                return;
+            }
+
+            int column = -1;
+
+            for (int i = 0; i < row.Cells.Count && i < _columns.Count; i++)
+            {
+                if (row.Cells[i] == cell)
+                {
+                    column = i;
+                }
+            }
+
+            if (column < 0 || !_columns[column].IsToggleable || IndexOf(row.Item) < 0)
+            {
+                return;
+            }
+
+            _columns[column].Toggle(row.Item, check.Checked);
+            _body.Refresh();
+        }
+
+        private int FirstToggleable()
+        {
+            for (int i = 0; i < _columns.Count; i++)
+            {
+                if (_columns[i].IsToggleable)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        public void ToggleSelected(int column)
+        {
+            if (column < 0 || column >= _columns.Count || !_columns[column].IsToggleable
+                || _selection.CurrentItem == null)
+            {
+                return;
+            }
+
+            DataColumn toggled = _columns[column];
+            bool target = !toggled.Checked(_selection.CurrentItem);
+
+            foreach (object item in _selection.Items)
+            {
+                toggled.Toggle(item, target);
+            }
+
+            _body.Refresh();
         }
 
         private void OnRowDoubleClick(object sender, PointerEventArgs args)
@@ -867,6 +965,17 @@ namespace Ixen.Controls
                     {
                         args.Handled = true;
                         SelectAll();
+                    }
+
+                    break;
+
+                case Key.Space:
+                    int toggleable = FirstToggleable();
+
+                    if (toggleable >= 0 && _selection.Current >= 0 && args.Modifiers == KeyModifiers.None)
+                    {
+                        args.Handled = true;
+                        ToggleSelected(toggleable);
                     }
 
                     break;
