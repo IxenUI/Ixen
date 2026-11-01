@@ -1,5 +1,6 @@
 using Ixen.Core.Visual;
 using System;
+using System.Collections.Generic;
 
 namespace Ixen.Controls
 {
@@ -24,6 +25,10 @@ namespace Ixen.Controls
         public Func<object, bool> Checked { get; set; }
 
         public Action<object, bool> Toggle { get; set; }
+
+        public IReadOnlyList<string> Choices { get; set; }
+
+        public bool IsChoice => Choices != null && IsEditable;
 
         public bool IsSortable => Compare != null;
 

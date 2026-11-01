@@ -33,6 +33,9 @@ namespace Ixen.Controls
         private bool _resized;
 
         private TextField _editor;
+        private Menu _choices;
+        private object _choiceItem;
+        private int _choiceColumn = -1;
         private object _editItem;
         private int _editColumn = -1;
         private bool _focusEditor;
@@ -233,6 +236,12 @@ namespace Ixen.Controls
             object item = _view[index];
             DataColumn edited = _columns[column];
 
+            if (edited.IsChoice)
+            {
+                OpenChoices(index, column);
+                return;
+            }
+
             EnsureEditor();
 
             _editItem = item;
@@ -347,11 +356,18 @@ namespace Ixen.Controls
 
         private DataGridRow RealisedRow(int index)
         {
+            object item = ItemAt(index);
+
+            if (item == null)
+            {
+                return null;
+            }
+
             foreach (VisualElement element in _body.RealisedRows)
             {
-                if (_body.IndexOfRow(element) == index)
+                if (element is DataGridRow row && ReferenceEquals(row.Item, item))
                 {
-                    return element as DataGridRow;
+                    return row;
                 }
             }
 
@@ -641,6 +657,11 @@ namespace Ixen.Controls
 
             row.Item = item;
             row.Fit(_columns);
+
+            if (IsChoosing && ReferenceEquals(item, _choiceItem) && _choiceColumn < row.Cells.Count)
+            {
+                _choices.AnchorElement = row.CellAt(_choiceColumn);
+            }
             row.ToggleState(DataGridRow.SELECTED, _selection.Contains(item));
 
             for (int i = 0; i < _columns.Count; i++)
@@ -673,6 +694,93 @@ namespace Ixen.Controls
                         CommitEdit(false);
                     }
                 });
+            }
+        }
+
+        public bool IsChoosing => _choices != null && _choices.Open;
+
+        public Menu ChoiceMenu => _choices;
+
+        private void OpenChoices(int index, int column)
+        {
+            if (_choices == null)
+            {
+                _choices = new Menu();
+                _choices.ItemInvoked += OnChoiceInvoked;
+                _choices.Closed += OnChoicesClosed;
+                AddChild(_choices);
+            }
+
+            _choices.Close();
+
+            foreach (VisualElement stale in new List<VisualElement>(_choices.Panel.ChildElements))
+            {
+                _choices.Panel.RemoveChild(stale);
+            }
+
+            object item = _view[index];
+            DataColumn choosing = _columns[column];
+            string current = choosing.Value?.Invoke(item) ?? RealisedCellText(index, column);
+            MenuItem focused = null;
+
+            foreach (string choice in choosing.Choices)
+            {
+                var entry = new MenuItem { Text = choice };
+
+                if (choice == current)
+                {
+                    entry.Selected = true;
+                    focused = entry;
+                }
+
+                _choices.AddChild(entry);
+                focused = focused ?? entry;
+            }
+
+            _choiceItem = item;
+            _choiceColumn = column;
+
+            DataGridRow row = RealisedRow(index);
+
+            _choices.AnchorElement = row == null ? (VisualElement)this : row.CellAt(column);
+            _choices.Styles.AnchorPlacement = new AnchorPlacementStyleDescriptor
+            {
+                Side = AnchorSide.Below,
+                Align = AnchorAlign.Start
+            };
+            _choices.Open = true;
+
+            focused?.Focus();
+        }
+
+        private void OnChoiceInvoked(object sender, MenuItemEventArgs args)
+        {
+            object item = _choiceItem;
+            int column = _choiceColumn;
+
+            if (item == null || column < 0 || column >= _columns.Count || IndexOf(item) < 0)
+            {
+                return;
+            }
+
+            _columns[column].Commit(item, args.Item.Text);
+            Rebuild();
+        }
+
+        private void OnChoicesClosed(object sender, EventArgs args)
+        {
+            _choiceItem = null;
+            _choiceColumn = -1;
+
+            VisualElement focused = Host?.FocusedElement;
+
+            for (VisualElement walked = focused; walked != null; walked = walked.Parent)
+            {
+                if (walked == _choices)
+                {
+                    Focus();
+                    return;
+                }
             }
         }
 
@@ -921,7 +1029,7 @@ namespace Ixen.Controls
 
         private void OnKeyDown(object sender, KeyEventArgs args)
         {
-            if (IsEditing)
+            if (IsEditing || IsChoosing)
             {
                 return;
             }
