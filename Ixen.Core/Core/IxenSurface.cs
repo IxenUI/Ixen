@@ -989,6 +989,8 @@ namespace Ixen.Core
         private CursorKind _cursor = CursorKind.Default;
         private CursorImage _cursorImage;
         private bool _inspector;
+        private bool _inspectorPinning;
+        private VisualElement _inspected;
 
         internal Action<CursorKind, CursorImage> CursorSetter
         {
@@ -1146,11 +1148,11 @@ namespace Ixen.Core
             }
         }
 
-        public InspectorHit Inspect(float x, float y)
-        {
-            VisualElement element = HitTest(x, y);
+        public InspectorHit Inspect(float x, float y) => Inspect(HitTest(x, y));
 
-            if (element == null)
+        public InspectorHit Inspect(VisualElement element)
+        {
+            if (!IsInTree(element))
             {
                 return null;
             }
@@ -1163,6 +1165,99 @@ namespace Ixen.Core
             }
 
             return new InspectorHit(element, ExplainStyles(element), depth);
+        }
+
+        public VisualElement InspectedElement
+        {
+            get => IsInTree(_inspected) ? _inspected : null;
+
+            set
+            {
+                if (_inspected == value)
+                {
+                    return;
+                }
+
+                _inspected = value;
+
+                if (_inspector)
+                {
+                    InvalidateVisual();
+                }
+            }
+        }
+
+        private VisualElement InspectorTarget => InspectedElement ?? _pointerDispatcher.Hovered;
+
+        private bool IsInTree(VisualElement element)
+        {
+            if (element == null || Root == null)
+            {
+                return false;
+            }
+
+            VisualElement top = element;
+
+            while (top.Parent != null)
+            {
+                top = top.Parent;
+            }
+
+            return top == Root;
+        }
+
+        private bool SteerInspector(Key key, KeyModifiers modifiers)
+        {
+            VisualElement pinned = InspectedElement;
+
+            if (!_inspector || pinned == null || modifiers != KeyModifiers.None)
+            {
+                return false;
+            }
+
+            switch (key)
+            {
+                case Key.Escape:
+                    InspectedElement = null;
+                    return true;
+
+                case Key.Up:
+                    InspectedElement = pinned.Parent ?? pinned;
+                    return true;
+
+                case Key.Down:
+                    InspectedElement = pinned.Children.Count > 0 ? pinned.Children[0] : pinned;
+                    return true;
+
+                case Key.Left:
+                case Key.Right:
+                    InspectedElement = SiblingOf(pinned, key == Key.Right ? 1 : -1);
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        private static VisualElement SiblingOf(VisualElement element, int step)
+        {
+            VisualElement parent = element.Parent;
+
+            if (parent == null)
+            {
+                return element;
+            }
+
+            int index = parent.Children.IndexOf(element) + step;
+
+            return index >= 0 && index < parent.Children.Count ? parent.Children[index] : element;
+        }
+
+        private bool PinsInspector(PointerButton button, KeyModifiers modifiers)
+        {
+            KeyModifiers pin = AcceleratorModifier | KeyModifiers.Shift;
+
+            return _inspector && button == PointerButton.Left && (modifiers & pin) == pin;
         }
 
         public VisualElement FocusedElement => _keyboardDispatcher.Focused;
@@ -1187,6 +1282,11 @@ namespace Ixen.Core
 
         internal bool KeyDown(Key key, KeyModifiers modifiers, bool? isRepeat = null)
         {
+            if (SteerInspector(key, modifiers))
+            {
+                return true;
+            }
+
             VisualElement before = _keyboardDispatcher.Focused;
 
             bool handled = _keyboardDispatcher.KeyDown(Root, key, modifiers, TrackStates, isRepeat,
@@ -1255,7 +1355,7 @@ namespace Ixen.Core
 
         private void DamageInspector(VisualElement before)
         {
-            if (!_inspector || before == _pointerDispatcher.Hovered)
+            if (!_inspector || before == _pointerDispatcher.Hovered || InspectedElement != null)
             {
                 return;
             }
@@ -1267,6 +1367,15 @@ namespace Ixen.Core
             PointerKind kind = PointerKind.Mouse, int pointerId = 0, KeyModifiers modifiers = KeyModifiers.None)
         {
             bool primary = _pointerDispatcher.PointerCount == 0;
+
+            if (primary && PinsInspector(button, modifiers))
+            {
+                InspectedElement = HitTest(x, y);
+                _inspectorPinning = true;
+
+                return;
+            }
+
             VisualElement focusedBefore = FocusedElement;
 
             _pointerDispatcher.Down(Root, ToLogical(x), ToLogical(y), button, TrackStates, kind, pointerId, modifiers);
@@ -1282,6 +1391,13 @@ namespace Ixen.Core
         internal void PointerUp(float x, float y, PointerButton button,
             PointerKind kind = PointerKind.Mouse, int pointerId = 0, KeyModifiers modifiers = KeyModifiers.None)
         {
+            if (_inspectorPinning)
+            {
+                _inspectorPinning = false;
+
+                return;
+            }
+
             _pointerDispatcher.Up(Root, ToLogical(x), ToLogical(y), button, TrackStates, kind, pointerId, modifiers);
             SyncCursor();
         }
@@ -1335,7 +1451,7 @@ namespace Ixen.Core
 
                 if (_inspector)
                 {
-                    InspectorRenderer.Render(_rendererContext, _pointerDispatcher.Hovered);
+                    InspectorRenderer.Render(_rendererContext, InspectorTarget, InspectedElement != null);
                 }
             }
 

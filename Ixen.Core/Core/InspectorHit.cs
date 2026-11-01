@@ -1,5 +1,6 @@
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -25,7 +26,10 @@ namespace Ixen.Core
             ContentHeight = element.ContentHeight;
 
             Label = Describe(element, Width, Height);
+            Path = PathOf(element, int.MaxValue);
         }
+
+        public string Path { get; }
 
         public VisualElement Element { get; }
 
@@ -51,22 +55,52 @@ namespace Ixen.Core
 
         public string Label { get; }
 
-        internal static string Describe(VisualElement element, float width, float height)
-        {
-            var text = new StringBuilder();
+        private const string PATH_SEPARATOR = " > ";
+        private const string PATH_ELISION = "... > ";
 
+        internal static string PathOf(VisualElement element, int segments)
+        {
+            var names = new List<string>();
+
+            for (VisualElement walked = element; walked != null; walked = walked.Parent)
+            {
+                names.Add(NameOf(walked));
+            }
+
+            var text = new StringBuilder();
+            int shown = Math.Min(segments, names.Count);
+
+            if (shown < names.Count)
+            {
+                text.Append(PATH_ELISION);
+            }
+
+            for (int index = shown - 1; index >= 0; index--)
+            {
+                text.Append(names[index]);
+
+                if (index > 0)
+                {
+                    text.Append(PATH_SEPARATOR);
+                }
+            }
+
+            return text.ToString();
+        }
+
+        private static string NameOf(VisualElement element)
+        {
             if (!string.IsNullOrEmpty(element.Name))
             {
-                text.Append(element.Name);
+                return element.Name;
             }
-            else if (!string.IsNullOrEmpty(element.TypeName))
-            {
-                text.Append('#').Append(element.TypeName);
-            }
-            else
-            {
-                text.Append("(unnamed)");
-            }
+
+            return string.IsNullOrEmpty(element.TypeName) ? "(unnamed)" : "#" + element.TypeName;
+        }
+
+        internal static string Describe(VisualElement element, float width, float height)
+        {
+            var text = new StringBuilder(NameOf(element));
 
             List<string> classes = element.Classes;
 

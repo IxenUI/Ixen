@@ -418,6 +418,212 @@ namespace Ixen.Core.UT.Rendering
             }
         }
 
+        private int _clicks;
+
+        private void Click(int x, int y, KeyModifiers modifiers)
+        {
+            _surface.PointerDown(x, y, PointerButton.Left, PointerKind.Mouse, 0, modifiers);
+            _surface.PointerUp(x, y, PointerButton.Left, PointerKind.Mouse, 0, modifiers);
+        }
+
+        private const KeyModifiers PIN = KeyModifiers.Control | KeyModifiers.Shift;
+
+        private int Bluish(int x, int y, int width, int height)
+        {
+            int found = 0;
+
+            for (int row = y; row < y + height && row < HEIGHT; row++)
+            {
+                for (int column = x; column < x + width && column < WIDTH; column++)
+                {
+                    SKColor pixel = _bitmap.GetPixel(column, row);
+
+                    if (pixel.Blue > pixel.Red + 30 && pixel.Blue > 90)
+                    {
+                        found++;
+                    }
+                }
+            }
+
+            return found;
+        }
+
+        private VisualElement Child(VisualElement parent, string name, float left, float top)
+        {
+            var child = new VisualElement { Name = name };
+
+            child.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = left };
+            child.Styles.Top = new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = top };
+            child.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 20 };
+            child.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 20 };
+
+            parent.AddChild(child);
+
+            return child;
+        }
+
+        [TestMethod]
+        public void TheAcceleratorShiftClickPinsAndTheApplicationNeverSeesIt()
+        {
+            _card.PointerDown += (sender, e) => _clicks++;
+            _card.PointerUp += (sender, e) => _clicks++;
+            _card.PointerClick += (sender, e) => _clicks++;
+            _surface.Inspector = true;
+
+            Click(100, 100, PIN);
+
+            Assert.AreSame(_card, _surface.InspectedElement);
+            Assert.AreEqual(0, _clicks, "a click that pins is the inspector's, its release included");
+
+            Click(100, 100, KeyModifiers.None);
+
+            Assert.AreEqual(3, _clicks, "a plain click still belongs to the application");
+        }
+
+        [TestMethod]
+        public void WithTheInspectorOffTheModifiersMeanWhatTheApplicationSays()
+        {
+            _card.PointerClick += (sender, e) => _clicks++;
+
+            Click(100, 100, PIN);
+
+            Assert.IsNull(_surface.InspectedElement);
+            Assert.AreEqual(1, _clicks);
+        }
+
+        [TestMethod]
+        public void APinnedElementStaysOutlinedWhereverThePointerGoes()
+        {
+            _surface.Inspector = true;
+            Hover(300, 250);
+            Frame();
+
+            SKColor unpinned = At(100, 70);
+
+            Click(100, 100, PIN);
+            Hover(300, 250);
+            Frame();
+
+            Assert.AreNotEqual(unpinned, At(100, 70),
+                "the card's padding band is painted as padding, not as the root's content - inside the "
+                    + "card both would tint the same blue and prove nothing");
+
+            Hover(350, 280);
+
+            Assert.IsFalse(_surface.IsDirty, "with something pinned, the hover has nothing to repaint");
+        }
+
+        [TestMethod]
+        public void TheArrowsWalkTheTreeFromThePinnedElement()
+        {
+            VisualElement inner = Child(_card, "inner", 0, 0);
+            VisualElement left = Child(_root, "left", 200, 200);
+            VisualElement right = Child(_root, "right", 260, 200);
+            int keys = 0;
+
+            _root.KeyDown += (sender, e) => keys++;
+            Frame();
+
+            _surface.Inspector = true;
+            _surface.InspectedElement = _card;
+
+            Assert.IsTrue(_surface.KeyDown(Key.Down, KeyModifiers.None));
+            Assert.AreSame(inner, _surface.InspectedElement, "down goes to the first child");
+
+            _surface.KeyDown(Key.Down, KeyModifiers.None);
+            Assert.AreSame(inner, _surface.InspectedElement, "a leaf has nowhere further down to go");
+
+            _surface.KeyDown(Key.Up, KeyModifiers.None);
+            Assert.AreSame(_card, _surface.InspectedElement);
+
+            _surface.KeyDown(Key.Right, KeyModifiers.None);
+            Assert.AreSame(left, _surface.InspectedElement);
+
+            _surface.KeyDown(Key.Right, KeyModifiers.None);
+            _surface.KeyDown(Key.Right, KeyModifiers.None);
+            Assert.AreSame(right, _surface.InspectedElement, "the last sibling stays where it is");
+
+            _surface.KeyDown(Key.Left, KeyModifiers.None);
+            Assert.AreSame(left, _surface.InspectedElement);
+
+            _surface.KeyDown(Key.Up, KeyModifiers.None);
+            _surface.KeyDown(Key.Up, KeyModifiers.None);
+            Assert.AreSame(_root, _surface.InspectedElement, "the root is as far up as it goes");
+
+            Assert.AreEqual(0, keys, "the keys that steer the inspector are not the page's");
+        }
+
+        [TestMethod]
+        public void EscapeUnpinsAndTheKeysGoBackToTheApplication()
+        {
+            int keys = 0;
+
+            _root.KeyDown += (sender, e) => keys++;
+            _surface.Inspector = true;
+            _surface.InspectedElement = _card;
+
+            _surface.KeyDown(Key.Escape, KeyModifiers.None);
+
+            Assert.IsNull(_surface.InspectedElement);
+            Assert.AreEqual(0, keys);
+
+            _surface.KeyDown(Key.Up, KeyModifiers.None);
+
+            Assert.AreEqual(1, keys, "with nothing pinned, the arrows are the page's again");
+        }
+
+        [TestMethod]
+        public void TheKeysAreTheApplicationsWhenTheOverlayIsOff()
+        {
+            int keys = 0;
+
+            _root.KeyDown += (sender, e) => keys++;
+            _surface.InspectedElement = _card;
+
+            _surface.KeyDown(Key.Down, KeyModifiers.None);
+
+            Assert.AreEqual(1, keys);
+            Assert.AreSame(_card, _surface.InspectedElement);
+        }
+
+        [TestMethod]
+        public void AnElementTakenOutOfTheTreeIsNoLongerPinned()
+        {
+            VisualElement inner = Child(_card, "inner", 0, 0);
+
+            Frame();
+            _surface.InspectedElement = inner;
+            _card.RemoveChild(inner);
+
+            Assert.IsNull(_surface.InspectedElement, "the overlay would outline something no longer there");
+        }
+
+        [TestMethod]
+        public void APinnedElementShowsWhereItSitsInTheTree()
+        {
+            _surface.Inspector = true;
+            Hover(100, 100);
+            Frame();
+
+            Assert.AreEqual(0, Bluish(40, 38, 260, 20), "a hovered element's plate is one line");
+
+            _surface.InspectedElement = _card;
+            Frame();
+
+            Assert.IsTrue(Bluish(40, 38, 260, 20) > 0, "a pinned one adds the path under the label");
+        }
+
+        [TestMethod]
+        public void AnElementCanBeAskedAboutDirectly()
+        {
+            InspectorHit hit = _surface.Inspect(_card);
+
+            Assert.AreSame(_card, hit.Element);
+            Assert.AreEqual("root > card", hit.Path);
+            Assert.AreEqual(1, hit.Depth);
+            Assert.IsNull(_surface.Inspect(new VisualElement()), "something outside the tree has no report");
+        }
+
         [TestMethod]
         public void AnUnnamedElementSaysSo()
         {
