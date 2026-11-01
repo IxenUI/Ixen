@@ -165,6 +165,12 @@ namespace Ixen.Core.Rendering
             styles.Background?.Render(element, context);
             _imageRenderer.Render(element, context);
             _pathRenderer.Render(element, context);
+
+            if (element is DrawingElement drawing)
+            {
+                drawing.RenderDrawing(context);
+            }
+
             ShadowRenderer.RenderInset(element, context);
             styles.Border?.Render(element, context);
             _textRenderer.Render(element, context);

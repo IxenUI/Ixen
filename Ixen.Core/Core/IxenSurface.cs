@@ -258,6 +258,11 @@ namespace Ixen.Core
             Root.ClearLayoutDirty();
 
             RefreshInput();
+
+            if (_framed.Count > 0)
+            {
+                SyncAnimationTicker();
+            }
         }
 
         private readonly List<RevealRequest> _reveals = new List<RevealRequest>();
@@ -817,6 +822,7 @@ namespace Ixen.Core
 
                 if (!value)
                 {
+                    SyncAnimationTicker();
                     return;
                 }
 
@@ -914,9 +920,80 @@ namespace Ixen.Core
             SyncAnimationTicker();
         }
 
+        private readonly List<DrawingElement> _framed = new List<DrawingElement>();
+        private readonly List<DrawingElement> _framing = new List<DrawingElement>();
+
+        internal int FramedCount => _framed.Count;
+
+        internal void StartFrames(DrawingElement element)
+        {
+            if (!_framed.Contains(element))
+            {
+                _framed.Add(element);
+            }
+
+            SyncAnimationTicker();
+        }
+
+        internal void StopFrames(DrawingElement element)
+        {
+            if (_framed.Remove(element))
+            {
+                SyncAnimationTicker();
+            }
+        }
+
+        private bool AnyFramedCanBeSeen()
+        {
+            for (int index = 0; index < _framed.Count; index++)
+            {
+                if (_framed[index].Host == this && _framed[index].CanBeSeen())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void TickFrames()
+        {
+            if (_reducedMotion)
+            {
+                return;
+            }
+
+            _framing.Clear();
+            _framing.AddRange(_framed);
+
+            for (int index = 0; index < _framing.Count; index++)
+            {
+                DrawingElement element = _framing[index];
+
+                if (element.Host != this)
+                {
+                    _framed.Remove(element);
+                    continue;
+                }
+
+                if (!element.CanBeSeen())
+                {
+                    continue;
+                }
+
+                element.RaiseFrame();
+
+                _visualDirty = true;
+
+                AddDamage(element);
+            }
+        }
+
         private void SyncAnimationTicker()
         {
-            if (_scheduler == null || _animating.Count == 0 || !_presentable)
+            bool framing = !_reducedMotion && AnyFramedCanBeSeen();
+
+            if (_scheduler == null || (_animating.Count == 0 && !framing) || !_presentable)
             {
                 StopAnimationTicker();
                 return;
@@ -969,6 +1046,7 @@ namespace Ixen.Core
                 AddDamage(element);
             }
 
+            TickFrames();
             SyncAnimationTicker();
         }
 
@@ -1032,8 +1110,17 @@ namespace Ixen.Core
             get => _scheduler;
             set
             {
+                if (_scheduler == value)
+                {
+                    return;
+                }
+
+                StopAnimationTicker();
+
                 _scheduler = value;
                 _pointerDispatcher.Scheduler = value;
+
+                SyncAnimationTicker();
             }
         }
 

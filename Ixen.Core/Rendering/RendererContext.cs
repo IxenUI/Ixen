@@ -27,6 +27,8 @@ namespace Ixen.Core.Rendering
 
         internal SKCanvas SKCanvas { get; private set; }
 
+        internal DrawingContext Drawing { get; } = new DrawingContext();
+
         private readonly SKPaint _imagePaint = new SKPaint { IsAntialias = true };
 
         private readonly SKPaint _bandPaint = new SKPaint { IsStroke = false, IsAntialias = false };
