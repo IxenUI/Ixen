@@ -65,6 +65,39 @@ namespace Ixen.Controls
 
         public int Overscan { get; set; } = 1;
 
+        private float _rowWidth;
+
+        public float RowWidth
+        {
+            get => _rowWidth;
+            set
+            {
+                float width = value > 0 ? value : 0;
+
+                if (width == _rowWidth)
+                {
+                    return;
+                }
+
+                _rowWidth = width;
+                _spacer.Styles.Width.Value = width;
+                _spacer.Invalidate();
+
+                foreach (VisualElement row in _rows)
+                {
+                    FitWidth(row);
+                }
+
+                InvalidateLayout();
+            }
+        }
+
+        private void FitWidth(VisualElement row)
+        {
+            row.Styles.MinWidth = new MinWidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = _rowWidth };
+            row.Invalidate();
+        }
+
         public int Count => _count == null ? 0 : _count();
 
         public int RealisedCount => _realised;
@@ -223,6 +256,11 @@ namespace Ixen.Controls
                 row.Styles.Right = new RightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
                 row.Styles.Top = new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
                 row.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = _itemHeight };
+
+                if (_rowWidth > 0)
+                {
+                    FitWidth(row);
+                }
 
                 _owners.Add(owner);
                 _rows.Add(row);

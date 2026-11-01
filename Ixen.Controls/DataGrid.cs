@@ -106,8 +106,84 @@ namespace Ixen.Controls
             BuildHeader();
 
             _body.SetItems(_view, CreateRow, BindRow);
+            FitWidth();
 
             Rebuild();
+        }
+
+        public float ColumnsWidth
+        {
+            get
+            {
+                float width = 0;
+
+                foreach (DataColumn column in _columns)
+                {
+                    width += column.Width > 0 ? column.Width : column.MinWidth;
+                }
+
+                return width;
+            }
+        }
+
+        private float _headerShift = float.NaN;
+
+        private void FitWidth()
+        {
+            _body.RowWidth = ColumnsWidth;
+        }
+
+        protected override void OnPrepass(float viewportWidth, float viewportHeight)
+        {
+            base.OnPrepass(viewportWidth, viewportHeight);
+
+            float gutter = _header.ActualWidth - _header.ContentWidth;
+            float headerWidth = ColumnsWidth + (gutter > 0 ? gutter : 0);
+
+            if (_header.Styles.MinWidth == null || _header.Styles.MinWidth.Value != headerWidth)
+            {
+                _header.Styles.MinWidth = new MinWidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = headerWidth };
+                _header.Invalidate();
+            }
+
+            float shift = -_body.ScrollX;
+
+            if (shift == _headerShift)
+            {
+                return;
+            }
+
+            _headerShift = shift;
+            _header.Styles.Transform = shift == 0
+                ? new TransformStyleDescriptor()
+                : new TransformStyleDescriptor
+                {
+                    Operations = new List<TransformOperation>
+                    {
+                        new TransformOperation { Kind = TransformKind.Translate, X = shift, Y = 0 }
+                    }
+                };
+            _header.Invalidate();
+        }
+
+        private const float SCROLL_STEP = 40;
+
+        public void ScrollColumns(float delta)
+        {
+            float most = ColumnsWidth - _body.ContentWidth;
+            float next = _body.ScrollX + delta;
+
+            if (next > most)
+            {
+                next = most;
+            }
+
+            if (next < 0)
+            {
+                next = 0;
+            }
+
+            _body.ScrollX = next;
         }
 
         public void SortBy(int column)
@@ -963,6 +1039,7 @@ namespace Ixen.Controls
             SizeCell(_headerCells[column], resized);
             _headerCells[column].Invalidate();
 
+            FitWidth();
             _body.Refresh();
         }
 
@@ -1073,6 +1150,16 @@ namespace Ixen.Controls
                     {
                         args.Handled = true;
                         SelectAll();
+                    }
+
+                    break;
+
+                case Key.Left:
+                case Key.Right:
+                    if (args.Modifiers == KeyModifiers.None && ColumnsWidth > _body.ContentWidth)
+                    {
+                        args.Handled = true;
+                        ScrollColumns(args.Key == Key.Right ? SCROLL_STEP : -SCROLL_STEP);
                     }
 
                     break;
