@@ -130,6 +130,46 @@ namespace Ixen.Core.Input
             return true;
         }
 
+        internal static bool Reveal(VisualElement element, bool alignToTop)
+        {
+            float y = element.Y;
+            float height = element.ActualHeight;
+            bool moved = false;
+
+            for (VisualElement target = Scrollable(element.Parent); target != null; target = Scrollable(target.Parent))
+            {
+                float top = target.Y + target.PaddingTop + target.BorderInsideTop;
+                float above = y - top;
+                float below = y + height - (top + target.ContentHeight);
+
+                float wanted = alignToTop ? above : above < 0 ? above : below > 0 ? (below < above ? below : above) : 0;
+                float next = target.ScrollY + wanted;
+
+                if (next > target.MaxScrollY)
+                {
+                    next = target.MaxScrollY;
+                }
+
+                if (next < 0)
+                {
+                    next = 0;
+                }
+
+                float applied = next - target.ScrollY;
+
+                if (applied == 0)
+                {
+                    continue;
+                }
+
+                target.ScrollY = next;
+                y -= applied;
+                moved = true;
+            }
+
+            return moved;
+        }
+
         private static VisualElement Scrollable(VisualElement from)
         {
             for (VisualElement element = from; element != null; element = element.Parent)

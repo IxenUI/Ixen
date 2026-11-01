@@ -245,6 +245,12 @@ namespace Ixen.Core
             LastMeasuredElements = _measureComputer.Measured;
 
             _arrangeComputer.Arrange(Root, 0, 0, logicalWidth, logicalHeight);
+
+            if (RevealPending())
+            {
+                _arrangeComputer.Arrange(Root, 0, 0, logicalWidth, logicalHeight);
+            }
+
             _clippingComputer.Compute(Root, logicalWidth, logicalHeight);
 
             DamageLayout(Root, null);
@@ -252,6 +258,52 @@ namespace Ixen.Core
             Root.ClearLayoutDirty();
 
             RefreshInput();
+        }
+
+        private readonly List<RevealRequest> _reveals = new List<RevealRequest>();
+
+        private struct RevealRequest
+        {
+            internal VisualElement Element;
+            internal VisualElement Scope;
+            internal string Name;
+            internal bool AlignToTop;
+        }
+
+        internal void RequestReveal(VisualElement element, bool alignToTop)
+        {
+            _reveals.Add(new RevealRequest { Element = element, AlignToTop = alignToTop });
+            Root?.InvalidateLayout();
+        }
+
+        internal void RequestReveal(VisualElement scope, string name, bool alignToTop)
+        {
+            _reveals.Add(new RevealRequest { Scope = scope, Name = name, AlignToTop = alignToTop });
+            Root?.InvalidateLayout();
+        }
+
+        private bool RevealPending()
+        {
+            if (_reveals.Count == 0)
+            {
+                return false;
+            }
+
+            bool moved = false;
+
+            foreach (RevealRequest request in _reveals)
+            {
+                VisualElement element = request.Element ?? (request.Scope ?? Root)?.FindByName(request.Name);
+
+                if (element != null && IsInTree(element) && !element.IsHiddenInTree)
+                {
+                    moved |= ScrollNavigator.Reveal(element, request.AlignToTop);
+                }
+            }
+
+            _reveals.Clear();
+
+            return moved;
         }
 
         public StyleTrace ExplainStyles(VisualElement element)

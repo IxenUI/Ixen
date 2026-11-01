@@ -1274,6 +1274,18 @@ namespace Ixen.Core.Visual
             RemoveClass(name);
         }
 
+        public bool ScrollIntoView(bool alignToTop = false)
+        {
+            if (!(Host is IxenSurface surface))
+            {
+                return false;
+            }
+
+            surface.RequestReveal(this, alignToTop);
+
+            return true;
+        }
+
         public VisualElement FindByName(string name)
         {
             if (name == null)

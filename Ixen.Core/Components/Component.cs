@@ -288,6 +288,20 @@ namespace Ixen.Core.Components
             GetVisualElement()?.InvalidateLayout();
         }
 
+        protected bool ScrollTo(string name, bool alignToTop = true)
+        {
+            VisualElement view = GetVisualElement();
+
+            if (string.IsNullOrEmpty(name) || !(view?.Host is IxenSurface surface))
+            {
+                return false;
+            }
+
+            surface.RequestReveal(view, name, alignToTop);
+
+            return true;
+        }
+
         protected void Run(Func<Task> work)
         {
             if (work == null)

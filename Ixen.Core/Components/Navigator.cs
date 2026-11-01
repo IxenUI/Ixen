@@ -12,6 +12,7 @@ namespace Ixen.Core.Components
         private const char PARAMETER_OPEN = '{';
         private const char PARAMETER_CLOSE = '}';
         private const char QUERY = '?';
+        private const char FRAGMENT = '#';
         private const char PAIR = '&';
         private const char ASSIGN = '=';
 
@@ -41,6 +42,8 @@ namespace Ixen.Core.Components
         public string Path => PathOf(Location);
 
         public string QueryString => QueryOf(Location);
+
+        public string Fragment => FragmentOf(Location);
 
         public string Previous => CanGoBack ? _stack[_stack.Count - 2] : null;
 
@@ -197,6 +200,15 @@ namespace Ixen.Core.Components
                 return ROOT;
             }
 
+            string fragment = null;
+            int hash = trimmed.IndexOf(FRAGMENT);
+
+            if (hash >= 0)
+            {
+                fragment = trimmed.Substring(hash + 1);
+                trimmed = trimmed.Substring(0, hash);
+            }
+
             string query = null;
             int mark = trimmed.IndexOf(QUERY);
 
@@ -216,21 +228,39 @@ namespace Ixen.Core.Components
                 trimmed = trimmed.Substring(0, trimmed.Length - 1);
             }
 
-            return string.IsNullOrEmpty(query) ? trimmed : trimmed + QUERY + query;
+            string located = string.IsNullOrEmpty(query) ? trimmed : trimmed + QUERY + query;
+
+            return string.IsNullOrEmpty(fragment) ? located : located + FRAGMENT + fragment;
+        }
+
+        private static string WithoutFragment(string location)
+        {
+            int hash = location.IndexOf(FRAGMENT);
+
+            return hash < 0 ? location : location.Substring(0, hash);
         }
 
         private static string PathOf(string location)
         {
-            int mark = location.IndexOf(QUERY);
+            string located = WithoutFragment(location);
+            int mark = located.IndexOf(QUERY);
 
-            return mark < 0 ? location : location.Substring(0, mark);
+            return mark < 0 ? located : located.Substring(0, mark);
         }
 
         private static string QueryOf(string location)
         {
-            int mark = location.IndexOf(QUERY);
+            string located = WithoutFragment(location);
+            int mark = located.IndexOf(QUERY);
 
-            return mark < 0 ? null : location.Substring(mark + 1);
+            return mark < 0 ? null : located.Substring(mark + 1);
+        }
+
+        private static string FragmentOf(string location)
+        {
+            int hash = location.IndexOf(FRAGMENT);
+
+            return hash < 0 ? null : Uri.UnescapeDataString(location.Substring(hash + 1));
         }
 
         private Dictionary<string, string> Parameters()
