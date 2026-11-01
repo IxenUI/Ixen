@@ -124,7 +124,35 @@ namespace Ixen.View.Android
                 case Keycode.Back:
                     return Key.Back;
 
+                case Keycode.MediaPlayPause:
+                case Keycode.Headsethook:
+                    return Key.MediaPlayPause;
+
+                case Keycode.MediaPlay: return Key.MediaPlay;
+                case Keycode.MediaPause: return Key.MediaPause;
+                case Keycode.MediaStop: return Key.MediaStop;
+                case Keycode.MediaNext: return Key.MediaNext;
+                case Keycode.MediaPrevious: return Key.MediaPrevious;
+
                 default: return Key.None;
+            }
+        }
+
+        internal static bool IsMediaKey(Keycode code)
+        {
+            switch (code)
+            {
+                case Keycode.MediaPlayPause:
+                case Keycode.Headsethook:
+                case Keycode.MediaPlay:
+                case Keycode.MediaPause:
+                case Keycode.MediaStop:
+                case Keycode.MediaNext:
+                case Keycode.MediaPrevious:
+                    return true;
+
+                default:
+                    return false;
             }
         }
 

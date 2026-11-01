@@ -102,6 +102,25 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void AMediaKeyIsAShortcutLikeAnyOther()
+        {
+            Save("MediaPlayPause");
+
+            Assert.IsTrue(_surface.KeyDown(Key.MediaPlayPause, KeyModifiers.None),
+                "a host hands an unhandled media key back to the system, so handled has to be honest");
+            Assert.AreEqual(1, _hits);
+        }
+
+        [TestMethod]
+        public void AMediaKeyNobodyClaimsIsNotHandled()
+        {
+            Save();
+
+            Assert.IsFalse(_surface.KeyDown(Key.MediaNext, KeyModifiers.None),
+                "so another player in the background still gets it");
+        }
+
+        [TestMethod]
         public void AHandlerThatConsumesTheKeyKeepsIt()
         {
             VisualElement field = Box("field");

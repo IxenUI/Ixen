@@ -107,7 +107,7 @@ namespace Ixen.Core.UT.Native
             var found = new Dictionary<string, int>();
 
             foreach (Match match in Regex.Matches(Read(NATIVE) + Read(ATSPI),
-                @"#define\s+(IXEN_[A-Z_]+)\s+(\d+)"))
+                @"#define\s+(IXEN_[A-Z_]+)\s+(\S+)"))
             {
                 found[match.Groups[1].Value] = int.Parse(match.Groups[2].Value);
             }

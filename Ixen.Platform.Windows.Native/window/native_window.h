@@ -21,7 +21,7 @@ namespace IxenWindowsNative
         HWND _handle = nullptr;
         void (*_paintCallBack)(int, int) = nullptr;
         void (*_pointerCallBack)(int, int, int, int) = nullptr;
-        void (*_keyCallBack)(int, int, int, int) = nullptr;
+        int (*_keyCallBack)(int, int, int, int) = nullptr;
         void (*_imeCallBack)(int, const wchar_t*, int) = nullptr;
         void (*_wheelCallBack)(int, int, int, int, int) = nullptr;
         __int64 (*_accessibilityCallBack)(__int64, __int64) = nullptr;
@@ -50,7 +50,8 @@ namespace IxenWindowsNative
         LRESULT HandlePower(WPARAM wParam);
         void NotifySystemChange(int kind);
         void ClampToWorkArea();
-        LRESULT HandleKey(int kind, WPARAM wParam, LPARAM lParam);
+        bool HandleKey(int kind, WPARAM wParam, LPARAM lParam);
+        bool HandleAppCommand(LPARAM lParam);
         LRESULT HandleComposition(LPARAM lParam);
         LRESULT HandleEndComposition();
         LRESULT HandleWheel(WPARAM wParam, LPARAM lParam, bool horizontal);
@@ -82,7 +83,7 @@ namespace IxenWindowsNative
         void SetPixelsBuffer(void* buffer) { _pixelsBuffer = buffer; }
         void SetOnPaintCallBack(void __stdcall callback(int, int)) { _paintCallBack = callback; }
         void SetOnPointerCallBack(void __stdcall callback(int, int, int, int)) { _pointerCallBack = callback; }
-        void SetOnKeyCallBack(void __stdcall callback(int, int, int, int)) { _keyCallBack = callback; }
+        void SetOnKeyCallBack(int __stdcall callback(int, int, int, int)) { _keyCallBack = callback; }
         void SetOnImeCallBack(void __stdcall callback(int, const wchar_t*, int)) { _imeCallBack = callback; }
         void SetOnWheelCallBack(void __stdcall callback(int, int, int, int, int)) { _wheelCallBack = callback; }
         void SetOnAccessibilityCallBack(__int64 __stdcall callback(__int64, __int64)) { _accessibilityCallBack = callback; }

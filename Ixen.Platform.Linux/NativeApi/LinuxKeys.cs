@@ -57,6 +57,11 @@ namespace Ixen.Platform.Linux.NativeApi
         internal const int XK_SUPER_R = 0xFFEC;
         internal const int XK_ISO_LEFT_TAB = 0xFE20;
         internal const int XK_DELETE = 0xFFFF;
+        internal const int XF86_AUDIO_PLAY = 0x1008FF14;
+        internal const int XF86_AUDIO_STOP = 0x1008FF15;
+        internal const int XF86_AUDIO_PREV = 0x1008FF16;
+        internal const int XF86_AUDIO_NEXT = 0x1008FF17;
+        internal const int XF86_AUDIO_PAUSE = 0x1008FF31;
 
         internal static KeyModifiers ToModifiers(int modifiers)
         {
@@ -153,6 +158,12 @@ namespace Ixen.Platform.Linux.NativeApi
                 case XK_META_R: return Key.Meta;
                 case XK_SUPER_L: return Key.Meta;
                 case XK_SUPER_R: return Key.Meta;
+
+                case XF86_AUDIO_PLAY: return Key.MediaPlayPause;
+                case XF86_AUDIO_PAUSE: return Key.MediaPause;
+                case XF86_AUDIO_STOP: return Key.MediaStop;
+                case XF86_AUDIO_NEXT: return Key.MediaNext;
+                case XF86_AUDIO_PREV: return Key.MediaPrevious;
 
                 default: return Key.None;
             }

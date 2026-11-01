@@ -45,6 +45,8 @@ namespace Ixen.Core.UT.Native
             { "IXEN_MOD_ALT", "MOD_ALT" },
             { "IXEN_MOD_META", "MOD_META" },
 
+            { "IXEN_VK_MEDIA_PAUSE", "VK_MEDIA_PAUSE" },
+
             { "IXEN_CURSOR_DEFAULT", "Default" },
             { "IXEN_CURSOR_HAND", "Hand" },
             { "IXEN_CURSOR_TEXT", "Text" },
@@ -81,6 +83,7 @@ namespace Ixen.Core.UT.Native
             = new Dictionary<string, string>
         {
             { "void", "void" },
+            { "int", "int" },
             { "__int64", "IntPtr" }
         };
 
@@ -213,7 +216,7 @@ namespace Ixen.Core.UT.Native
         {
             var found = new Dictionary<string, int>();
 
-            foreach (Match match in Regex.Matches(Read(NATIVE), @"#define\s+(IXEN_[A-Z_]+)\s+(\d+)"))
+            foreach (Match match in Regex.Matches(Read(NATIVE), @"#define\s+(IXEN_[A-Z_]+)\s+(\S+)"))
             {
                 found[match.Groups[1].Value] = int.Parse(match.Groups[2].Value);
             }
@@ -247,7 +250,7 @@ namespace Ixen.Core.UT.Native
             ReadEnum(keys, "NativeKeyKind", found);
             ReadEnum(keys, "NativeImeKind", found);
 
-            foreach (Match match in Regex.Matches(keys, @"const int (MOD_[A-Z]+)\s*=\s*(\d+)"))
+            foreach (Match match in Regex.Matches(keys, @"const int ((?:MOD|VK)_[A-Z_]+)\s*=\s*(\d+)"))
             {
                 found[match.Groups[1].Value] = int.Parse(match.Groups[2].Value);
             }

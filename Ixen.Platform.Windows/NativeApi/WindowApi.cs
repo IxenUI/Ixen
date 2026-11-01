@@ -9,7 +9,7 @@ namespace Ixen.Platform.Windows.NativeApi
 
         public delegate void OnPaintCallBack(int width, int height);
         public delegate void OnPointerCallBack(int kind, int x, int y, int button);
-        public delegate void OnKeyCallBack(int kind, int keyCode, int modifiers, int repeat);
+        public delegate int OnKeyCallBack(int kind, int keyCode, int modifiers, int repeat);
         public delegate void OnImeCallBack(int kind,
             [MarshalAs(UnmanagedType.LPWStr)] string text, int caret);
         public delegate void OnWheelCallBack(int x, int y, int deltaX, int deltaY, int modifiers);

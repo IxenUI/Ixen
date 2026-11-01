@@ -47,6 +47,8 @@ namespace Ixen.Platform.Windows.NativeApi
         private const int MOD_ALT = 4;
         private const int MOD_META = 8;
 
+        internal const int VK_MEDIA_PAUSE = 256;
+
         internal static KeyModifiers ToModifiers(int modifiers)
         {
             KeyModifiers result = KeyModifiers.None;
@@ -115,6 +117,13 @@ namespace Ixen.Platform.Windows.NativeApi
                 case 0x12: return Key.Alt;
                 case 0x5B: return Key.Meta;
                 case 0x5C: return Key.Meta;
+
+                case 0xB3: return Key.MediaPlayPause;
+                case 0xFA: return Key.MediaPlay;
+                case VK_MEDIA_PAUSE: return Key.MediaPause;
+                case 0xB2: return Key.MediaStop;
+                case 0xB0: return Key.MediaNext;
+                case 0xB1: return Key.MediaPrevious;
 
                 default: return Key.None;
             }

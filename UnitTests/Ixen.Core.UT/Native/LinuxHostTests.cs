@@ -53,6 +53,18 @@ namespace Ixen.Core.UT.Native
         }
 
         [TestMethod]
+        public void TheMediaKeysAreXF86sAudioKeysAndTheVolumeIsLeftToTheDesktop()
+        {
+            Assert.AreEqual(Key.MediaPlayPause, LinuxKeys.ToKey(0x1008FF14),
+                "XF86AudioPlay is the play/pause key on keyboards that have one key for both");
+            Assert.AreEqual(Key.MediaPause, LinuxKeys.ToKey(0x1008FF31));
+            Assert.AreEqual(Key.MediaStop, LinuxKeys.ToKey(0x1008FF15));
+            Assert.AreEqual(Key.MediaPrevious, LinuxKeys.ToKey(0x1008FF16));
+            Assert.AreEqual(Key.MediaNext, LinuxKeys.ToKey(0x1008FF17));
+            Assert.AreEqual(Key.None, LinuxKeys.ToKey(0x1008FF13), "XF86AudioRaiseVolume belongs to the desktop");
+        }
+
+        [TestMethod]
         public void TheNamedKeysAreWhatX11CallsThem()
         {
             Assert.AreEqual(Key.Space, LinuxKeys.ToKey(0x0020));

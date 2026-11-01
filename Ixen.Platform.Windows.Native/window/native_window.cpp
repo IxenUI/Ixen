@@ -23,6 +23,8 @@
 #define IXEN_KEY_UP 1
 #define IXEN_KEY_CHAR 2
 
+#define IXEN_VK_MEDIA_PAUSE 256
+
 #define IXEN_MOD_SHIFT 1
 #define IXEN_MOD_CONTROL 2
 #define IXEN_MOD_ALT 4
@@ -693,16 +695,51 @@ LRESULT NativeWindow::HandleEndComposition()
     return 0;
 }
 
-LRESULT NativeWindow::HandleKey(int kind, WPARAM wParam, LPARAM lParam)
+bool NativeWindow::HandleKey(int kind, WPARAM wParam, LPARAM lParam)
 {
-    if (_keyCallBack != nullptr)
+    if (_keyCallBack == nullptr)
     {
-        int repeat = (lParam & (1 << 30)) != 0 ? 1 : 0;
-
-        _keyCallBack(kind, (int)wParam, GetModifiers(), repeat);
+        return false;
     }
 
-    return 0;
+    int repeat = (lParam & (1 << 30)) != 0 ? 1 : 0;
+
+    return _keyCallBack(kind, (int)wParam, GetModifiers(), repeat) != 0;
+}
+
+static bool IsSystemKey(WPARAM key)
+{
+    return key >= VK_BROWSER_BACK && key <= VK_LAUNCH_APP2;
+}
+
+static int KeyOfAppCommand(int command)
+{
+    switch (command)
+    {
+    case APPCOMMAND_MEDIA_PLAY_PAUSE: return VK_MEDIA_PLAY_PAUSE;
+    case APPCOMMAND_MEDIA_PLAY: return VK_PLAY;
+    case APPCOMMAND_MEDIA_PAUSE: return IXEN_VK_MEDIA_PAUSE;
+    case APPCOMMAND_MEDIA_STOP: return VK_MEDIA_STOP;
+    case APPCOMMAND_MEDIA_NEXTTRACK: return VK_MEDIA_NEXT_TRACK;
+    case APPCOMMAND_MEDIA_PREVIOUSTRACK: return VK_MEDIA_PREV_TRACK;
+    default: return 0;
+    }
+}
+
+bool NativeWindow::HandleAppCommand(LPARAM lParam)
+{
+    int key = KeyOfAppCommand(GET_APPCOMMAND_LPARAM(lParam));
+
+    if (key == 0 || _keyCallBack == nullptr)
+    {
+        return false;
+    }
+
+    bool handled = _keyCallBack(IXEN_KEY_DOWN, key, GetModifiers(), 0) != 0;
+
+    _keyCallBack(IXEN_KEY_UP, key, GetModifiers(), 0);
+
+    return handled;
 }
 
 LRESULT NativeWindow::HandleCaptureLost()
@@ -770,11 +807,29 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
         return HandleEndComposition();
 
     case WM_KEYDOWN:
-        return HandleKey(IXEN_KEY_DOWN, wParam, lParam);
+        if (HandleKey(IXEN_KEY_DOWN, wParam, lParam) || !IsSystemKey(wParam))
+        {
+            return 0;
+        }
+
+        break;
     case WM_KEYUP:
-        return HandleKey(IXEN_KEY_UP, wParam, lParam);
+        if (HandleKey(IXEN_KEY_UP, wParam, lParam) || !IsSystemKey(wParam))
+        {
+            return 0;
+        }
+
+        break;
     case WM_CHAR:
-        return HandleKey(IXEN_KEY_CHAR, wParam, lParam);
+        HandleKey(IXEN_KEY_CHAR, wParam, lParam);
+        return 0;
+    case WM_APPCOMMAND:
+        if (HandleAppCommand(lParam))
+        {
+            return TRUE;
+        }
+
+        break;
 
     case WM_SYSKEYDOWN:
         HandleKey(IXEN_KEY_DOWN, wParam, lParam);

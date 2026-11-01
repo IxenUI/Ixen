@@ -4,6 +4,7 @@ using Ixen.Platform.Windows.Accessibility;
 using Ixen.Platform.Windows.NativeApi;
 using SkiaSharp;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -109,21 +110,34 @@ namespace Ixen.Platform.Windows
             }
         }
 
-        private void OnKey(int kind, int keyCode, int modifiers, int repeat)
+        private readonly HashSet<int> _handledDown = new HashSet<int>();
+
+        private int OnKey(int kind, int keyCode, int modifiers, int repeat)
         {
             switch ((NativeKeyKind)kind)
             {
                 case NativeKeyKind.Down:
-                    _host.KeyDown(NativeKeys.ToKey(keyCode), NativeKeys.ToModifiers(modifiers), repeat != 0);
-                    break;
+                    bool handled = _host.KeyDown(NativeKeys.ToKey(keyCode), NativeKeys.ToModifiers(modifiers),
+                        repeat != 0);
+
+                    if (handled)
+                    {
+                        _handledDown.Add(keyCode);
+                    }
+
+                    return handled ? 1 : 0;
 
                 case NativeKeyKind.Up:
                     _host.KeyUp(NativeKeys.ToKey(keyCode), NativeKeys.ToModifiers(modifiers));
-                    break;
+
+                    return _handledDown.Remove(keyCode) ? 1 : 0;
 
                 case NativeKeyKind.Char:
                     OnChar(keyCode);
-                    break;
+                    return 1;
+
+                default:
+                    return 0;
             }
         }
 

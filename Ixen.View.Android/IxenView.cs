@@ -47,6 +47,7 @@ namespace Ixen.View.Android
 
         private bool _softKeyboardShown;
         private bool _backHandled;
+        private bool _mediaHandled;
         private BackGesture _backGesture;
         private PreferenceObserver _preferences;
         private MemoryTrimObserver _trim;
@@ -267,6 +268,11 @@ namespace Ixen.View.Android
                 global::Android.Provider.Settings.Secure.GetUriFor(HIGH_TEXT_CONTRAST));
             _trim = MemoryTrimObserver.Register(Context, _host.ReleaseCaches);
 
+            if (RootView?.FindFocus() == null)
+            {
+                RequestFocus();
+            }
+
             OnPreferences();
         }
 
@@ -336,6 +342,7 @@ namespace Ixen.View.Android
             }
 
             bool isBack = e.KeyCode == Keycode.Back;
+            bool isMedia = AndroidKeys.IsMediaKey(e.KeyCode);
             KeyModifiers modifiers = AndroidKeys.ToModifiers(e.MetaState);
 
             switch (e.Action)
@@ -346,6 +353,13 @@ namespace Ixen.View.Android
                     if (isBack)
                     {
                         _backHandled = handled;
+
+                        return handled || base.DispatchKeyEvent(e);
+                    }
+
+                    if (isMedia)
+                    {
+                        _mediaHandled = handled;
 
                         return handled || base.DispatchKeyEvent(e);
                     }
@@ -362,7 +376,7 @@ namespace Ixen.View.Android
                 case KeyEventActions.Up:
                     _host.KeyUp(AndroidKeys.ToKey(e.KeyCode), modifiers);
 
-                    if (isBack && !_backHandled)
+                    if ((isBack && !_backHandled) || (isMedia && !_mediaHandled))
                     {
                         return base.DispatchKeyEvent(e);
                     }

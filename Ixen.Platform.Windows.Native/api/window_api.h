@@ -14,7 +14,7 @@ IXEN_API_ENTRY void WA_SetWindowTitle(NativeWindow* window, LPCWSTR value);
 IXEN_API_ENTRY void WA_SetWindowPixelsBuffer(NativeWindow* window, void* buffer);
 IXEN_API_ENTRY void WA_RegisterPaintCallBack(NativeWindow* window, void __stdcall callBack(int, int));
 IXEN_API_ENTRY void WA_RegisterPointerCallBack(NativeWindow* window, void __stdcall callBack(int, int, int, int));
-IXEN_API_ENTRY void WA_RegisterKeyCallBack(NativeWindow* window, void __stdcall callBack(int, int, int, int));
+IXEN_API_ENTRY void WA_RegisterKeyCallBack(NativeWindow* window, int __stdcall callBack(int, int, int, int));
 IXEN_API_ENTRY void WA_RegisterImeCallBack(NativeWindow* window, void __stdcall callBack(int, const wchar_t*, int));
 IXEN_API_ENTRY void WA_RegisterWheelCallBack(NativeWindow* window, void __stdcall callBack(int, int, int, int, int));
 IXEN_API_ENTRY void WA_RegisterAccessibilityCallBack(NativeWindow* window, __int64 __stdcall callBack(__int64, __int64));

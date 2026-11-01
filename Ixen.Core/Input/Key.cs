@@ -35,6 +35,13 @@ namespace Ixen.Core.Input
         Alt,
         Meta,
 
-        Back
+        Back,
+
+        MediaPlayPause,
+        MediaPlay,
+        MediaPause,
+        MediaStop,
+        MediaNext,
+        MediaPrevious
     }
 }
