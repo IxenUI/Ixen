@@ -261,7 +261,7 @@ namespace Ixen.Core
                 return null;
             }
 
-            var trace = new StyleTrace(element);
+            var trace = new StyleTrace(element) { Tokens = (Styles ?? StyleRegistry.Default).Tokens };
 
             _styleComputer.Trace = trace;
 

@@ -2,6 +2,7 @@ using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using System.Linq;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Ixen.Core.Visual.Classes
 {
@@ -32,10 +33,17 @@ namespace Ixen.Core.Visual.Classes
                 {
                     properties.Add(style.Identifier);
                 }
+
+                _values[style.Identifier] = style.Text;
             }
 
             Properties = properties;
         }
+
+        private readonly Dictionary<string, string> _values = new();
+
+        public string ValueOf(string property)
+            => property != null && _values.TryGetValue(property, out string value) ? value : null;
 
         private static string Describe(StyleClass styleClass)
         {
@@ -106,6 +114,46 @@ namespace Ixen.Core.Visual.Classes
 
             return null;
         }
+
+        public string ValueOf(string property) => WinnerOf(property)?.ValueOf(property);
+
+        public string ResolvedValueOf(string property)
+        {
+            string value = ValueOf(property);
+
+            if (value == null || Tokens == null || value.IndexOf(StyleTokens.MARKER) < 0)
+            {
+                return value;
+            }
+
+            var resolved = new StringBuilder(value.Length);
+            int index = 0;
+
+            while (index < value.Length)
+            {
+                if (value[index] != StyleTokens.MARKER)
+                {
+                    resolved.Append(value[index]);
+                    index++;
+
+                    continue;
+                }
+
+                int end = index + 1;
+
+                while (end < value.Length && (char.IsLetterOrDigit(value[end]) || value[end] == '_' || value[end] == '-'))
+                {
+                    end++;
+                }
+
+                resolved.Append(Tokens.Resolve(value.Substring(index, end - index)));
+                index = end;
+            }
+
+            return resolved.ToString();
+        }
+
+        internal StyleTokens Tokens { get; set; }
 
         internal void Record(StyleClass styleClass, bool isDefault)
         {

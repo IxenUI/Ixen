@@ -565,13 +565,22 @@ namespace Ixen.Core.Language.Xns
                 xnsStyle.Value = _variables.Substitute(xnsStyle.Value, xnsStyle.ValueIndex, errors);
             }
 
+            string written = xnsStyle.Value?.Trim();
+
             xnsStyle.Value = XnsCalc.Evaluate(xnsStyle.Value, xnsStyle.ValueIndex, errors);
 
             StyleParser parser = definition.CreateParser(xnsStyle.Value);
 
             if (parser.IsValid)
             {
-                return definition.DescriptorOf(parser);
+                StyleDescriptor descriptor = definition.DescriptorOf(parser);
+
+                if (descriptor != null)
+                {
+                    descriptor.Text = written;
+                }
+
+                return descriptor;
             }
 
             errors.Add(new LanguageError(

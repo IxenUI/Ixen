@@ -9,8 +9,28 @@ namespace Ixen.Core.Visual.Styles.Descriptors
 
         internal object Handler;
 
+        public string Text { get; set; }
+
+        public static T WithText<T>(T descriptor, string text)
+            where T : StyleDescriptor
+        {
+            descriptor.Text = text;
+
+            return descriptor;
+        }
+
         internal virtual bool CanGenerateSource { get; } = false;
         internal virtual string ToSource() => string.Empty;
+
+        internal string ToSourceWithText()
+        {
+            string expression = ToSource();
+
+            return string.IsNullOrEmpty(Text)
+                ? expression
+                : "global::Ixen.Core.Visual.Styles.Descriptors.StyleDescriptor.WithText("
+                    + expression + ", " + SourceOf(Text) + ")";
+        }
 
         protected internal static string SourceOf(float value)
             => value.ToString("R", CultureInfo.InvariantCulture) + "f";

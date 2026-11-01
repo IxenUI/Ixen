@@ -295,5 +295,72 @@ namespace Ixen.Core.UT.StyleScoping
             Assert.AreEqual(0, trace.Applied.Count,
                 "the pass walks the tree, so an element that is not in it is never reached");
         }
+
+        [TestMethod]
+        public void TheWinnerSaysWhatItWroteAndNotWhatALoserWrote()
+        {
+            StyleTrace trace = Explain(
+                "#Button { background: #111111  width: 40px }\r\n"
+                + "row { background: #333333 }");
+
+            Assert.AreEqual("#333333", trace.ValueOf("background"));
+            Assert.AreEqual("40px", trace.ValueOf("width"), "a property only the type rule sets is the type rule's");
+            Assert.AreEqual("#111111", trace.Applied[0].ValueOf("background"),
+                "each rule keeps its own text, so a loser can still be read");
+            Assert.IsNull(trace.ValueOf("height"), "nothing set it");
+        }
+
+        [TestMethod]
+        public void AValueReadsAsWrittenWithItsVariablesFilledIn()
+        {
+            StyleTrace trace = Explain(
+                "$gap: 6px\r\n"
+                + "row { padding: $gap 12px  width: calc(50% - 8px) }");
+
+            Assert.AreEqual("6px 12px", trace.ValueOf("padding"),
+                "a variable that is not a colour is gone after the build, so its value is what was applied");
+            Assert.AreEqual("calc(50% - 8px)", trace.ValueOf("width"),
+                "the calc is shown as written, not as the linear form it folds to");
+        }
+
+        [TestMethod]
+        public void AColourTokenShowsItsNameAndWhatItResolvesToNow()
+        {
+            StyleTrace trace = Explain(
+                "$accent: #4C6EF5\r\n"
+                + "row { background: $accent }");
+
+            Assert.AreEqual("$accent", trace.ValueOf("background"), "a colour variable survives as a runtime token");
+            Assert.AreEqual("#4C6EF5", trace.ResolvedValueOf("background"));
+
+            _surface.SetToken("accent", "#E8590C");
+
+            Assert.AreEqual("#E8590C", _surface.ExplainStyles(_row).ResolvedValueOf("background"),
+                "what it resolves to follows the tokens set at run time, as the screen does");
+        }
+
+        [TestMethod]
+        public void AStyleSetFromCodeHasNoText()
+        {
+            var descriptor = new BackgroundStyleDescriptor { Color = "#101010" };
+
+            Assert.IsNull(descriptor.Text);
+            Assert.AreSame(descriptor, StyleDescriptor.WithText(descriptor, "#101010"));
+            Assert.AreEqual("#101010", descriptor.Text);
+        }
+
+        [TestMethod]
+        public void TheGeneratedSheetCarriesTheTextAndAnInlineOneDoesNot()
+        {
+            ClassesSet set = Compile("row { background: #333333 }");
+            StyleDescriptor style = set.Classes.Single().Styles.Single();
+
+            StringAssert.Contains(style.ToSourceWithText(), "WithText(");
+            StringAssert.Contains(style.ToSourceWithText(), "\"#333333\")");
+
+            style.Text = null;
+
+            Assert.AreEqual(style.ToSource(), style.ToSourceWithText());
+        }
     }
 }

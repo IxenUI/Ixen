@@ -99,7 +99,7 @@ namespace Ixen.Generators.Xns
             {
                 if (style.CanGenerateSource)
                 {
-                    sb.AppendLine($"\t\t\t\t{style.ToSource()},");
+                    sb.AppendLine($"\t\t\t\t{style.ToSourceWithText()},");
                 }
             }
 
