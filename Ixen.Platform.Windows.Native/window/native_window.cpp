@@ -25,6 +25,9 @@
 
 #define IXEN_VK_MEDIA_PAUSE 256
 
+#define IXEN_AREA_CLIENT 0
+#define IXEN_AREA_CAPTION 1
+
 #define IXEN_MOD_SHIFT 1
 #define IXEN_MOD_CONTROL 2
 #define IXEN_MOD_ALT 4
@@ -80,16 +83,108 @@ void NativeWindow::ApplyLogicalSize(int logicalWidth, int logicalHeight)
 {
     UINT dpi = GetDpi();
 
+    _logicalWidth = logicalWidth;
+    _logicalHeight = logicalHeight;
+
     RECT rect = { 0, 0,
         MulDiv(logicalWidth, dpi, USER_DEFAULT_SCREEN_DPI),
         MulDiv(logicalHeight, dpi, USER_DEFAULT_SCREEN_DPI) };
 
     AdjustWindowRectExForDpi(&rect, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_WINDOWEDGE, dpi);
 
+    if (_extended)
+    {
+        rect.top = 0;
+    }
+
     SetWindowPos(_handle, nullptr, 0, 0,
         rect.right - rect.left,
         rect.bottom - rect.top,
         SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
+void NativeWindow::SetExtended(bool value)
+{
+    if (_extended == value || _handle == nullptr)
+    {
+        return;
+    }
+
+    _extended = value;
+
+    ApplyLogicalSize(_logicalWidth, _logicalHeight);
+
+    SetWindowPos(_handle, nullptr, 0, 0, 0, 0,
+        SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
+int NativeWindow::FrameThickness()
+{
+    UINT dpi = GetDpi();
+
+    return GetSystemMetricsForDpi(SM_CYFRAME, dpi) + GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+}
+
+LRESULT NativeWindow::HandleNcCalcSize(WPARAM wParam, LPARAM lParam)
+{
+    if (!_extended || !wParam)
+    {
+        return DefWindowProc(_handle, WM_NCCALCSIZE, wParam, lParam);
+    }
+
+    NCCALCSIZE_PARAMS* sizes = reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam);
+    LONG top = sizes->rgrc[0].top;
+    LRESULT result = DefWindowProc(_handle, WM_NCCALCSIZE, wParam, lParam);
+
+    sizes->rgrc[0].top = top;
+
+    if (IsZoomed(_handle))
+    {
+        sizes->rgrc[0].top += FrameThickness();
+    }
+
+    return result;
+}
+
+LRESULT NativeWindow::HandleNcHitTest(LPARAM lParam)
+{
+    LRESULT hit = DefWindowProc(_handle, WM_NCHITTEST, 0, lParam);
+
+    if (!_extended || hit != HTCLIENT)
+    {
+        return hit;
+    }
+
+    POINT point = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+
+    ScreenToClient(_handle, &point);
+
+    if (!IsZoomed(_handle) && point.y < FrameThickness())
+    {
+        RECT client = {};
+        int frame = FrameThickness();
+
+        GetClientRect(_handle, &client);
+
+        if (point.x < frame)
+        {
+            return HTTOPLEFT;
+        }
+
+        if (point.x >= client.right - frame)
+        {
+            return HTTOPRIGHT;
+        }
+
+        return HTTOP;
+    }
+
+    if (_hitTestCallBack != nullptr && _hitTestCallBack(point.x, point.y) == IXEN_AREA_CAPTION)
+    {
+        return HTCAPTION;
+    }
+
+    return HTCLIENT;
 }
 
 UINT NativeWindow::GetDpi()
@@ -770,6 +865,10 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
     {
     case WM_ERASEBKGND:
         return 1;
+    case WM_NCCALCSIZE:
+        return HandleNcCalcSize(wParam, lParam);
+    case WM_NCHITTEST:
+        return HandleNcHitTest(lParam);
     case WM_GETOBJECT:
         return HandleGetObject(wParam, lParam);
     case WM_DESTROY:

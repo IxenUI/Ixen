@@ -36,6 +36,9 @@ namespace Ixen.Core.UT.Native
             { "IXEN_IME_COMMIT", "Commit" },
             { "IXEN_IME_CANCEL", "Cancel" },
 
+            { "IXEN_AREA_CLIENT", "Client" },
+            { "IXEN_AREA_CAPTION", "Caption" },
+
             { "IXEN_KEY_DOWN", "Down" },
             { "IXEN_KEY_UP", "Up" },
             { "IXEN_KEY_CHAR", "Char" },
@@ -76,7 +79,8 @@ namespace Ixen.Core.UT.Native
             { "_accessibilityCallBack", "OnAccessibilityCallBack" },
             { "_dropCallBack", "OnDropCallBack" },
             { "_suspendCallBack", "OnSuspendCallBack" },
-            { "_systemCallBack", "OnSystemCallBack" }
+            { "_systemCallBack", "OnSystemCallBack" },
+            { "_hitTestCallBack", "OnHitTestCallBack" }
         };
 
         private static readonly Dictionary<string, string> _returns
@@ -249,6 +253,7 @@ namespace Ixen.Core.UT.Native
             ReadEnum(kinds, "NativeSystemChange", found);
             ReadEnum(keys, "NativeKeyKind", found);
             ReadEnum(keys, "NativeImeKind", found);
+            ReadEnum(keys, "NativeWindowArea", found);
 
             foreach (Match match in Regex.Matches(keys, @"const int ((?:MOD|VK)_[A-Z_]+)\s*=\s*(\d+)"))
             {
@@ -289,6 +294,11 @@ namespace Ixen.Core.UT.Native
             if (define.StartsWith("IXEN_CHANGE_", StringComparison.Ordinal))
             {
                 return "NativeSystemChange." + suffix;
+            }
+
+            if (define.StartsWith("IXEN_AREA_", StringComparison.Ordinal))
+            {
+                return "NativeWindowArea." + suffix;
             }
 
             if (define.StartsWith("IXEN_IME_", StringComparison.Ordinal))

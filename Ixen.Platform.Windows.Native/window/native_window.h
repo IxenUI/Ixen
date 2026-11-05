@@ -28,7 +28,11 @@ namespace IxenWindowsNative
         void (*_dropCallBack)(int, int, const wchar_t*) = nullptr;
         void (*_suspendCallBack)() = nullptr;
         void (*_systemCallBack)(int) = nullptr;
+        int (*_hitTestCallBack)(int, int) = nullptr;
         void* _pixelsBuffer = nullptr;
+        bool _extended = false;
+        int _logicalWidth = 0;
+        int _logicalHeight = 0;
         HCURSOR _cursor = nullptr;
         HDC _deviceContext = nullptr;
         HGLRC _glContext = nullptr;
@@ -61,6 +65,9 @@ namespace IxenWindowsNative
         void DestroyGlContext();
         static int GetModifiers();
         void ApplyLogicalSize(int logicalWidth, int logicalHeight);
+        int FrameThickness();
+        LRESULT HandleNcCalcSize(WPARAM wParam, LPARAM lParam);
+        LRESULT HandleNcHitTest(LPARAM lParam);
 
     public:
         NativeWindow(LPCWSTR title, int width, int height);
@@ -91,6 +98,8 @@ namespace IxenWindowsNative
         void SetOnSuspendCallBack(void __stdcall callback()) { _suspendCallBack = callback; }
         void SetOnSystemCallBack(void __stdcall callback(int)) { _systemCallBack = callback; }
         void SetAcceptsFiles(bool value);
+        void SetOnHitTestCallBack(int __stdcall callback(int, int)) { _hitTestCallBack = callback; }
+        void SetExtended(bool value);
     };
 }
 

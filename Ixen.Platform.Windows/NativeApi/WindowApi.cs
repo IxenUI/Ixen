@@ -18,6 +18,7 @@ namespace Ixen.Platform.Windows.NativeApi
             [MarshalAs(UnmanagedType.LPWStr)] string paths);
         public delegate void OnSuspendCallBack();
         public delegate void OnSystemCallBack(int kind);
+        public delegate int OnHitTestCallBack(int x, int y);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr CreateWindow([MarshalAs(UnmanagedType.LPWStr)] string title, int width, int height);
@@ -82,6 +83,12 @@ namespace Ixen.Platform.Windows.NativeApi
 
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterSystemCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterSystemCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnSystemCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterHitTestCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterHitTestCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnHitTestCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowExtended", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetWindowExtended(IntPtr windowPtr, int value);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateGlContext", CallingConvention = CallingConvention.Cdecl)]
         public static extern int CreateGlContext(IntPtr windowPtr);

@@ -9,6 +9,12 @@ namespace Ixen.Platform.Windows.NativeApi
         Cancel = 2
     }
 
+    internal enum NativeWindowArea
+    {
+        Client = 0,
+        Caption = 1
+    }
+
     internal enum NativeKeyKind
     {
         Down = 0,

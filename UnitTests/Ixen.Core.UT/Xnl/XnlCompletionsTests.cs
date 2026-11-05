@@ -260,7 +260,7 @@ namespace Ixen.Core.UT.Xnl
                     "pointer-pinch", "pointer-pinch-end", "pointer-pinch-start",
                     "pointer-up", "pointer-wheel", "role", "scroll-x", "scroll-y", "scrollable", "selected", "shortcut", "shortcuts-when-hidden", "slot",
                     "tab-index", "text", "text-input",
-                    "transition-ended", "type-name", "wheel"
+                    "transition-ended", "type-name", "wheel", "window-drag"
                 },
                 items,
                 "Classes and Styles have public setters but no XNL value can be converted to them: " + string.Join(", ", items));

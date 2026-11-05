@@ -26,6 +26,13 @@ namespace Ixen.Core.Visual
         public event EventHandler<DragEventArgs> DragLeave;
         public event EventHandler<DragEventArgs> Drop;
 
+        public bool WindowDrag { get; set; }
+
+        internal bool TakesPointer
+            => Focusable || _command != null || LabelFor != null
+                || PointerDown != null || PointerUp != null || PointerClick != null
+                || PointerDoubleClick != null || PointerLongPress != null || PointerDragStart != null;
+
         internal void RaisePointerDown(PointerEventArgs args) => PointerDown?.Invoke(this, args);
         internal void RaisePointerUp(PointerEventArgs args) => PointerUp?.Invoke(this, args);
         internal void RaisePointerMove(PointerEventArgs args) => PointerMove?.Invoke(this, args);

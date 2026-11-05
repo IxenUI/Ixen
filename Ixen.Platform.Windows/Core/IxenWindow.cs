@@ -25,6 +25,8 @@ namespace Ixen.Platform.Windows
         private readonly WindowApi.OnDropCallBack _onDrop;
         private readonly WindowApi.OnSuspendCallBack _onSuspend;
         private readonly WindowApi.OnSystemCallBack _onSystem;
+        private readonly WindowApi.OnHitTestCallBack _onHitTest;
+        private readonly WindowsWindowControl _window;
 
         private readonly UiaBridge _accessibility;
         private readonly NativeCursorImages _cursors = new();
@@ -51,11 +53,22 @@ namespace Ixen.Platform.Windows
             _onDrop = OnDrop;
             _onSuspend = OnSuspend;
             _onSystem = OnSystem;
+            _onHitTest = OnHitTest;
             _windowPtr = WindowApi.CreateWindow(_ixenSurface.InitOptions.Title, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
             {
                 throw new Exception("Could not initialize WIN32 Window");
+            }
+
+            _window = new WindowsWindowControl(() => WindowApi.GetWindowHandle(_windowPtr),
+                _ixenSurface.InitOptions.ExtendIntoTitleBar);
+            _ixenSurface.Window = _window;
+
+            if (_ixenSurface.InitOptions.ExtendIntoTitleBar)
+            {
+                WindowApi.RegisterHitTestCallBack(_windowPtr, _onHitTest);
+                WindowApi.SetWindowExtended(_windowPtr, 1);
             }
 
             SetIcon(_ixenSurface.InitOptions.Icon);
@@ -85,6 +98,9 @@ namespace Ixen.Platform.Windows
 
             return WindowApi.ShowWindow(_windowPtr);
         }
+
+        private int OnHitTest(int x, int y)
+            => (int)(_ixenSurface.IsWindowCaptionAt(x, y) ? NativeWindowArea.Caption : NativeWindowArea.Client);
 
         private const float WHEEL_DELTA = 120f;
 
@@ -331,6 +347,7 @@ namespace Ixen.Platform.Windows
         {
             _ixenSurface.Presentable = CanPresent();
             _ixenSurface.Scale = WindowApi.GetWindowDpi(_windowPtr) / DEFAULT_DPI;
+            _window.Sync();
 
             Render(width, height);
 

@@ -191,6 +191,22 @@ void WA_RegisterSystemCallBack(NativeWindow* window, void __stdcall callBack(int
     }
 }
 
+void WA_RegisterHitTestCallBack(NativeWindow* window, int __stdcall callBack(int, int))
+{
+    if (window)
+    {
+        window->SetOnHitTestCallBack(callBack);
+    }
+}
+
+void WA_SetWindowExtended(NativeWindow* window, int value)
+{
+    if (window)
+    {
+        window->SetExtended(value != 0);
+    }
+}
+
 int WA_CreateGlContext(NativeWindow* window)
 {
     if (!window)

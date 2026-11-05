@@ -9,5 +9,6 @@
         public bool Minimized { get; set; } = false;
         public bool PreferGpu { get; set; } = false;
         public string Icon { get; set; }
+        public bool ExtendIntoTitleBar { get; set; } = false;
     }
 }

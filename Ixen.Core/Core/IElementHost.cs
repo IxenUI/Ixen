@@ -4,6 +4,7 @@ namespace Ixen.Core
     {
         IScheduler Scheduler { get; }
         IClipboard Clipboard { get; }
+        IWindowControl Window { get; }
         Visual.VisualElement PressedElement { get; }
         Visual.VisualElement FocusedElement { get; }
 

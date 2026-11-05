@@ -1105,6 +1105,26 @@ namespace Ixen.Core
             }
         }
 
+        public IWindowControl Window { get; set; }
+
+        internal bool IsWindowCaptionAt(float deviceX, float deviceY)
+        {
+            for (VisualElement element = HitTest(deviceX, deviceY); element != null; element = element.Parent)
+            {
+                if (element.WindowDrag)
+                {
+                    return true;
+                }
+
+                if (element.TakesPointer)
+                {
+                    return false;
+                }
+            }
+
+            return false;
+        }
+
         public IScheduler Scheduler
         {
             get => _scheduler;
