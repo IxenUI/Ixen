@@ -25,7 +25,22 @@ namespace Ixen.Core.Rendering
             internal bool Read;
             internal SvgDocument Vector;
             internal int RasterWidth;
+            internal byte[] Encoded;
+            internal volatile float WantedWidth;
+            internal volatile float WantedHeight;
         }
+
+        private sealed class Arrival
+        {
+            internal byte[] Encoded;
+            internal int Width;
+            internal int Height;
+            internal SvgDocument Vector;
+            internal SKBitmap Bitmap;
+            internal int Divisor;
+        }
+
+        private long _trimmedAt;
 
         private readonly Dictionary<string, Entry> _entries = new Dictionary<string, Entry>();
 
@@ -73,6 +88,15 @@ namespace Ixen.Core.Rendering
             return entry.Bitmap;
         }
 
+        internal void Want(string name, float width, float height)
+        {
+            if (name != null && _pending.Contains(name) && _entries.TryGetValue(name, out Entry entry))
+            {
+                entry.WantedWidth = width;
+                entry.WantedHeight = height;
+            }
+        }
+
         internal bool TryNatural(string name, out int width, out int height)
         {
             Entry entry = Touch(name);
@@ -84,6 +108,9 @@ namespace Ixen.Core.Rendering
         }
 
         private static int DivisorFor(Entry entry, float width, float height)
+            => DivisorFor(entry.NaturalWidth, entry.NaturalHeight, width, height);
+
+        private static int DivisorFor(int naturalWidth, int naturalHeight, float width, float height)
         {
             if (width <= 0 || height <= 0)
             {
@@ -92,8 +119,8 @@ namespace Ixen.Core.Rendering
 
             for (int divisor = MAX_DIVISOR; divisor > 1; divisor /= 2)
             {
-                if (entry.NaturalWidth / divisor >= width
-                    && entry.NaturalHeight / divisor >= height)
+                if (naturalWidth / divisor >= width
+                    && naturalHeight / divisor >= height)
                 {
                     return divisor;
                 }
@@ -102,9 +129,19 @@ namespace Ixen.Core.Rendering
             return 1;
         }
 
+        private static long EncodedBytes(Entry entry) => entry.Encoded == null ? 0 : entry.Encoded.Length;
+
         private void Pixels(string name, Entry entry, float width, float height)
         {
-            if (entry.NaturalWidth <= 0 || _pending.Contains(name))
+            if (_pending.Contains(name))
+            {
+                entry.WantedWidth = width;
+                entry.WantedHeight = height;
+
+                return;
+            }
+
+            if (entry.NaturalWidth <= 0)
             {
                 return;
             }
@@ -123,7 +160,9 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            SKBitmap decoded = Load(name, divisor);
+            SKBitmap decoded = entry.Encoded != null
+                ? DecodeAt(entry.Encoded, divisor)
+                : Load(name, divisor);
 
             if (decoded == null)
             {
@@ -139,7 +178,7 @@ namespace Ixen.Core.Rendering
 
             entry.Bitmap = decoded;
             entry.Divisor = divisor;
-            entry.Bytes = decoded.ByteCount;
+            entry.Bytes = EncodedBytes(entry) + decoded.ByteCount;
 
             _bytes += entry.Bytes;
         }
@@ -265,32 +304,66 @@ namespace Ixen.Core.Rendering
 
         internal void Trim()
         {
-            while (_bytes > Budget)
+            long shown = _trimmedAt;
+
+            _trimmedAt = _clock;
+
+            for (int pass = 0; pass < 2 && _bytes > Budget; pass++)
             {
-                string oldest = null;
-                long stamp = long.MaxValue;
+                bool pixelsOnly = pass == 0;
 
-                foreach (KeyValuePair<string, Entry> candidate in _entries)
+                while (_bytes > Budget)
                 {
-                    if (candidate.Value.Bytes > 0 && candidate.Value.Stamp < stamp)
+                    string oldest = Oldest(shown, pixelsOnly);
+
+                    if (oldest == null)
                     {
-                        stamp = candidate.Value.Stamp;
-                        oldest = candidate.Key;
+                        break;
                     }
-                }
 
-                if (oldest == null)
-                {
-                    return;
+                    Evict(oldest, pixelsOnly);
                 }
-
-                Evict(oldest);
             }
         }
 
-        private void Evict(string name)
+        private string Oldest(long shown, bool pixelsOnly)
+        {
+            string oldest = null;
+            long stamp = long.MaxValue;
+
+            foreach (KeyValuePair<string, Entry> candidate in _entries)
+            {
+                Entry entry = candidate.Value;
+                bool evictable = pixelsOnly ? entry.Encoded != null && entry.Bitmap != null : entry.Bytes > 0;
+
+                if (evictable && entry.Stamp <= shown && entry.Stamp < stamp)
+                {
+                    stamp = entry.Stamp;
+                    oldest = candidate.Key;
+                }
+            }
+
+            return oldest;
+        }
+
+        private void Evict(string name, bool pixelsOnly)
         {
             Entry entry = _entries[name];
+
+            if (pixelsOnly)
+            {
+                _bytes -= entry.Bitmap.ByteCount;
+                entry.Bytes -= entry.Bitmap.ByteCount;
+
+                entry.Tile?.Shader?.Dispose();
+                entry.Tile?.Dispose();
+                entry.Tile = null;
+                entry.Bitmap.Dispose();
+                entry.Bitmap = null;
+                entry.Divisor = 0;
+
+                return;
+            }
 
             _entries.Remove(name);
             _bytes -= entry.Bytes;
@@ -327,13 +400,13 @@ namespace Ixen.Core.Rendering
 
             opening.ContinueWith(finished =>
             {
-                SKBitmap decoded = Decode(finished);
+                Arrival arrival = Read(finished, waiting.WantedWidth, waiting.WantedHeight);
 
-                Poster(() => Settle(name, waiting, decoded));
+                Poster(() => Settle(name, waiting, arrival));
             });
         }
 
-        private static SKBitmap Decode(Task<Stream> finished)
+        private static Arrival Read(Task<Stream> finished, float wantedWidth, float wantedHeight)
         {
             if (finished.Status != TaskStatus.RanToCompletion || finished.Result == null)
             {
@@ -342,27 +415,49 @@ namespace Ixen.Core.Rendering
 
             try
             {
+                byte[] encoded;
+
                 using (Stream stream = finished.Result)
                 using (var buffer = new MemoryStream())
                 {
                     stream.CopyTo(buffer);
-                    buffer.Position = 0;
+                    encoded = buffer.ToArray();
+                }
 
-                    SKBitmap decoded = SKBitmap.Decode(buffer);
-
-                    if (decoded != null)
+                using (var header = new MemoryStream(encoded))
+                using (SKCodec codec = SKCodec.Create(header))
+                {
+                    if (codec != null)
                     {
-                        return decoded;
+                        var arrival = new Arrival
+                        {
+                            Encoded = encoded,
+                            Width = codec.Info.Width,
+                            Height = codec.Info.Height
+                        };
+
+                        if (wantedWidth > 0 && wantedHeight > 0)
+                        {
+                            arrival.Divisor = DivisorFor(arrival.Width, arrival.Height, wantedWidth, wantedHeight);
+                            arrival.Bitmap = DecodeAt(encoded, arrival.Divisor);
+                        }
+
+                        return arrival;
                     }
+                }
 
-                    buffer.Position = 0;
-
-                    SvgDocument document = SvgDocument.Parse(buffer);
+                using (var vector = new MemoryStream(encoded))
+                {
+                    SvgDocument document = SvgDocument.Parse(vector);
 
                     return document == null
                         ? null
-                        : SvgRasteriser.Render(document,
-                            (int)Math.Ceiling(document.Width), (int)Math.Ceiling(document.Height));
+                        : new Arrival
+                        {
+                            Vector = document,
+                            Width = (int)Math.Ceiling(document.Width),
+                            Height = (int)Math.Ceiling(document.Height)
+                        };
                 }
             }
             catch
@@ -371,25 +466,69 @@ namespace Ixen.Core.Rendering
             }
         }
 
-        private void Settle(string name, Entry waiting, SKBitmap bitmap)
+        private void Settle(string name, Entry waiting, Arrival arrival)
         {
             if (!_entries.TryGetValue(name, out Entry current) || current != waiting)
             {
-                bitmap?.Dispose();
+                arrival?.Bitmap?.Dispose();
                 return;
             }
 
-            waiting.Bitmap = bitmap;
-            waiting.Bytes = bitmap == null ? 0 : bitmap.ByteCount;
-            waiting.Divisor = 1;
-            waiting.NaturalWidth = bitmap == null ? 0 : bitmap.Width;
-            waiting.NaturalHeight = bitmap == null ? 0 : bitmap.Height;
-
             _pending.Remove(name);
 
-            _bytes += waiting.Bytes;
+            if (arrival != null)
+            {
+                waiting.Encoded = arrival.Encoded;
+                waiting.Vector = arrival.Vector;
+                waiting.NaturalWidth = arrival.Width;
+                waiting.NaturalHeight = arrival.Height;
+                waiting.Bitmap = arrival.Bitmap;
+                waiting.Divisor = arrival.Bitmap == null ? 0 : arrival.Divisor;
+                waiting.Bytes = (arrival.Encoded == null ? 0 : arrival.Encoded.Length)
+                    + (arrival.Bitmap == null ? 0 : arrival.Bitmap.ByteCount);
+
+                _bytes += waiting.Bytes;
+            }
 
             Arrived?.Invoke();
+        }
+
+        private static SKBitmap DecodeAt(byte[] encoded, int divisor)
+        {
+            using (var stream = new MemoryStream(encoded))
+            {
+                return DecodeAt(stream, divisor);
+            }
+        }
+
+        private static SKBitmap DecodeAt(Stream stream, int divisor)
+        {
+            try
+            {
+                if (divisor <= 1)
+                {
+                    return SKBitmap.Decode(stream);
+                }
+
+                using (SKCodec codec = SKCodec.Create(stream))
+                {
+                    if (codec == null)
+                    {
+                        return null;
+                    }
+
+                    SKSizeI wanted = codec.GetScaledDimensions(1f / divisor);
+                    SKImageInfo info = codec.Info
+                        .WithSize(wanted.Width, wanted.Height)
+                        .WithColorType(SKImageInfo.PlatformColorType);
+
+                    return SKBitmap.Decode(codec, info);
+                }
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         internal void Clear()
@@ -417,30 +556,7 @@ namespace Ixen.Core.Rendering
             {
                 using (Stream stream = source.Open(name))
                 {
-                    if (stream == null)
-                    {
-                        return null;
-                    }
-
-                    if (divisor <= 1)
-                    {
-                        return SKBitmap.Decode(stream);
-                    }
-
-                    using (SKCodec codec = SKCodec.Create(stream))
-                    {
-                        if (codec == null)
-                        {
-                            return null;
-                        }
-
-                        SKSizeI wanted = codec.GetScaledDimensions(1f / divisor);
-                        SKImageInfo info = codec.Info
-                            .WithSize(wanted.Width, wanted.Height)
-                            .WithColorType(SKImageInfo.PlatformColorType);
-
-                        return SKBitmap.Decode(codec, info);
-                    }
+                    return stream == null ? null : DecodeAt(stream, divisor);
                 }
             }
             catch

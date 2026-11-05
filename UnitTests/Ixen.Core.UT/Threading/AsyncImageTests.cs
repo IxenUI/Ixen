@@ -297,9 +297,20 @@ namespace Ixen.Core.UT.Threading
 
             Pump(() => _picture.ActualWidth > 0);
 
-            Assert.AreEqual(60L * 40L * 4L, _surface.ImageBytes,
+            long encoded = _images.Files[SAMPLE].Length;
+
+            Assert.AreEqual(encoded, _surface.ImageBytes,
                 "the arrival has to be added to the total, or the cache budget drifts and Trim "
-                + "stops being able to honour it");
+                + "stops being able to honour it; nothing has drawn it yet, so it holds its file only");
+
+            using (var bitmap = new SKBitmap(VIEWPORT, VIEWPORT))
+            using (var canvas = new SKCanvas(bitmap))
+            {
+                _surface.Render(canvas);
+            }
+
+            Assert.AreEqual(encoded + 60L * 40L * 4L, _surface.ImageBytes,
+                "and its pixels once it is drawn");
         }
 
         [TestMethod]

@@ -164,13 +164,15 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            if (!_images.TryNatural(image.Source, out int naturalWidth, out int naturalHeight))
-            {
-                return;
-            }
-
             float boxWidth = element.ContentWidth;
             float boxHeight = element.ContentHeight;
+
+            if (!_images.TryNatural(image.Source, out int naturalWidth, out int naturalHeight))
+            {
+                _images.Want(image.Source, boxWidth * context.Scale, boxHeight * context.Scale);
+
+                return;
+            }
 
             if (boxWidth <= 0 || boxHeight <= 0)
             {
