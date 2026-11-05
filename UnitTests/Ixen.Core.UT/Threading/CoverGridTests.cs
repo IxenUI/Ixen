@@ -140,17 +140,20 @@ namespace Ixen.Core.UT.Threading
 
         private void Settle()
         {
-            long previous = -1;
-            int still = 0;
+            System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
 
-            for (int frame = 0; frame < 2000 && still < 5; frame++)
+            Frame();
+
+            while (_surface.ImagesPending > 0 && clock.ElapsedMilliseconds < 20000)
             {
+                Thread.Sleep(5);
                 Frame();
-                Thread.Sleep(2);
-
-                still = _surface.ImageBytes == previous ? still + 1 : 0;
-                previous = _surface.ImageBytes;
             }
+
+            Frames(2);
+
+            Assert.AreEqual(0, _surface.ImagesPending,
+                "every cover has to have arrived before anything is measured, or an empty grid passes for a light one");
         }
 
         private void Frames(int count)
@@ -169,6 +172,15 @@ namespace Ixen.Core.UT.Threading
             return _bitmap.GetPixel(x, y).Alpha == 255;
         }
 
+        private string State(int cover)
+        {
+            int x = (cover % COLUMNS) * SHOWN + SHOWN / 2;
+            int y = (cover / COLUMNS) * SHOWN + SHOWN / 2;
+
+            return $"cover {cover} reads {_bitmap.GetPixel(x, y)}, {_surface.ImageBytes} bytes held, "
+                + $"{_store.Asked} downloads asked, {_bitmap.ColorType} bitmap";
+        }
+
         [TestMethod]
         public void ForCoversDrawnSmallItHoldsWhatTheyShowRatherThanWhatTheyWeigh()
         {
@@ -179,7 +191,7 @@ namespace Ixen.Core.UT.Threading
             Assert.IsTrue(_surface.ImageBytes <= _encoded + COVERS * perCover,
                 $"{_surface.ImageBytes} bytes held for {COVERS} covers of {SIDE}px drawn at {SHOWN}: decoded whole "
                     + $"they were {COVERS * SIDE * SIDE * 4L} bytes, so the budget threw out covers still on screen");
-            Assert.IsTrue(Drawn(0) && Drawn(COVERS - 1), "and every one of them is on screen");
+            Assert.IsTrue(Drawn(0) && Drawn(COVERS - 1), "and every one of them is on screen: " + State(0) + "; " + State(COVERS - 1));
         }
 
         [TestMethod]
@@ -204,7 +216,7 @@ namespace Ixen.Core.UT.Threading
             Frames(10);
 
             Assert.AreEqual(COVERS, _store.Asked, "what is on screen is never evicted, even over budget");
-            Assert.IsTrue(Drawn(0) && Drawn(COVERS - 1));
+            Assert.IsTrue(Drawn(0) && Drawn(COVERS - 1), State(0) + "; " + State(COVERS - 1));
         }
 
         [TestMethod]
@@ -240,7 +252,7 @@ namespace Ixen.Core.UT.Threading
             Frames(3);
 
             Assert.AreEqual(COVERS, _store.Asked, "they kept their compressed bytes, so nothing is downloaded again");
-            Assert.IsTrue(Drawn(COVERS - 1), "and they are decoded again from those bytes");
+            Assert.IsTrue(Drawn(COVERS - 1), "and they are decoded again from those bytes: " + State(COVERS - 1));
         }
     }
 }

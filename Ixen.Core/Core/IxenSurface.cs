@@ -1061,6 +1061,8 @@ namespace Ixen.Core
 
         internal long ImageBytes => _images.Bytes;
 
+        internal int ImagesPending => _images.Pending;
+
         internal long TextBlobBytes => _rendererContext.Blobs.Bytes;
 
         internal int TextBlobCount => _rendererContext.Blobs.Count;

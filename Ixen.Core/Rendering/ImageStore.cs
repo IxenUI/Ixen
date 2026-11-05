@@ -57,6 +57,8 @@ namespace Ixen.Core.Rendering
 
         internal long Bytes => _bytes;
 
+        internal int Pending => _pending.Count;
+
         internal IImageSource Source
         {
             get => _source;
