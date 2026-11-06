@@ -1,4 +1,4 @@
-﻿using Ixen.Core.Visual;
+using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Shapes;
 using Ixen.Core.Visual.Styles;
@@ -448,7 +448,51 @@ namespace Ixen.Core.Rendering
         }
 
         internal float MeasureTextWidth(string text, FontSpec fontSpec)
-            => FontCache.Get(fontSpec, text).MeasureText(text) + fontSpec.Advance(text);
+            => FontCache.Width(fontSpec, text, false, _runs) + fontSpec.Advance(text);
+
+        private readonly System.Collections.Generic.List<FontRun> _runs = new System.Collections.Generic.List<FontRun>();
+
+        private SKTextBlob Mixed(string text, FontSpec fontSpec, float spacing)
+        {
+            using (var builder = new SKTextBlobBuilder())
+            {
+                float x = 0;
+
+                foreach (FontRun run in _runs)
+                {
+                    ReadOnlySpan<char> span = text.AsSpan(run.Start, run.Length);
+                    ushort[] glyphs = run.Font.GetGlyphs(span);
+
+                    if (glyphs.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    if (spacing == 0)
+                    {
+                        builder.AddRun(glyphs, run.Font, new SKPoint(x, 0));
+                        x += run.Font.MeasureText(span);
+
+                        continue;
+                    }
+
+                    var widths = new float[glyphs.Length];
+                    var positions = new SKPoint[glyphs.Length];
+
+                    run.Font.GetGlyphWidths(glyphs, widths, Span<SKRect>.Empty);
+
+                    for (int index = 0; index < glyphs.Length; index++)
+                    {
+                        positions[index] = new SKPoint(x, 0);
+                        x += widths[index] + spacing;
+                    }
+
+                    builder.AddPositionedRun(glyphs, run.Font, positions);
+                }
+
+                return builder.Build();
+            }
+        }
 
         private static float LastGap(FontSpec fontSpec) => fontSpec.LetterSpacing;
 
@@ -463,6 +507,27 @@ namespace Ixen.Core.Rendering
             SKFont font, SKPaint paint)
         {
             float spacing = fontSpec.LetterSpacing;
+
+            if (!string.IsNullOrEmpty(text) && _blobs.TryGet(text, font, spacing, out SKTextBlob known))
+            {
+                SKCanvas.DrawText(known, x, baseline, paint);
+                return;
+            }
+
+            if (FontCache.Split(fontSpec, text, Transformed, _runs))
+            {
+                SKTextBlob mixed = Mixed(text, fontSpec, spacing);
+
+                _blobs.Add(text, font, spacing, mixed);
+
+                if (mixed != null)
+                {
+                    SKCanvas.DrawText(mixed, x, baseline, paint);
+                }
+
+                return;
+            }
+
             bool wanted = spacing != 0 || Transformed;
             bool mapped = wanted && !string.IsNullOrEmpty(text) && font.CountGlyphs(text) == text.Length;
 

@@ -1,5 +1,6 @@
 using Ixen.Core.Visual;
 using SkiaSharp;
+using System;
 using System.Collections.Generic;
 
 namespace Ixen.Core.Rendering
@@ -92,6 +93,136 @@ namespace Ixen.Core.Rendering
             }
 
             return Fallback(spec, missing, smooth) ?? font;
+        }
+
+        internal static bool Split(FontSpec spec, string text, bool smooth, List<FontRun> runs)
+        {
+            runs.Clear();
+
+            if (!MayBeUncovered(text))
+            {
+                return false;
+            }
+
+            SKFont primary = Get(spec, smooth);
+
+            if (FirstUncovered(primary, text) < 0)
+            {
+                return false;
+            }
+
+            SKFont current = null;
+            int start = 0;
+
+            for (int index = 0; index < text.Length;)
+            {
+                int length = CodepointAt(text, index, out int codepoint);
+                SKFont font = FontFor(spec, smooth, primary, current, codepoint);
+
+                if (font != current)
+                {
+                    if (current != null)
+                    {
+                        runs.Add(new FontRun(start, index - start, current));
+                    }
+
+                    current = font;
+                    start = index;
+                }
+
+                index += length;
+            }
+
+            runs.Add(new FontRun(start, text.Length - start, current));
+
+            return runs.Count > 1;
+        }
+
+        private static SKFont FontFor(FontSpec spec, bool smooth, SKFont primary, SKFont current, int codepoint)
+        {
+            if (current != null && IsSticky(codepoint))
+            {
+                return current;
+            }
+
+            if (codepoint <= MAX_ASCII || Covers(primary, codepoint))
+            {
+                return current != null && current != primary && IsNeutral(codepoint) && Covers(current, codepoint)
+                    ? current
+                    : primary;
+            }
+
+            if (current != null && current != primary && Covers(current, codepoint))
+            {
+                return current;
+            }
+
+            return Fallback(spec, codepoint, smooth) ?? primary;
+        }
+
+        private static int CodepointAt(string text, int index, out int codepoint)
+        {
+            char c = text[index];
+
+            if (char.IsHighSurrogate(c) && index + 1 < text.Length && char.IsLowSurrogate(text[index + 1]))
+            {
+                codepoint = char.ConvertToUtf32(c, text[index + 1]);
+
+                return 2;
+            }
+
+            codepoint = c;
+
+            return 1;
+        }
+
+        private static bool IsSticky(int codepoint)
+        {
+            if (codepoint == 0x200D || (codepoint >= 0xFE00 && codepoint <= 0xFE0F)
+                || (codepoint >= 0xE0100 && codepoint <= 0xE01EF) || (codepoint >= 0x1F3FB && codepoint <= 0x1F3FF))
+            {
+                return true;
+            }
+
+            if (codepoint > 0xFFFF)
+            {
+                return false;
+            }
+
+            System.Globalization.UnicodeCategory category = char.GetUnicodeCategory((char)codepoint);
+
+            return category == System.Globalization.UnicodeCategory.NonSpacingMark
+                || category == System.Globalization.UnicodeCategory.SpacingCombiningMark
+                || category == System.Globalization.UnicodeCategory.EnclosingMark;
+        }
+
+        private static bool IsNeutral(int codepoint)
+        {
+            if (codepoint > 0xFFFF)
+            {
+                return false;
+            }
+
+            char c = (char)codepoint;
+
+            return char.IsWhiteSpace(c) || char.IsPunctuation(c) || char.IsSymbol(c) || char.IsDigit(c);
+        }
+
+        internal static float Width(FontSpec spec, string text, bool smooth, List<FontRun> runs)
+        {
+            if (!Split(spec, text, smooth, runs))
+            {
+                return Get(spec, text, smooth).MeasureText(text);
+            }
+
+            float width = 0;
+
+            foreach (FontRun run in runs)
+            {
+                width += run.Font.MeasureText(text.AsSpan(run.Start, run.Length));
+            }
+
+            return width;
         }
 
         private static bool MayBeUncovered(string text)

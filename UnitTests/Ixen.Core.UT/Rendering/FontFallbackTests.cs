@@ -176,9 +176,8 @@ namespace Ixen.Core.UT.Rendering
             SKFont resolved = FontCache.Get(Spec, "a" + Text(uncovered) + "b");
 
             Assert.IsTrue(resolved.ContainsGlyph(uncovered),
-                "there is no per-run shaping: a string with one uncovered character is drawn "
-                + "entirely with the face that covers it, which is right for the one-glyph case "
-                + "the controls use and acceptable for mixed text since a CJK face carries latin");
+                "the single font of a mixed string is the one its metrics (baseline, decoration) come "
+                + "from; what is measured and drawn is split into runs, see MixedScriptTests");
         }
 
         [TestMethod]
