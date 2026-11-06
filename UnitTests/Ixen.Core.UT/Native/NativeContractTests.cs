@@ -38,6 +38,7 @@ namespace Ixen.Core.UT.Native
 
             { "IXEN_AREA_CLIENT", "Client" },
             { "IXEN_AREA_CAPTION", "Caption" },
+            { "IXEN_AREA_MAXIMIZE", "Maximize" },
 
             { "IXEN_KEY_DOWN", "Down" },
             { "IXEN_KEY_UP", "Up" },

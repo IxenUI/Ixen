@@ -87,6 +87,36 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void TheMaximizeButtonIsReportedAsSuchSoWindowsOffersItsSnapLayouts()
+        {
+            _button.MaximizeButton = true;
+
+            Assert.AreEqual(WindowArea.Maximize, _surface.WindowAreaAt(370, 20),
+                "a focusable button would otherwise be plain client area");
+            Assert.AreEqual(WindowArea.Caption, _surface.WindowAreaAt(150, 20));
+            Assert.AreEqual(WindowArea.Client, _surface.WindowAreaAt(250, 20));
+        }
+
+        [TestMethod]
+        public void AChildOfTheMaximizeButtonIsPartOfIt()
+        {
+            _clickable.MaximizeButton = true;
+
+            Assert.AreEqual(WindowArea.Maximize, _surface.WindowAreaAt(212, 20),
+                "the glyph inside the button, which the pointer usually rests on");
+        }
+
+        [TestMethod]
+        public void ADisabledMaximizeButtonOffersNoSnapLayouts()
+        {
+            _button.MaximizeButton = true;
+            _button.Enabled = false;
+            _surface.ComputeLayout(400, 300);
+
+            Assert.AreNotEqual(WindowArea.Maximize, _surface.WindowAreaAt(370, 20));
+        }
+
+        [TestMethod]
         public void WithoutADragAreaNothingMovesTheWindow()
         {
             _header.WindowDrag = false;

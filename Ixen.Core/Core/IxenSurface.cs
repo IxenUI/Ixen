@@ -1111,21 +1111,29 @@ namespace Ixen.Core
         public IWindowControl Window { get; set; }
 
         internal bool IsWindowCaptionAt(float deviceX, float deviceY)
+            => WindowAreaAt(deviceX, deviceY) == WindowArea.Caption;
+
+        internal WindowArea WindowAreaAt(float deviceX, float deviceY)
         {
             for (VisualElement element = HitTest(deviceX, deviceY); element != null; element = element.Parent)
             {
+                if (element.MaximizeButton)
+                {
+                    return element.IsEnabled ? WindowArea.Maximize : WindowArea.Client;
+                }
+
                 if (element.WindowDrag)
                 {
-                    return true;
+                    return WindowArea.Caption;
                 }
 
                 if (element.TakesPointer)
                 {
-                    return false;
+                    return WindowArea.Client;
                 }
             }
 
-            return false;
+            return WindowArea.Client;
         }
 
         public IScheduler Scheduler

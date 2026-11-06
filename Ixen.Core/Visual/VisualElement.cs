@@ -28,6 +28,8 @@ namespace Ixen.Core.Visual
 
         public bool WindowDrag { get; set; }
 
+        public bool MaximizeButton { get; set; }
+
         internal bool TakesPointer
             => Focusable || _command != null || LabelFor != null
                 || PointerDown != null || PointerUp != null || PointerClick != null

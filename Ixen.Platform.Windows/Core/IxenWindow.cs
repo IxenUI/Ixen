@@ -100,7 +100,17 @@ namespace Ixen.Platform.Windows
         }
 
         private int OnHitTest(int x, int y)
-            => (int)(_ixenSurface.IsWindowCaptionAt(x, y) ? NativeWindowArea.Caption : NativeWindowArea.Client);
+        {
+            switch (_ixenSurface.WindowAreaAt(x, y))
+            {
+                case WindowArea.Caption:
+                    return (int)NativeWindowArea.Caption;
+                case WindowArea.Maximize:
+                    return (int)NativeWindowArea.Maximize;
+                default:
+                    return (int)NativeWindowArea.Client;
+            }
+        }
 
         private const float WHEEL_DELTA = 120f;
 

@@ -27,6 +27,7 @@
 
 #define IXEN_AREA_CLIENT 0
 #define IXEN_AREA_CAPTION 1
+#define IXEN_AREA_MAXIMIZE 2
 
 #define IXEN_MOD_SHIFT 1
 #define IXEN_MOD_CONTROL 2
@@ -179,12 +180,60 @@ LRESULT NativeWindow::HandleNcHitTest(LPARAM lParam)
         return HTTOP;
     }
 
-    if (_hitTestCallBack != nullptr && _hitTestCallBack(point.x, point.y) == IXEN_AREA_CAPTION)
+    int area = _hitTestCallBack != nullptr ? _hitTestCallBack(point.x, point.y) : IXEN_AREA_CLIENT;
+
+    if (area == IXEN_AREA_CAPTION)
     {
         return HTCAPTION;
     }
 
+    if (area == IXEN_AREA_MAXIMIZE)
+    {
+        return HTMAXBUTTON;
+    }
+
     return HTCLIENT;
+}
+
+bool NativeWindow::HandleNcPointer(int kind, WPARAM wParam, LPARAM lParam)
+{
+    if (!_extended || wParam != HTMAXBUTTON)
+    {
+        return false;
+    }
+
+    POINT point = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+
+    ScreenToClient(_handle, &point);
+
+    if (kind == IXEN_POINTER_MOVE && !_trackingNonClient)
+    {
+        TRACKMOUSEEVENT tme = {};
+        tme.cbSize = sizeof(TRACKMOUSEEVENT);
+        tme.dwFlags = TME_LEAVE | TME_NONCLIENT;
+        tme.hwndTrack = _handle;
+
+        if (TrackMouseEvent(&tme))
+        {
+            _trackingNonClient = true;
+        }
+    }
+
+    HandlePointer(kind, kind == IXEN_POINTER_MOVE ? IXEN_BUTTON_NONE : IXEN_BUTTON_LEFT, MAKELPARAM(point.x, point.y));
+
+    return true;
+}
+
+LRESULT NativeWindow::HandleNcMouseLeave()
+{
+    _trackingNonClient = false;
+
+    if (_pointerCallBack != nullptr && GetCapture() != _handle)
+    {
+        _pointerCallBack(IXEN_POINTER_LEAVE, 0, 0, IXEN_BUTTON_NONE);
+    }
+
+    return 0;
 }
 
 UINT NativeWindow::GetDpi()
@@ -869,6 +918,31 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
         return HandleNcCalcSize(wParam, lParam);
     case WM_NCHITTEST:
         return HandleNcHitTest(lParam);
+    case WM_NCMOUSEMOVE:
+        if (HandleNcPointer(IXEN_POINTER_MOVE, wParam, lParam))
+        {
+            return 0;
+        }
+
+        break;
+    case WM_NCLBUTTONDOWN:
+    case WM_NCLBUTTONDBLCLK:
+        if (HandleNcPointer(IXEN_POINTER_DOWN, wParam, lParam))
+        {
+            return 0;
+        }
+
+        break;
+    case WM_NCLBUTTONUP:
+        if (HandleNcPointer(IXEN_POINTER_UP, wParam, lParam))
+        {
+            return 0;
+        }
+
+        break;
+    case WM_NCMOUSELEAVE:
+        HandleNcMouseLeave();
+        break;
     case WM_GETOBJECT:
         return HandleGetObject(wParam, lParam);
     case WM_DESTROY:

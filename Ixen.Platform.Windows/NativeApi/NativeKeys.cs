@@ -12,7 +12,8 @@ namespace Ixen.Platform.Windows.NativeApi
     internal enum NativeWindowArea
     {
         Client = 0,
-        Caption = 1
+        Caption = 1,
+        Maximize = 2
     }
 
     internal enum NativeKeyKind

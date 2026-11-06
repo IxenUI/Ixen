@@ -38,6 +38,7 @@ namespace IxenWindowsNative
         HGLRC _glContext = nullptr;
 
         bool _trackingMouse = false;
+        bool _trackingNonClient = false;
 
         RECT _clientRect = {};
         BITMAPINFOHEADER _bitmapInfoHeader = {};
@@ -68,6 +69,8 @@ namespace IxenWindowsNative
         int FrameThickness();
         LRESULT HandleNcCalcSize(WPARAM wParam, LPARAM lParam);
         LRESULT HandleNcHitTest(LPARAM lParam);
+        bool HandleNcPointer(int kind, WPARAM wParam, LPARAM lParam);
+        LRESULT HandleNcMouseLeave();
 
     public:
         NativeWindow(LPCWSTR title, int width, int height);
