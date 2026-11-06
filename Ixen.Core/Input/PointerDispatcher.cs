@@ -1,5 +1,6 @@
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Styles;
+using Ixen.Core.Visual.Styles.Descriptors;
 using System;
 using System.Collections.Generic;
 
@@ -97,8 +98,17 @@ namespace Ixen.Core.Input
         private IDisposable _longPress;
         private bool _longPressHandled;
 
+        private VisualElement _root;
+        private VisualElement _ghostRoot;
+        private VisualElement _ghostHolder;
+        private float _ghostOffsetX;
+        private float _ghostOffsetY;
+
         internal ITimeSource TimeSource { get; set; } = SystemTimeSource.Instance;
         internal IScheduler Scheduler { get; set; }
+        internal Func<VisualElement, VisualElement> Snapshot { get; set; }
+
+        internal VisualElement DragGhost => _ghostHolder;
 
         internal VisualElement Hovered => _hovered;
         internal VisualElement Pressed => _pressed;
@@ -740,6 +750,7 @@ namespace Ixen.Core.Input
             }
 
             _panning = null;
+            _root = root;
 
             VisualElement hit = Enabled(HitTester.HitTest(root, x, y));
 
@@ -828,11 +839,81 @@ namespace Ixen.Core.Input
             }
 
             RaiseDrag(x, y, PointerEventKind.Drag);
+            MoveGhost(x, y);
             SyncDropTarget(hit, x, y);
+        }
+
+        private void ShowGhost(DragEventArgs args, float x, float y)
+        {
+            HideGhost();
+
+            VisualElement ghost = args.Ghost;
+
+            if (ghost == null && args.GhostSource != null && Snapshot != null)
+            {
+                ghost = Snapshot(args.GhostSource);
+            }
+
+            if (ghost == null || _root == null || ghost.Parent != null)
+            {
+                return;
+            }
+
+            var holder = new VisualElement
+            {
+                TypeName = DragEventArgs.GHOST,
+                Role = Accessibility.AccessibleRole.Presentation
+            };
+
+            holder.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = x - args.GhostOffsetX };
+            holder.Styles.Top = new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = y - args.GhostOffsetY };
+            holder.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Content };
+            holder.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Content };
+            holder.Styles.PointerEvents = new PointerEventsStyleDescriptor { Value = PointerEvents.None };
+
+            holder.AddChild(ghost);
+
+            _ghostOffsetX = args.GhostOffsetX;
+            _ghostOffsetY = args.GhostOffsetY;
+            _ghostHolder = holder;
+            _ghostRoot = _root;
+
+            _root.AddChrome(holder);
+        }
+
+        private void MoveGhost(float x, float y)
+        {
+            if (_ghostHolder == null)
+            {
+                return;
+            }
+
+            _ghostHolder.Styles.Left.Value = x - _ghostOffsetX;
+            _ghostHolder.Styles.Top.Value = y - _ghostOffsetY;
+            _ghostHolder.InvalidateLayout();
+        }
+
+        private void HideGhost()
+        {
+            if (_ghostHolder == null)
+            {
+                return;
+            }
+
+            VisualElement holder = _ghostHolder;
+
+            _ghostHolder = null;
+
+            _ghostRoot?.RemoveChrome(holder);
+            _ghostRoot = null;
+
+            holder.RemoveChildAt(0);
         }
 
         private void EndDrag(float x, float y)
         {
+            HideGhost();
+
             if (!_dragging)
             {
                 return;
@@ -868,6 +949,8 @@ namespace Ixen.Core.Input
             if (kind == PointerEventKind.DragStart)
             {
                 _dragData = args.Data;
+
+                ShowGhost(args, x, y);
             }
 
             return args.Handled;
@@ -1060,6 +1143,8 @@ namespace Ixen.Core.Input
 
             _panning = target;
             _dragging = false;
+
+            HideGhost();
 
             _captured = null;
             SetState(_pressed, StyleStates.PRESSED, false);

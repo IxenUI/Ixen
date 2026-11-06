@@ -547,6 +547,11 @@ $control_focus_soft:   #EEF1FE
     background: $control_focus
 }
 
+#DragGhost {
+    opacity: 0.85
+    box-shadow: 0px 6px 18px #30000000
+}
+
 #DataGridCell {
     height: 1*
     padding: 0px 10px

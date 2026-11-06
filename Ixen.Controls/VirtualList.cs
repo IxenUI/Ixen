@@ -124,6 +124,8 @@ namespace Ixen.Controls
 
         public Func<int, object> DragOffer { get; set; }
 
+        public Func<IReadOnlyList<int>, VisualElement> DragGhost { get; set; }
+
         internal bool MarksDropGap { get; set; } = true;
 
         internal Func<int, IReadOnlyList<int>> ReorderGroup { get; set; }
@@ -439,6 +441,8 @@ namespace Ixen.Controls
                 {
                     args.Handled = true;
                     args.Data = offered;
+
+                    Ghost(args, row, new[] { index });
                 }
 
                 return;
@@ -460,7 +464,29 @@ namespace Ixen.Controls
             args.Handled = true;
             args.Data = _payload;
 
+            Ghost(args, row, group);
             MarkDragging();
+        }
+
+        private void Ghost(DragEventArgs args, VisualElement row, IReadOnlyList<int> indices)
+        {
+            if (DragGhost == null)
+            {
+                args.GhostOf(row);
+
+                return;
+            }
+
+            VisualElement ghost = DragGhost(indices);
+
+            if (ghost == null)
+            {
+                return;
+            }
+
+            args.Ghost = ghost;
+            args.GhostOffsetX = args.X - args.TotalX - row.ContentX;
+            args.GhostOffsetY = args.Y - args.TotalY - row.ContentY;
         }
 
         private bool IsOwn(object data) => _group != null && data != null && ReferenceEquals(data, _payload);

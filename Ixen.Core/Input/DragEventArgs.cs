@@ -4,6 +4,8 @@ namespace Ixen.Core.Input
 {
     public class DragEventArgs : PointerEventArgs
     {
+        public const string GHOST = "DragGhost";
+
         public float DeltaX { get; private set; }
         public float DeltaY { get; private set; }
         public float TotalX { get; private set; }
@@ -12,6 +14,26 @@ namespace Ixen.Core.Input
         public VisualElement DragSource { get; private set; }
         public object Data { get; set; }
         public bool Accepted { get; set; } = true;
+
+        public VisualElement Ghost { get; set; }
+        public float GhostOffsetX { get; set; }
+        public float GhostOffsetY { get; set; }
+
+        internal VisualElement GhostSource { get; private set; }
+
+        public void GhostOf(VisualElement element)
+        {
+            GhostSource = element;
+            Ghost = null;
+
+            if (element == null)
+            {
+                return;
+            }
+
+            GhostOffsetX = X - TotalX - element.X;
+            GhostOffsetY = Y - TotalY - element.Y;
+        }
 
         internal DragEventArgs(float x, float y, PointerButton button, VisualElement source,
             float deltaX, float deltaY, float totalX, float totalY,

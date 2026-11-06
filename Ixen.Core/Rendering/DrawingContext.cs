@@ -34,6 +34,8 @@ namespace Ixen.Core.Rendering
 
         public Color ColorOf(string colorOrToken) => _renderer.ColorOf(colorOrToken);
 
+        internal SKCanvas Canvas => _canvas;
+
         internal void Begin(RendererContext renderer, DrawingElement element)
         {
             _renderer = renderer;

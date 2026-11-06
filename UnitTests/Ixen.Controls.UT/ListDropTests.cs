@@ -325,6 +325,69 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
+        public void ARowCarriedElsewhereShowsAPictureOfItself()
+        {
+            Press(_store, 3);
+            MoveTo(_store, Row(_store, 3) + 6);
+            MoveTo(_playlist, Gap(_playlist, 2));
+
+            VisualElement ghost = _surface.DragGhost;
+
+            Assert.IsNotNull(ghost, "by default the row itself is what follows the pointer");
+            Assert.AreEqual(DragEventArgs.GHOST, ghost.TypeName);
+            float rowWidth = _store.RealisedRows.First().ActualWidth;
+
+            Assert.AreEqual(rowWidth, ghost.ActualWidth, 0.5f, "the picture is the row's size, gutter excluded");
+            Assert.AreEqual(ITEM, ghost.ActualHeight, 0.5f);
+
+            Release(_playlist, Gap(_playlist, 2));
+
+            Assert.IsNull(_surface.DragGhost);
+        }
+
+        [TestMethod]
+        public void AReorderingRowShowsItsGhostToo()
+        {
+            _playlist.Reorderable = true;
+
+            Press(_playlist, 0);
+            MoveTo(_playlist, Row(_playlist, 0) + 6);
+
+            Assert.IsNotNull(_surface.DragGhost);
+
+            Release(_playlist, Row(_playlist, 0) + 6);
+        }
+
+        [TestMethod]
+        public void TheApplicationCanDrawTheGhostOrHaveNone()
+        {
+            IReadOnlyList<int> asked = null;
+            var badge = new VisualElement { Name = "badge", Text = "1 song" };
+            _store.DragGhost = indices =>
+            {
+                asked = indices;
+                return badge;
+            };
+
+            Press(_store, 3);
+            MoveTo(_store, Row(_store, 3) + 6);
+
+            Assert.AreEqual("3", string.Join(",", asked));
+            Assert.AreSame(_surface.DragGhost, badge.Parent);
+
+            Release(_store, Row(_store, 3) + 6);
+
+            _store.DragGhost = indices => null;
+
+            Press(_store, 3);
+            MoveTo(_store, Row(_store, 3) + 6);
+
+            Assert.IsNull(_surface.DragGhost);
+
+            Release(_store, Row(_store, 3) + 6);
+        }
+
+        [TestMethod]
         public void AReorderableListWithAnOfferReordersWithinItself()
         {
             var moves = 0;

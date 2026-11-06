@@ -174,6 +174,7 @@ namespace Ixen.Core
 
             _images.Poster = Post;
             _images.Arrived = () => Root?.InvalidateLayoutTree();
+            _pointerDispatcher.Snapshot = SnapshotOf;
 
             InitOptions = initOptions ?? new();
             Root = root ?? new();
@@ -1624,6 +1625,39 @@ namespace Ixen.Core
             _damage.Reset();
 
             _rendererContext.EndFrame();
+        }
+
+        internal VisualElement DragGhost => _pointerDispatcher.DragGhost;
+
+        internal VisualElement SnapshotOf(VisualElement element)
+        {
+            if (element == null || element.StylesHandlers == null || !IsInTree(element)
+                || element.ActualWidth <= 0 || element.ActualHeight <= 0)
+            {
+                return null;
+            }
+
+            float width = element.ActualWidth;
+            float height = element.ActualHeight;
+
+            using (var recorder = new SKPictureRecorder())
+            {
+                SKCanvas canvas = recorder.BeginRecording(new SKRect(0, 0, width * _scale, height * _scale));
+
+                _rendererContext.BeginFrame(canvas, _scale, Styles?.Tokens, _fontScale);
+
+                try
+                {
+                    canvas.Translate(-element.X, -element.Y);
+                    _renderer.Render(element, _rendererContext, _viewPort);
+                }
+                finally
+                {
+                    _rendererContext.EndFrame();
+                }
+
+                return new DragSnapshot(recorder.EndRecording(), _scale, width, height);
+            }
         }
 
         internal SKBitmap RenderToBitmap()
