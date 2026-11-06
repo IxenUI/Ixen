@@ -233,15 +233,22 @@ namespace Ixen.Core
 
             for (int pass = 0; pass < CONTAINER_PASSES; pass++)
             {
+                _sized.Clear();
+
                 RenderComponents(Root, string.Empty, logicalWidth, logicalHeight);
                 _styleComputer.Compute(Root, styles, logicalWidth, logicalHeight);
                 _measureComputer.Measure(Root, logicalWidth, logicalHeight, true, true);
 
-                if (!SyncContainers(styles))
+                bool containers = SyncContainers(styles);
+                bool resized = SyncSized();
+
+                if (!containers && !resized)
                 {
                     break;
                 }
             }
+
+            _sized.Clear();
 
             LastMeasuredElements = _measureComputer.Measured;
 
@@ -346,6 +353,26 @@ namespace Ixen.Core
 
         private const int CONTAINER_PASSES = 2;
 
+        private readonly List<VisualElement> _sized = new List<VisualElement>();
+
+        private bool SyncSized()
+        {
+            bool changed = false;
+
+            for (int i = 0; i < _sized.Count; i++)
+            {
+                VisualElement element = _sized[i];
+
+                if (element.ContentWidth != element.PrepassWidth || element.ContentHeight != element.PrepassHeight)
+                {
+                    element.InvalidateLayout();
+                    changed = true;
+                }
+            }
+
+            return changed;
+        }
+
         private bool SyncContainers(StyleRegistry styles)
             => styles.HasContainerClasses && RefreshContainers(styles, Root);
 
@@ -408,6 +435,13 @@ namespace Ixen.Core
 
             element.Owner?.RenderIfDirty();
             element.OnPrepass(width, height);
+
+            if (element.PrepassFollowsSize)
+            {
+                element.PrepassWidth = element.ContentWidth;
+                element.PrepassHeight = element.ContentHeight;
+                _sized.Add(element);
+            }
 
             foreach (VisualElement child in element.Children)
             {

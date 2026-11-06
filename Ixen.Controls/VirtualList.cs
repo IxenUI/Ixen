@@ -30,6 +30,7 @@ namespace Ixen.Controls
         private List<int> _group;
         private object _payload;
         private int _gap = -1;
+        private float _pointerX;
         private float _pointerY;
         private float _scrollStep;
         private IDisposable _autoScroll;
@@ -44,6 +45,8 @@ namespace Ixen.Controls
         private Action<IRegionRow, int> _bind;
 
         private float _itemHeight = DEFAULT_ITEM_HEIGHT;
+        private float _itemWidth;
+        private int _columns = 1;
         private int _first = -1;
         private int _realised;
 
@@ -152,6 +155,26 @@ namespace Ixen.Controls
             }
         }
 
+        public float ItemWidth
+        {
+            get => _itemWidth;
+            set
+            {
+                float width = value > 0 ? value : 0;
+
+                if (width == _itemWidth)
+                {
+                    return;
+                }
+
+                _itemWidth = width;
+
+                Reset();
+            }
+        }
+
+        public int Columns => _columns;
+
         public int Overscan { get; set; } = 1;
 
         private float _rowWidth;
@@ -172,9 +195,12 @@ namespace Ixen.Controls
                 _spacer.Styles.Width.Value = width;
                 _spacer.Invalidate();
 
-                foreach (VisualElement row in _rows)
+                if (_columns == 1)
                 {
-                    FitWidth(row);
+                    foreach (VisualElement row in _rows)
+                    {
+                        FitWidth(row);
+                    }
                 }
 
                 InvalidateLayout();
@@ -232,7 +258,7 @@ namespace Ixen.Controls
 
         public void ScrollTo(int index)
         {
-            ScrollY = index * _itemHeight;
+            ScrollY = TopOf(index);
 
             Reset();
         }
@@ -246,7 +272,7 @@ namespace Ixen.Controls
                 return;
             }
 
-            float top = index * _itemHeight;
+            float top = TopOf(index);
             float bottom = top + _itemHeight;
 
             if (top < ScrollY)
@@ -259,14 +285,32 @@ namespace Ixen.Controls
             }
         }
 
+        private float TopOf(int index) => (index / _columns) * _itemHeight;
+
+        private int RowsFor(int count) => (count + _columns - 1) / _columns;
+
         private void Reset()
         {
             _first = -1;
 
-            _spacer.Styles.Height.Value = Count * _itemHeight;
+            _spacer.Styles.Height.Value = RowsFor(Count) * _itemHeight;
             _spacer.Invalidate();
 
             InvalidateLayout();
+        }
+
+        protected override bool PrepassFollowsSize => true;
+
+        private int ColumnsFor(float width)
+        {
+            if (_itemWidth <= 0 || width <= 0)
+            {
+                return 1;
+            }
+
+            int columns = (int)(width / _itemWidth);
+
+            return columns < 1 ? 1 : columns;
         }
 
         protected override void OnPrepass(float viewportWidth, float viewportHeight)
@@ -277,38 +321,65 @@ namespace Ixen.Controls
             }
 
             int count = Count;
+            int columns = ColumnsFor(ContentWidth);
+            bool reflowed = columns != _columns;
 
-            _spacer.Styles.Height.Value = count * _itemHeight;
+            _columns = columns;
 
-            float window = ContentHeight > 0 ? ContentHeight : viewportHeight;
+            int rows = RowsFor(count);
+            float extent = rows * _itemHeight;
 
-            int visible = window <= 0
+            if (_spacer.Styles.Height.Value != extent)
+            {
+                _spacer.Styles.Height.Value = extent;
+                _spacer.Invalidate();
+            }
+
+            float window = ContentHeight;
+
+            int visibleRows = window <= 0
                 ? 0
                 : (int)Math.Ceiling(window / _itemHeight) + (Overscan * 2);
 
-            if (visible > count)
+            if (visibleRows > rows)
             {
-                visible = count;
+                visibleRows = rows;
             }
 
-            int first = _itemHeight <= 0 ? 0 : (int)(ScrollY / _itemHeight) - Overscan;
+            int firstRow = _itemHeight <= 0 ? 0 : (int)(ScrollY / _itemHeight) - Overscan;
 
-            if (first > count - visible)
+            if (firstRow > rows - visibleRows)
             {
-                first = count - visible;
+                firstRow = rows - visibleRows;
             }
 
-            if (first < 0)
+            if (firstRow < 0)
             {
-                first = 0;
+                firstRow = 0;
             }
 
-            if (first == _first && visible == _realised)
+            int first = firstRow * columns;
+            int visible = Math.Min(visibleRows * columns, count - first);
+
+            if (visible < 0)
+            {
+                visible = 0;
+            }
+
+            if (first == _first && visible == _realised && !reflowed)
             {
                 return;
             }
 
             Realise(visible);
+
+            if (reflowed)
+            {
+                foreach (VisualElement row in _rows)
+                {
+                    PlaceColumns(row);
+                }
+            }
 
             _first = first;
 
@@ -317,14 +388,43 @@ namespace Ixen.Controls
                 VisualElement row = _rows[i];
                 int index = first + i;
 
-                row.Styles.Top.Value = index * _itemHeight;
+                row.Styles.Top.Value = (index / columns) * _itemHeight;
                 row.Styles.Height.Value = _itemHeight;
+
+                if (columns > 1)
+                {
+                    row.Styles.Left.Value = (index % columns) * 100f / columns;
+                }
 
                 _bind(_owners[i], index);
 
                 row.ToggleState(DRAGGING, IsDragged(index));
                 row.Invalidate();
             }
+        }
+
+        private void PlaceColumns(VisualElement row)
+        {
+            if (_columns > 1)
+            {
+                row.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 };
+                row.Styles.Right = new RightStyleDescriptor();
+                row.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Percents, Value = 100f / _columns };
+                row.Styles.MinWidth = new MinWidthStyleDescriptor();
+            }
+            else
+            {
+                row.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+                row.Styles.Right = new RightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+                row.Styles.Width = new WidthStyleDescriptor();
+
+                if (_rowWidth > 0)
+                {
+                    FitWidth(row);
+                }
+            }
+
+            row.Invalidate();
         }
 
         private void Realise(int visible)
@@ -342,15 +442,10 @@ namespace Ixen.Controls
 
                 VisualElement row = owner.ElementAt(0);
 
-                row.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
-                row.Styles.Right = new RightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
                 row.Styles.Top = new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
                 row.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = _itemHeight };
 
-                if (_rowWidth > 0)
-                {
-                    FitWidth(row);
-                }
+                PlaceColumns(row);
 
                 _owners.Add(owner);
                 _rows.Add(row);
@@ -513,6 +608,7 @@ namespace Ixen.Controls
             args.Accepted = true;
 
             _foreign = !IsOwn(args.Data);
+            _pointerX = args.X;
             _pointerY = args.Y;
 
             PlaceMarker();
@@ -535,6 +631,7 @@ namespace Ixen.Controls
                 return;
             }
 
+            _pointerX = args.X;
             _pointerY = args.Y;
             PlaceMarker();
 
@@ -603,20 +700,29 @@ namespace Ixen.Controls
             }
         }
 
+        private int GapAt(int count)
+        {
+            float localY = _pointerY - ContentY;
+
+            if (_columns == 1)
+            {
+                return Clamp((int)Math.Floor(localY / _itemHeight + 0.5f), 0, count);
+            }
+
+            int rows = RowsFor(count);
+            int row = Clamp((int)Math.Floor(localY / _itemHeight), 0, rows - 1);
+            float slot = ContentWidth / _columns;
+            int column = slot <= 0 ? 0 : Clamp((int)Math.Floor((_pointerX - ContentX) / slot + 0.5f), 0, _columns);
+
+            return Clamp(row * _columns + column, 0, count);
+        }
+
+        private static int Clamp(int value, int low, int high) => value < low ? low : (value > high ? high : value);
+
         private void PlaceMarker()
         {
             int count = Count;
-            int gap = (int)Math.Floor((_pointerY - ContentY) / _itemHeight + 0.5f);
-
-            if (gap < 0)
-            {
-                gap = 0;
-            }
-
-            if (gap > count)
-            {
-                gap = count;
-            }
+            int gap = GapAt(count);
 
             if (gap == _gap)
             {
@@ -632,21 +738,41 @@ namespace Ixen.Controls
                 return;
             }
 
-            float top = gap * _itemHeight - MARKER_THICKNESS / 2;
-            float most = count * _itemHeight - MARKER_THICKNESS;
-
-            if (top > most)
+            if (_columns == 1)
             {
-                top = most;
+                float top = gap * _itemHeight - MARKER_THICKNESS / 2;
+                float most = count * _itemHeight - MARKER_THICKNESS;
+
+                ShowMarker(new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 },
+                    new RightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 },
+                    new WidthStyleDescriptor(),
+                    top > most ? (most < 0 ? 0 : most) : (top < 0 ? 0 : top),
+                    MARKER_THICKNESS);
+
+                return;
             }
 
-            if (top < 0)
-            {
-                top = 0;
-            }
+            float slot = ContentWidth / _columns;
+            int row = gap == count && gap % _columns == 0 ? gap / _columns - 1 : gap / _columns;
+            int column = gap - row * _columns;
+            float left = column * slot - MARKER_THICKNESS / 2;
+            float widest = ContentWidth - MARKER_THICKNESS;
 
+            ShowMarker(new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = left > widest ? widest : (left < 0 ? 0 : left) },
+                new RightStyleDescriptor(),
+                new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = MARKER_THICKNESS },
+                row * _itemHeight,
+                _itemHeight);
+        }
+
+        private void ShowMarker(LeftStyleDescriptor left, RightStyleDescriptor right, WidthStyleDescriptor width,
+            float top, float height)
+        {
+            _marker.Styles.Left = left;
+            _marker.Styles.Right = right;
+            _marker.Styles.Width = width;
             _marker.Styles.Top.Value = top;
-            _marker.Styles.Height.Value = MARKER_THICKNESS;
+            _marker.Styles.Height.Value = height;
             _marker.Styles.Visibility = new VisibilityStyleDescriptor { Value = Visibility.Visible };
             _marker.Invalidate();
         }

@@ -822,6 +822,12 @@ namespace Ixen.Core.Visual
         {
         }
 
+        protected internal virtual bool PrepassFollowsSize => false;
+
+        internal float PrepassWidth { get; set; } = float.NaN;
+
+        internal float PrepassHeight { get; set; } = float.NaN;
+
         protected internal virtual void OnHostChanged()
         {
             if (Host == null)
