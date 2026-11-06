@@ -21,6 +21,7 @@ namespace Ixen.Controls
         private const float SCROLL_SPEED = 12;
 
         public event EventHandler<ReorderEventArgs> Reordered;
+        public event EventHandler<ListDropEventArgs> ItemDropped;
 
         private readonly VisualElement _spacer;
         private readonly VisualElement _marker;
@@ -32,6 +33,8 @@ namespace Ixen.Controls
         private float _scrollStep;
         private IDisposable _autoScroll;
         private VisualElement _armed;
+        private bool _foreign;
+        private Func<object, bool> _accepts;
         private readonly List<VisualElement> _rows = new();
         private readonly List<IRegionRow> _owners = new();
 
@@ -99,7 +102,7 @@ namespace Ixen.Controls
                 }
 
                 _reorderable = value;
-                AllowDrop = value;
+                AllowDrop = value || _accepts != null;
 
                 if (!value)
                 {
@@ -108,9 +111,23 @@ namespace Ixen.Controls
             }
         }
 
+        public Func<object, bool> Accepts
+        {
+            get => _accepts;
+            set
+            {
+                _accepts = value;
+                AllowDrop = _reorderable || value != null;
+            }
+        }
+
+        public Func<int, object> DragOffer { get; set; }
+
+        internal bool MarksDropGap { get; set; } = true;
+
         public bool IsReordering => _dragFrom >= 0;
 
-        public int DropIndex => _dragFrom >= 0 ? _gap : -1;
+        public int DropIndex => _dragFrom >= 0 || _foreign ? _gap : -1;
 
         public VisualElement DropMarker => _marker;
 
@@ -372,9 +389,11 @@ namespace Ixen.Controls
             return null;
         }
 
+        private bool CanStartDrag => (_reorderable && Count >= 2) || (DragOffer != null && Count > 0);
+
         private void OnLongPress(object sender, PointerEventArgs args)
         {
-            if (!_reorderable || args.Kind != PointerKind.Touch || _dragFrom >= 0)
+            if (!CanStartDrag || args.Kind != PointerKind.Touch || _dragFrom >= 0)
             {
                 return;
             }
@@ -396,7 +415,7 @@ namespace Ixen.Controls
 
             _armed = null;
 
-            if (!_reorderable || args.Data != null || Count < 2)
+            if (!CanStartDrag || args.Data != null)
             {
                 return;
             }
@@ -408,23 +427,43 @@ namespace Ixen.Controls
                 return;
             }
 
+            int index = IndexOfRow(row);
+
+            if (!_reorderable || Count < 2)
+            {
+                object offered = DragOffer(index);
+
+                if (offered != null)
+                {
+                    args.Handled = true;
+                    args.Data = offered;
+                }
+
+                return;
+            }
+
             args.Handled = true;
             args.Data = new ReorderData(this);
 
-            _dragFrom = IndexOfRow(row);
+            _dragFrom = index;
             _gap = -1;
 
             MarkDragging();
         }
 
-        private void OnDragOver(object sender, DragEventArgs args)
+        private bool Welcomes(object data)
         {
-            if (!(args.Data is ReorderData data))
+            if (data is ReorderData reorder)
             {
-                return;
+                return reorder.List == this && _dragFrom >= 0;
             }
 
-            if (data.List != this || _dragFrom < 0)
+            return data != null && _accepts != null && _accepts(data);
+        }
+
+        private void OnDragOver(object sender, DragEventArgs args)
+        {
+            if (!Welcomes(args.Data))
             {
                 args.Accepted = false;
 
@@ -433,6 +472,7 @@ namespace Ixen.Controls
 
             args.Accepted = true;
 
+            _foreign = !(args.Data is ReorderData);
             _pointerY = args.Y;
 
             PlaceMarker();
@@ -441,18 +481,16 @@ namespace Ixen.Controls
 
         private void OnDragLeave(object sender, DragEventArgs args)
         {
-            if (!(args.Data is ReorderData data) || data.List != this)
-            {
-                return;
-            }
-
             StopAutoScroll();
             HideMarker();
+
+            _foreign = false;
+            _gap = -1;
         }
 
         private void OnDrop(object sender, DragEventArgs args)
         {
-            if (!(args.Data is ReorderData data) || data.List != this || _dragFrom < 0)
+            if (!Welcomes(args.Data))
             {
                 return;
             }
@@ -460,8 +498,20 @@ namespace Ixen.Controls
             _pointerY = args.Y;
             PlaceMarker();
 
+            int gap = _gap;
+
+            if (!(args.Data is ReorderData))
+            {
+                EndReorder();
+
+                ItemDropped?.Invoke(this, new ListDropEventArgs(args.Data, MarksDropGap ? gap : -1));
+                Reset();
+
+                return;
+            }
+
             int from = _dragFrom;
-            int to = _gap > from ? _gap - 1 : _gap;
+            int to = gap > from ? gap - 1 : gap;
 
             EndReorder();
 
@@ -485,9 +535,12 @@ namespace Ixen.Controls
         private void EndReorder()
         {
             _armed = null;
+            _foreign = false;
 
             StopAutoScroll();
             HideMarker();
+
+            _gap = -1;
 
             if (_dragFrom < 0)
             {
@@ -495,7 +548,6 @@ namespace Ixen.Controls
             }
 
             _dragFrom = -1;
-            _gap = -1;
 
             MarkDragging();
         }
@@ -530,7 +582,7 @@ namespace Ixen.Controls
 
             _gap = gap;
 
-            if (gap == _dragFrom || gap == _dragFrom + 1)
+            if (!MarksDropGap || (_dragFrom >= 0 && (gap == _dragFrom || gap == _dragFrom + 1)))
             {
                 HideMarker();
 
@@ -617,7 +669,7 @@ namespace Ixen.Controls
 
         private void ScrollTick()
         {
-            if (_dragFrom < 0)
+            if (_dragFrom < 0 && !_foreign)
             {
                 StopAutoScroll();
 

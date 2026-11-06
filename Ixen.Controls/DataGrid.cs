@@ -18,6 +18,7 @@ namespace Ixen.Controls
 
         public event EventHandler<EventArgs> SelectionChanged;
         public event EventHandler<ReorderEventArgs> Reordered;
+        public event EventHandler<ListDropEventArgs> ItemDropped;
 
         private readonly VisualElement _header;
         private readonly VirtualList _body;
@@ -65,6 +66,7 @@ namespace Ixen.Controls
             AddChild(_body);
 
             _body.Reordered += OnBodyReordered;
+            _body.ItemDropped += OnBodyDropped;
             KeyDown += OnKeyDown;
         }
 
@@ -249,6 +251,47 @@ namespace Ixen.Controls
         }
 
         private void OnBodyReordered(object sender, ReorderEventArgs args) => MoveItem(args.From, args.To);
+
+        public Func<object, bool> Accepts
+        {
+            get => _body.Accepts;
+            set => _body.Accepts = value;
+        }
+
+        private Func<IReadOnlyList<object>, object> _dragOffer;
+
+        public Func<IReadOnlyList<object>, object> DragOffer
+        {
+            get => _dragOffer;
+            set
+            {
+                _dragOffer = value;
+                _body.DragOffer = value == null ? null : new Func<int, object>(Offer);
+            }
+        }
+
+        private object Offer(int index)
+        {
+            if (_dragOffer == null || index < 0 || index >= _view.Count)
+            {
+                return null;
+            }
+
+            object item = _view[index];
+
+            if (_selection.Contains(item))
+            {
+                return _dragOffer(new List<object>(_selection.Items));
+            }
+
+            return _dragOffer(new[] { item });
+        }
+
+        private void OnBodyDropped(object sender, ListDropEventArgs args)
+        {
+            ItemDropped?.Invoke(this, args);
+            Rebuild();
+        }
 
         public void Select(int index) => _selection.Select(index);
 
@@ -734,6 +777,7 @@ namespace Ixen.Controls
 
             _selection.Rebuilt();
             _body.Reorderable = CanReorder;
+            _body.MarksDropGap = _sorted < 0;
 
             for (int i = 0; i < _headerCells.Count; i++)
             {

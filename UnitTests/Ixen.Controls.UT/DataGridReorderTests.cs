@@ -179,6 +179,120 @@ namespace Ixen.Controls.UT
             Assert.IsFalse(_grid.MoveItem(0, 1));
         }
 
+        private VirtualList Target(List<object> received, List<int> indices)
+        {
+            var target = new VirtualList { Name = "target", ItemHeight = ROW, Accepts = data => data is IReadOnlyList<object> };
+            target.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 300 };
+            target.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 100 };
+            target.SetItems(new List<string> { "a", "b" }, () => new VisualElement(), (row, index) => row.Text = "x");
+            target.ItemDropped += (sender, e) =>
+            {
+                received.AddRange((IReadOnlyList<object>)e.Data);
+                indices.Add(e.Index);
+            };
+
+            _root.AddChild(target);
+            Layout();
+
+            return target;
+        }
+
+        private void CarryTo(VirtualList target, int from)
+        {
+            float x = _grid.Body.ContentX + 10;
+            float y = _grid.Body.ContentY + from * ROW + ROW / 2;
+            float to = target.ContentY + 2;
+
+            _surface.PointerDown(x, y, PointerButton.Left);
+            _surface.PointerMove(x, y + 6);
+            Layout();
+            _surface.PointerMove(x, to);
+            Layout();
+            _surface.PointerUp(x, to, PointerButton.Left);
+            Layout();
+        }
+
+        [TestMethod]
+        public void AGridOffersTheSelectionWhenTheDraggedRowIsInIt()
+        {
+            _grid.Reorderable = false;
+            _grid.MultiSelect = true;
+            _grid.DragOffer = items => items;
+            _grid.Select(1);
+            _grid.ToggleSelection(3);
+            Layout();
+
+            var received = new List<object>();
+            var indices = new List<int>();
+            VirtualList target = Target(received, indices);
+
+            CarryTo(target, 3);
+
+            Assert.AreEqual("Blake,Donne", string.Join(",", received.Select(p => ((Person)p).Name)));
+            Assert.AreEqual(0, indices[0]);
+
+            received.Clear();
+
+            CarryTo(target, 4);
+
+            Assert.AreEqual("Hardy", string.Join(",", received.Select(p => ((Person)p).Name)),
+                "a row outside the selection travels alone");
+        }
+
+        [TestMethod]
+        public void AGridReceivesAtTheGapAndRebuilds()
+        {
+            int index = -2;
+            _grid.Accepts = data => data is string;
+            _grid.ItemDropped += (sender, e) =>
+            {
+                index = e.Index;
+                _people.Insert(e.Index < 0 ? _people.Count : e.Index, new Person { Name = (string)e.Data });
+            };
+
+            var source = new VirtualList { Name = "source", ItemHeight = ROW, DragOffer = i => "Owen" };
+            source.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 300 };
+            source.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 60 };
+            source.SetItems(new List<string> { "Owen" }, () => new VisualElement(), (row, i) => row.Text = "Owen");
+            _root.AddChild(source);
+            Layout();
+
+            float x = source.ContentX + 10;
+            float y = source.ContentY + ROW / 2;
+            float to = _grid.Body.ContentY + 2 * ROW + 2;
+
+            _surface.PointerDown(x, y, PointerButton.Left);
+            _surface.PointerMove(x, y + 6);
+            Layout();
+            _surface.PointerMove(x, to);
+            Layout();
+            _surface.PointerUp(x, to, PointerButton.Left);
+            Layout();
+
+            Assert.AreEqual(2, index);
+            Assert.AreEqual("Yeats,Blake,Owen,Keats,Donne,Hardy", Shown(), "the grid rebuilt its view");
+
+            _grid.SortBy(0);
+            Layout();
+
+            y = source.ContentY + ROW / 2;
+            to = _grid.Body.ContentY + 2 * ROW + 2;
+
+            _surface.PointerDown(x, y, PointerButton.Left);
+            _surface.PointerMove(x, y + 6);
+            Layout();
+            _surface.PointerMove(x, to);
+            Layout();
+
+            Assert.AreEqual(Visibility.Hidden, _grid.Body.DropMarker.Styles.Visibility.Value,
+                "a sorted grid has no gap to show");
+
+            _surface.PointerUp(x, to, PointerButton.Left);
+            Layout();
+
+            Assert.AreEqual(-1, index, "and says the place is the application's to choose");
+        }
+
         [TestMethod]
         public void AGridThatIsNotReorderableLeavesAltArrowsAlone()
         {
