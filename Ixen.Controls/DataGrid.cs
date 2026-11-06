@@ -559,6 +559,11 @@ namespace Ixen.Controls
                 cell.AddChild(_editor);
             }
 
+            if (_contents.TryGetValue(cell, out CellContent content) && content.Element.Parent == cell)
+            {
+                cell.RemoveChild(content.Element);
+            }
+
             if (_focusEditor && Host != null)
             {
                 _focusEditor = false;
@@ -899,7 +904,10 @@ namespace Ixen.Controls
                 VisualElement cell = row.CellAt(i);
 
                 FitCheck(cell, _columns[i], item);
-                _columns[i].Bind?.Invoke(cell, item);
+
+                VisualElement content = FitContent(cell, _columns[i]);
+
+                _columns[i].Bind?.Invoke(content ?? cell, item);
             }
 
             if (_editor == null)
@@ -1025,6 +1033,68 @@ namespace Ixen.Controls
             }
 
             return null;
+        }
+
+        private sealed class CellContent
+        {
+            internal DataColumn Column;
+            internal VisualElement Element;
+        }
+
+        private readonly Dictionary<VisualElement, CellContent> _contents = new();
+
+        public VisualElement ContentOf(DataGridRow row, int column)
+        {
+            if (row == null || column < 0 || column >= row.Cells.Count)
+            {
+                return null;
+            }
+
+            return _contents.TryGetValue(row.CellAt(column), out CellContent content) ? content.Element : null;
+        }
+
+        private VisualElement FitContent(VisualElement cell, DataColumn column)
+        {
+            _contents.TryGetValue(cell, out CellContent fitted);
+
+            if (column.Create == null)
+            {
+                if (fitted != null)
+                {
+                    fitted.Element.Parent?.RemoveChild(fitted.Element);
+                    _contents.Remove(cell);
+                }
+
+                return null;
+            }
+
+            if (fitted != null && fitted.Column != column)
+            {
+                fitted.Element.Parent?.RemoveChild(fitted.Element);
+                fitted = null;
+            }
+
+            if (fitted == null)
+            {
+                VisualElement element = column.Create();
+
+                if (element == null)
+                {
+                    _contents.Remove(cell);
+
+                    return null;
+                }
+
+                fitted = new CellContent { Column = column, Element = element };
+                _contents[cell] = fitted;
+            }
+
+            if (fitted.Element.Parent == null && (_editor == null || _editor.Parent != cell))
+            {
+                cell.InsertChild(0, fitted.Element);
+            }
+
+            return fitted.Element;
         }
 
         private void FitCheck(VisualElement cell, DataColumn column, object item)

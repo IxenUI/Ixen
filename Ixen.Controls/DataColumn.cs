@@ -16,6 +16,8 @@ namespace Ixen.Controls
 
         public Action<VisualElement, object> Bind { get; set; }
 
+        public Func<VisualElement> Create { get; set; }
+
         public Comparison<object> Compare { get; set; }
 
         public Func<object, string> Value { get; set; }
