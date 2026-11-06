@@ -67,6 +67,7 @@ namespace Ixen.Controls
 
             _body.Reordered += OnBodyReordered;
             _body.ItemDropped += OnBodyDropped;
+            _body.ReorderGroup = GroupOf;
             KeyDown += OnKeyDown;
         }
 
@@ -237,20 +238,84 @@ namespace Ixen.Controls
         public bool CanReorder => _reorderable && _sorted < 0 && _items != null
             && !_items.IsReadOnly && !_items.IsFixedSize;
 
-        public bool MoveItem(int from, int to)
+        public bool MoveItem(int from, int to) => MoveItems(new[] { from }, to);
+
+        public bool MoveItems(IReadOnlyList<int> indices, int to)
         {
-            if (!CanReorder || from < 0 || from >= _view.Count || to < 0 || to >= _view.Count || from == to)
+            if (!CanReorder || indices == null || indices.Count == 0)
             {
                 return false;
             }
 
-            Reordered?.Invoke(this, new ReorderEventArgs(from, to));
+            var args = new ReorderEventArgs(indices, to);
+
+            for (int i = 0; i < args.Count; i++)
+            {
+                if (args.Indices[i] < 0 || args.Indices[i] >= _view.Count || (i > 0 && args.Indices[i] == args.Indices[i - 1]))
+                {
+                    return false;
+                }
+            }
+
+            if (to < 0 || to + args.Count > _view.Count || !ReorderEventArgs.Changes(args.Indices, to))
+            {
+                return false;
+            }
+
+            Reordered?.Invoke(this, args);
             Rebuild();
 
             return true;
         }
 
-        private void OnBodyReordered(object sender, ReorderEventArgs args) => MoveItem(args.From, args.To);
+        private void OnBodyReordered(object sender, ReorderEventArgs args) => MoveItems(args.Indices, args.To);
+
+        private IReadOnlyList<int> SelectedIndices()
+        {
+            var indices = new List<int>();
+
+            for (int i = 0; i < _view.Count; i++)
+            {
+                if (_selection.Contains(_view[i]))
+                {
+                    indices.Add(i);
+                }
+            }
+
+            return indices;
+        }
+
+        private IReadOnlyList<int> GroupOf(int index)
+        {
+            if (index < 0 || index >= _view.Count || !_selection.Contains(_view[index]))
+            {
+                return new[] { index };
+            }
+
+            return SelectedIndices();
+        }
+
+        private void MoveSelection(int direction)
+        {
+            IReadOnlyList<int> group = GroupOf(_selection.Current);
+
+            if (group.Count == 0 || group[0] < 0)
+            {
+                return;
+            }
+
+            int gap = direction > 0 ? group[group.Count - 1] + 2 : group[0] - 1;
+
+            if (gap < 0 || gap > _view.Count)
+            {
+                return;
+            }
+
+            if (MoveItems(group, ReorderEventArgs.Landing(group, gap)))
+            {
+                _body.ScrollIntoView(_selection.Current);
+            }
+        }
 
         public Func<object, bool> Accepts
         {
@@ -1204,12 +1269,7 @@ namespace Ixen.Controls
             {
                 args.Handled = true;
 
-                int from = _selection.Current;
-
-                if (MoveItem(from, args.Key == Key.Down ? from + 1 : from - 1))
-                {
-                    _body.ScrollIntoView(_selection.Current);
-                }
+                MoveSelection(args.Key == Key.Down ? 1 : -1);
 
                 return;
             }

@@ -111,6 +111,23 @@ namespace Ixen.Core.UT.Components
         }
 
         [TestMethod]
+        public void MovingSeveralAnnouncesOnceAndKeepsTheirOrder()
+        {
+            _list.AddRange(new[] { "a", "b", "c", "d", "e" });
+            _list.Move(new[] { 4, 1 }, 0);
+
+            Assert.AreEqual("b,e,a,c,d", string.Join(",", _list), "sorted first, so b stays ahead of e");
+            Assert.AreEqual(2, _announced);
+
+            _list.Move(new[] { 0, 1 }, 0);
+
+            Assert.AreEqual(2, _announced, "a block onto itself changes nothing");
+            Assert.Throws<System.ArgumentOutOfRangeException>(() => _list.Move(new[] { 3, 4 }, 4));
+            Assert.Throws<System.ArgumentOutOfRangeException>(() => _list.Move(new[] { 2, 2 }, 0));
+            Assert.AreEqual("b,e,a,c,d", string.Join(",", _list));
+        }
+
+        [TestMethod]
         public void MovingOutOfRangeThrowsAndChangesNothing()
         {
             _list.AddRange(new[] { "a", "b" });

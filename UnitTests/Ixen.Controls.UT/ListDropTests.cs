@@ -272,6 +272,59 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
+        public void AReorderableListWithAnOfferStillSendsRowsElsewhere()
+        {
+            var moves = 0;
+            _store.Reorderable = true;
+            _store.Reordered += (sender, e) => moves++;
+
+            Carry(3, 2);
+
+            Assert.AreEqual(0, moves, "leaving the list is not a reorder");
+            Assert.AreEqual(1, _drops.Count);
+            Assert.AreEqual("store 3", _drops[0].Data, "the other list receives what was offered");
+            Assert.AreEqual(true, _accepted);
+            Assert.IsFalse(_store.IsReordering);
+            Assert.IsFalse(_store.RealisedRows.Any(row => row.HasState(VirtualList.DRAGGING)));
+        }
+
+        [TestMethod]
+        public void AnyDropTargetSeesWhatAReorderableListOffers()
+        {
+            object binned = null;
+            var bin = new VisualElement { Name = "bin", AllowDrop = true };
+            bin.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 200 };
+            bin.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 40 };
+            bin.Drop += (sender, e) => binned = e.Data;
+            _root.AddChild(bin);
+            Layout();
+
+            _store.Reorderable = true;
+
+            Press(_store, 1);
+            MoveTo(_store, Row(_store, 1) + 6);
+            _surface.PointerMove(bin.X + 10, bin.Y + 10);
+            Layout();
+            _surface.PointerUp(bin.X + 10, bin.Y + 10, PointerButton.Left);
+            Layout();
+
+            Assert.AreEqual("store 1", binned, "a bin outside any list can take the song");
+        }
+
+        [TestMethod]
+        public void WithoutAnOfferAReorderingRowGoesNowhereElse()
+        {
+            _store.Reorderable = true;
+            _store.DragOffer = null;
+            _playlist.Accepts = data => true;
+
+            Carry(3, 2);
+
+            Assert.AreEqual(0, _drops.Count, "the reorder payload is the list's own business");
+            Assert.AreEqual(false, _accepted);
+        }
+
+        [TestMethod]
         public void AReorderableListWithAnOfferReordersWithinItself()
         {
             var moves = 0;

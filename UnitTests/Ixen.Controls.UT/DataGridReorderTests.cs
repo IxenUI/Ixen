@@ -293,6 +293,155 @@ namespace Ixen.Controls.UT
             Assert.AreEqual(-1, index, "and says the place is the application's to choose");
         }
 
+        private List<ReorderEventArgs> Watch()
+        {
+            var seen = new List<ReorderEventArgs>();
+            _grid.Reordered += (sender, e) => seen.Add(e);
+
+            return seen;
+        }
+
+        private void SelectBlock(params int[] indices)
+        {
+            _grid.MultiSelect = true;
+            _grid.Select(indices[0]);
+
+            for (int i = 1; i < indices.Length; i++)
+            {
+                _grid.ToggleSelection(indices[i]);
+            }
+
+            Layout();
+        }
+
+        [TestMethod]
+        public void DraggingASelectedRowCarriesTheWholeSelection()
+        {
+            List<ReorderEventArgs> seen = Watch();
+            SelectBlock(0, 2);
+
+            Drag(2, 4);
+
+            Assert.AreEqual("0,2", string.Join(",", seen[0].Indices));
+            Assert.AreEqual(2, seen[0].To, "the first moved item lands where the gap is once both have left");
+            Assert.AreEqual("Blake,Donne,Yeats,Keats,Hardy", Source(), "in the order they were shown");
+            Assert.AreEqual("Yeats,Keats", string.Join(",", _grid.SelectedItems.Select(p => ((Person)p).Name)),
+                "and still selected");
+        }
+
+        [TestMethod]
+        public void DraggingAnUnselectedRowMovesItAlone()
+        {
+            List<ReorderEventArgs> seen = Watch();
+            SelectBlock(0, 2);
+
+            Drag(4, 1);
+
+            Assert.AreEqual("4", string.Join(",", seen[0].Indices));
+            Assert.AreEqual("Yeats,Hardy,Blake,Keats,Donne", Source());
+        }
+
+        [TestMethod]
+        public void EveryDraggedRowIsMarkedAndABlockDroppedOnItselfMovesNothing()
+        {
+            List<ReorderEventArgs> seen = Watch();
+            SelectBlock(1, 2);
+
+            float x = _grid.Body.ContentX + 10;
+            float y = _grid.Body.ContentY + ROW + ROW / 2;
+
+            _surface.PointerDown(x, y, PointerButton.Left);
+            _surface.PointerMove(x, y + 6);
+            Layout();
+
+            var marked = _grid.Body.RealisedRows.Where(row => row.HasState(VirtualList.DRAGGING))
+                .Select(row => _grid.Body.IndexOfRow(row)).OrderBy(i => i);
+
+            Assert.AreEqual("1,2", string.Join(",", marked));
+
+            foreach (int gap in new[] { 1, 2, 3 })
+            {
+                _surface.PointerMove(x, _grid.Body.ContentY + gap * ROW + 2);
+                Layout();
+
+                Assert.AreEqual(Visibility.Hidden, _grid.Body.DropMarker.Styles.Visibility.Value,
+                    "gap " + gap + " is inside or beside the block");
+            }
+
+            _surface.PointerMove(x, _grid.Body.ContentY + 4 * ROW + 2);
+            Layout();
+
+            Assert.AreEqual(Visibility.Visible, _grid.Body.DropMarker.Styles.Visibility.Value);
+
+            _surface.PointerMove(x, _grid.Body.ContentY + 2 * ROW + 2);
+            Layout();
+            _surface.PointerUp(x, _grid.Body.ContentY + 2 * ROW + 2, PointerButton.Left);
+            Layout();
+
+            Assert.AreEqual(0, seen.Count);
+        }
+
+        [TestMethod]
+        public void AScatteredSelectionGathersWhereItIsDropped()
+        {
+            SelectBlock(0, 4);
+
+            Drag(0, 2);
+
+            Assert.AreEqual("Blake,Yeats,Hardy,Keats,Donne", Source());
+        }
+
+        [TestMethod]
+        public void AltArrowsMoveTheSelectedBlock()
+        {
+            SelectBlock(1, 2);
+            _surface.Focus(_grid);
+            Layout();
+
+            Key(Ixen.Core.Input.Key.Down, KeyModifiers.Alt);
+
+            Assert.AreEqual("Yeats,Donne,Blake,Keats,Hardy", Source());
+
+            Key(Ixen.Core.Input.Key.Down, KeyModifiers.Alt);
+            Key(Ixen.Core.Input.Key.Down, KeyModifiers.Alt);
+
+            Assert.AreEqual("Yeats,Donne,Hardy,Blake,Keats", Source(), "the bottom stops it");
+
+            Key(Ixen.Core.Input.Key.Up, KeyModifiers.Alt);
+
+            Assert.AreEqual("Yeats,Donne,Blake,Keats,Hardy", Source());
+            Assert.AreEqual("Blake,Keats", string.Join(",", _grid.SelectedItems.Select(p => ((Person)p).Name)));
+        }
+
+        [TestMethod]
+        public void MoveItemsRefusesWhatCannotBe()
+        {
+            Assert.IsFalse(_grid.MoveItems(new[] { 0, 0 }, 1), "an index twice");
+            Assert.IsFalse(_grid.MoveItems(new[] { 3, 4 }, 4), "past the end");
+            Assert.IsFalse(_grid.MoveItems(new[] { 1, 2 }, 1), "onto itself");
+            Assert.IsTrue(_grid.MoveItems(new[] { 3, 4 }, 0));
+            Assert.AreEqual("Donne,Hardy,Yeats,Blake,Keats", Source());
+        }
+
+        [TestMethod]
+        public void ApplyMovesABlockInAPlainListAndAnObservableOne()
+        {
+            var plain = new List<string> { "a", "b", "c", "d", "e" };
+            var observable = new Ixen.Core.Components.ObservableList<string>(plain);
+            int changes = 0;
+            observable.Changed += (sender, e) => changes++;
+
+            var move = new ReorderEventArgs(new[] { 3, 0 }, 1);
+
+            move.Apply(plain);
+            move.Apply(observable);
+
+            Assert.AreEqual("b,a,d,c,e", string.Join(",", plain));
+            Assert.AreEqual("b,a,d,c,e", string.Join(",", observable));
+            Assert.AreEqual(1, changes, "one change for the whole block");
+            Assert.AreEqual(0, move.From, "From is the first of the sorted indices");
+        }
+
         [TestMethod]
         public void AGridThatIsNotReorderableLeavesAltArrowsAlone()
         {

@@ -117,6 +117,62 @@ namespace Ixen.Core.Components
             Announce();
         }
 
+        public void Move(IReadOnlyList<int> indices, int to)
+        {
+            if (indices == null || indices.Count == 0)
+            {
+                return;
+            }
+
+            var sorted = new List<int>(indices);
+
+            sorted.Sort();
+
+            for (int i = 0; i < sorted.Count; i++)
+            {
+                if (sorted[i] < 0 || sorted[i] >= _items.Count || (i > 0 && sorted[i] == sorted[i - 1]))
+                {
+                    throw new ArgumentOutOfRangeException(nameof(indices));
+                }
+            }
+
+            if (to < 0 || to + sorted.Count > _items.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(to));
+            }
+
+            bool moves = false;
+
+            for (int i = 0; i < sorted.Count; i++)
+            {
+                if (sorted[i] != to + i)
+                {
+                    moves = true;
+                }
+            }
+
+            if (!moves)
+            {
+                return;
+            }
+
+            var moved = new List<T>(sorted.Count);
+
+            foreach (int index in sorted)
+            {
+                moved.Add(_items[index]);
+            }
+
+            for (int i = sorted.Count - 1; i >= 0; i--)
+            {
+                _items.RemoveAt(sorted[i]);
+            }
+
+            _items.InsertRange(to, moved);
+
+            Announce();
+        }
+
         public void Clear()
         {
             if (_items.Count == 0)

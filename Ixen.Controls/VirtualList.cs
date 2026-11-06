@@ -27,7 +27,8 @@ namespace Ixen.Controls
         private readonly VisualElement _marker;
 
         private bool _reorderable;
-        private int _dragFrom = -1;
+        private List<int> _group;
+        private object _payload;
         private int _gap = -1;
         private float _pointerY;
         private float _scrollStep;
@@ -125,9 +126,11 @@ namespace Ixen.Controls
 
         internal bool MarksDropGap { get; set; } = true;
 
-        public bool IsReordering => _dragFrom >= 0;
+        internal Func<int, IReadOnlyList<int>> ReorderGroup { get; set; }
 
-        public int DropIndex => _dragFrom >= 0 || _foreign ? _gap : -1;
+        public bool IsReordering => _group != null;
+
+        public int DropIndex => _group != null || _foreign ? _gap : -1;
 
         public VisualElement DropMarker => _marker;
 
@@ -317,7 +320,7 @@ namespace Ixen.Controls
 
                 _bind(_owners[i], index);
 
-                row.ToggleState(DRAGGING, index == _dragFrom);
+                row.ToggleState(DRAGGING, IsDragged(index));
                 row.Invalidate();
             }
         }
@@ -393,7 +396,7 @@ namespace Ixen.Controls
 
         private void OnLongPress(object sender, PointerEventArgs args)
         {
-            if (!CanStartDrag || args.Kind != PointerKind.Touch || _dragFrom >= 0)
+            if (!CanStartDrag || args.Kind != PointerKind.Touch || _group != null)
             {
                 return;
             }
@@ -428,11 +431,10 @@ namespace Ixen.Controls
             }
 
             int index = IndexOfRow(row);
+            object offered = DragOffer?.Invoke(index);
 
             if (!_reorderable || Count < 2)
             {
-                object offered = DragOffer(index);
-
                 if (offered != null)
                 {
                     args.Handled = true;
@@ -442,23 +444,35 @@ namespace Ixen.Controls
                 return;
             }
 
-            args.Handled = true;
-            args.Data = new ReorderData(this);
+            var group = new List<int>(ReorderGroup?.Invoke(index) ?? new[] { index });
 
-            _dragFrom = index;
+            if (!group.Contains(index))
+            {
+                group.Add(index);
+            }
+
+            group.Sort();
+
+            _payload = offered ?? new ReorderData();
+            _group = group;
             _gap = -1;
+
+            args.Handled = true;
+            args.Data = _payload;
 
             MarkDragging();
         }
 
+        private bool IsOwn(object data) => _group != null && data != null && ReferenceEquals(data, _payload);
+
         private bool Welcomes(object data)
         {
-            if (data is ReorderData reorder)
+            if (IsOwn(data))
             {
-                return reorder.List == this && _dragFrom >= 0;
+                return true;
             }
 
-            return data != null && _accepts != null && _accepts(data);
+            return data != null && !(data is ReorderData) && _accepts != null && _accepts(data);
         }
 
         private void OnDragOver(object sender, DragEventArgs args)
@@ -472,7 +486,7 @@ namespace Ixen.Controls
 
             args.Accepted = true;
 
-            _foreign = !(args.Data is ReorderData);
+            _foreign = !IsOwn(args.Data);
             _pointerY = args.Y;
 
             PlaceMarker();
@@ -500,7 +514,7 @@ namespace Ixen.Controls
 
             int gap = _gap;
 
-            if (!(args.Data is ReorderData))
+            if (!IsOwn(args.Data))
             {
                 EndReorder();
 
@@ -510,23 +524,23 @@ namespace Ixen.Controls
                 return;
             }
 
-            int from = _dragFrom;
-            int to = gap > from ? gap - 1 : gap;
+            List<int> group = _group;
+            int to = gap < 0 ? -1 : ReorderEventArgs.Landing(group, gap);
 
             EndReorder();
 
-            if (to < 0 || to == from)
+            if (to < 0 || !ReorderEventArgs.Changes(group, to))
             {
                 return;
             }
 
-            Reordered?.Invoke(this, new ReorderEventArgs(from, to));
+            Reordered?.Invoke(this, new ReorderEventArgs(group, to));
             Reset();
         }
 
         private void OnDragEnd(object sender, DragEventArgs args)
         {
-            if (args.Data is ReorderData data && data.List == this)
+            if (IsOwn(args.Data))
             {
                 EndReorder();
             }
@@ -542,21 +556,24 @@ namespace Ixen.Controls
 
             _gap = -1;
 
-            if (_dragFrom < 0)
+            if (_group == null)
             {
                 return;
             }
 
-            _dragFrom = -1;
+            _group = null;
+            _payload = null;
 
             MarkDragging();
         }
+
+        private bool IsDragged(int index) => _group != null && _group.BinarySearch(index) >= 0;
 
         private void MarkDragging()
         {
             for (int i = 0; i < _realised; i++)
             {
-                _rows[i].ToggleState(DRAGGING, _first + i == _dragFrom);
+                _rows[i].ToggleState(DRAGGING, IsDragged(_first + i));
             }
         }
 
@@ -582,7 +599,7 @@ namespace Ixen.Controls
 
             _gap = gap;
 
-            if (!MarksDropGap || (_dragFrom >= 0 && (gap == _dragFrom || gap == _dragFrom + 1)))
+            if (!MarksDropGap || (_group != null && !_foreign && !ReorderEventArgs.Changes(_group, ReorderEventArgs.Landing(_group, gap))))
             {
                 HideMarker();
 
@@ -669,7 +686,7 @@ namespace Ixen.Controls
 
         private void ScrollTick()
         {
-            if (_dragFrom < 0 && !_foreign)
+            if (_group == null && !_foreign)
             {
                 StopAutoScroll();
 
@@ -709,12 +726,6 @@ namespace Ixen.Controls
 
         private sealed class ReorderData
         {
-            internal ReorderData(VirtualList list)
-            {
-                List = list;
-            }
-
-            internal VirtualList List { get; }
         }
 
         private sealed class ElementRow : IRegionRow
