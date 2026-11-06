@@ -280,5 +280,23 @@ namespace Ixen.Core.UT.Input
             Assert.AreEqual(PointerKind.Touch, seen,
                 "a handler can tell a finger from a mouse, which is what makes the rule expressible");
         }
+
+        [TestMethod]
+        public void EveryPointerEventReportsTheKind()
+        {
+            var seen = new List<string>();
+
+            _row.PointerDown += (sender, e) => seen.Add("down " + e.Kind);
+            _row.PointerUp += (sender, e) => seen.Add("up " + e.Kind);
+            _row.PointerClick += (sender, e) => seen.Add("click " + e.Kind);
+
+            _surface.PointerDown(20, 60, PointerButton.Left, PointerKind.Touch);
+            _surface.PointerUp(20, 60, PointerButton.Left, PointerKind.Touch);
+            _surface.PointerDown(20, 60, PointerButton.Left);
+            _surface.PointerUp(20, 60, PointerButton.Left);
+
+            Assert.AreEqual("down Touch,up Touch,click Touch,down Mouse,up Mouse,click Mouse", string.Join(",", seen),
+                "only the drag events carried it, so a long press could not tell a finger from a held mouse button");
+        }
     }
 }

@@ -17,6 +17,7 @@ namespace Ixen.Controls
         private const float EDGE_GRIP = 6;
 
         public event EventHandler<EventArgs> SelectionChanged;
+        public event EventHandler<ReorderEventArgs> Reordered;
 
         private readonly VisualElement _header;
         private readonly VirtualList _body;
@@ -39,6 +40,7 @@ namespace Ixen.Controls
         private object _editItem;
         private int _editColumn = -1;
         private bool _focusEditor;
+        private bool _reorderable;
 
         public DataGrid()
         {
@@ -62,6 +64,7 @@ namespace Ixen.Controls
             AddChild(_header);
             AddChild(_body);
 
+            _body.Reordered += OnBodyReordered;
             KeyDown += OnKeyDown;
         }
 
@@ -205,6 +208,47 @@ namespace Ixen.Controls
 
             Rebuild();
         }
+
+        public void ClearSort()
+        {
+            if (_sorted < 0)
+            {
+                return;
+            }
+
+            _sorted = -1;
+            _descending = false;
+
+            Rebuild();
+        }
+
+        public bool Reorderable
+        {
+            get => _reorderable;
+            set
+            {
+                _reorderable = value;
+                _body.Reorderable = CanReorder;
+            }
+        }
+
+        public bool CanReorder => _reorderable && _sorted < 0 && _items != null
+            && !_items.IsReadOnly && !_items.IsFixedSize;
+
+        public bool MoveItem(int from, int to)
+        {
+            if (!CanReorder || from < 0 || from >= _view.Count || to < 0 || to >= _view.Count || from == to)
+            {
+                return false;
+            }
+
+            Reordered?.Invoke(this, new ReorderEventArgs(from, to));
+            Rebuild();
+
+            return true;
+        }
+
+        private void OnBodyReordered(object sender, ReorderEventArgs args) => MoveItem(args.From, args.To);
 
         public void Select(int index) => _selection.Select(index);
 
@@ -689,6 +733,7 @@ namespace Ixen.Controls
             }
 
             _selection.Rebuilt();
+            _body.Reorderable = CanReorder;
 
             for (int i = 0; i < _headerCells.Count; i++)
             {
@@ -1108,6 +1153,20 @@ namespace Ixen.Controls
         {
             if (IsEditing || IsChoosing)
             {
+                return;
+            }
+
+            if ((args.Key == Key.Up || args.Key == Key.Down) && args.Modifiers == KeyModifiers.Alt && CanReorder)
+            {
+                args.Handled = true;
+
+                int from = _selection.Current;
+
+                if (MoveItem(from, args.Key == Key.Down ? from + 1 : from - 1))
+                {
+                    _body.ScrollIntoView(_selection.Current);
+                }
+
                 return;
             }
 

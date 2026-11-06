@@ -92,6 +92,31 @@ namespace Ixen.Core.Components
             Announce();
         }
 
+        public void Move(int from, int to)
+        {
+            if (from < 0 || from >= _items.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(from));
+            }
+
+            if (to < 0 || to >= _items.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(to));
+            }
+
+            if (from == to)
+            {
+                return;
+            }
+
+            T item = _items[from];
+
+            _items.RemoveAt(from);
+            _items.Insert(to, item);
+
+            Announce();
+        }
+
         public void Clear()
         {
             if (_items.Count == 0)

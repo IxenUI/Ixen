@@ -539,6 +539,14 @@ $control_focus_soft:   #EEF1FE
     cursor: hand
 }
 
+#DataGridRow:dragging {
+    opacity: 0.45
+}
+
+#VirtualListDropMarker {
+    background: $control_focus
+}
+
 #DataGridCell {
     height: 1*
     padding: 0px 10px

@@ -1483,7 +1483,7 @@ namespace Ixen.Core.Input
         private KeyModifiers _modifiers;
 
         private PointerEventArgs Args(float x, float y, PointerButton button, VisualElement source)
-            => new PointerEventArgs(x, y, button, source) { Modifiers = _modifiers };
+            => new PointerEventArgs(x, y, button, source, _kind) { Modifiers = _modifiers };
 
         private static void Bubble(VisualElement hit, PointerEventArgs args, PointerEventKind kind)
         {

@@ -1,4 +1,6 @@
+using Ixen.Core;
 using Ixen.Core.Accessibility;
+using Ixen.Core.Input;
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Styles.Descriptors;
 using System;
@@ -10,10 +12,26 @@ namespace Ixen.Controls
     public class VirtualList : VisualElement, IRegionHost
     {
         public const string SPACER = "VirtualListSpacer";
+        public const string DROP_MARKER = "VirtualListDropMarker";
+        public const string DRAGGING = "dragging";
 
         private const float DEFAULT_ITEM_HEIGHT = 28;
+        private const float MARKER_THICKNESS = 2;
+        private const int SCROLL_TICK = 16;
+        private const float SCROLL_SPEED = 12;
+
+        public event EventHandler<ReorderEventArgs> Reordered;
 
         private readonly VisualElement _spacer;
+        private readonly VisualElement _marker;
+
+        private bool _reorderable;
+        private int _dragFrom = -1;
+        private int _gap = -1;
+        private float _pointerY;
+        private float _scrollStep;
+        private IDisposable _autoScroll;
+        private VisualElement _armed;
         private readonly List<VisualElement> _rows = new();
         private readonly List<IRegionRow> _owners = new();
 
@@ -45,7 +63,56 @@ namespace Ixen.Controls
             _spacer.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
 
             AddChild(_spacer);
+
+            _marker = new VisualElement
+            {
+                TypeName = DROP_MARKER,
+                Role = AccessibleRole.Presentation
+            };
+
+            _marker.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+            _marker.Styles.Right = new RightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+            _marker.Styles.Top = new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+            _marker.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+            _marker.Styles.PointerEvents = new PointerEventsStyleDescriptor { Value = PointerEvents.None };
+            _marker.Styles.Visibility = new VisibilityStyleDescriptor { Value = Visibility.Hidden };
+
+            AddChild(_marker);
+
+            PointerLongPress += OnLongPress;
+            PointerDragStart += OnDragStart;
+            PointerDragEnd += OnDragEnd;
+            DragEnter += OnDragOver;
+            DragOver += OnDragOver;
+            DragLeave += OnDragLeave;
+            Drop += OnDrop;
         }
+
+        public bool Reorderable
+        {
+            get => _reorderable;
+            set
+            {
+                if (value == _reorderable)
+                {
+                    return;
+                }
+
+                _reorderable = value;
+                AllowDrop = value;
+
+                if (!value)
+                {
+                    EndReorder();
+                }
+            }
+        }
+
+        public bool IsReordering => _dragFrom >= 0;
+
+        public int DropIndex => _dragFrom >= 0 ? _gap : -1;
+
+        public VisualElement DropMarker => _marker;
 
         public float ItemHeight
         {
@@ -233,6 +300,7 @@ namespace Ixen.Controls
 
                 _bind(_owners[i], index);
 
+                row.ToggleState(DRAGGING, index == _dragFrom);
                 row.Invalidate();
             }
         }
@@ -264,7 +332,7 @@ namespace Ixen.Controls
 
                 _owners.Add(owner);
                 _rows.Add(row);
-                AddChild(row);
+                InsertChild(ChildElements.Count - 1, row);
             }
 
             for (int i = 0; i < _rows.Count; i++)
@@ -284,6 +352,317 @@ namespace Ixen.Controls
             }
 
             _realised = visible;
+        }
+
+        private VisualElement RowOf(VisualElement source, bool fromRowItself)
+        {
+            for (VisualElement element = source; element != null && element != this; element = element.Parent)
+            {
+                if (element.Parent == this)
+                {
+                    return IndexOfRow(element) >= 0 ? element : null;
+                }
+
+                if (fromRowItself && element.Focusable)
+                {
+                    return null;
+                }
+            }
+
+            return null;
+        }
+
+        private void OnLongPress(object sender, PointerEventArgs args)
+        {
+            if (!_reorderable || args.Kind != PointerKind.Touch || _dragFrom >= 0)
+            {
+                return;
+            }
+
+            VisualElement row = RowOf(args.Source, true);
+
+            if (row == null)
+            {
+                return;
+            }
+
+            _armed = row;
+            args.Handled = true;
+        }
+
+        private void OnDragStart(object sender, DragEventArgs args)
+        {
+            VisualElement armed = _armed;
+
+            _armed = null;
+
+            if (!_reorderable || args.Data != null || Count < 2)
+            {
+                return;
+            }
+
+            VisualElement row = RowOf(args.DragSource, true);
+
+            if (row == null || (args.Kind == PointerKind.Touch && row != armed))
+            {
+                return;
+            }
+
+            args.Handled = true;
+            args.Data = new ReorderData(this);
+
+            _dragFrom = IndexOfRow(row);
+            _gap = -1;
+
+            MarkDragging();
+        }
+
+        private void OnDragOver(object sender, DragEventArgs args)
+        {
+            if (!(args.Data is ReorderData data))
+            {
+                return;
+            }
+
+            if (data.List != this || _dragFrom < 0)
+            {
+                args.Accepted = false;
+
+                return;
+            }
+
+            args.Accepted = true;
+
+            _pointerY = args.Y;
+
+            PlaceMarker();
+            AutoScroll();
+        }
+
+        private void OnDragLeave(object sender, DragEventArgs args)
+        {
+            if (!(args.Data is ReorderData data) || data.List != this)
+            {
+                return;
+            }
+
+            StopAutoScroll();
+            HideMarker();
+        }
+
+        private void OnDrop(object sender, DragEventArgs args)
+        {
+            if (!(args.Data is ReorderData data) || data.List != this || _dragFrom < 0)
+            {
+                return;
+            }
+
+            _pointerY = args.Y;
+            PlaceMarker();
+
+            int from = _dragFrom;
+            int to = _gap > from ? _gap - 1 : _gap;
+
+            EndReorder();
+
+            if (to < 0 || to == from)
+            {
+                return;
+            }
+
+            Reordered?.Invoke(this, new ReorderEventArgs(from, to));
+            Reset();
+        }
+
+        private void OnDragEnd(object sender, DragEventArgs args)
+        {
+            if (args.Data is ReorderData data && data.List == this)
+            {
+                EndReorder();
+            }
+        }
+
+        private void EndReorder()
+        {
+            _armed = null;
+
+            StopAutoScroll();
+            HideMarker();
+
+            if (_dragFrom < 0)
+            {
+                return;
+            }
+
+            _dragFrom = -1;
+            _gap = -1;
+
+            MarkDragging();
+        }
+
+        private void MarkDragging()
+        {
+            for (int i = 0; i < _realised; i++)
+            {
+                _rows[i].ToggleState(DRAGGING, _first + i == _dragFrom);
+            }
+        }
+
+        private void PlaceMarker()
+        {
+            int count = Count;
+            int gap = (int)Math.Floor((_pointerY - ContentY) / _itemHeight + 0.5f);
+
+            if (gap < 0)
+            {
+                gap = 0;
+            }
+
+            if (gap > count)
+            {
+                gap = count;
+            }
+
+            if (gap == _gap)
+            {
+                return;
+            }
+
+            _gap = gap;
+
+            if (gap == _dragFrom || gap == _dragFrom + 1)
+            {
+                HideMarker();
+
+                return;
+            }
+
+            float top = gap * _itemHeight - MARKER_THICKNESS / 2;
+            float most = count * _itemHeight - MARKER_THICKNESS;
+
+            if (top > most)
+            {
+                top = most;
+            }
+
+            if (top < 0)
+            {
+                top = 0;
+            }
+
+            _marker.Styles.Top.Value = top;
+            _marker.Styles.Height.Value = MARKER_THICKNESS;
+            _marker.Styles.Visibility = new VisibilityStyleDescriptor { Value = Visibility.Visible };
+            _marker.Invalidate();
+        }
+
+        private void HideMarker()
+        {
+            if (_marker.Styles.Visibility.Value == Visibility.Hidden)
+            {
+                return;
+            }
+
+            _marker.Styles.Top.Value = 0;
+            _marker.Styles.Height.Value = 0;
+            _marker.Styles.Visibility = new VisibilityStyleDescriptor { Value = Visibility.Hidden };
+            _marker.Invalidate();
+        }
+
+        private void AutoScroll()
+        {
+            float window = ContentHeight;
+
+            if (window <= 0)
+            {
+                StopAutoScroll();
+
+                return;
+            }
+
+            float top = ContentY + ScrollY;
+            float zone = Math.Min(_itemHeight, window / 4);
+            float step = 0;
+
+            if (_pointerY < top + zone)
+            {
+                step = -SCROLL_SPEED * Math.Min(1, (top + zone - _pointerY) / zone);
+            }
+            else if (_pointerY > top + window - zone)
+            {
+                step = SCROLL_SPEED * Math.Min(1, (_pointerY - (top + window - zone)) / zone);
+            }
+
+            _scrollStep = step;
+
+            if (step == 0)
+            {
+                StopAutoScroll();
+
+                return;
+            }
+
+            if (_autoScroll != null)
+            {
+                return;
+            }
+
+            IScheduler scheduler = Host?.Scheduler;
+
+            if (scheduler != null)
+            {
+                _autoScroll = scheduler.Schedule(SCROLL_TICK, true, ScrollTick);
+            }
+        }
+
+        private void ScrollTick()
+        {
+            if (_dragFrom < 0)
+            {
+                StopAutoScroll();
+
+                return;
+            }
+
+            float most = Count * _itemHeight - ContentHeight;
+            float next = ScrollY + _scrollStep;
+
+            if (next > most)
+            {
+                next = most;
+            }
+
+            if (next < 0)
+            {
+                next = 0;
+            }
+
+            if (next == ScrollY)
+            {
+                return;
+            }
+
+            ScrollY = next;
+            InvalidateLayout();
+
+            PlaceMarker();
+        }
+
+        private void StopAutoScroll()
+        {
+            _autoScroll?.Dispose();
+            _autoScroll = null;
+            _scrollStep = 0;
+        }
+
+        private sealed class ReorderData
+        {
+            internal ReorderData(VirtualList list)
+            {
+                List = list;
+            }
+
+            internal VirtualList List { get; }
         }
 
         private sealed class ElementRow : IRegionRow

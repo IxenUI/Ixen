@@ -93,6 +93,35 @@ namespace Ixen.Core.UT.Components
         }
 
         [TestMethod]
+        public void MovingAnnouncesOnceAndKeepsEveryItem()
+        {
+            _list.AddRange(new[] { "a", "b", "c", "d" });
+            _list.Move(0, 2);
+
+            Assert.AreEqual(2, _announced, "a move is one change, not a removal and an insertion");
+            Assert.AreEqual("b,c,a,d", string.Join(",", _list));
+
+            _list.Move(3, 0);
+
+            Assert.AreEqual("d,b,c,a", string.Join(",", _list));
+
+            _list.Move(1, 1);
+
+            Assert.AreEqual(3, _announced, "moving an item onto itself changes nothing");
+        }
+
+        [TestMethod]
+        public void MovingOutOfRangeThrowsAndChangesNothing()
+        {
+            _list.AddRange(new[] { "a", "b" });
+
+            Assert.Throws<System.ArgumentOutOfRangeException>(() => _list.Move(0, 2));
+            Assert.Throws<System.ArgumentOutOfRangeException>(() => _list.Move(-1, 0));
+            Assert.AreEqual("a,b", string.Join(",", _list));
+            Assert.AreEqual(1, _announced);
+        }
+
+        [TestMethod]
         public void WritingTheSameValueBackAnnouncesNothing()
         {
             _list.Add("one");

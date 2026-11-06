@@ -18,6 +18,7 @@ namespace Ixen.Controls.UT
         {
             internal Action Callback;
             internal bool Cancelled;
+            internal bool Repeat;
 
             public void Dispose() => Cancelled = true;
         }
@@ -42,11 +43,47 @@ namespace Ixen.Controls.UT
 
         public IDisposable Schedule(int delayMilliseconds, bool repeat, Action callback)
         {
-            var entry = new Entry { Callback = callback };
+            var entry = new Entry { Callback = callback, Repeat = repeat };
 
             Scheduled.Add(entry);
 
             return entry;
+        }
+
+        internal void Tick()
+        {
+            foreach (Entry entry in Scheduled.ToArray())
+            {
+                if (entry.Cancelled)
+                {
+                    continue;
+                }
+
+                if (!entry.Repeat)
+                {
+                    entry.Cancelled = true;
+                }
+
+                entry.Callback();
+            }
+        }
+
+        internal int RepeatingCount
+        {
+            get
+            {
+                int count = 0;
+
+                foreach (Entry entry in Scheduled)
+                {
+                    if (!entry.Cancelled && entry.Repeat)
+                    {
+                        count++;
+                    }
+                }
+
+                return count;
+            }
         }
 
         internal void FireAll()
