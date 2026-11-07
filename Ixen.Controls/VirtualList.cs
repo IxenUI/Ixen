@@ -47,6 +47,10 @@ namespace Ixen.Controls
         private float _itemHeight = DEFAULT_ITEM_HEIGHT;
         private float _itemWidth;
         private int _columns = 1;
+        private Func<int, float> _heights;
+        private float[] _offsets;
+        private int _offsetsFor = -1;
+        private bool _offsetsStale = true;
         private int _first = -1;
         private int _realised;
 
@@ -273,7 +277,7 @@ namespace Ixen.Controls
             }
 
             float top = TopOf(index);
-            float bottom = top + _itemHeight;
+            float bottom = top + HeightOf(index);
 
             if (top < ScrollY)
             {
@@ -285,15 +289,120 @@ namespace Ixen.Controls
             }
         }
 
-        private float TopOf(int index) => (index / _columns) * _itemHeight;
+        public Func<int, float> ItemHeights
+        {
+            get => _heights;
+            set
+            {
+                _heights = value;
+
+                Reset();
+            }
+        }
+
+        private bool Varies => _heights != null && _columns == 1;
+
+        private float TopOf(int index)
+        {
+            if (!Varies)
+            {
+                return (index / _columns) * _itemHeight;
+            }
+
+            EnsureOffsets(Count);
+
+            return _offsets[Clamp(index, 0, _offsetsFor)];
+        }
+
+        private float HeightOf(int index)
+        {
+            if (!Varies)
+            {
+                return _itemHeight;
+            }
+
+            EnsureOffsets(Count);
+
+            return index < 0 || index >= _offsetsFor ? 0 : _offsets[index + 1] - _offsets[index];
+        }
+
+        private float ExtentOf(int count)
+        {
+            if (!Varies)
+            {
+                return RowsFor(count) * _itemHeight;
+            }
+
+            EnsureOffsets(count);
+
+            return _offsets[count];
+        }
+
+        private int IndexAt(float y)
+        {
+            EnsureOffsets(Count);
+
+            int low = 0;
+            int high = _offsetsFor - 1;
+
+            if (high < 0)
+            {
+                return 0;
+            }
+
+            while (low < high)
+            {
+                int middle = (low + high + 1) / 2;
+
+                if (_offsets[middle] <= y)
+                {
+                    low = middle;
+                }
+                else
+                {
+                    high = middle - 1;
+                }
+            }
+
+            return low;
+        }
+
+        private void EnsureOffsets(int count)
+        {
+            if (!_offsetsStale && _offsetsFor == count && _offsets != null)
+            {
+                return;
+            }
+
+            if (_offsets == null || _offsets.Length < count + 1)
+            {
+                _offsets = new float[count + 1];
+            }
+
+            float top = 0;
+
+            for (int index = 0; index < count; index++)
+            {
+                _offsets[index] = top;
+
+                float height = _heights(index);
+
+                top += height > 0 ? height : 0;
+            }
+
+            _offsets[count] = top;
+            _offsetsFor = count;
+            _offsetsStale = false;
+        }
 
         private int RowsFor(int count) => (count + _columns - 1) / _columns;
 
         private void Reset()
         {
             _first = -1;
+            _offsetsStale = true;
 
-            _spacer.Styles.Height.Value = RowsFor(Count) * _itemHeight;
+            _spacer.Styles.Height.Value = ExtentOf(Count);
             _spacer.Invalidate();
 
             InvalidateLayout();
@@ -327,7 +436,7 @@ namespace Ixen.Controls
             _columns = columns;
 
             int rows = RowsFor(count);
-            float extent = rows * _itemHeight;
+            float extent = ExtentOf(count);
 
             if (_spacer.Styles.Height.Value != extent)
             {
@@ -336,6 +445,13 @@ namespace Ixen.Controls
             }
 
             float window = ContentHeight;
+
+            if (Varies)
+            {
+                Window(count, window, reflowed);
+
+                return;
+            }
 
             int visibleRows = window <= 0
                 ? 0
@@ -395,6 +511,52 @@ namespace Ixen.Controls
                 {
                     row.Styles.Left.Value = (index % columns) * 100f / columns;
                 }
+
+                _bind(_owners[i], index);
+
+                row.ToggleState(DRAGGING, IsDragged(index));
+                row.Invalidate();
+            }
+        }
+
+        private void Window(int count, float window, bool reflowed)
+        {
+            int first = 0;
+            int visible = 0;
+
+            if (window > 0 && count > 0)
+            {
+                first = Math.Max(0, IndexAt(ScrollY) - Overscan);
+
+                int last = Math.Min(count - 1, IndexAt(ScrollY + window) + Overscan);
+
+                visible = last - first + 1;
+            }
+
+            if (first == _first && visible == _realised && !reflowed)
+            {
+                return;
+            }
+
+            Realise(visible);
+
+            if (reflowed)
+            {
+                foreach (VisualElement row in _rows)
+                {
+                    PlaceColumns(row);
+                }
+            }
+
+            _first = first;
+
+            for (int i = 0; i < visible; i++)
+            {
+                VisualElement row = _rows[i];
+                int index = first + i;
+
+                row.Styles.Top.Value = _offsets[index];
+                row.Styles.Height.Value = _offsets[index + 1] - _offsets[index];
 
                 _bind(_owners[i], index);
 
@@ -704,6 +866,18 @@ namespace Ixen.Controls
         {
             float localY = _pointerY - ContentY;
 
+            if (Varies)
+            {
+                if (count == 0)
+                {
+                    return 0;
+                }
+
+                int under = IndexAt(localY);
+
+                return Clamp(localY < TopOf(under) + HeightOf(under) / 2 ? under : under + 1, 0, count);
+            }
+
             if (_columns == 1)
             {
                 return Clamp((int)Math.Floor(localY / _itemHeight + 0.5f), 0, count);
@@ -740,8 +914,8 @@ namespace Ixen.Controls
 
             if (_columns == 1)
             {
-                float top = gap * _itemHeight - MARKER_THICKNESS / 2;
-                float most = count * _itemHeight - MARKER_THICKNESS;
+                float top = TopOf(gap) - MARKER_THICKNESS / 2;
+                float most = ExtentOf(count) - MARKER_THICKNESS;
 
                 ShowMarker(new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 },
                     new RightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 },
