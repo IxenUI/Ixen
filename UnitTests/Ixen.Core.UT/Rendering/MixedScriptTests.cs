@@ -140,10 +140,33 @@ namespace Ixen.Core.UT.Rendering
         public void SpacesPunctuationAndDigitsStayWithTheRunTheyAreIn()
         {
             int uncovered = Uncovered();
-            string text = Text(uncovered) + " " + Text(uncovered) + ", 2024";
+            string word = Text(uncovered);
+            SKFont fallback = FontCache.Get(Spec, word);
+            int kept = 0;
 
-            Assert.IsFalse(FontCache.Split(Spec, text, false, new List<FontRun>()),
-                "a space or a comma between two words of one script does not break the run");
+            foreach (char neutral in " ,.2")
+            {
+                string text = word + neutral + word;
+                var runs = new List<FontRun>();
+                bool split = FontCache.Split(Spec, text, false, runs);
+
+                if (fallback.ContainsGlyph(neutral))
+                {
+                    Assert.IsFalse(split, $"'{neutral}' between two words of one script, which their face has, does not break the run");
+                    kept++;
+                }
+                else
+                {
+                    FontRun middle = runs.Find(run => run.Start <= word.Length && word.Length < run.Start + run.Length);
+
+                    Assert.IsTrue(middle.Font.ContainsGlyph(neutral), $"'{neutral}' is not in the fallback face, so it goes to one that has it");
+                }
+            }
+
+            if (kept == 0)
+            {
+                Assert.Inconclusive("the fallback face here has none of the space, the comma, the full stop or the digit");
+            }
         }
 
         [TestMethod]
