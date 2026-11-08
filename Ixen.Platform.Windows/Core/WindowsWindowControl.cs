@@ -22,6 +22,8 @@ namespace Ixen.Platform.Windows
 
         public event EventHandler Changed;
 
+        public IntPtr NativeHandle => _handle();
+
         public bool IsMaximized => IsZoomed(_handle());
 
         public bool ExtendsIntoTitleBar { get; }
