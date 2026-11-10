@@ -99,6 +99,23 @@ namespace Ixen.Core.Rendering
             }
         }
 
+        internal ImageStatus StatusOf(string name)
+        {
+            Entry entry = Touch(name);
+
+            if (entry == null)
+            {
+                return ImageStatus.Failed;
+            }
+
+            if (_pending.Contains(name))
+            {
+                return ImageStatus.Loading;
+            }
+
+            return entry.NaturalWidth > 0 && entry.NaturalHeight > 0 ? ImageStatus.Ready : ImageStatus.Failed;
+        }
+
         internal bool TryNatural(string name, out int width, out int height)
         {
             Entry entry = Touch(name);

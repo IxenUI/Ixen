@@ -1195,6 +1195,8 @@ namespace Ixen.Core
 
         internal int ImagesPending => _images.Pending;
 
+        internal Rendering.ImageStatus ImageStatusOf(string source) => _images.StatusOf(source);
+
         internal long TextBlobBytes => _rendererContext.Blobs.Bytes;
 
         internal int TextBlobCount => _rendererContext.Blobs.Count;
