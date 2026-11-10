@@ -15,6 +15,7 @@ namespace Ixen.Controls
         private const float DEFAULT_INDENT = 16;
 
         public event EventHandler<EventArgs> SelectionChanged;
+        public event EventHandler<TreeMoveEventArgs> Moved;
 
         private readonly VirtualList _list;
         private readonly List<TreeNode> _flat = new();
@@ -35,10 +36,12 @@ namespace Ixen.Controls
 
             Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
 
-            _list = new VirtualList { TypeName = ROWS, Role = AccessibleRole.None };
+            _list = new VirtualList { TypeName = ROWS, Role = AccessibleRole.None, AnnouncesMoves = false };
             _selection = new ItemSelection(() => _flat.Count, index => _flat[index].Item, OnSelectionMoved);
 
             AddChild(_list);
+
+            _list.Reordered += OnRowsReordered;
 
             KeyDown += OnKeyDown;
         }
@@ -90,6 +93,8 @@ namespace Ixen.Controls
 
             Rebuild();
         }
+
+        public void Refresh() => Rebuild();
 
         public bool IsExpanded(object item) => _open.Contains(item);
 
@@ -154,6 +159,152 @@ namespace Ixen.Controls
         }
 
         public void Select(int index) => _selection.Select(index);
+
+        public bool Reorderable
+        {
+            get => _list.Reorderable;
+            set => _list.Reorderable = value;
+        }
+
+        public Func<TreeMoveEventArgs, string> MoveAnnouncement { get; set; } = move => move.Describe();
+
+        public bool MoveRow(int from, int gap)
+        {
+            TreeNode node = NodeAt(from);
+
+            if (node == null || _roots == null || gap < 0 || gap > _flat.Count)
+            {
+                return false;
+            }
+
+            int fromParent = ParentIndexOf(from);
+            IList fromList = ListOf(fromParent);
+            int fromIndex = IndexIn(fromList, node.Item);
+
+            int toParent;
+            IList toList;
+            int toIndex;
+
+            if (gap == _flat.Count)
+            {
+                toParent = -1;
+                toList = _roots;
+                toIndex = _roots.Count;
+            }
+            else
+            {
+                toParent = ParentIndexOf(gap);
+                toList = ListOf(toParent);
+                toIndex = IndexIn(toList, _flat[gap].Item);
+            }
+
+            for (int ancestor = toParent; ancestor >= 0; ancestor = ParentIndexOf(ancestor))
+            {
+                if (ancestor == from)
+                {
+                    return false;
+                }
+            }
+
+            if (ReferenceEquals(fromList, toList) && toIndex > fromIndex)
+            {
+                toIndex--;
+            }
+
+            return Raise(node.Item, fromParent, fromList, fromIndex, toParent, toList, toIndex);
+        }
+
+        private bool MoveAmongSiblings(int index, int direction)
+        {
+            TreeNode node = NodeAt(index);
+
+            if (node == null || !Reorderable)
+            {
+                return false;
+            }
+
+            int parent = ParentIndexOf(index);
+            IList list = ListOf(parent);
+            int at = IndexIn(list, node.Item);
+
+            return Raise(node.Item, parent, list, at, parent, list, at + direction);
+        }
+
+        private bool Raise(object item, int fromParent, IList fromList, int fromIndex,
+            int toParent, IList toList, int toIndex)
+        {
+            if (fromList == null || toList == null || fromIndex < 0 || toIndex < 0)
+            {
+                return false;
+            }
+
+            bool same = ReferenceEquals(fromList, toList);
+
+            if ((same && (toIndex == fromIndex || toIndex >= fromList.Count)) || (!same && toIndex > toList.Count))
+            {
+                return false;
+            }
+
+            var move = new TreeMoveEventArgs(item, NodeAt(fromParent)?.Item, fromList, fromIndex,
+                NodeAt(toParent)?.Item, toList, toIndex);
+
+            string spoken = MoveAnnouncement?.Invoke(move);
+
+            Moved?.Invoke(this, move);
+
+            Rebuild();
+
+            _list.Say(spoken);
+
+            return true;
+        }
+
+        private int ParentIndexOf(int index)
+        {
+            TreeNode node = NodeAt(index);
+
+            if (node == null)
+            {
+                return -1;
+            }
+
+            for (int i = index - 1; i >= 0; i--)
+            {
+                if (_flat[i].Depth < node.Depth)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private IList ListOf(int parent) => parent < 0 ? _roots : _children?.Invoke(_flat[parent].Item);
+
+        private static int IndexIn(IList list, object item)
+        {
+            if (list == null)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (ReferenceEquals(list[i], item))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private void OnRowsReordered(object sender, ReorderEventArgs args)
+        {
+            int from = args.From;
+
+            MoveRow(from, args.To > from ? args.To + 1 : args.To);
+        }
 
         private void OnSelectionMoved(int index)
         {
@@ -291,6 +442,17 @@ namespace Ixen.Controls
         private void OnKeyDown(object sender, KeyEventArgs args)
         {
             TreeNode node = SelectedNode;
+
+            if ((args.Key == Key.Up || args.Key == Key.Down) && (args.Modifiers & KeyModifiers.Alt) != 0)
+            {
+                if (Reorderable)
+                {
+                    args.Handled = true;
+                    MoveAmongSiblings(_selection.Current, args.Key == Key.Up ? -1 : 1);
+                }
+
+                return;
+            }
 
             switch (args.Key)
             {

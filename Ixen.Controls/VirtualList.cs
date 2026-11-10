@@ -156,8 +156,11 @@ namespace Ixen.Controls
 
         internal void Announce(ReorderEventArgs move, int total, Func<ReorderEventArgs, int, string> describe)
         {
-            string text = describe?.Invoke(move, total);
+            Say(describe?.Invoke(move, total));
+        }
 
+        internal void Say(string text)
+        {
             if (string.IsNullOrEmpty(text))
             {
                 return;
