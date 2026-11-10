@@ -86,6 +86,29 @@ namespace Ixen.Core.UT.Layout
         }
 
         [TestMethod]
+        public void EverySuccessiveTargetIsReachedNotOnlyTheFirst()
+        {
+            _surface.ReducedMotion = true;
+
+            VisualElement box = Transitioned();
+            Layout();
+
+            Retarget(box, WHITE);
+
+            Assert.AreEqual(255, Red(box));
+
+            Retarget(box, BLACK);
+
+            Assert.AreEqual(0, Red(box),
+                "the first jump left the element thinking it was still registered with the surface, "
+                + "so the second retarget was never finished and stayed where the first one ended");
+
+            Retarget(box, RED);
+
+            Assert.AreEqual(255, Red(box));
+        }
+
+        [TestMethod]
         public void ATransitionJumpsStraightToItsTarget()
         {
             _surface.ReducedMotion = true;

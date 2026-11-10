@@ -588,6 +588,8 @@ namespace Ixen.Core.Visual
 
             _keyframes?.Complete(animations);
 
+            _registered = null;
+
             Report(transitions, animations);
         }
     }

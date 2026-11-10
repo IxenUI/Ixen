@@ -680,3 +680,37 @@ $control_focus_soft:   #EEF1FE
     color: $control_line_off
 }
 
+#Toast {
+    bottom: 24px
+    padding: 10px 14px
+    content-align: left middle
+    background: $control_inverse
+    color: $control_inverse_text
+    corner-radius: 6px
+    box-shadow: 0px 6px 18px #30000000
+    font-size: 13px
+    pointer-events: none
+    transform: translate(-50% 120px)
+    transition: transform 160ms ease-out
+}
+
+#Toast:shown {
+    pointer-events: auto
+    transform: translate(-50% 0px)
+}
+
+#ToastMessage {
+    width: ?
+    height: ?
+}
+
+#ToastAction {
+    width: ?
+    height: ?
+    margin: 0px 0px 0px 14px
+    padding: 4px 8px
+    color: $control_focus_soft
+    font-weight: bold
+    corner-radius: 4px
+    cursor: hand
+}
