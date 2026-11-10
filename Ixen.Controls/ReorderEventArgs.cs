@@ -28,6 +28,16 @@ namespace Ixen.Controls
 
         public int Count => Indices.Count;
 
+        public string Describe(int total)
+        {
+            if (Count == 1)
+            {
+                return "Moved to position " + (To + 1) + " of " + total;
+            }
+
+            return Count + " items moved to positions " + (To + 1) + " to " + (To + Count) + " of " + total;
+        }
+
         internal static int Landing(IReadOnlyList<int> sorted, int gap)
         {
             int before = 0;

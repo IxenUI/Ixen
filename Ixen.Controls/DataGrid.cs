@@ -19,6 +19,7 @@ namespace Ixen.Controls
         public event EventHandler<EventArgs> SelectionChanged;
         public event EventHandler<ReorderEventArgs> Reordered;
         public event EventHandler<ListDropEventArgs> ItemDropped;
+        public event EventHandler<ReorderEventArgs> ColumnMoved;
 
         private readonly VisualElement _header;
         private readonly VirtualList _body;
@@ -33,6 +34,8 @@ namespace Ixen.Controls
         private int _resizing = -1;
         private float _resizeFrom;
         private bool _resized;
+        private int _movingColumn = -1;
+        private DataGridHeaderCell _armedHeader;
 
         private TextField _editor;
         private Menu _choices;
@@ -59,7 +62,7 @@ namespace Ixen.Controls
 
             _header.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Row };
 
-            _body = new VirtualList { TypeName = BODY, Role = AccessibleRole.None };
+            _body = new VirtualList { TypeName = BODY, Role = AccessibleRole.None, AnnouncesMoves = false };
             _selection = new ItemSelection(() => _view.Count, index => _view[index], OnSelectionMoved);
 
             AddChild(_header);
@@ -238,6 +241,51 @@ namespace Ixen.Controls
         public bool CanReorder => _reorderable && _sorted < 0 && _items != null
             && !_items.IsReadOnly && !_items.IsFixedSize;
 
+        public bool ColumnsReorderable { get; set; }
+
+        public bool IsMovingColumn => _movingColumn >= 0;
+
+        public bool MoveColumn(int from, int to)
+        {
+            if (from < 0 || from >= _columns.Count || to < 0 || to >= _columns.Count || from == to)
+            {
+                return false;
+            }
+
+            if (IsEditing)
+            {
+                CommitEdit(false);
+            }
+
+            if (IsChoosing)
+            {
+                _choices.Close();
+            }
+
+            DataColumn sorted = _sorted >= 0 && _sorted < _columns.Count ? _columns[_sorted] : null;
+            bool focused = Host?.FocusedElement is DataGridHeaderCell;
+            DataColumn column = _columns[from];
+
+            _columns.RemoveAt(from);
+            _columns.Insert(to, column);
+
+            _sorted = sorted == null ? -1 : _columns.IndexOf(sorted);
+
+            BuildHeader();
+
+            if (focused)
+            {
+                Rove(to);
+                Host.Focus(_headerCells[to]);
+            }
+
+            Rebuild();
+
+            ColumnMoved?.Invoke(this, new ReorderEventArgs(from, to));
+
+            return true;
+        }
+
         public bool MoveItem(int from, int to) => MoveItems(new[] { from }, to);
 
         public bool MoveItems(IReadOnlyList<int> indices, int to)
@@ -265,8 +313,12 @@ namespace Ixen.Controls
             Reordered?.Invoke(this, args);
             Rebuild();
 
+            _body.Announce(args, _view.Count, MoveAnnouncement);
+
             return true;
         }
+
+        public Func<ReorderEventArgs, int, string> MoveAnnouncement { get; set; } = (move, total) => move.Describe(total);
 
         private void OnBodyReordered(object sender, ReorderEventArgs args) => MoveItems(args.Indices, args.To);
 
@@ -708,6 +760,8 @@ namespace Ixen.Controls
             {
                 var cell = new DataGridHeaderCell();
 
+                cell.PointerDown += OnHeaderDown;
+                cell.PointerLongPress += OnHeaderLongPress;
                 cell.PointerClick += OnHeaderClick;
                 cell.PointerMove += OnHeaderMove;
                 cell.PointerLeave += OnHeaderLeave;
@@ -727,6 +781,7 @@ namespace Ixen.Controls
                 DataColumn column = i < _columns.Count ? _columns[i] : null;
 
                 SizeCell(cell, column);
+                cell.Invalidate();
 
                 cell.SetHeader(column?.Header);
                 cell.SetSort(false, false);
@@ -801,6 +856,16 @@ namespace Ixen.Controls
                     args.Handled = true;
 
                     int direction = args.Key == Key.Left ? -1 : 1;
+
+                    if ((args.Modifiers & KeyModifiers.Alt) != 0)
+                    {
+                        if (ColumnsReorderable)
+                        {
+                            MoveColumn(index, index + direction);
+                        }
+
+                        break;
+                    }
 
                     if (control)
                     {
@@ -1272,15 +1337,64 @@ namespace Ixen.Controls
             int index = _headerCells.IndexOf(cell);
 
             return index >= 0 && index < _columns.Count && _columns[index].Resizable
-                && x >= cell.ContentX + cell.ContentWidth - EDGE_GRIP;
+                && x + _body.ScrollX >= cell.ContentX + cell.ContentWidth - EDGE_GRIP;
+        }
+
+        private int ColumnGapAt(float x)
+        {
+            float laid = x + _body.ScrollX;
+
+            for (int i = 0; i < _columns.Count && i < _headerCells.Count; i++)
+            {
+                DataGridHeaderCell cell = _headerCells[i];
+
+                if (laid < cell.X + cell.ActualWidth / 2)
+                {
+                    return i;
+                }
+            }
+
+            return _columns.Count;
+        }
+
+        private void OnHeaderDown(object sender, PointerEventArgs args)
+        {
+            _resized = false;
+            _armedHeader = null;
+        }
+
+        private void OnHeaderLongPress(object sender, PointerEventArgs args)
+        {
+            if (!ColumnsReorderable || args.Kind != PointerKind.Touch || !(sender is DataGridHeaderCell cell))
+            {
+                return;
+            }
+
+            args.Handled = true;
+            _armedHeader = cell;
         }
 
         private void OnHeaderMove(object sender, PointerEventArgs args)
         {
-            if (sender is DataGridHeaderCell cell && _resizing < 0)
+            if (sender is DataGridHeaderCell cell && _resizing < 0 && _movingColumn < 0)
             {
                 cell.ToggleState(DataGridHeaderCell.EDGE, AtEdge(cell, args.X));
             }
+        }
+
+        private void Carry(DataGridHeaderCell cell, float offset)
+        {
+            cell.Styles.Transform = offset == 0
+                ? new TransformStyleDescriptor()
+                : new TransformStyleDescriptor
+                {
+                    Operations = new List<TransformOperation>
+                    {
+                        new TransformOperation { Kind = TransformKind.Translate, X = offset, Y = 0 }
+                    }
+                };
+
+            cell.Invalidate();
         }
 
         private void OnHeaderLeave(object sender, PointerEventArgs args)
@@ -1293,20 +1407,48 @@ namespace Ixen.Controls
 
         private void OnHeaderDragStart(object sender, DragEventArgs args)
         {
-            if (!(sender is DataGridHeaderCell cell) || !AtEdge(cell, args.X - args.TotalX))
+            if (!(sender is DataGridHeaderCell cell))
             {
+                return;
+            }
+
+            int index = _headerCells.IndexOf(cell);
+
+            if (!AtEdge(cell, args.X - args.TotalX))
+            {
+                if (!ColumnsReorderable || index < 0 || index >= _columns.Count || _columns.Count < 2
+                    || (args.Kind == PointerKind.Touch && !ReferenceEquals(_armedHeader, cell)))
+                {
+                    return;
+                }
+
+                args.Handled = true;
+
+                _movingColumn = index;
+                _resized = true;
+                cell.ToggleState(DataGridHeaderCell.DRAGGING, true);
+                Carry(cell, args.TotalX);
+
                 return;
             }
 
             args.Handled = true;
 
-            _resizing = _headerCells.IndexOf(cell);
+            _resizing = index;
             _resizeFrom = cell.ActualWidth;
             _resized = true;
         }
 
         private void OnHeaderDrag(object sender, DragEventArgs args)
         {
+            if (_movingColumn >= 0)
+            {
+                args.Handled = true;
+                Carry(_headerCells[_movingColumn], args.TotalX);
+
+                return;
+            }
+
             if (_resizing < 0)
             {
                 return;
@@ -1319,6 +1461,21 @@ namespace Ixen.Controls
 
         private void OnHeaderDragEnd(object sender, DragEventArgs args)
         {
+            if (_movingColumn >= 0)
+            {
+                int from = _movingColumn;
+                int gap = ColumnGapAt(args.X);
+                DataGridHeaderCell cell = _headerCells[from];
+
+                _movingColumn = -1;
+                cell.ToggleState(DataGridHeaderCell.DRAGGING, false);
+                Carry(cell, 0);
+
+                MoveColumn(from, gap > from ? gap - 1 : gap);
+
+                return;
+            }
+
             if (_resizing < 0)
             {
                 return;

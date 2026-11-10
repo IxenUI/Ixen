@@ -14,6 +14,7 @@ namespace Ixen.Controls
         public const string SPACER = "VirtualListSpacer";
         public const string DROP_MARKER = "VirtualListDropMarker";
         public const string DRAGGING = "dragging";
+        public const string STATUS = "VirtualListStatus";
 
         private const float DEFAULT_ITEM_HEIGHT = 28;
         private const float MARKER_THICKNESS = 2;
@@ -25,6 +26,7 @@ namespace Ixen.Controls
 
         private readonly VisualElement _spacer;
         private readonly VisualElement _marker;
+        private VisualElement _status;
 
         private bool _reorderable;
         private List<int> _group;
@@ -112,11 +114,64 @@ namespace Ixen.Controls
                 _reorderable = value;
                 AllowDrop = value || _accepts != null;
 
-                if (!value)
+                if (value)
+                {
+                    EnsureStatus();
+                }
+                else
                 {
                     EndReorder();
                 }
             }
+        }
+
+        public Func<ReorderEventArgs, int, string> MoveAnnouncement { get; set; } = (move, total) => move.Describe(total);
+
+        internal bool AnnouncesMoves { get; set; } = true;
+
+        public VisualElement Status => _status;
+
+        private void EnsureStatus()
+        {
+            if (_status != null)
+            {
+                return;
+            }
+
+            _status = new VisualElement
+            {
+                TypeName = STATUS,
+                LiveRegion = LiveRegionKind.Polite
+            };
+
+            _status.Styles.Left = new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+            _status.Styles.Top = new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+            _status.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 1 };
+            _status.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 1 };
+            _status.Styles.Color = new ColorStyleDescriptor { Value = "#00000000" };
+            _status.Styles.PointerEvents = new PointerEventsStyleDescriptor { Value = PointerEvents.None };
+
+            AddChrome(_status);
+        }
+
+        internal void Announce(ReorderEventArgs move, int total, Func<ReorderEventArgs, int, string> describe)
+        {
+            string text = describe?.Invoke(move, total);
+
+            if (string.IsNullOrEmpty(text))
+            {
+                return;
+            }
+
+            EnsureStatus();
+
+            if (_status.Text == text)
+            {
+                text += " ";
+            }
+
+            _status.Text = text;
+            _status.Invalidate();
         }
 
         public Func<object, bool> Accepts
@@ -819,8 +874,15 @@ namespace Ixen.Controls
                 return;
             }
 
-            Reordered?.Invoke(this, new ReorderEventArgs(group, to));
+            var move = new ReorderEventArgs(group, to);
+
+            Reordered?.Invoke(this, move);
             Reset();
+
+            if (AnnouncesMoves)
+            {
+                Announce(move, Count, MoveAnnouncement);
+            }
         }
 
         private void OnDragEnd(object sender, DragEventArgs args)

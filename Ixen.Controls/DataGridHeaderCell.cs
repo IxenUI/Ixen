@@ -12,7 +12,7 @@ namespace Ixen.Controls
         public const string SORTED = "sorted";
         public const string DESCENDING = "descending";
         public const string EDGE = "edge";
-
+        public const string DRAGGING = "dragging";
 
         private readonly VisualElement _label;
         private readonly VisualElement _mark;
