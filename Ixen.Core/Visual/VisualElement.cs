@@ -983,6 +983,13 @@ namespace Ixen.Core.Visual
             return transition != null && (transition.Running || transition.Held) ? transition.Descriptor : null;
         }
 
+        internal float AnimatedOpacity(float declared)
+        {
+            SizeTransition transition = _animations?.Opacity;
+
+            return transition != null && (transition.Running || transition.Held) ? transition.Current : declared;
+        }
+
         internal Styles.Descriptors.TransformStyleDescriptor AnimatedTransform()
         {
             TransformTransition transition = _animations?.Transform;

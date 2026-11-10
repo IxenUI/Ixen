@@ -542,6 +542,7 @@ namespace Ixen.Core.Visual.Computers
             RetargetSize(element, transitions, StyleIdentifier.BOTTOM, handlers.Bottom.Descriptor, keyframes);
 
             RetargetTransform(element, transitions, handlers.Transform.Descriptor, keyframes);
+            RetargetOpacity(element, transitions, handlers.Opacity.Descriptor.Value, keyframes);
 
             element.Animations.Sync();
         }
@@ -635,6 +636,39 @@ namespace Ixen.Core.Visual.Computers
             }
 
             transition.Start(target.Value, Math.Max(1, spec.Duration / ElementAnimations.TICK),
+                spec.Delay / ElementAnimations.TICK, spec.Easing);
+        }
+
+        private void RetargetOpacity(VisualElement element, TransitionStyleDescriptor transitions,
+            float target, KeyframeAnimation keyframes)
+        {
+            if (keyframes.Drives(StyleIdentifier.OPACITY))
+            {
+                return;
+            }
+
+            SizeTransition transition = element.Animations.OpacityFor();
+
+            if (!transition.HasValue)
+            {
+                transition.Jump(SizeUnit.Pixels, target);
+                return;
+            }
+
+            if (transition.To == target)
+            {
+                return;
+            }
+
+            TransitionSpec spec = transitions == null ? default : transitions.SpecOf(StyleIdentifier.OPACITY);
+
+            if (spec.Duration <= 0)
+            {
+                transition.Jump(SizeUnit.Pixels, target);
+                return;
+            }
+
+            transition.Start(target, Math.Max(1, spec.Duration / ElementAnimations.TICK),
                 spec.Delay / ElementAnimations.TICK, spec.Easing);
         }
 

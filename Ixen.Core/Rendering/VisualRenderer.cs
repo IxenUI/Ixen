@@ -47,12 +47,14 @@ namespace Ixen.Core.Rendering
                 context.PushTransform(Transforms.Of(element));
             }
 
-            OpacityStyleDescriptor opacity = element.StylesHandlers.Opacity.Descriptor;
-            bool layered = opacity.IsTransparent;
+            float opacity = element.HasAnimations
+                ? element.AnimatedOpacity(element.StylesHandlers.Opacity.Descriptor.Value)
+                : element.StylesHandlers.Opacity.Descriptor.Value;
+            bool layered = opacity < OpacityStyleDescriptor.OPAQUE;
 
             if (layered)
             {
-                context.PushOpacity(opacity.Value);
+                context.PushOpacity(opacity);
             }
 
             bool backdrop = element.HasBackdropFilter;

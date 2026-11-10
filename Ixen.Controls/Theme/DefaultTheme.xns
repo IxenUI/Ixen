@@ -690,12 +690,14 @@ $control_focus_soft:   #EEF1FE
     box-shadow: 0px 6px 18px #30000000
     font-size: 13px
     pointer-events: none
+    opacity: 0
     transform: translate(-50% 120px)
-    transition: transform 160ms ease-out
+    transition: transform 160ms ease-out opacity 160ms ease-out
 }
 
 #Toast:shown {
     pointer-events: auto
+    opacity: 1
     transform: translate(-50% 0px)
 }
 

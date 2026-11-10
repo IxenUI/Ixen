@@ -249,6 +249,7 @@ namespace Ixen.Core.Visual
         internal SizeTransition Bottom;
 
         internal TransformTransition Transform;
+        internal SizeTransition Opacity;
         internal ScrollTransition Scroll;
 
         private KeyframeAnimation _keyframes;
@@ -340,6 +341,9 @@ namespace Ixen.Core.Visual
         internal TransformTransition TransformFor()
             => Transform ?? (Transform = new TransformTransition());
 
+        internal SizeTransition OpacityFor()
+            => Opacity ?? (Opacity = new SizeTransition());
+
         internal ScrollTransition ScrollFor()
             => Scroll ?? (Scroll = new ScrollTransition());
 
@@ -348,6 +352,7 @@ namespace Ixen.Core.Visual
                 || (Color != null && Color.Running)
                 || (Border != null && Border.Running)
                 || (Transform != null && Transform.Running)
+                || (Opacity != null && Opacity.Running)
                 || (Scroll != null && Scroll.Running)
                 || HasKeyframes
                 || SizeRunning;
@@ -493,6 +498,7 @@ namespace Ixen.Core.Visual
             Advance(Bottom, Styles.StyleIdentifier.BOTTOM);
 
             AdvanceTransform();
+            Advance(Opacity, Styles.StyleIdentifier.OPACITY);
             AdvanceScroll();
 
             if (sizes && CanBeSeen())
@@ -564,6 +570,7 @@ namespace Ixen.Core.Visual
             Ended(Right != null && Right.Running, Styles.StyleIdentifier.RIGHT, ref transitions);
             Ended(Bottom != null && Bottom.Running, Styles.StyleIdentifier.BOTTOM, ref transitions);
             Ended(Transform != null && Transform.Running, Styles.StyleIdentifier.TRANSFORM, ref transitions);
+            Ended(Opacity != null && Opacity.Running, Styles.StyleIdentifier.OPACITY, ref transitions);
 
             List<string> animations = _element.HasAnimationEndedHandler ? new List<string>() : null;
 
@@ -579,6 +586,7 @@ namespace Ixen.Core.Visual
             Bottom?.Jump(Bottom.Unit, Bottom.To);
 
             Transform?.Jump(Transform.To);
+            Opacity?.Jump(Opacity.Unit, Opacity.To);
 
             if (Scroll != null && Scroll.Running)
             {
