@@ -1348,7 +1348,7 @@ namespace Ixen.Controls
             {
                 DataGridHeaderCell cell = _headerCells[i];
 
-                if (laid < cell.X + cell.ActualWidth / 2)
+                if (laid < cell.ContentX + cell.ContentWidth / 2)
                 {
                     return i;
                 }
