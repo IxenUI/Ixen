@@ -96,6 +96,9 @@ namespace Ixen.Core.Visual.Classes
         internal static bool IsTransformProperty(string identifier)
             => identifier == StyleIdentifier.TRANSFORM;
 
+        internal static bool IsOpacityProperty(string identifier)
+            => identifier == StyleIdentifier.OPACITY;
+
         internal static bool IsColorProperty(string identifier)
             => identifier == StyleIdentifier.BACKGROUND
                 || identifier == StyleIdentifier.COLOR
@@ -166,6 +169,18 @@ namespace Ixen.Core.Visual.Classes
                             Offset = frame.Offset,
                             Unit = size.Unit,
                             Value = size.Value
+                        });
+
+                        continue;
+                    }
+
+                    if (IsOpacityProperty(identifier) && descriptor is OpacityStyleDescriptor opacity)
+                    {
+                        Track(sizes, identifier).Add(new SizeStop
+                        {
+                            Offset = frame.Offset,
+                            Unit = SizeUnit.Pixels,
+                            Value = opacity.Value
                         });
 
                         continue;

@@ -226,6 +226,12 @@ namespace Ixen.Core.Visual
                     _element.Animations.For(identifier).Held = false;
                 }
 
+                if (KeyframesSet.IsOpacityProperty(identifier)
+                    && _element.Animations.Opacity != null)
+                {
+                    _element.Animations.Opacity.Held = false;
+                }
+
                 if (KeyframesSet.IsTransformProperty(identifier)
                     && _element.Animations.Transform != null)
                 {
@@ -347,7 +353,11 @@ namespace Ixen.Core.Visual
                 if (sizes != null)
                 {
                     SizeStop sampled = SampleSize(sizes, progress, instance.Spec.Easing);
-                    _element.Animations.SizeFor(identifier).Hold(sampled.Unit, sampled.Value);
+                    SizeTransition slot = KeyframesSet.IsOpacityProperty(identifier)
+                        ? _element.Animations.OpacityFor()
+                        : _element.Animations.SizeFor(identifier);
+
+                    slot.Hold(sampled.Unit, sampled.Value);
                     continue;
                 }
 
