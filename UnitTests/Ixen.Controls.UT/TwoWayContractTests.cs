@@ -113,6 +113,7 @@ namespace Ixen.Controls.UT
                     "RadioButton.Checked",
                     "RangeSlider.Lower",
                     "RangeSlider.Upper",
+                    "SearchBox.Query",
                     "Slider.Value",
                     "Switch.Checked",
                     "TabControl.SelectedIndex",

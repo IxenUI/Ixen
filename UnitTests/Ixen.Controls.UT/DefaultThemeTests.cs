@@ -420,6 +420,7 @@ namespace Ixen.Controls.UT
                 "MenuPanel #30000000",
                 "DragGhost #30000000",
                 "Toast #30000000",
+                "SearchSuggestions #30000000",
                 "TooltipPanel #40000000",
                 "DialogSheet #50000000",
                 "DialogScrim #99101216"

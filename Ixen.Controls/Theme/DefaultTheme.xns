@@ -714,3 +714,31 @@ $control_focus_soft:   #EEF1FE
     corner-radius: 4px
     cursor: hand
 }
+
+#SearchBox {
+    width: 1*
+    height: ?
+}
+
+#SearchSuggestions {
+    background: $control_panel
+    border: $control_line 1px inner
+    corner-radius: 6px
+    padding: 4px
+    box-shadow: 0px 6px 18px #30000000
+}
+
+#SearchSuggestion {
+    width: 1*
+    height: ?
+    padding: 6px 10px
+    corner-radius: 4px
+    color: $control_text
+    font-size: 13px
+    cursor: hand
+}
+
+#SearchSuggestion:hover,
+#SearchSuggestion:active {
+    background: $control_surface_over
+}
