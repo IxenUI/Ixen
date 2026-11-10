@@ -224,3 +224,7 @@ generated_tokens {
     0%   { background: $generated_accent }
     100% { background: #0000FF }
 }
+
+generated_marquee {
+    text-overflow: marquee
+}

@@ -30,6 +30,11 @@ namespace Ixen.Core.Visual.Styles.Parsers
                     Descriptor.Value = TextOverflow.Ellipsis;
                     break;
 
+                case "marquee":
+                    Descriptor.Value = TextOverflow.Marquee;
+
+                    return parts.Length == 1;
+
                 default:
                     return false;
             }

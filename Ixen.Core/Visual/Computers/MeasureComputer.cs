@@ -20,6 +20,7 @@ namespace Ixen.Core.Visual.Computers
         internal int Measured;
 
         internal float FontScale = 1;
+        internal bool ReducedMotion;
 
         private float _viewportWidth;
         private float _viewportHeight;
@@ -365,12 +366,13 @@ namespace Ixen.Core.Visual.Computers
             }
 
             FontSpec fontSpec = FontSpec.From(element.StylesHandlers, FontScale);
-            TextWrap wrap = element.StylesHandlers.TextWrap.Descriptor.Value;
+            TextOverflowStyleDescriptor overflow = element.StylesHandlers.TextOverflow.Descriptor;
+            bool marquee = overflow.Value == TextOverflow.Marquee;
+            TextWrap wrap = marquee ? TextWrap.NoWrap : element.StylesHandlers.TextWrap.Descriptor.Value;
             bool wraps = wrap != TextWrap.NoWrap;
             bool breakWord = wrap == TextWrap.BreakWord;
-            TextOverflowStyleDescriptor overflow = element.StylesHandlers.TextOverflow.Descriptor;
-            bool ellipsis = overflow.Value == TextOverflow.Ellipsis;
-            int maxLines = overflow.MaxLines;
+            bool ellipsis = overflow.Value == TextOverflow.Ellipsis || (marquee && ReducedMotion);
+            int maxLines = marquee ? 1 : overflow.MaxLines;
 
             float limit = ellipsis ? availableHeight : 0;
 

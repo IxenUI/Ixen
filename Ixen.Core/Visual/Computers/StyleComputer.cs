@@ -43,6 +43,7 @@ namespace Ixen.Core.Visual.Computers
                 Inherit(element);
                 SyncOverflow(element);
                 SyncTransitions(element, registry);
+                SyncMarquee(element);
 
                 element.MustRefreshStyles = false;
                 element.InvalidateLayout();
@@ -80,6 +81,25 @@ namespace Ixen.Core.Visual.Computers
             {
                 ComputeTree(chrome, registry);
             }
+        }
+
+        private static void SyncMarquee(VisualElement element)
+        {
+            bool wanted = element.StylesHandlers.TextOverflow.Descriptor.Value == TextOverflow.Marquee;
+
+            if (wanted == element.MarqueeWanted)
+            {
+                return;
+            }
+
+            element.MarqueeWanted = wanted;
+
+            if (!wanted)
+            {
+                Marquee.Rest(element);
+            }
+
+            (element.Host as IxenSurface)?.SyncMarquee(element);
         }
 
         private static void Follow(VisualElement element)

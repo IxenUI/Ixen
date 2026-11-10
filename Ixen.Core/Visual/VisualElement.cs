@@ -683,6 +683,12 @@ namespace Ixen.Core.Visual
 
         internal TextLayoutCache TextLayout => _textLayout;
 
+        internal bool MarqueeWanted { get; set; }
+
+        internal int MarqueeTicks { get; set; }
+
+        internal float MarqueeOffset { get; set; }
+
         internal TextLayoutCache EnsureTextLayout()
         {
             if (_textLayout == null)
@@ -792,6 +798,12 @@ namespace Ixen.Core.Visual
 
             ListenToCommand(host != null);
             OnHostChanged();
+
+            if (MarqueeWanted)
+            {
+                (previous as IxenSurface)?.SyncMarquee(this);
+                (host as IxenSurface)?.SyncMarquee(this);
+            }
 
             if (host == null)
             {

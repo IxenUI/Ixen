@@ -218,7 +218,7 @@ namespace Ixen.Core.Visual.Styles
                         TextDecorationStyleParser.LINE_THROUGH, TextDecorationStyleParser.OVERLINE }),
 
                 Define(StyleIdentifier.TEXT_OVERFLOW, v => new TextOverflowStyleParser(v),
-                    p => ((TextOverflowStyleParser)p).Descriptor, new[] { "clip", "ellipsis" }),
+                    p => ((TextOverflowStyleParser)p).Descriptor, new[] { "clip", "ellipsis", "marquee" }),
 
                 Define(StyleIdentifier.TEXT_WRAP, v => new TextWrapStyleParser(v),
                     p => ((TextWrapStyleParser)p).Descriptor, new[] { "wrap", "nowrap", "break-word" }),

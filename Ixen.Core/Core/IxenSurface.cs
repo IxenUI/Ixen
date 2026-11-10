@@ -230,6 +230,7 @@ namespace Ixen.Core
 
             _measureComputer.Measured = 0;
             _measureComputer.FontScale = _fontScale;
+            _measureComputer.ReducedMotion = _reducedMotion;
 
             for (int pass = 0; pass < CONTAINER_PASSES; pass++)
             {
@@ -267,7 +268,7 @@ namespace Ixen.Core
 
             RefreshInput();
 
-            if (_framed.Count > 0)
+            if (_framed.Count > 0 || _marquees.Count > 0)
             {
                 SyncAnimationTicker();
             }
@@ -855,6 +856,12 @@ namespace Ixen.Core
                 _reducedMotion = value;
                 _preferencesChanged = true;
 
+                for (int index = 0; index < _marquees.Count; index++)
+                {
+                    Marquee.Rest(_marquees[index]);
+                    _marquees[index].InvalidateLayout();
+                }
+
                 if (!value)
                 {
                     SyncAnimationTicker();
@@ -1024,9 +1031,98 @@ namespace Ixen.Core
             }
         }
 
+        private readonly List<VisualElement> _marquees = new List<VisualElement>();
+        private readonly List<VisualElement> _scrolling = new List<VisualElement>();
+
+        internal int MarqueeCount => _marquees.Count;
+
+        internal void SyncMarquee(VisualElement element)
+        {
+            if (element.MarqueeWanted && element.Host == this)
+            {
+                if (!_marquees.Contains(element))
+                {
+                    _marquees.Add(element);
+                }
+            }
+            else
+            {
+                _marquees.Remove(element);
+            }
+
+            SyncAnimationTicker();
+        }
+
+        private static bool CanBeSeen(VisualElement element)
+        {
+            if (element.Clip != null && element.Clip.IsVoidOrInvalid)
+            {
+                return false;
+            }
+
+            for (VisualElement ancestor = element; ancestor != null; ancestor = ancestor.Parent)
+            {
+                if (ancestor.IsHidden)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool Moves(VisualElement element)
+            => element.Host == this && element.MarqueeWanted && CanBeSeen(element) && Marquee.Overflows(element);
+
+        private bool AnyMarqueeMoves()
+        {
+            for (int index = 0; index < _marquees.Count; index++)
+            {
+                if (Moves(_marquees[index]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void TickMarquees()
+        {
+            if (_reducedMotion || _marquees.Count == 0)
+            {
+                return;
+            }
+
+            _scrolling.Clear();
+            _scrolling.AddRange(_marquees);
+
+            for (int index = 0; index < _scrolling.Count; index++)
+            {
+                VisualElement element = _scrolling[index];
+
+                if (element.Host != this || !element.MarqueeWanted)
+                {
+                    _marquees.Remove(element);
+                    continue;
+                }
+
+                bool moved = Moves(element) ? Marquee.Advance(element) : Marquee.Rest(element);
+
+                if (!moved)
+                {
+                    continue;
+                }
+
+                _visualDirty = true;
+
+                AddDamage(element);
+            }
+        }
+
         private void SyncAnimationTicker()
         {
-            bool framing = !_reducedMotion && AnyFramedCanBeSeen();
+            bool framing = !_reducedMotion && (AnyFramedCanBeSeen() || AnyMarqueeMoves());
 
             if (_scheduler == null || (_animating.Count == 0 && !framing) || !_presentable)
             {
@@ -1082,6 +1178,7 @@ namespace Ixen.Core
             }
 
             TickFrames();
+            TickMarquees();
             SyncAnimationTicker();
         }
 

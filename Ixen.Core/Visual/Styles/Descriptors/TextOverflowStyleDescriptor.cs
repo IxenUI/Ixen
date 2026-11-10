@@ -3,7 +3,8 @@ namespace Ixen.Core.Visual.Styles.Descriptors
     public enum TextOverflow
     {
         Clip,
-        Ellipsis
+        Ellipsis,
+        Marquee
     }
 
     public class TextOverflowStyleDescriptor : StyleDescriptor

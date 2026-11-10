@@ -84,6 +84,12 @@ namespace Ixen.Core.Rendering
                 }
             }
 
+            if (element.MarqueeWanted && Marquee.Overflows(element))
+            {
+                RenderMarquee(element, lines[0], context, handlers, fontSpec, top);
+                return;
+            }
+
             foreach (string line in lines)
             {
                 float x = contentLeft;
@@ -101,6 +107,32 @@ namespace Ixen.Core.Rendering
 
                 top += lineHeight;
             }
+        }
+
+        private static void RenderMarquee(VisualElement element, string line, RendererContext context,
+            VisualElementStylesHandlers handlers, FontSpec fontSpec, float top)
+        {
+            float left = element.TextSlotX;
+            float x = left - element.MarqueeOffset;
+
+            context.PushClip(left, element.TextSlotY, element.TextSlotWidth, element.TextSlotHeight, null);
+
+            DrawLine(line, x, top, context, handlers, fontSpec);
+
+            if (element.MarqueeOffset > 0)
+            {
+                DrawLine(line, x + element.TextLayout.Width + Marquee.GAP, top, context, handlers, fontSpec);
+            }
+
+            context.PopClip();
+        }
+
+        private static void DrawLine(string line, float x, float top, RendererContext context,
+            VisualElementStylesHandlers handlers, FontSpec fontSpec)
+        {
+            context.DrawTextShadow(line, x, top, fontSpec, handlers.TextShadow.Descriptor);
+            context.DrawText(line, x, top, fontSpec, handlers.Color.Brush);
+            context.DrawTextDecoration(line, x, top, fontSpec, handlers.TextDecoration.Descriptor, handlers.Color.Brush);
         }
 
         private void RenderField(TextField field, List<string> lines, RendererContext context,
