@@ -299,18 +299,25 @@ $control_focus_soft:   #EEF1FE
     corner-radius: 2px
 }
 
+#SliderBuffer {
+    background: $control_line
+    corner-radius: 2px
+}
+
 #SliderFill {
     background: $control_focus
     corner-radius: 2px
 }
 
 #SliderTrack:horizontal,
+#SliderBuffer:horizontal,
 #SliderFill:horizontal {
     top: 7px
     height: 4px
 }
 
 #SliderTrack:vertical,
+#SliderBuffer:vertical,
 #SliderFill:vertical {
     left: 7px
     width: 4px

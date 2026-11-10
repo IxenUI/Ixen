@@ -15,11 +15,19 @@ namespace Ixen.Controls
         public const string VERTICAL = "vertical";
         public const string HORIZONTAL = "horizontal";
 
+        public const string BUFFER = "SliderBuffer";
+
         public event EventHandler<EventArgs> ValueChanged;
+        public event EventHandler<EventArgs> ValueCommitted;
 
         private readonly VisualElement _track;
+        private readonly VisualElement _buffer;
         private readonly VisualElement _fill;
         private readonly VisualElement _thumb;
+
+        private bool _holding;
+        private float _heldFrom;
+        private float _buffered = float.NaN;
 
         private float _minimum;
         private float _maximum = 100;
@@ -36,23 +44,62 @@ namespace Ixen.Controls
             Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Absolute };
 
             VisualElement track = Part(TRACK);
+            _buffer = Part(BUFFER);
             _fill = Part(FILL);
             _thumb = Part(THUMB);
 
             track.Role = AccessibleRole.Presentation;
+            _buffer.Role = AccessibleRole.Presentation;
             _fill.Role = AccessibleRole.Presentation;
             _thumb.Role = AccessibleRole.Presentation;
 
             _track = track;
 
-            AddChildren(track, _fill, _thumb);
+            AddChildren(track, _buffer, _fill, _thumb);
 
             Orient();
 
             PointerDown += OnPointerDown;
+            PointerUp += OnPointerUp;
             PointerDragStart += OnDrag;
             PointerDrag += OnDrag;
+            PointerDragEnd += OnDragEnd;
+            PointerWheel += OnWheel;
             KeyDown += OnKeyDown;
+        }
+
+        public bool IsInteracting => _holding;
+
+        public bool AcceptsWheel { get; set; }
+
+        public float Buffered
+        {
+            get => _buffered;
+            set
+            {
+                if (value.Equals(_buffered))
+                {
+                    return;
+                }
+
+                _buffered = value;
+
+                Layout();
+            }
+        }
+
+        private float FractionOf(float value)
+        {
+            float span = _maximum - _minimum;
+
+            if (span <= 0 || float.IsNaN(value))
+            {
+                return 0;
+            }
+
+            float fraction = (value - _minimum) / span;
+
+            return fraction < 0 ? 0 : (fraction > 1 ? 1 : fraction);
         }
 
         private static VisualElement Part(string typeName) => new VisualElement { TypeName = typeName };
@@ -75,7 +122,7 @@ namespace Ixen.Controls
 
         private void Orient()
         {
-            foreach (VisualElement element in new[] { this, _track, _fill, _thumb })
+            foreach (VisualElement element in new[] { this, _track, _buffer, _fill, _thumb })
             {
                 element.ToggleState(VERTICAL, _vertical);
                 element.ToggleState(HORIZONTAL, !_vertical);
@@ -86,10 +133,13 @@ namespace Ixen.Controls
             _track.Styles.Top = _vertical ? new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 } : new TopStyleDescriptor();
             _track.Styles.Bottom = _vertical ? new BottomStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 } : new BottomStyleDescriptor();
 
-            _fill.Styles.Left = _vertical ? new LeftStyleDescriptor() : new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
-            _fill.Styles.Width = _vertical ? new WidthStyleDescriptor() : new WidthStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 };
-            _fill.Styles.Bottom = _vertical ? new BottomStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 } : new BottomStyleDescriptor();
-            _fill.Styles.Height = _vertical ? new HeightStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 } : new HeightStyleDescriptor();
+            foreach (VisualElement bar in new[] { _buffer, _fill })
+            {
+                bar.Styles.Left = _vertical ? new LeftStyleDescriptor() : new LeftStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+                bar.Styles.Width = _vertical ? new WidthStyleDescriptor() : new WidthStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 };
+                bar.Styles.Bottom = _vertical ? new BottomStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 } : new BottomStyleDescriptor();
+                bar.Styles.Height = _vertical ? new HeightStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 } : new HeightStyleDescriptor();
+            }
 
             _thumb.Styles.Left = _vertical ? new LeftStyleDescriptor() : new LeftStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 };
             _thumb.Styles.Top = _vertical ? new TopStyleDescriptor { Unit = SizeUnit.Percents, Value = 0 } : new TopStyleDescriptor();
@@ -108,7 +158,7 @@ namespace Ixen.Controls
                 }
             };
 
-            foreach (VisualElement part in new[] { _track, _fill, _thumb })
+            foreach (VisualElement part in new[] { _track, _buffer, _fill, _thumb })
             {
                 part.Invalidate();
             }
@@ -147,7 +197,15 @@ namespace Ixen.Controls
         public float Value
         {
             get => _value;
-            set => Set(value, false);
+            set
+            {
+                if (_holding)
+                {
+                    return;
+                }
+
+                Set(value, false);
+            }
         }
 
         public float Fraction
@@ -208,19 +266,61 @@ namespace Ixen.Controls
         private void Layout()
         {
             float percent = Fraction * 100;
+            float buffered = FractionOf(_buffered) * 100;
 
             if (_vertical)
             {
                 _fill.Styles.Height.Value = percent;
+                _buffer.Styles.Height.Value = buffered;
                 _thumb.Styles.Top.Value = 100 - percent;
             }
             else
             {
                 _fill.Styles.Width.Value = percent;
+                _buffer.Styles.Width.Value = buffered;
                 _thumb.Styles.Left.Value = percent;
             }
 
+            _buffer.InvalidateLayout();
             InvalidateLayout();
+        }
+
+        private void Hold()
+        {
+            if (_holding)
+            {
+                return;
+            }
+
+            _holding = true;
+            _heldFrom = _value;
+        }
+
+        private void Release()
+        {
+            if (!_holding)
+            {
+                return;
+            }
+
+            _holding = false;
+
+            if (_value != _heldFrom)
+            {
+                ValueCommitted?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        private void Commit(float value)
+        {
+            float before = _value;
+
+            Interact(value);
+
+            if (_value != before)
+            {
+                ValueCommitted?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         private void Interact(float value)
@@ -251,14 +351,43 @@ namespace Ixen.Controls
         {
             args.Handled = true;
 
+            if (!IsEnabled)
+            {
+                return;
+            }
+
+            Hold();
             Interact(ValueAt(args.X, args.Y));
         }
+
+        private void OnPointerUp(object sender, PointerEventArgs args) => Release();
 
         private void OnDrag(object sender, DragEventArgs args)
         {
             args.Handled = true;
 
             Interact(ValueAt(args.X, args.Y));
+        }
+
+        private void OnDragEnd(object sender, DragEventArgs args) => Release();
+
+        private void OnWheel(object sender, WheelEventArgs args)
+        {
+            if (!AcceptsWheel || !IsEnabled || _holding)
+            {
+                return;
+            }
+
+            float notches = args.DeltaY != 0 ? args.DeltaY : args.DeltaX;
+
+            if (notches == 0)
+            {
+                return;
+            }
+
+            args.Handled = true;
+
+            Commit(_value + notches * KeyStep);
         }
 
         private float KeyStep => _step > 0 ? _step : (_maximum - _minimum) / 100;
@@ -269,7 +398,7 @@ namespace Ixen.Controls
 
         bool IAccessibleRange.CanSetValue => IsEnabled;
 
-        void IAccessibleRange.SetValue(float value) => Interact(value);
+        void IAccessibleRange.SetValue(float value) => Commit(value);
 
         private void OnKeyDown(object sender, KeyEventArgs args)
         {
@@ -280,33 +409,33 @@ namespace Ixen.Controls
                 case Key.Left:
                 case Key.Down:
                     args.Handled = true;
-                    Interact(_value - amount);
+                    Commit(_value - amount);
                     break;
 
                 case Key.Right:
                 case Key.Up:
                     args.Handled = true;
-                    Interact(_value + amount);
+                    Commit(_value + amount);
                     break;
 
                 case Key.PageDown:
                     args.Handled = true;
-                    Interact(_value - (amount * 10));
+                    Commit(_value - (amount * 10));
                     break;
 
                 case Key.PageUp:
                     args.Handled = true;
-                    Interact(_value + (amount * 10));
+                    Commit(_value + (amount * 10));
                     break;
 
                 case Key.Home:
                     args.Handled = true;
-                    Interact(_minimum);
+                    Commit(_minimum);
                     break;
 
                 case Key.End:
                     args.Handled = true;
-                    Interact(_maximum);
+                    Commit(_maximum);
                     break;
             }
         }
