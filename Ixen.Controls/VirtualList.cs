@@ -653,6 +653,16 @@ namespace Ixen.Controls
             int columns = ColumnsFor(ContentWidth);
             bool reflowed = columns != _columns;
 
+            if (reflowed && _shownColumns > 0 && columns != _shownColumns)
+            {
+                KeepTopItem(_shownColumns, columns);
+            }
+
+            if (ContentWidth > 0)
+            {
+                _shownColumns = columns;
+            }
+
             _columns = columns;
 
             if (reflowed && _measures)
@@ -804,6 +814,22 @@ namespace Ixen.Controls
                 row.ToggleState(DROP_TARGET, index == _onto);
                 row.Invalidate();
             }
+        }
+
+        private int _shownColumns;
+
+        private void KeepTopItem(int before, int after)
+        {
+            if (_itemHeight <= 0 || ScrollY <= 0 || _heights != null || _measures)
+            {
+                return;
+            }
+
+            int row = (int)(ScrollY / _itemHeight);
+            float within = ScrollY - row * _itemHeight;
+            int top = row * before;
+
+            ScrollY = (top / after) * _itemHeight + within;
         }
 
         private void PlaceColumns(VisualElement row)

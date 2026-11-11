@@ -74,6 +74,56 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
+        public void AResizeKeepsTheItemAtTheTopInView()
+        {
+            _list.ScrollY = 10 * ITEM + 20;
+            Layout();
+
+            Assert.AreEqual(30, _list.FirstRealised + 3, "row 10 of three columns starts with item 30, one row of overscan above");
+
+            _holder.Styles.Width.Value = 434;
+            _holder.Invalidate();
+            Layout();
+
+            Assert.AreEqual(7, _list.Columns);
+            Assert.AreEqual(4 * ITEM + 20, _list.ScrollY, 0.01f,
+                "item 30 is on row 4 of seven columns, and the 20 units it was scrolled into its row stay: "
+                + "the offset alone kept the place in pixels and showed items 70 and on");
+        }
+
+        [TestMethod]
+        public void ARestoredGridStaysWhereItWasSaved()
+        {
+            _list.PersistScroll = true;
+            _list.ScrollY = 10 * ITEM;
+            Layout();
+
+            string saved = _surface.SaveState();
+
+            var root = new VisualElement { Name = "root" };
+            root.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
+
+            var holder = new VisualElement { Name = "holder" };
+            holder.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 214 };
+            holder.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 200 };
+
+            var again = new VirtualList { Name = "albums", ItemHeight = ITEM, ItemWidth = 60, PersistScroll = true };
+            again.SetItems(_albums, () => new VisualElement(), (cell, index) => cell.Text = _albums[index]);
+
+            holder.AddChild(again);
+            root.AddChild(holder);
+
+            var surface = new IxenSurface(root) { Styles = new StyleRegistry(), Scheduler = new FakeScheduler() };
+
+            surface.RestoreState(saved);
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Assert.AreEqual(10 * ITEM, again.ScrollY, 0.01f,
+                "its first pass has no width, so one column; going to three is not a reflow anyone saw, "
+                + "and keeping the top item across it would have undone the restore");
+        }
+
+        [TestMethod]
         public void AResizeReflowsWithinTheFrameThatMadeIt()
         {
             _holder.Styles.Width.Value = 434;
