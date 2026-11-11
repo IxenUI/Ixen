@@ -333,6 +333,17 @@ namespace Ixen.Core.Components
         protected void Load<T>(AsyncValue<T> value, Func<Task<T>> work)
             => Load(value, work == null ? (Func<CancellationToken, Task<T>>)null : token => work());
 
+        protected void Load<T>(AsyncValue<T> value, Func<CancellationToken, Task<T>> work, LoadOptions options)
+        {
+            if (options == null || work == null)
+            {
+                Load(value, work);
+                return;
+            }
+
+            Load(value, token => options.Run(work, token));
+        }
+
         protected void Load<T>(AsyncValue<T> value, Func<CancellationToken, Task<T>> work)
         {
             if (value == null)
