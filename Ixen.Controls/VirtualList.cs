@@ -829,9 +829,11 @@ namespace Ixen.Controls
 
         internal bool IsOwnDrag(object data) => IsOwn(data);
 
-        public int DroppedFrom { get; private set; } = -1;
+        public IReadOnlyList<int> DroppedRows { get; private set; }
 
-        internal int DraggedIndex => _group == null || _group.Count == 0 ? -1 : _group[0];
+        internal int DroppedGap { get; private set; } = -1;
+
+        internal IReadOnlyList<int> DraggedRows => _group;
 
         private bool Welcomes(object data)
         {
@@ -993,12 +995,12 @@ namespace Ixen.Controls
 
             if (onto >= 0)
             {
-                DroppedFrom = IsOwn(args.Data) ? DraggedIndex : -1;
+                DroppedRows = IsOwn(args.Data) ? _group : null;
 
                 EndReorder();
 
                 DroppedOnto?.Invoke(this, new ListDropEventArgs(args.Data, onto));
-                DroppedFrom = -1;
+                DroppedRows = null;
                 Reset();
 
                 return;
@@ -1035,7 +1037,9 @@ namespace Ixen.Controls
 
             var move = new ReorderEventArgs(group, to);
 
+            DroppedGap = gap;
             Reordered?.Invoke(this, move);
+            DroppedGap = -1;
             Reset();
 
             if (AnnouncesMoves)

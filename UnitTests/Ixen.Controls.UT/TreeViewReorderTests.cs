@@ -99,6 +99,105 @@ namespace Ixen.Controls.UT
             Layout();
         }
 
+        private void SelectRows(params int[] rows)
+        {
+            _tree.MultiSelect = true;
+            _tree.Select(rows[0]);
+
+            for (int i = 1; i < rows.Length; i++)
+            {
+                _tree.ToggleSelection(rows[i]);
+            }
+
+            Layout();
+        }
+
+        private void DragOnto(int from, int row)
+        {
+            VirtualList rows = _tree.Rows;
+            float x = rows.ContentX + 60;
+            float y = rows.ContentY + from * ROW + ROW / 2;
+            float to = rows.ContentY + row * ROW + ROW / 2;
+
+            _surface.PointerDown(x, y, PointerButton.Left);
+            _surface.PointerMove(x, y + (to > y ? 6 : -6));
+            Layout();
+            _surface.PointerMove(x, to);
+            Layout();
+            _surface.PointerUp(x, to, PointerButton.Left);
+            Layout();
+        }
+
+        [TestMethod]
+        public void ASelectionFromTwoFoldersTravelsAsOneBlock()
+        {
+            SelectRows(2, 4);
+
+            Drag(4, 0);
+
+            Assert.AreEqual(1, _moves.Count, "one event for the block");
+            Assert.AreEqual(2, _moves[0].Count);
+            Assert.IsTrue(_moves[0].ChangesParent);
+            Assert.AreEqual("Letters,Music,Documents,Pictures", Names(_roots), "in the order they were shown");
+            Assert.AreEqual("Reports", Names(_documents.Children));
+            Assert.AreEqual("2 items moved to positions 1 to 2 of 4", _tree.Rows.Status.Text);
+        }
+
+        [TestMethod]
+        public void ABlockDroppedOnAFolderGoesLastInsideIt()
+        {
+            SelectRows(3, 4);
+
+            DragOnto(3, 1);
+
+            Assert.AreEqual("2024,2025,Pictures,Music", Names(_reports.Children));
+            Assert.AreEqual("Documents", Names(_roots));
+        }
+
+        [TestMethod]
+        public void AChildWhoseFolderIsAlsoSelectedTravelsInsideIt()
+        {
+            SelectRows(0, 2);
+
+            Drag(0, 5);
+
+            Assert.AreEqual(1, _moves[0].Count, "Letters is already carried by Documents");
+            Assert.AreEqual("Pictures,Music,Documents", Names(_roots));
+            Assert.AreEqual("Reports,Letters", Names(_documents.Children), "and stays where it was inside it");
+        }
+
+        [TestMethod]
+        public void ABlockDroppedWhereItAlreadyIsMovesNothing()
+        {
+            SelectRows(3, 4);
+
+            Assert.IsFalse(_tree.MoveRows(new[] { 3, 4 }, 4), "before Music, which is itself in the block");
+            Assert.IsFalse(_tree.MoveRows(new[] { 3, 4 }, 5));
+            Assert.AreEqual(0, _moves.Count);
+        }
+
+        [TestMethod]
+        public void ABlockCannotGoInsideOneOfItsOwnFolders()
+        {
+            SelectRows(0, 3);
+
+            DragOnto(3, 1);
+
+            Assert.AreEqual(0, _moves.Count, "Reports is inside Documents, which is in the block");
+            Assert.AreEqual("Documents,Pictures,Music", Names(_roots));
+        }
+
+        [TestMethod]
+        public void AnUnselectedRowMovesAlone()
+        {
+            SelectRows(3, 4);
+
+            Drag(2, 0);
+
+            Assert.AreEqual(1, _moves[0].Count);
+            Assert.AreEqual("Letters,Documents,Pictures,Music", Names(_roots));
+        }
+
         [TestMethod]
         public void TheStartingTreeIsWhatTheTestsThinkItIs()
         {
