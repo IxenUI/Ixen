@@ -28,6 +28,7 @@ IXEN_API_ENTRY unsigned int WA_GetWindowDpi(NativeWindow* window);
 IXEN_API_ENTRY void WA_RegisterSuspendCallBack(NativeWindow* window, void __stdcall callBack());
 IXEN_API_ENTRY void WA_RegisterSystemCallBack(NativeWindow* window, void __stdcall callBack(int));
 IXEN_API_ENTRY void WA_RegisterHitTestCallBack(NativeWindow* window, int __stdcall callBack(int, int));
+IXEN_API_ENTRY void WA_RegisterTouchCallBack(NativeWindow* window, void __stdcall callBack(int, int, int, int));
 IXEN_API_ENTRY void WA_SetWindowExtended(NativeWindow* window, int value);
 IXEN_API_ENTRY int WA_CreateGlContext(NativeWindow* window);
 IXEN_API_ENTRY int WA_EnsureGlContext(NativeWindow* window);

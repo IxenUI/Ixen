@@ -26,6 +26,7 @@ namespace Ixen.Platform.Windows
         private readonly WindowApi.OnSuspendCallBack _onSuspend;
         private readonly WindowApi.OnSystemCallBack _onSystem;
         private readonly WindowApi.OnHitTestCallBack _onHitTest;
+        private readonly WindowApi.OnTouchCallBack _onTouch;
         private readonly WindowsWindowControl _window;
 
         private readonly UiaBridge _accessibility;
@@ -54,6 +55,7 @@ namespace Ixen.Platform.Windows
             _onSuspend = OnSuspend;
             _onSystem = OnSystem;
             _onHitTest = OnHitTest;
+            _onTouch = OnTouch;
             _windowPtr = WindowApi.CreateWindow(_ixenSurface.InitOptions.Title, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
@@ -95,6 +97,7 @@ namespace Ixen.Platform.Windows
             WindowApi.RegisterDropCallBack(_windowPtr, _onDrop);
             WindowApi.RegisterSuspendCallBack(_windowPtr, _onSuspend);
             WindowApi.RegisterSystemCallBack(_windowPtr, _onSystem);
+            WindowApi.RegisterTouchCallBack(_windowPtr, _onTouch);
 
             return WindowApi.ShowWindow(_windowPtr);
         }
@@ -230,6 +233,28 @@ namespace Ixen.Platform.Windows
                 {
                     _icons.Apply(WindowApi.GetWindowHandle(_windowPtr), bitmap, WindowApi.GetWindowDpi(_windowPtr));
                 }
+            }
+        }
+
+        private void OnTouch(int kind, int x, int y, int id)
+        {
+            switch ((NativePointerKind)kind)
+            {
+                case NativePointerKind.Move:
+                    _host.PointerMove(x, y, PointerKind.Touch, id);
+                    break;
+
+                case NativePointerKind.Down:
+                    _host.PointerDown(x, y, PointerButton.Left, PointerKind.Touch, id, HeldModifiers());
+                    break;
+
+                case NativePointerKind.Up:
+                    _host.PointerUp(x, y, PointerButton.Left, PointerKind.Touch, id, HeldModifiers());
+                    break;
+
+                case NativePointerKind.CaptureLost:
+                    _host.PointerCaptureLost();
+                    break;
             }
         }
 

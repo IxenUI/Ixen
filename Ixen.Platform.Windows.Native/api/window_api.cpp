@@ -199,6 +199,14 @@ void WA_RegisterHitTestCallBack(NativeWindow* window, int __stdcall callBack(int
     }
 }
 
+void WA_RegisterTouchCallBack(NativeWindow* window, void __stdcall callBack(int, int, int, int))
+{
+    if (window)
+    {
+        window->SetOnTouchCallBack(callBack);
+    }
+}
+
 void WA_SetWindowExtended(NativeWindow* window, int value)
 {
     if (window)

@@ -81,7 +81,8 @@ namespace Ixen.Core.UT.Native
             { "_dropCallBack", "OnDropCallBack" },
             { "_suspendCallBack", "OnSuspendCallBack" },
             { "_systemCallBack", "OnSystemCallBack" },
-            { "_hitTestCallBack", "OnHitTestCallBack" }
+            { "_hitTestCallBack", "OnHitTestCallBack" },
+            { "_touchCallBack", "OnTouchCallBack" }
         };
 
         private static readonly Dictionary<string, string> _returns

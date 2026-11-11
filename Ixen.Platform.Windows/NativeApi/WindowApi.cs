@@ -19,6 +19,7 @@ namespace Ixen.Platform.Windows.NativeApi
         public delegate void OnSuspendCallBack();
         public delegate void OnSystemCallBack(int kind);
         public delegate int OnHitTestCallBack(int x, int y);
+        public delegate void OnTouchCallBack(int kind, int x, int y, int id);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr CreateWindow([MarshalAs(UnmanagedType.LPWStr)] string title, int width, int height);
@@ -86,6 +87,9 @@ namespace Ixen.Platform.Windows.NativeApi
 
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterHitTestCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterHitTestCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnHitTestCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterTouchCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterTouchCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnTouchCallBack callback);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowExtended", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetWindowExtended(IntPtr windowPtr, int value);

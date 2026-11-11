@@ -29,6 +29,7 @@ namespace IxenWindowsNative
         void (*_suspendCallBack)() = nullptr;
         void (*_systemCallBack)(int) = nullptr;
         int (*_hitTestCallBack)(int, int) = nullptr;
+        void (*_touchCallBack)(int, int, int, int) = nullptr;
         void* _pixelsBuffer = nullptr;
         bool _extended = false;
         int _logicalWidth = 0;
@@ -49,6 +50,7 @@ namespace IxenWindowsNative
         LRESULT HandlePaint();
         LRESULT HandlePointer(int kind, int button, LPARAM lParam);
         LRESULT HandleMouseLeave();
+        bool HandleTouch(UINT msg, WPARAM wParam, LPARAM lParam);
         LRESULT HandleCaptureLost();
         LRESULT HandleDpiChanged(LPARAM lParam);
         LRESULT HandleDisplayChange();
@@ -102,6 +104,7 @@ namespace IxenWindowsNative
         void SetOnSystemCallBack(void __stdcall callback(int)) { _systemCallBack = callback; }
         void SetAcceptsFiles(bool value);
         void SetOnHitTestCallBack(int __stdcall callback(int, int)) { _hitTestCallBack = callback; }
+        void SetOnTouchCallBack(void __stdcall callback(int, int, int, int)) { _touchCallBack = callback; }
         void SetExtended(bool value);
     };
 }

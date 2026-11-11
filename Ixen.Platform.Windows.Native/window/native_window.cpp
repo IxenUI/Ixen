@@ -896,6 +896,50 @@ LRESULT NativeWindow::HandleCaptureLost()
     return 0;
 }
 
+bool NativeWindow::HandleTouch(UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if (_touchCallBack == nullptr)
+    {
+        return false;
+    }
+
+    UINT32 id = GET_POINTERID_WPARAM(wParam);
+    POINTER_INPUT_TYPE type = PT_POINTER;
+
+    if (!GetPointerType(id, &type) || type != PT_TOUCH)
+    {
+        return false;
+    }
+
+    if (msg == WM_POINTERCAPTURECHANGED)
+    {
+        _touchCallBack(IXEN_POINTER_CAPTURELOST, 0, 0, (int)id);
+        return true;
+    }
+
+    POINT point = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+    ScreenToClient(_handle, &point);
+
+    int kind = IXEN_POINTER_MOVE;
+
+    if (msg == WM_POINTERDOWN)
+    {
+        kind = IXEN_POINTER_DOWN;
+    }
+    else if (msg == WM_POINTERUP)
+    {
+        kind = IS_POINTER_CANCELED_WPARAM(wParam) ? IXEN_POINTER_CAPTURELOST : IXEN_POINTER_UP;
+    }
+    else if (!IS_POINTER_INCONTACT_WPARAM(wParam))
+    {
+        return true;
+    }
+
+    _touchCallBack(kind, point.x, point.y, (int)id);
+
+    return true;
+}
+
 LRESULT NativeWindow::HandleMouseLeave()
 {
     _trackingMouse = false;
@@ -949,6 +993,17 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
         return HandleDestroy();
     case WM_PAINT:
         return HandlePaint();
+
+    case WM_POINTERDOWN:
+    case WM_POINTERUPDATE:
+    case WM_POINTERUP:
+    case WM_POINTERCAPTURECHANGED:
+        if (HandleTouch(msg, wParam, lParam))
+        {
+            return 0;
+        }
+
+        break;
 
     case WM_MOUSEMOVE:
         return HandlePointer(IXEN_POINTER_MOVE, IXEN_BUTTON_NONE, lParam);
