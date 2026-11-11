@@ -28,7 +28,10 @@ namespace Ixen.Core.Rendering
             internal byte[] Encoded;
             internal volatile float WantedWidth;
             internal volatile float WantedHeight;
+            internal int Needed = NOT_DRAWN;
         }
+
+        private const int NOT_DRAWN = int.MaxValue;
 
         private sealed class Arrival
         {
@@ -173,6 +176,11 @@ namespace Ixen.Core.Rendering
             }
 
             int divisor = DivisorFor(entry, width, height);
+
+            if (divisor < entry.Needed)
+            {
+                entry.Needed = divisor;
+            }
 
             if (entry.Bitmap != null && entry.Divisor <= divisor)
             {
@@ -327,22 +335,51 @@ namespace Ixen.Core.Rendering
 
             _trimmedAt = _clock;
 
-            for (int pass = 0; pass < 2 && _bytes > Budget; pass++)
+            for (int pass = 0; pass < 3 && _bytes > Budget; pass++)
             {
-                bool pixelsOnly = pass == 0;
-
                 while (_bytes > Budget)
                 {
-                    string oldest = Oldest(shown, pixelsOnly);
+                    string chosen = pass == 1 ? Oversized() : Oldest(shown, pass == 0);
 
-                    if (oldest == null)
+                    if (chosen == null)
                     {
                         break;
                     }
 
-                    Evict(oldest, pixelsOnly);
+                    Evict(chosen, pass < 2);
                 }
             }
+
+            foreach (KeyValuePair<string, Entry> entry in _entries)
+            {
+                entry.Value.Needed = NOT_DRAWN;
+            }
+        }
+
+        private string Oversized()
+        {
+            string largest = null;
+            long bytes = 0;
+            bool rereadable = !(_source is IAsyncImageSource);
+
+            foreach (KeyValuePair<string, Entry> candidate in _entries)
+            {
+                Entry entry = candidate.Value;
+
+                if (entry.Bitmap == null || entry.Vector != null || entry.Needed == NOT_DRAWN
+                    || entry.Divisor >= entry.Needed || (entry.Encoded == null && !rereadable))
+                {
+                    continue;
+                }
+
+                if (entry.Bitmap.ByteCount > bytes)
+                {
+                    bytes = entry.Bitmap.ByteCount;
+                    largest = candidate.Key;
+                }
+            }
+
+            return largest;
         }
 
         private string Oldest(long shown, bool pixelsOnly)
@@ -536,12 +573,26 @@ namespace Ixen.Core.Rendering
                         return null;
                     }
 
+                    SKSizeI natural = codec.Info.Size;
                     SKSizeI wanted = codec.GetScaledDimensions(1f / divisor);
                     SKImageInfo info = codec.Info
                         .WithSize(wanted.Width, wanted.Height)
                         .WithColorType(SKImageInfo.PlatformColorType);
 
-                    return SKBitmap.Decode(codec, info);
+                    SKBitmap decoded = SKBitmap.Decode(codec, info);
+                    int width = natural.Width / divisor;
+                    int height = natural.Height / divisor;
+
+                    if (decoded == null || decoded.Width <= width || width < 1 || height < 1)
+                    {
+                        return decoded;
+                    }
+
+                    using (decoded)
+                    {
+                        return decoded.Resize(decoded.Info.WithSize(width, height),
+                            new SKSamplingOptions(SKCubicResampler.Mitchell));
+                    }
                 }
             }
             catch
