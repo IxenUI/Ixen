@@ -83,6 +83,8 @@ namespace Ixen.Core.Visual.Computers
 
         private void ComputeElementClip(VisualElement element, bool transformed)
         {
+            element.InTransformedTree = transformed;
+
             if (element.HasShortcut)
             {
                 _shortcuts?.Add(element);

@@ -696,13 +696,7 @@ namespace Ixen.Core
 
             if (element.StylesHandlers != null && clip != null && !clip.IsVoidOrInvalid)
             {
-                float margin = PaintMargin(element);
-
-                left = clip.X - margin;
-                top = clip.Y - margin;
-                right = clip.X + clip.ActualWidth + margin;
-                bottom = clip.Y + clip.ActualHeight + margin;
-                visible = true;
+                visible = PaintBounds(element, PaintMargin(element), out left, out top, out right, out bottom);
             }
             else if (repaint && element.StylesHandlers == null)
             {
@@ -767,11 +761,120 @@ namespace Ixen.Core
                 return;
             }
 
-            float margin = PaintMargin(element) + extra;
+            if (PaintBounds(element, PaintMargin(element) + extra,
+                out float left, out float top, out float right, out float bottom))
+            {
+                _damage.Add(left, top, right - left, bottom - top);
+            }
+        }
+
+        private void DamageAnimated(VisualElement element)
+        {
+            if (element.InTransformedTree && element.StylesHandlers != null && element.Clip != null)
+            {
+                DamageMoved(element);
+            }
+
+            AddDamage(element);
+        }
+
+        private void DamageMoved(VisualElement element)
+        {
+            if (element.StylesHandlers == null || element.Clip == null)
+            {
+                return;
+            }
+
+            float left = 0;
+            float top = 0;
+            float right = 0;
+            float bottom = 0;
+            bool visible = !element.Clip.IsVoidOrInvalid
+                && PaintBounds(element, PaintMargin(element), out left, out top, out right, out bottom);
+
+            if (visible != element.Painted
+                || (visible
+                    && (left != element.PaintedLeft
+                        || top != element.PaintedTop
+                        || right != element.PaintedRight
+                        || bottom != element.PaintedBottom)))
+            {
+                DamagePainted(element);
+
+                if (visible)
+                {
+                    _damage.Add(left, top, right - left, bottom - top);
+                }
+
+                element.Painted = visible;
+                element.PaintedLeft = left;
+                element.PaintedTop = top;
+                element.PaintedRight = right;
+                element.PaintedBottom = bottom;
+            }
+
+            foreach (VisualElement child in element.Children)
+            {
+                DamageMoved(child);
+            }
+
+            if (!element.HasChrome)
+            {
+                return;
+            }
+
+            foreach (VisualElement chrome in element.Chrome)
+            {
+                DamageMoved(chrome);
+            }
+        }
+
+        private static bool PaintBounds(VisualElement element, float margin,
+            out float left, out float top, out float right, out float bottom)
+        {
             DimensionalElement clip = element.Clip;
 
-            _damage.Add(clip.X - margin, clip.Y - margin,
-                clip.ActualWidth + margin * 2, clip.ActualHeight + margin * 2);
+            left = clip.X - margin;
+            top = clip.Y - margin;
+            right = clip.X + clip.ActualWidth + margin;
+            bottom = clip.Y + clip.ActualHeight + margin;
+
+            if (!element.InTransformedTree)
+            {
+                return true;
+            }
+
+            Matrix2D matrix = Matrix2D.Identity;
+
+            for (VisualElement ancestor = element; ancestor != null; ancestor = ancestor.Parent)
+            {
+                if (ancestor.HasTransform)
+                {
+                    matrix = Matrix2D.Concat(Transforms.Of(ancestor), matrix);
+                }
+
+                if (ancestor.IsOverlay)
+                {
+                    break;
+                }
+            }
+
+            float x0 = element.X - margin;
+            float y0 = element.Y - margin;
+            float x1 = element.X + element.ActualWidth + margin;
+            float y1 = element.Y + element.ActualHeight + margin;
+
+            matrix.Map(x0, y0, out float ax, out float ay);
+            matrix.Map(x1, y0, out float bx, out float by);
+            matrix.Map(x1, y1, out float cx, out float cy);
+            matrix.Map(x0, y1, out float dx, out float dy);
+
+            left = Math.Max(left, Math.Min(Math.Min(ax, bx), Math.Min(cx, dx)));
+            top = Math.Max(top, Math.Min(Math.Min(ay, by), Math.Min(cy, dy)));
+            right = Math.Min(right, Math.Max(Math.Max(ax, bx), Math.Max(cx, dx)));
+            bottom = Math.Min(bottom, Math.Max(Math.Max(ay, by), Math.Max(cy, dy)));
+
+            return left < right && top < bottom;
         }
 
         private static float PaintMargin(VisualElement element)
@@ -1209,7 +1312,7 @@ namespace Ixen.Core
 
                 _visualDirty = true;
 
-                AddDamage(element);
+                DamageAnimated(element);
             }
 
             TickFrames();

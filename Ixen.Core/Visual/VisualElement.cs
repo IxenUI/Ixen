@@ -733,6 +733,7 @@ namespace Ixen.Core.Visual
         internal float PaintedTop;
         internal float PaintedRight;
         internal float PaintedBottom;
+        internal bool InTransformedTree;
         internal bool IsLayoutDirty { get; private set; } = true;
 
         private string _text;

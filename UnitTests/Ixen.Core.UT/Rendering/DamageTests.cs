@@ -389,54 +389,94 @@ namespace Ixen.Core.UT.Rendering
                 + "far - BorderOutside on each side");
         }
 
-        [TestMethod]
-        public void ATransformedElementDamagesTheWholeSurface()
+        private static void Transform(VisualElement element, TransformKind kind, float x, float y)
         {
-            _near.Styles.Transform = new TransformStyleDescriptor();
-            _near.Styles.Transform.Operations.Add(new TransformOperation
-            {
-                Kind = TransformKind.Translate,
-                X = 250,
-                Y = 180
-            });
-
-            _near.Invalidate();
-            Frame();
-
-            Mark(320, 240);
-
-            _surface.InvalidateVisual(_near);
-            Frame();
-
-            Assert.IsFalse(Survived(320, 240),
-                "a transform paints the element somewhere its bounds do not describe. What "
-                + "enforces this is ClippingComputer: it gives a transformed subtree its "
-                + "ancestor's clip UNNARROWED so nothing is wrongly culled, and that clip is "
-                + "the viewport - so the region is already the whole surface. Tighten that "
-                + "conservatism and this test is what tells you the damage went with it.");
+            element.Styles.Transform = new TransformStyleDescriptor();
+            element.Styles.Transform.Operations.Add(new TransformOperation { Kind = kind, X = x, Y = y });
+            element.Invalidate();
         }
 
         [TestMethod]
-        public void ATransformOnAnAncestorDoesTheSame()
+        public void ATransformedElementIsRepaintedWhereItIsDrawn()
         {
-            _root.Styles.Transform = new TransformStyleDescriptor();
-            _root.Styles.Transform.Operations.Add(new TransformOperation
-            {
-                Kind = TransformKind.Scale,
-                X = 2,
-                Y = 2
-            });
-
-            _root.Invalidate();
+            Transform(_near, TransformKind.Translate, 250, 180);
             Frame();
 
-            Mark(320, 240);
+            Mark(290, 220);
+            Mark(40, 40);
+            Mark(150, 120);
 
             _surface.InvalidateVisual(_near);
             Frame();
 
-            Assert.IsFalse(Survived(320, 240),
-                "a descendant of a transformed element inherits the same unnarrowed clip");
+            Assert.IsFalse(Survived(290, 220), "the element is drawn at 270..310 x 200..240 now");
+            Assert.IsTrue(Survived(40, 40), "its untransformed box is not where it paints");
+            Assert.IsTrue(Survived(150, 120),
+                "a transformed element used to damage its whole ancestor clip - here the viewport");
+        }
+
+        [TestMethod]
+        public void ARotatedElementIsCoveredUpToItsCorners()
+        {
+            Transform(_near, TransformKind.Rotate, 45, 0);
+            Frame();
+
+            Mark(15, 40);
+            Mark(120, 120);
+
+            _surface.InvalidateVisual(_near);
+            Frame();
+
+            Assert.IsFalse(Survived(15, 40),
+                "turned by 45 degrees about its centre, the 40 unit box reaches 11.7 on the left");
+            Assert.IsTrue(Survived(120, 120), "and nothing far from it");
+        }
+
+        [TestMethod]
+        public void ATransformOnAnAncestorMovesTheDamageOfItsDescendants()
+        {
+            Transform(_root, TransformKind.Translate, 100, 80);
+            Frame();
+
+            Mark(140, 120);
+            Mark(40, 40);
+
+            _surface.InvalidateVisual(_near);
+            Frame();
+
+            Assert.IsFalse(Survived(140, 120), "the root moves near to 120..160 x 100..140");
+            Assert.IsTrue(Survived(40, 40), "where near would be without its ancestor's transform");
+        }
+
+        [TestMethod]
+        public void ATransformAnimationRepaintsTheWayItTravelsAndLeavesNoGhost()
+        {
+            var scheduler = new FakeScheduler();
+            _surface.Scheduler = scheduler;
+
+            Transform(_near, TransformKind.Translate, 0, 0);
+            _near.Styles.Transition = new TransitionStyleDescriptor();
+            _near.Styles.Transition.Specs.Add(Ixen.Core.Visual.Styles.StyleIdentifier.TRANSFORM,
+                new TransitionSpec { Duration = 160 });
+            Frame();
+
+            Transform(_near, TransformKind.Translate, 100, 0);
+            Frame();
+
+            Mark(200, 250);
+
+            for (int tick = 0; tick < 20; tick++)
+            {
+                scheduler.FireAll();
+                Frame();
+            }
+
+            Assert.AreEqual(new SKColor(0x10, 0x10, 0x10), _bitmap.GetPixel(30, 30),
+                "where the box started is the root's ground again: each tick damages where the "
+                + "box was drawn as well as where it is drawn now");
+            Assert.AreEqual(new SKColor(0x4C, 0x6E, 0xF5), _bitmap.GetPixel(140, 40),
+                "and the box is drawn where it ended");
+            Assert.IsTrue(Survived(200, 250), "nothing outside its path was repainted");
         }
 
         [TestMethod]
