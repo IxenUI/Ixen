@@ -837,6 +837,8 @@ namespace Ixen.Core.Visual
 
         protected internal virtual bool PrepassFollowsSize => false;
 
+        protected internal virtual bool OnMeasured() => false;
+
         internal float PrepassWidth { get; set; } = float.NaN;
 
         internal float PrepassHeight { get; set; } = float.NaN;

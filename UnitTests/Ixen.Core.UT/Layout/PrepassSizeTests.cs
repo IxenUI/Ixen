@@ -13,8 +13,21 @@ namespace Ixen.Core.UT.Layout
         {
             internal readonly List<float> Seen = new List<float>();
             internal bool Follows;
+            internal int Wants;
 
             protected internal override bool PrepassFollowsSize => Follows;
+
+            protected internal override bool OnMeasured()
+            {
+                if (Wants <= 0)
+                {
+                    return false;
+                }
+
+                Wants--;
+
+                return true;
+            }
 
             protected internal override void OnPrepass(float viewportWidth, float viewportHeight)
             {
@@ -58,6 +71,38 @@ namespace Ixen.Core.UT.Layout
 
             Assert.AreEqual(300, _watcher.Seen[_watcher.Seen.Count - 1],
                 "and a resize is seen within the frame that made it, not one frame late");
+        }
+
+        [TestMethod]
+        public void AnElementMayAskForAnotherPassOnceItsChildrenAreMeasured()
+        {
+            _watcher.Follows = true;
+            _watcher.Wants = 2;
+
+            _surface.ComputeLayout(400, 300);
+
+            Assert.AreEqual(0, _watcher.Wants, "two more passes, within the frame");
+            Assert.AreEqual(3, _watcher.Seen.Count, "each one starts with a prepass");
+        }
+
+        [TestMethod]
+        public void WhatAFrameCannotSettleIsTakenUpByTheNextOne()
+        {
+            _watcher.Follows = true;
+            _watcher.Wants = 6;
+
+            _surface.ComputeLayout(400, 300);
+
+            Assert.IsTrue(_watcher.Wants > 0, "a frame runs a bounded number of passes");
+
+            _surface.ComputeLayout(400, 300);
+
+            Assert.IsTrue(_surface.LastLayoutRan, "the leftover was posted, so the next frame lays out again");
+            Assert.AreEqual(0, _watcher.Wants);
+
+            _surface.ComputeLayout(400, 300);
+
+            Assert.IsFalse(_surface.LastLayoutRan, "and once settled, nothing keeps asking");
         }
 
         [TestMethod]

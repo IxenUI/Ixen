@@ -232,6 +232,8 @@ namespace Ixen.Core
             _measureComputer.FontScale = _fontScale;
             _measureComputer.ReducedMotion = _reducedMotion;
 
+            bool unsettled = false;
+
             for (int pass = 0; pass < CONTAINER_PASSES; pass++)
             {
                 _sized.Clear();
@@ -243,9 +245,29 @@ namespace Ixen.Core
                 bool containers = SyncContainers(styles);
                 bool resized = SyncSized();
 
+                unsettled = resized;
+
                 if (!containers && !resized)
                 {
                     break;
+                }
+            }
+
+            if (unsettled)
+            {
+                _unsettled.Clear();
+
+                for (int i = 0; i < _sized.Count; i++)
+                {
+                    if (_sized[i].IsLayoutDirty)
+                    {
+                        _unsettled.Add(_sized[i]);
+                    }
+                }
+
+                if (_unsettled.Count > 0)
+                {
+                    Post(_settleLater ?? (_settleLater = SettleLater));
                 }
             }
 
@@ -352,9 +374,21 @@ namespace Ixen.Core
             SyncCursor();
         }
 
-        private const int CONTAINER_PASSES = 2;
+        private const int CONTAINER_PASSES = 4;
 
         private readonly List<VisualElement> _sized = new List<VisualElement>();
+        private readonly List<VisualElement> _unsettled = new List<VisualElement>();
+        private Action _settleLater;
+
+        private void SettleLater()
+        {
+            for (int i = 0; i < _unsettled.Count; i++)
+            {
+                _unsettled[i].InvalidateLayout();
+            }
+
+            _unsettled.Clear();
+        }
 
         private bool SyncSized()
         {
@@ -364,7 +398,9 @@ namespace Ixen.Core
             {
                 VisualElement element = _sized[i];
 
-                if (element.ContentWidth != element.PrepassWidth || element.ContentHeight != element.PrepassHeight)
+                bool wanted = element.OnMeasured();
+
+                if (wanted || element.ContentWidth != element.PrepassWidth || element.ContentHeight != element.PrepassHeight)
                 {
                     element.InvalidateLayout();
                     changed = true;

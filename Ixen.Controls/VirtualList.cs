@@ -59,6 +59,9 @@ namespace Ixen.Controls
         private float[] _offsets;
         private int _offsetsFor = -1;
         private bool _offsetsStale = true;
+        private bool _measures;
+        private float[] _measured;
+        private float _measuredWidth = float.NaN;
         private int _first = -1;
         private int _realised;
 
@@ -376,7 +379,148 @@ namespace Ixen.Controls
             }
         }
 
-        private bool Varies => _heights != null && _columns == 1;
+        public bool MeasureItems
+        {
+            get => _measures;
+            set
+            {
+                if (value == _measures)
+                {
+                    return;
+                }
+
+                _measures = value;
+                _measured = null;
+
+                foreach (VisualElement row in _rows)
+                {
+                    SizeRow(row);
+                }
+
+                Reset();
+            }
+        }
+
+        public void RemeasureItems()
+        {
+            _measured = null;
+
+            Reset();
+        }
+
+        private bool Measuring => _measures && _columns == 1;
+
+        private void SizeRow(VisualElement row)
+        {
+            row.Styles.Height = Measuring
+                ? new HeightStyleDescriptor { Unit = SizeUnit.Content }
+                : new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = _itemHeight };
+            row.Invalidate();
+        }
+
+        private float EstimateOf(int index)
+        {
+            if (_measured != null && index < _measured.Length && !float.IsNaN(_measured[index]))
+            {
+                return _measured[index];
+            }
+
+            return _heights == null ? _itemHeight : _heights(index);
+        }
+
+        private void EnsureMeasured(int count)
+        {
+            if (_measured != null && _measured.Length == count)
+            {
+                return;
+            }
+
+            float[] measured = new float[count];
+
+            for (int index = 0; index < count; index++)
+            {
+                measured[index] = float.NaN;
+            }
+
+            _measured = measured;
+        }
+
+        protected override bool OnMeasured()
+        {
+            if (!Measuring || _realised == 0)
+            {
+                return false;
+            }
+
+            int count = Count;
+
+            EnsureMeasured(count);
+
+            bool changed = false;
+
+            for (int i = 0; i < _realised; i++)
+            {
+                int index = _first + i;
+
+                if (index >= count)
+                {
+                    break;
+                }
+
+                float height = _rows[i].ActualHeight;
+
+                if (_measured[index] != height)
+                {
+                    _measured[index] = height;
+                    changed = true;
+                }
+            }
+
+            if (!changed)
+            {
+                return false;
+            }
+
+            int anchor = IndexAt(ScrollY);
+
+            if (TopOf(anchor) < ScrollY && anchor < count - 1)
+            {
+                anchor++;
+            }
+
+            float within = ScrollY - TopOf(anchor);
+
+            _offsetsStale = true;
+
+            float extent = ExtentOf(count);
+
+            if (_spacer.Styles.Height.Value != extent)
+            {
+                _spacer.Styles.Height.Value = extent;
+                _spacer.Invalidate();
+            }
+
+            if (ScrollY > 0)
+            {
+                ScrollY = Math.Max(0, TopOf(anchor) + within);
+            }
+
+            for (int i = 0; i < _realised && _first + i < count; i++)
+            {
+                VisualElement row = _rows[i];
+                float top = _offsets[_first + i];
+
+                if (row.Styles.Top.Value != top)
+                {
+                    row.Styles.Top.Value = top;
+                    row.InvalidateLayout();
+                }
+            }
+
+            return true;
+        }
+
+        private bool Varies => (_heights != null || _measures) && _columns == 1;
 
         private float TopOf(int index)
         {
@@ -461,7 +605,7 @@ namespace Ixen.Controls
             {
                 _offsets[index] = top;
 
-                float height = _heights(index);
+                float height = EstimateOf(index);
 
                 top += height > 0 ? height : 0;
             }
@@ -510,6 +654,21 @@ namespace Ixen.Controls
             bool reflowed = columns != _columns;
 
             _columns = columns;
+
+            if (reflowed && _measures)
+            {
+                foreach (VisualElement row in _rows)
+                {
+                    SizeRow(row);
+                }
+            }
+
+            if (Measuring && (_measuredWidth != ContentWidth || (_measured != null && _measured.Length != count)))
+            {
+                _measuredWidth = ContentWidth;
+                _measured = null;
+                _offsetsStale = true;
+            }
 
             int rows = RowsFor(count);
             float extent = ExtentOf(count);
@@ -633,7 +792,11 @@ namespace Ixen.Controls
                 int index = first + i;
 
                 row.Styles.Top.Value = _offsets[index];
-                row.Styles.Height.Value = _offsets[index + 1] - _offsets[index];
+
+                if (!Measuring)
+                {
+                    row.Styles.Height.Value = _offsets[index + 1] - _offsets[index];
+                }
 
                 _bind(_owners[i], index);
 
@@ -683,8 +846,8 @@ namespace Ixen.Controls
                 VisualElement row = owner.ElementAt(0);
 
                 row.Styles.Top = new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
-                row.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = _itemHeight };
 
+                SizeRow(row);
                 PlaceColumns(row);
 
                 _owners.Add(owner);
