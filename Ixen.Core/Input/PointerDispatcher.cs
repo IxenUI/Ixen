@@ -1492,7 +1492,7 @@ namespace Ixen.Core.Input
             PerformDrop(x, y);
             EndDrag(x, y);
 
-            bool isClick = hit != null && hit == _pressed && !_longPressHandled;
+            bool isClick = hit != null && hit == _pressed && !_longPressHandled && button == PointerButton.Left;
 
             _pressed = null;
 

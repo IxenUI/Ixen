@@ -63,6 +63,52 @@ namespace Ixen.Core.UT.Input
         private string Log => string.Join(" ", _log);
 
         [TestMethod]
+        public void ARightClickIsADownAndAnUpButNoClick()
+        {
+            _surface.PointerDown(40, 40, PointerButton.Right);
+            _surface.PointerUp(40, 40, PointerButton.Right);
+
+            Assert.AreEqual("down:left:Right up:left:Right", Log,
+                "a right-click opens a context menu; as a click it also pressed whatever was under "
+                + "the pointer - a cover opened its album under its own menu");
+        }
+
+        [TestMethod]
+        public void NorIsAMiddleDoubleClickADoubleClick()
+        {
+            int doubles = 0;
+
+            _left.PointerDoubleClick += (s, e) => doubles++;
+
+            for (int i = 0; i < 2; i++)
+            {
+                _surface.PointerDown(40, 40, PointerButton.Middle);
+                _surface.PointerUp(40, 40, PointerButton.Middle);
+            }
+
+            Assert.IsFalse(Log.Contains("click"));
+            Assert.AreEqual(0, doubles);
+        }
+
+        [TestMethod]
+        public void ARightClickRunsNoCommand()
+        {
+            int ran = 0;
+
+            _left.Command = new Ixen.Core.Components.Command(() => ran++);
+
+            _surface.PointerDown(40, 40, PointerButton.Right);
+            _surface.PointerUp(40, 40, PointerButton.Right);
+
+            Assert.AreEqual(0, ran, "a command runs at the end of a click, so it ran on a right-click too");
+
+            _surface.PointerDown(40, 40, PointerButton.Left);
+            _surface.PointerUp(40, 40, PointerButton.Left);
+
+            Assert.AreEqual(1, ran, "the primary button still runs it");
+        }
+
+        [TestMethod]
         public void ASecondButtonDoesNotStealTheCapture()
         {
             _surface.PointerDown(40, 40, PointerButton.Left);
