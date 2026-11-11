@@ -61,9 +61,9 @@ namespace Ixen.View.Android
 
             _skCanvasView = new SKCanvasView(Context);
 
-            _host = new IxenHost(new IxenSurface(), _skCanvasView.Invalidate,
+            _host = new IxenHost(new IxenSurface(), RequestFrame,
                 new AndroidScheduler(), new AndroidClipboard(Context), null,
-                new AssetImageSource(Context?.Assets), _skCanvasView.PostInvalidate,
+                new AssetImageSource(Context?.Assets), WakeFrame,
                 () => IsShown);
 
             IxenSynchronizationContext.Install(_host.Surface);
@@ -72,6 +72,88 @@ namespace Ixen.View.Android
             _skCanvasView.Touch += OnTouch;
 
             AddView(_skCanvasView);
+        }
+
+        private GpuPresenter _gpu;
+
+        public bool PreferGpu
+        {
+            get => _gpu != null;
+            set
+            {
+                if (value == (_gpu != null))
+                {
+                    return;
+                }
+
+                if (value)
+                {
+                    RemoveView(_skCanvasView);
+
+                    _gpu = new GpuPresenter(Context, Produce) { Presented = OnPresented };
+                    _gpu.View.Touch += OnTouch;
+                    _host.Surface.PreservesFrame = false;
+
+                    AddView(_gpu.View);
+                    _gpu.Schedule();
+
+                    return;
+                }
+
+                GpuPresenter gpu = _gpu;
+
+                _gpu = null;
+                gpu.View.Touch -= OnTouch;
+                gpu.Release();
+                RemoveView(gpu.View);
+
+                _host.Surface.PreservesFrame = true;
+
+                AddView(_skCanvasView);
+                _skCanvasView.Invalidate();
+            }
+        }
+
+        private void RequestFrame()
+        {
+            if (_gpu != null)
+            {
+                _gpu.Schedule();
+                return;
+            }
+
+            _skCanvasView.Invalidate();
+        }
+
+        private void WakeFrame()
+        {
+            if (_gpu != null)
+            {
+                Post(RequestFrame);
+                return;
+            }
+
+            _skCanvasView.PostInvalidate();
+        }
+
+        protected override void OnWindowVisibilityChanged(ViewStates visibility)
+        {
+            base.OnWindowVisibilityChanged(visibility);
+
+            if (_gpu == null)
+            {
+                return;
+            }
+
+            if (visibility == ViewStates.Visible)
+            {
+                _gpu.Resume();
+                _gpu.Schedule();
+            }
+            else
+            {
+                _gpu.Pause();
+            }
         }
 
         private bool PrefersReducedMotion()
@@ -115,7 +197,7 @@ namespace Ixen.View.Android
             }
         }
 
-        private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
+        private void Produce(SKCanvas canvas, int width, int height)
         {
             _host.Surface.Presentable = IsShown;
 
@@ -124,20 +206,62 @@ namespace Ixen.View.Android
 
             _host.Surface.Scale = density > 0 ? density : 1f;
             _host.Surface.FontScale = fontScale > 0 ? fontScale : 1f;
-            _host.Paint(e.Surface.Canvas, e.Info.Width, e.Info.Height);
-            RevealFieldIfShrunk(e.Info.Height);
+            _host.Paint(canvas, width, height);
+            RevealFieldIfShrunk(height);
             _accessibility?.Sync();
+
+            if (_gpu != null && _captured != null)
+            {
+                _gpu.Schedule();
+            }
+        }
+
+        private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
+        {
+            Produce(e.Surface.Canvas, e.Info.Width, e.Info.Height);
 
             _paints++;
 
             if (_captured != null && _paints >= _capturePaints)
             {
-                Capture(e.Surface, e.Info.Width, e.Info.Height);
+                Capture(ReadFrame(e.Surface, e.Info.Width, e.Info.Height), e.Info.Width, e.Info.Height);
             }
             else if (_captured != null)
             {
                 _skCanvasView.PostInvalidate();
             }
+        }
+
+        private bool _readingGpuFrame;
+
+        private void OnPresented(SKSurface surface, int width, int height)
+        {
+            if (_captured == null || _readingGpuFrame)
+            {
+                return;
+            }
+
+            if (++_paints < _capturePaints)
+            {
+                return;
+            }
+
+            _readingGpuFrame = true;
+
+            SKBitmap frame = ReadFrame(surface, width, height);
+
+            Post(() =>
+            {
+                _readingGpuFrame = false;
+
+                if (_captured == null)
+                {
+                    frame?.Dispose();
+                    return;
+                }
+
+                Capture(frame, width, height);
+            });
         }
 
         private void OnTouch(object sender, TouchEventArgs e)
@@ -285,7 +409,7 @@ namespace Ixen.View.Android
 
             _host.Surface.ReducedMotion = PrefersReducedMotion();
             _host.Surface.HighContrast = PrefersHighContrast();
-            _skCanvasView.Invalidate();
+            RequestFrame();
         }
 
         protected override void OnDetachedFromWindow()
@@ -330,7 +454,7 @@ namespace Ixen.View.Android
 
             if (ScrollNavigator.IntoView(field))
             {
-                _skCanvasView.PostInvalidate();
+                WakeFrame();
             }
         }
 
@@ -433,13 +557,13 @@ namespace Ixen.View.Android
             _host.Surface.ReducedMotion = true;
         }
 
-        private void Capture(SKSurface surface, int width, int height)
+        private void Capture(SKBitmap frame, int width, int height)
         {
             System.Action<IxenFrameCapture> captured = _captured;
 
             _captured = null;
 
-            using SKBitmap host = ReadFrame(surface, width, height);
+            using SKBitmap host = frame;
             using SKBitmap library = _host.Surface.RenderToBitmap();
             using var capture = new IxenFrameCapture(host, library, width, height,
                 _host.Surface.Scale, _host.Surface.FontScale);
