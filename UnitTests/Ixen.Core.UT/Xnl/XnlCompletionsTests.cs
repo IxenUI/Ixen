@@ -254,7 +254,7 @@ namespace Ixen.Core.UT.Xnl
                     "drag-end", "drag-enter", "drag-leave", "drag-over", "drag-start", "drop",
                     "enabled", "error", "focusable", "got-focus", "id", "invalid", "key-down",
                     "key-up", "label", "label-for", "live-region", "long-press",
-                    "lost-focus", "maximize-button", "modal", "name", "pinch", "pinch-end", "pinch-start",
+                    "lost-focus", "maximize-button", "modal", "name", "persist-scroll", "pinch", "pinch-end", "pinch-start",
                     "pointer-click", "pointer-double-click", "pointer-down", "pointer-drag", "pointer-drag-end",
                     "pointer-drag-start", "pointer-enter", "pointer-leave", "pointer-long-press", "pointer-move",
                     "pointer-pinch", "pointer-pinch-end", "pointer-pinch-start",

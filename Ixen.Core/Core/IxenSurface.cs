@@ -400,7 +400,8 @@ namespace Ixen.Core
 
                 bool wanted = element.OnMeasured();
 
-                if (wanted || element.ContentWidth != element.PrepassWidth || element.ContentHeight != element.PrepassHeight)
+                if (wanted || element.ContentWidth != element.PrepassWidth || element.ContentHeight != element.PrepassHeight
+                    || element.ScrollY != element.PrepassScrollY)
                 {
                     element.InvalidateLayout();
                     changed = true;
@@ -477,6 +478,7 @@ namespace Ixen.Core
             {
                 element.PrepassWidth = element.ContentWidth;
                 element.PrepassHeight = element.ContentHeight;
+                element.PrepassScrollY = element.ScrollY;
                 _sized.Add(element);
             }
 
@@ -532,11 +534,34 @@ namespace Ixen.Core
                 }
             }
 
+            if (element.PersistScroll && !string.IsNullOrEmpty(element.Name))
+            {
+                string key = SCROLL_STATE + path;
+
+                if (states.ContainsKey(key))
+                {
+                    throw new InvalidOperationException(
+                        $"Two elements keeping their scroll resolve to the state path '{path}', so neither "
+                        + "could be restored without the other. Give one of them a different name.");
+                }
+
+                var scroll = new ComponentState();
+
+                scroll.Set(SCROLL_X, element.IsRestoringScroll ? element.RestoringScrollX : element.ScrollX);
+                scroll.Set(SCROLL_Y, element.IsRestoringScroll ? element.RestoringScrollY : element.ScrollY);
+
+                states[key] = scroll;
+            }
+
             foreach (VisualElement child in element.Children)
             {
                 CollectState(child, path, states);
             }
         }
+
+        private const string SCROLL_STATE = "scroll:";
+        private const string SCROLL_X = "x";
+        private const string SCROLL_Y = "y";
 
         private static string PathOf(VisualElement element, string prefix)
         {
@@ -550,7 +575,22 @@ namespace Ixen.Core
 
         private void RestoreIfPending(VisualElement element, string path)
         {
-            if (_pendingState == null || path == null || element.Owner == null)
+            if (_pendingState == null || path == null)
+            {
+                return;
+            }
+
+            if (element.PersistScroll && !string.IsNullOrEmpty(element.Name)
+                && _pendingState.TryGetValue(SCROLL_STATE + path, out Dictionary<string, string> scroll))
+            {
+                _pendingState.Remove(SCROLL_STATE + path);
+
+                var saved = new ComponentState(scroll);
+
+                element.RestoreScroll(saved.Get(SCROLL_X, 0f), saved.Get(SCROLL_Y, 0f));
+            }
+
+            if (element.Owner == null)
             {
                 return;
             }

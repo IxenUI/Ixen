@@ -128,6 +128,7 @@ namespace Ixen.Core.Visual.Computers
                 Stretch(element, type, widthIsDefinite, heightIsDefinite);
             }
 
+            element.ApplyRestoringScroll();
             element.ClampScroll();
 
             if (element is TextField field)

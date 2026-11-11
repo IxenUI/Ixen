@@ -534,8 +534,50 @@ namespace Ixen.Core.Visual
         internal bool ScrollsSmoothly
             => StylesHandlers != null && StylesHandlers.ScrollBehavior.Descriptor.IsDeclared;
 
+        public bool PersistScroll { get; set; }
+
+        internal float RestoringScrollX = float.NaN;
+        internal float RestoringScrollY = float.NaN;
+
+        internal bool IsRestoringScroll => !float.IsNaN(RestoringScrollY);
+
+        internal void RestoreScroll(float x, float y)
+        {
+            RestoringScrollX = x < 0 ? 0 : x;
+            RestoringScrollY = y < 0 ? 0 : y;
+
+            InvalidateLayout();
+        }
+
+        internal void ApplyRestoringScroll()
+        {
+            if (!IsRestoringScroll)
+            {
+                return;
+            }
+
+            float maxX = MaxScrollX;
+            float maxY = MaxScrollY;
+
+            _scrollX = Clamp(RestoringScrollX, maxX);
+            _scrollY = Clamp(RestoringScrollY, maxY);
+
+            if (maxX >= RestoringScrollX && maxY >= RestoringScrollY)
+            {
+                CancelScrollRestore();
+            }
+        }
+
+        private void CancelScrollRestore()
+        {
+            RestoringScrollX = float.NaN;
+            RestoringScrollY = float.NaN;
+        }
+
         internal void RequestScroll(float deltaX, float deltaY)
         {
+            CancelScrollRestore();
+
             if (!ScrollsSmoothly)
             {
                 ScrollBy(deltaX, deltaY);
@@ -586,6 +628,9 @@ namespace Ixen.Core.Visual
 
         private void SetScroll(float x, float y)
         {
+            CancelScrollRestore();
+
+
             if (x < 0)
             {
                 x = 0;
@@ -842,6 +887,8 @@ namespace Ixen.Core.Visual
         internal float PrepassWidth { get; set; } = float.NaN;
 
         internal float PrepassHeight { get; set; } = float.NaN;
+
+        internal float PrepassScrollY { get; set; }
 
         protected internal virtual void OnHostChanged()
         {
