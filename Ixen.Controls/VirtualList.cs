@@ -15,6 +15,7 @@ namespace Ixen.Controls
         public const string DROP_MARKER = "VirtualListDropMarker";
         public const string DRAGGING = "dragging";
         public const string STATUS = "VirtualListStatus";
+        public const string DROP_TARGET = "droptarget";
 
         private const float DEFAULT_ITEM_HEIGHT = 28;
         private const float MARKER_THICKNESS = 2;
@@ -23,6 +24,7 @@ namespace Ixen.Controls
 
         public event EventHandler<ReorderEventArgs> Reordered;
         public event EventHandler<ListDropEventArgs> ItemDropped;
+        public event EventHandler<ListDropEventArgs> DroppedOnto;
 
         private readonly VisualElement _spacer;
         private readonly VisualElement _marker;
@@ -39,6 +41,9 @@ namespace Ixen.Controls
         private VisualElement _armed;
         private bool _foreign;
         private Func<object, bool> _accepts;
+        private Func<object, int, bool> _acceptsOnto;
+        private int _onto = -1;
+        private object _hovering;
         private readonly List<VisualElement> _rows = new();
         private readonly List<IRegionRow> _owners = new();
 
@@ -112,7 +117,7 @@ namespace Ixen.Controls
                 }
 
                 _reorderable = value;
-                AllowDrop = value || _accepts != null;
+                AllowDrop = value || _accepts != null || _acceptsOnto != null;
 
                 if (value)
                 {
@@ -183,9 +188,21 @@ namespace Ixen.Controls
             set
             {
                 _accepts = value;
-                AllowDrop = _reorderable || value != null;
+                AllowDrop = _reorderable || value != null || _acceptsOnto != null;
             }
         }
+
+        public Func<object, int, bool> AcceptsOnto
+        {
+            get => _acceptsOnto;
+            set
+            {
+                _acceptsOnto = value;
+                AllowDrop = _reorderable || _accepts != null || value != null;
+            }
+        }
+
+        public int DropOntoIndex => _onto;
 
         public Func<int, object> DragOffer { get; set; }
 
@@ -573,6 +590,7 @@ namespace Ixen.Controls
                 _bind(_owners[i], index);
 
                 row.ToggleState(DRAGGING, IsDragged(index));
+                row.ToggleState(DROP_TARGET, index == _onto);
                 row.Invalidate();
             }
         }
@@ -619,6 +637,7 @@ namespace Ixen.Controls
                 _bind(_owners[i], index);
 
                 row.ToggleState(DRAGGING, IsDragged(index));
+                row.ToggleState(DROP_TARGET, index == _onto);
                 row.Invalidate();
             }
         }
@@ -806,6 +825,12 @@ namespace Ixen.Controls
 
         private bool IsOwn(object data) => _group != null && data != null && ReferenceEquals(data, _payload);
 
+        internal bool IsOwnDrag(object data) => IsOwn(data);
+
+        public int DroppedFrom { get; private set; } = -1;
+
+        internal int DraggedIndex => _group == null || _group.Count == 0 ? -1 : _group[0];
+
         private bool Welcomes(object data)
         {
             if (IsOwn(data))
@@ -816,43 +841,172 @@ namespace Ixen.Controls
             return data != null && !(data is ReorderData) && _accepts != null && _accepts(data);
         }
 
+        private int ItemUnder(int count, out float within)
+        {
+            within = 0;
+
+            float localY = _pointerY - ContentY;
+
+            if (count == 0 || localY < 0 || localY >= ExtentOf(count))
+            {
+                return -1;
+            }
+
+            int index;
+
+            if (Varies)
+            {
+                index = IndexAt(localY);
+            }
+            else if (_columns == 1)
+            {
+                index = (int)Math.Floor(localY / _itemHeight);
+            }
+            else
+            {
+                float slot = ContentWidth / _columns;
+                int column = slot <= 0 ? 0 : Clamp((int)Math.Floor((_pointerX - ContentX) / slot), 0, _columns - 1);
+
+                index = (int)Math.Floor(localY / _itemHeight) * _columns + column;
+            }
+
+            if (index < 0 || index >= count)
+            {
+                return -1;
+            }
+
+            float height = HeightOf(index);
+
+            within = height <= 0 ? 0 : (localY - TopOf(index)) / height;
+
+            return index;
+        }
+
+        private int OntoAt(object data, bool gaps)
+        {
+            if (_acceptsOnto == null || data == null || (data is ReorderData && !IsOwn(data)))
+            {
+                return -1;
+            }
+
+            int index = ItemUnder(Count, out float within);
+
+            if (index < 0 || IsDragged(index))
+            {
+                return -1;
+            }
+
+            if (gaps && (within < 0.25f || within >= 0.75f))
+            {
+                return -1;
+            }
+
+            return _acceptsOnto(data, index) ? index : -1;
+        }
+
+        private void SetOnto(int index)
+        {
+            if (index == _onto)
+            {
+                return;
+            }
+
+            _onto = index;
+
+            for (int i = 0; i < _realised; i++)
+            {
+                _rows[i].ToggleState(DROP_TARGET, _first + i == index);
+            }
+        }
+
+        private bool Track(object data)
+        {
+            bool gaps = Welcomes(data);
+            int onto = OntoAt(data, gaps);
+
+            SetOnto(onto);
+
+            if (onto >= 0)
+            {
+                HideMarker();
+                _gap = -1;
+
+                return true;
+            }
+
+            if (!gaps)
+            {
+                HideMarker();
+                _gap = -1;
+
+                return false;
+            }
+
+            PlaceMarker();
+
+            return true;
+        }
+
         private void OnDragOver(object sender, DragEventArgs args)
         {
-            if (!Welcomes(args.Data))
+            _pointerX = args.X;
+            _pointerY = args.Y;
+
+            if (!Track(args.Data) && !Hosts(args.Data))
             {
                 args.Accepted = false;
+                StopAutoScroll();
 
                 return;
             }
 
-            args.Accepted = true;
+            args.Accepted = _onto >= 0 || Welcomes(args.Data);
 
+            _hovering = args.Data;
             _foreign = !IsOwn(args.Data);
-            _pointerX = args.X;
-            _pointerY = args.Y;
 
-            PlaceMarker();
             AutoScroll();
         }
+
+        private bool Hosts(object data)
+            => _acceptsOnto != null && data != null && (IsOwn(data) || !(data is ReorderData));
 
         private void OnDragLeave(object sender, DragEventArgs args)
         {
             StopAutoScroll();
             HideMarker();
+            SetOnto(-1);
 
+            _hovering = null;
             _foreign = false;
             _gap = -1;
         }
 
         private void OnDrop(object sender, DragEventArgs args)
         {
+            _pointerX = args.X;
+            _pointerY = args.Y;
+
+            int onto = OntoAt(args.Data, Welcomes(args.Data));
+
+            if (onto >= 0)
+            {
+                DroppedFrom = IsOwn(args.Data) ? DraggedIndex : -1;
+
+                EndReorder();
+
+                DroppedOnto?.Invoke(this, new ListDropEventArgs(args.Data, onto));
+                DroppedFrom = -1;
+                Reset();
+
+                return;
+            }
+
             if (!Welcomes(args.Data))
             {
                 return;
             }
 
-            _pointerX = args.X;
-            _pointerY = args.Y;
             PlaceMarker();
 
             int gap = _gap;
@@ -900,9 +1054,11 @@ namespace Ixen.Controls
         {
             _armed = null;
             _foreign = false;
+            _hovering = null;
 
             StopAutoScroll();
             HideMarker();
+            SetOnto(-1);
 
             _gap = -1;
 
@@ -1105,7 +1261,14 @@ namespace Ixen.Controls
             ScrollY = next;
             InvalidateLayout();
 
-            PlaceMarker();
+            if (_hovering != null)
+            {
+                Track(_hovering);
+            }
+            else
+            {
+                PlaceMarker();
+            }
         }
 
         private void StopAutoScroll()

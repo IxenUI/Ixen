@@ -16,6 +16,9 @@ namespace Ixen.Controls
 
         public event EventHandler<EventArgs> SelectionChanged;
         public event EventHandler<TreeMoveEventArgs> Moved;
+        public event EventHandler<TreeDropEventArgs> DroppedOnto;
+
+        private Func<object, object, bool> _acceptsOnto;
 
         private readonly VirtualList _list;
         private readonly List<TreeNode> _flat = new();
@@ -42,6 +45,7 @@ namespace Ixen.Controls
             AddChild(_list);
 
             _list.Reordered += OnRowsReordered;
+            _list.DroppedOnto += OnRowsDroppedOnto;
 
             KeyDown += OnKeyDown;
         }
@@ -163,7 +167,95 @@ namespace Ixen.Controls
         public bool Reorderable
         {
             get => _list.Reorderable;
-            set => _list.Reorderable = value;
+            set
+            {
+                _list.Reorderable = value;
+                SyncOnto();
+            }
+        }
+
+        public Func<object, object, bool> AcceptsOnto
+        {
+            get => _acceptsOnto;
+            set
+            {
+                _acceptsOnto = value;
+                SyncOnto();
+            }
+        }
+
+        private void SyncOnto()
+        {
+            _list.AcceptsOnto = Reorderable || _acceptsOnto != null ? OntoRow : (Func<object, int, bool>)null;
+        }
+
+        private bool OntoRow(object data, int index)
+        {
+            TreeNode node = NodeAt(index);
+
+            if (node == null)
+            {
+                return false;
+            }
+
+            if (_list.IsOwnDrag(data))
+            {
+                return CanNest(_list.DraggedIndex, index);
+            }
+
+            return _acceptsOnto != null && _acceptsOnto(data, node.Item);
+        }
+
+        private bool CanNest(int from, int into)
+        {
+            if (from < 0 || into < 0 || into >= _flat.Count || _children?.Invoke(_flat[into].Item) == null)
+            {
+                return false;
+            }
+
+            for (int ancestor = into; ancestor >= 0; ancestor = ParentIndexOf(ancestor))
+            {
+                if (ancestor == from)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public bool MoveInto(int from, int into)
+        {
+            TreeNode node = NodeAt(from);
+
+            if (node == null || !CanNest(from, into))
+            {
+                return false;
+            }
+
+            int fromParent = ParentIndexOf(from);
+            IList fromList = ListOf(fromParent);
+            IList toList = _children(_flat[into].Item);
+            int toIndex = ReferenceEquals(fromList, toList) ? toList.Count - 1 : toList.Count;
+
+            return Raise(node.Item, fromParent, fromList, IndexIn(fromList, node.Item), into, toList, toIndex);
+        }
+
+        private void OnRowsDroppedOnto(object sender, ListDropEventArgs args)
+        {
+            if (_list.DroppedFrom >= 0)
+            {
+                MoveInto(_list.DroppedFrom, args.Index);
+
+                return;
+            }
+
+            TreeNode node = NodeAt(args.Index);
+
+            if (node != null)
+            {
+                DroppedOnto?.Invoke(this, new TreeDropEventArgs(args.Data, node.Item));
+            }
         }
 
         public Func<TreeMoveEventArgs, string> MoveAnnouncement { get; set; } = move => move.Describe();

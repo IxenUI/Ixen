@@ -554,6 +554,11 @@ $control_focus_soft:   #EEF1FE
     background: $control_focus
 }
 
+#TreeRow:droptarget,
+#DataGridRow:droptarget {
+    border: $control_focus 2px inner
+}
+
 #DragGhost {
     opacity: 0.85
     box-shadow: 0px 6px 18px #30000000
