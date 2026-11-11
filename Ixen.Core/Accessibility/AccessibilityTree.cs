@@ -202,6 +202,7 @@ namespace Ixen.Core.Accessibility
         {
             return element.Role != AccessibleRole.None
                 || element.Command != null
+                || ClicksLikeAButton(element)
                 || element.HasShortcut
                 || element.LiveRegion != LiveRegionKind.None
                 || element.Focusable
@@ -227,6 +228,11 @@ namespace Ixen.Core.Accessibility
             if (element is Image)
             {
                 return AccessibleRole.Image;
+            }
+
+            if (ClicksLikeAButton(element))
+            {
+                return AccessibleRole.Button;
             }
 
             if (element.Scrollable)
@@ -273,6 +279,43 @@ namespace Ixen.Core.Accessibility
             AppendDescendantText(element, builder);
 
             return builder.Length == 0 ? null : builder.ToString();
+        }
+
+        private static bool ClicksLikeAButton(VisualElement element)
+            => element.Role == AccessibleRole.None
+                && element.HandlesClick
+                && !element.Scrollable
+                && !(element is TextField)
+                && !(element is Image)
+                && OnlyText(element, out bool text)
+                && text;
+
+        private static bool OnlyText(VisualElement element, out bool text)
+        {
+            text = !string.IsNullOrEmpty(element.Text);
+
+            foreach (VisualElement child in element.Children)
+            {
+                if (child.Role == AccessibleRole.Presentation || child.IsHidden || child.IsOverlay)
+                {
+                    continue;
+                }
+
+                if (child.Role != AccessibleRole.None || child is TextField || child.Focusable
+                    || child.Command != null || child.HandlesClick || child.Scrollable)
+                {
+                    return false;
+                }
+
+                if (!OnlyText(child, out bool inner))
+                {
+                    return false;
+                }
+
+                text |= inner;
+            }
+
+            return true;
         }
 
         private static bool TakesNameFromContent(AccessibleRole role)

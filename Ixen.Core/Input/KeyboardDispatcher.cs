@@ -180,6 +180,12 @@ namespace Ixen.Core.Input
                 }
             }
 
+            if (Activates(_focused, key, modifiers))
+            {
+                _focused.PerformClick();
+                return true;
+            }
+
             if (TryShortcut(root, key, modifiers, accelerator))
             {
                 return true;
@@ -192,6 +198,16 @@ namespace Ixen.Core.Input
             }
 
             return ScrollBy(target, root, key);
+        }
+
+        private static bool Activates(VisualElement focused, Key key, KeyModifiers modifiers)
+        {
+            if (focused == null || modifiers != KeyModifiers.None || (key != Key.Enter && key != Key.Space))
+            {
+                return false;
+            }
+
+            return focused.IsEnabled && (focused.HandlesClick || focused.Command != null);
         }
 
         private static bool TryShortcut(VisualElement root, Key key, KeyModifiers modifiers,

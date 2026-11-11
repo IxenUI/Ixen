@@ -10,6 +10,8 @@ namespace Ixen.Core.Visual
         public event EventHandler<PointerEventArgs> PointerUp;
         public event EventHandler<PointerEventArgs> PointerMove;
         public event EventHandler<PointerEventArgs> PointerClick;
+
+        internal bool HandlesClick => PointerClick != null;
         public event EventHandler<PointerEventArgs> PointerEnter;
         public event EventHandler<PointerEventArgs> PointerLeave;
         public event EventHandler<WheelEventArgs> PointerWheel;
