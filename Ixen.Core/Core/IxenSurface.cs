@@ -1457,6 +1457,23 @@ namespace Ixen.Core
 
         public IWindowControl Window { get; set; }
 
+        private Connectivity _connectivity;
+
+        public Connectivity Connectivity
+        {
+            get
+            {
+                if (_connectivity == null)
+                {
+                    _connectivity = new Connectivity(Post, SystemNetwork.IsAvailable);
+                    SystemNetwork.Watch(_connectivity);
+                }
+
+                return _connectivity;
+            }
+            internal set => _connectivity = value;
+        }
+
         internal bool IsWindowCaptionAt(float deviceX, float deviceY)
             => WindowAreaAt(deviceX, deviceY) == WindowArea.Caption;
 

@@ -178,6 +178,7 @@ namespace Ixen.Core.Components
             _attached = attached;
 
             Listen(attached);
+            WatchConnectivity(attached);
 
             if (attached)
             {
@@ -341,7 +342,59 @@ namespace Ixen.Core.Components
                 return;
             }
 
+            if (options.RetryWhenOnline && value != null)
+            {
+                _reconnecting = _reconnecting ?? new List<IAsyncLoad>();
+
+                if (!_reconnecting.Contains(value))
+                {
+                    _reconnecting.Add(value);
+                }
+
+                WatchConnectivity(_attached);
+            }
+
             Load(value, token => options.Run(work, token));
+        }
+
+        private List<IAsyncLoad> _reconnecting;
+        private Connectivity _watched;
+
+        private void WatchConnectivity(bool attached)
+        {
+            Connectivity wanted = attached && _reconnecting != null
+                ? GetVisualElement()?.Host?.Connectivity
+                : null;
+
+            if (wanted == _watched)
+            {
+                return;
+            }
+
+            if (_watched != null)
+            {
+                _watched.Changed -= OnConnectivityChanged;
+            }
+
+            _watched = wanted;
+
+            if (_watched != null)
+            {
+                _watched.Changed += OnConnectivityChanged;
+            }
+        }
+
+        private void OnConnectivityChanged(object sender, EventArgs args)
+        {
+            if (_watched == null || !_watched.IsOnline || _reconnecting == null)
+            {
+                return;
+            }
+
+            foreach (IAsyncLoad load in _reconnecting.ToArray())
+            {
+                load.RetryIfFailed();
+            }
         }
 
         protected void Load<T>(AsyncValue<T> value, Func<CancellationToken, Task<T>> work)

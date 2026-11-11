@@ -14,6 +14,8 @@ namespace Ixen.Core.Components
     internal interface IAsyncLoad
     {
         void CancelLoading();
+
+        void RetryIfFailed();
     }
 
     public class AsyncValue<T> : IObservableState, IAsyncLoad
@@ -79,6 +81,14 @@ namespace Ixen.Core.Components
         }
 
         void IAsyncLoad.CancelLoading() => Cancel();
+
+        void IAsyncLoad.RetryIfFailed()
+        {
+            if (State == AsyncState.Failed)
+            {
+                Retry();
+            }
+        }
 
         internal int Begin() => Begin(null, out CancellationToken _);
 

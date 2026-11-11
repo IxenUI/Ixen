@@ -14,6 +14,8 @@ namespace Ixen.Core.Components
 
         public Func<Exception, bool> RetryWhen { get; set; }
 
+        public bool RetryWhenOnline { get; set; }
+
         internal Func<TimeSpan, CancellationToken, Task> Delay { get; set; } = Task.Delay;
 
         internal TimeSpan BackoffBefore(int attempt)
