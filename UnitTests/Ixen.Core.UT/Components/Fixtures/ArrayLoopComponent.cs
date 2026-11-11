@@ -10,6 +10,26 @@ namespace Ixen.Core.UT.Components.Fixtures
 
         public IReadOnlyList<ListItem> Items { get; set; } = new[] { new ListItem { Id = 1, Name = "one" } };
 
+        public int ShoutedReads { get; private set; }
+
+        public IEnumerable<string> Shouted
+        {
+            get
+            {
+                if (Names == null)
+                {
+                    yield break;
+                }
+
+                ShoutedReads++;
+
+                foreach (string name in Names)
+                {
+                    yield return name.ToUpperInvariant();
+                }
+            }
+        }
+
         internal void Update(System.Action change) => SetState(change);
     }
 }

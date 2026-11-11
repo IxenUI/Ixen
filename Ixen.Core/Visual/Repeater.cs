@@ -5,6 +5,16 @@ namespace Ixen.Core.Visual
 {
     public static class Repeater
     {
+        public static IList<T> Items<T>(IEnumerable<T> source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            return source as IList<T> ?? new List<T>(source);
+        }
+
         public static void Sync<TRow>(VisualElement parent, List<VisualElement> instances, List<TRow> rows,
             int offset, int count, Func<int, TRow> create)
             where TRow : IRegionRow

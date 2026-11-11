@@ -64,6 +64,40 @@ namespace Ixen.Core.UT.Components
         }
 
         [TestMethod]
+        public void ALazySequenceIsASource()
+        {
+            Assert.AreEqual("SWANS,LAKE", Texts("shouted"),
+                "the generated loop read each row with source[index], which an IEnumerable does not have");
+            Assert.AreEqual("SWANS,LAKE", Texts("shouted_keyed"));
+
+            _component.Update(() => _component.Names = new[] { "notes", "lake" });
+            _surface.ComputeLayout(300, 300);
+
+            Assert.AreEqual("NOTES,LAKE", Texts("shouted"));
+            Assert.AreEqual("NOTES,LAKE", Texts("shouted_keyed"));
+        }
+
+        [TestMethod]
+        public void ALazySequenceIsWalkedOncePerLoopAndBind()
+        {
+            int before = _component.ShoutedReads;
+
+            _component.Update(() => _component.Names = new[] { "a", "b", "c", "d" });
+            _surface.ComputeLayout(300, 300);
+
+            Assert.AreEqual(3, _component.ShoutedReads - before,
+                "once for each of the three loops over it, not once per row nor once more to count it");
+        }
+
+        [TestMethod]
+        public void AVirtualisingHostCountsALazySequence()
+        {
+            var host = (RecordingHost)_component.View.FindByName("shouted_host");
+
+            Assert.AreEqual(2, host.Counter());
+        }
+
+        [TestMethod]
         public void ANullSourceIsEmpty()
         {
             _component.Update(() => _component.Names = null);

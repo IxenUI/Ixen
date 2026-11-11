@@ -14,4 +14,19 @@ loops_root {} [
 			host_row { text: "{name}" }
 		@}
 	]
+	shouted {} [
+		@foreach (var name in Shouted) {
+			shouted_item { text: "{name}" }
+		@}
+	]
+	shouted_keyed {} [
+		@foreach (var name in Shouted) key (name) {
+			shouted_keyed_item { text: "{name}" }
+		@}
+	]
+	shouted_host<RecordingHost> {} [
+		@foreach (var name in Shouted) {
+			shouted_row { text: "{name}" }
+		@}
+	]
 ]
