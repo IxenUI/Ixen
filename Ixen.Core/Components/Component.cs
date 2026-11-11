@@ -37,6 +37,7 @@ namespace Ixen.Core.Components
             }
 
             _initialized = true;
+            _preparing = false;
 
             if (element != null)
             {
@@ -47,6 +48,49 @@ namespace Ixen.Core.Components
             RenderPass();
 
             return element;
+        }
+
+        private bool _preparing;
+
+        public VisualElement Prepare()
+        {
+            VisualElement element = GetVisualElement();
+
+            if (_initialized || _preparing)
+            {
+                return element;
+            }
+
+            _preparing = true;
+
+            if (element != null)
+            {
+                element.Owner = this;
+            }
+
+            return element;
+        }
+
+        public void PropsAssigned()
+        {
+            if (_preparing)
+            {
+                Initialize();
+                return;
+            }
+
+            if (!_initialized)
+            {
+                return;
+            }
+
+            if (_rendering)
+            {
+                _isStateDirty = true;
+                return;
+            }
+
+            RenderPass();
         }
 
         public VisualElement Content => ContentFor(null);

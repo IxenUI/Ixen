@@ -851,6 +851,56 @@ namespace Ixen.Core.Visual
         internal VisualElementStylesHandlers StylesHandlers { get; set; } = new();
         public List<string> Classes { get; set; } = new ();
 
+        private string _boundClassText;
+        private List<string> _boundClasses;
+
+        private static readonly char[] _classSeparators = { ' ', '\t', '\r', '\n' };
+
+        public void BindClasses(string classes)
+        {
+            if (string.Equals(classes, _boundClassText))
+            {
+                return;
+            }
+
+            _boundClassText = classes;
+
+            string[] wanted = string.IsNullOrEmpty(classes)
+                ? new string[0]
+                : classes.Split(_classSeparators, StringSplitOptions.RemoveEmptyEntries);
+
+            bool changed = false;
+
+            if (_boundClasses != null)
+            {
+                foreach (string previous in _boundClasses)
+                {
+                    if (Array.IndexOf(wanted, previous) < 0 && Classes.Remove(previous))
+                    {
+                        changed = true;
+                    }
+                }
+            }
+
+            _boundClasses = new List<string>(wanted.Length);
+
+            foreach (string name in wanted)
+            {
+                _boundClasses.Add(name);
+
+                if (!Classes.Contains(name))
+                {
+                    Classes.Add(name);
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                Invalidate();
+            }
+        }
+
         private List<VisualElement> _chrome;
 
         internal List<VisualElement> Chrome => _chrome;

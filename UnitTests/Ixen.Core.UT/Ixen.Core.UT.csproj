@@ -43,6 +43,8 @@
     <AdditionalFiles Include="Components\Fixtures\RowCommandView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\CommandMenuView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\ArrayLoopView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\ShelfView.xnl" />
+    <AdditionalFiles Include="Components\Fixtures\ShelfCardView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\CounterView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\LibraryHostView.xnl" />
     <AdditionalFiles Include="Components\Fixtures\HostView.xnl" />

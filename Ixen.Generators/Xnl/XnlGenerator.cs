@@ -457,7 +457,7 @@ namespace Ixen.Generators.Xnl
         {
             foreach (XnlNodeParameter param in node.Properties)
             {
-                if (param.Name != CLASS_PROPERTY && XnlBindings.HasBinding(param.Value))
+                if (XnlBindings.HasBinding(param.Value))
                 {
                     ids.Add(node.Id);
                     break;
@@ -479,11 +479,21 @@ namespace Ixen.Generators.Xnl
         static void AddRegionBindings(StringBuilder sb, XnlNode node, string rowVar, FileContext file, int tabLevel)
         {
             string tabs = new string('\t', tabLevel);
-            string path = $"{rowVar}.{Identifier(node)}";
-            INamedTypeSymbol symbol = file.Resolver.Resolve(node, new List<LanguageError>()).Symbol;
+            ResolvedType resolved = file.Resolver.Resolve(node, new List<LanguageError>());
+            INamedTypeSymbol symbol = resolved.Symbol;
+            string path = resolved.IsComponent
+                ? $"{rowVar}.{ComponentIdentifier(Identifier(node))}"
+                : $"{rowVar}.{Identifier(node)}";
 
             foreach (XnlNodeParameter param in node.Properties)
             {
+                if (param.Name == CLASS_PROPERTY && XnlBindings.HasBinding(param.Value))
+                {
+                    sb.AppendLine($"{tabs}{rowVar}.{Identifier(node)}.BindClasses(" +
+                        $"{XnlBindings.BuildExpression(XnlBindings.Parse(param.Value), file.ModelMembers)});");
+                    continue;
+                }
+
                 if (param.Name == CLASS_PROPERTY || param.Name == KEY_PROPERTY || param.Name == SLOT_PROPERTY)
                 {
                     continue;
@@ -509,6 +519,11 @@ namespace Ixen.Generators.Xnl
 
                 sb.AppendLine($"{tabs}{path}.{propertyName} = " +
                     $"{XnlBindings.BuildExpression(parts, file.ModelMembers)};");
+            }
+
+            if (resolved.IsComponent && HasBoundProps(node))
+            {
+                sb.AppendLine($"{tabs}{path}.PropsAssigned();");
             }
 
             foreach (XnlNode child in node.Children)
@@ -622,7 +637,7 @@ namespace Ixen.Generators.Xnl
         {
             foreach (XnlNodeParameter param in node.Properties)
             {
-                if (param.Name != CLASS_PROPERTY && XnlBindings.HasBinding(param.Value))
+                if (XnlBindings.HasBinding(param.Value))
                 {
                     file.BoundNodes.Add(node.Id);
                     break;
@@ -740,6 +755,24 @@ namespace Ixen.Generators.Xnl
 
         static string ComponentIdentifier(string nodeId)
             => $"{nodeId}_component";
+
+        static bool HasBoundProps(XnlNode node)
+        {
+            foreach (XnlNodeParameter param in node.Properties)
+            {
+                if (param.Name == CLASS_PROPERTY || param.Name == KEY_PROPERTY || param.Name == SLOT_PROPERTY)
+                {
+                    continue;
+                }
+
+                if (XnlBindings.TwoWayPath(param.Value) != null || XnlBindings.HasBinding(param.Value))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         static string ContentParent(ResolvedType resolved, string nodeId)
             => resolved.IsComponent ? $"{ComponentIdentifier(nodeId)}.Content" : nodeId;
@@ -1386,7 +1419,16 @@ namespace Ixen.Generators.Xnl
                 AddProperty(sb, tabs, componentId, param, resolved.Symbol, file);
             }
 
-            sb.AppendLine($"{tabs}{Declarator(file, bound, DEFAULT_ELEMENT_TYPE, nodeId)} = {componentId}.Initialize();");
+            bool propsBound = HasBoundProps(node);
+
+            if (propsBound && !file.InFactory)
+            {
+                file.Bind($"{componentId}.PropsAssigned();");
+            }
+
+            string start = propsBound ? "Prepare" : "Initialize";
+
+            sb.AppendLine($"{tabs}{Declarator(file, bound, DEFAULT_ELEMENT_TYPE, nodeId)} = {componentId}.{start}();");
 
             if (node.Name != null)
             {
@@ -1400,7 +1442,7 @@ namespace Ixen.Generators.Xnl
                     continue;
                 }
 
-                AddClasses(sb, tabs, nodeId, param.Value);
+                AddClassProperty(sb, tabs, nodeId, param, file);
             }
         }
 
@@ -1509,6 +1551,11 @@ namespace Ixen.Generators.Xnl
                     .OfType<INamedTypeSymbol>()
                     .Where(s => DerivesFrom(s, _componentSymbol) && ViewNameOf(s) == viewName)
                     .OrderBy(s => s.ToDisplayString(), StringComparer.Ordinal)
+                    .ToList();
+
+                candidates = candidates
+                    .Where(c => !candidates.Any(other =>
+                        !SymbolEqualityComparer.Default.Equals(other, c) && DerivesFrom(c, other)))
                     .ToList();
 
                 if (candidates.Count <= 1)
@@ -1671,7 +1718,7 @@ namespace Ixen.Generators.Xnl
 
             if (param.Name == CLASS_PROPERTY)
             {
-                AddClasses(sb, tabs, nodeId, param.Value);
+                AddClassProperty(sb, tabs, nodeId, param, file);
                 return;
             }
 
@@ -1945,6 +1992,35 @@ namespace Ixen.Generators.Xnl
 
         static string StringLiteral(string value)
             => SymbolDisplay.FormatLiteral(value ?? string.Empty, true);
+
+        static void AddClassProperty(StringBuilder sb, string tabs, string nodeId, XnlNodeParameter param,
+            FileContext file)
+        {
+            if (!XnlBindings.HasBinding(param.Value))
+            {
+                AddClasses(sb, tabs, nodeId, param.Value);
+                return;
+            }
+
+            if (file.InFactory)
+            {
+                return;
+            }
+
+            if (file.Model == null)
+            {
+                file.Diagnostics.Add(new LanguageError(
+                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
+                    $"'{param.Value}' binds to a component, but no single component uses this view.",
+                    param.ValueIndex,
+                    param.Value?.Length ?? 0));
+
+                return;
+            }
+
+            file.Bind($"{nodeId}.BindClasses(" +
+                $"{XnlBindings.BuildExpression(XnlBindings.Parse(param.Value), file.ModelMembers)});");
+        }
 
         static void AddClasses(StringBuilder sb, string tabs, string nodeId, string value)
         {

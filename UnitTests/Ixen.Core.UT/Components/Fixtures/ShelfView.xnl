@@ -1,0 +1,12 @@
+shelf {} [
+	featured<ShelfCardComponent> { album: "{Featured}" }
+	swatch { class: "swatch {Tint}" }
+	@if (ShowPicked) {
+		picked<ShelfCardComponent> { album: "{Picked}" }
+	@}
+	tiles {} [
+		@foreach (var album in Albums) {
+			tile { class: "{album.ToLowerInvariant()}" text: "{album}" }
+		@}
+	]
+]
