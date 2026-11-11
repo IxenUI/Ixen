@@ -342,6 +342,34 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
+        public void ADraggedBlockSaysHowManyItCarries()
+        {
+            SelectBlock(1, 3);
+
+            float x = _grid.Body.ContentX + 10;
+            float y = _grid.Body.ContentY + ROW + ROW / 2;
+
+            _surface.PointerDown(x, y, PointerButton.Left);
+            _surface.PointerMove(x, y + 6);
+            Layout();
+
+            VisualElement badge = _surface.DragGhost.ChromeElements.Single();
+
+            Assert.AreEqual("2", badge.Text);
+
+            _surface.PointerUp(x, y + 6, PointerButton.Left);
+            Layout();
+
+            _surface.PointerDown(x, _grid.Body.ContentY + 4 * ROW + ROW / 2, PointerButton.Left);
+            _surface.PointerMove(x, _grid.Body.ContentY + 4 * ROW + ROW / 2 + 6);
+            Layout();
+
+            Assert.AreEqual(0, _surface.DragGhost.ChromeElements.Count, "one row needs no count");
+
+            _surface.PointerUp(x, _grid.Body.ContentY + 4 * ROW + 6, PointerButton.Left);
+        }
+
+        [TestMethod]
         public void EveryDraggedRowIsMarkedAndABlockDroppedOnItselfMovesNothing()
         {
             List<ReorderEventArgs> seen = Watch();

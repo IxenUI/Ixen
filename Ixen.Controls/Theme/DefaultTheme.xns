@@ -554,6 +554,15 @@ $control_focus_soft:   #EEF1FE
     background: $control_focus
 }
 
+#DragGhostBadge {
+    background: $control_focus
+    color: #FFFFFF
+    font-size: 11px
+    font-weight: bold
+    padding: 1px 6px
+    corner-radius: 8px
+}
+
 #TreeRow:droptarget,
 #DataGridRow:droptarget {
     border: $control_focus 2px inner

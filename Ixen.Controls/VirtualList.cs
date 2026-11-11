@@ -6,6 +6,7 @@ using Ixen.Core.Visual.Styles.Descriptors;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace Ixen.Controls
 {
@@ -807,6 +808,7 @@ namespace Ixen.Controls
             if (DragGhost == null)
             {
                 args.GhostOf(row);
+                args.GhostBadge = indices.Count > 1 ? indices.Count.ToString(CultureInfo.InvariantCulture) : null;
 
                 return;
             }

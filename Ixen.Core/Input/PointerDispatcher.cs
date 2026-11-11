@@ -873,6 +873,23 @@ namespace Ixen.Core.Input
 
             holder.AddChild(ghost);
 
+            if (!string.IsNullOrEmpty(args.GhostBadge))
+            {
+                var badge = new VisualElement
+                {
+                    TypeName = DragEventArgs.GHOST_BADGE,
+                    Text = args.GhostBadge,
+                    Role = Accessibility.AccessibleRole.Presentation
+                };
+
+                badge.Styles.Right = new RightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+                badge.Styles.Top = new TopStyleDescriptor { Unit = SizeUnit.Pixels, Value = 0 };
+                badge.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Content };
+                badge.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Content };
+
+                holder.AddChrome(badge);
+            }
+
             _ghostOffsetX = args.GhostOffsetX;
             _ghostOffsetY = args.GhostOffsetY;
             _ghostHolder = holder;

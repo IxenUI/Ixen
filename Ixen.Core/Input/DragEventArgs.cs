@@ -5,6 +5,7 @@ namespace Ixen.Core.Input
     public class DragEventArgs : PointerEventArgs
     {
         public const string GHOST = "DragGhost";
+        public const string GHOST_BADGE = "DragGhostBadge";
 
         public float DeltaX { get; private set; }
         public float DeltaY { get; private set; }
@@ -18,6 +19,7 @@ namespace Ixen.Core.Input
         public VisualElement Ghost { get; set; }
         public float GhostOffsetX { get; set; }
         public float GhostOffsetY { get; set; }
+        public string GhostBadge { get; set; }
 
         internal VisualElement GhostSource { get; private set; }
 

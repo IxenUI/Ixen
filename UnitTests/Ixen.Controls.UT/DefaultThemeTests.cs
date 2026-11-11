@@ -417,6 +417,7 @@ namespace Ixen.Controls.UT
                 "TreeRow:selected #FFFFFF",
                 "DataGridRow:selected #FFFFFF",
                 "DatePickerDay:selected #FFFFFF",
+                "DragGhostBadge #FFFFFF",
                 "MenuPanel #30000000",
                 "DragGhost #30000000",
                 "Toast #30000000",

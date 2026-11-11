@@ -104,6 +104,51 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void ABadgeSitsOnTheGhostsTopRightCorner()
+        {
+            var ghost = new VisualElement { Name = "ghost" };
+            ghost.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 60 };
+            ghost.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 20 };
+
+            _source.PointerDragStart += (sender, e) =>
+            {
+                e.Data = "songs";
+                e.Ghost = ghost;
+                e.GhostBadge = "3";
+            };
+
+            Start(100, 80);
+
+            VisualElement holder = _surface.DragGhost;
+            VisualElement badge = holder.ChromeElements.Single();
+
+            Assert.AreEqual(DragEventArgs.GHOST_BADGE, badge.TypeName, "a theme dresses it by that name");
+            Assert.AreEqual("3", badge.Text);
+            Assert.AreEqual(holder.X + holder.ActualWidth, badge.X + badge.ActualWidth, 0.01f);
+            Assert.AreEqual(holder.Y, badge.Y, 0.01f);
+            Assert.IsTrue(badge.ActualWidth > 0, "sized by its text");
+            Assert.AreNotSame(badge, _surface.HitTest(badge.X + 1, badge.Y + 1), "and never hit");
+        }
+
+        [TestMethod]
+        public void NoBadgeWithoutText()
+        {
+            var ghost = new VisualElement { Name = "ghost" };
+            ghost.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 60 };
+            ghost.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 20 };
+
+            _source.PointerDragStart += (sender, e) =>
+            {
+                e.Data = "song";
+                e.Ghost = ghost;
+            };
+
+            Start(100, 80);
+
+            Assert.AreEqual(0, _surface.DragGhost.ChromeElements.Count);
+        }
+
+        [TestMethod]
         public void TheGhostIsNeverHitAndNeverAChild()
         {
             var ghost = new VisualElement { Name = "ghost" };
