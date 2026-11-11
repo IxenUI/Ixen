@@ -41,7 +41,11 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: install what the native library and the font fallback need
-        run: sudo apt-get update && sudo apt-get install -y libx11-dev libxcursor-dev libdbus-1-dev libwayland-dev libwayland-bin wayland-protocols libxkbcommon-dev fonts-droid-fallback
+        timeout-minutes: 10
+        run: |
+          sudo rm -f /var/lib/man-db/auto-update
+          sudo apt-get -o Acquire::Retries=3 update
+          sudo apt-get -o Acquire::Retries=3 install -y libx11-dev libxcursor-dev libdbus-1-dev libwayland-dev libwayland-bin wayland-protocols libxkbcommon-dev fonts-droid-fallback
 
       - name: verify
         run: bash ./verify-linux.sh --skip-host-frame
