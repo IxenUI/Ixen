@@ -259,6 +259,37 @@ namespace Ixen.Core.UT.Threading
         }
 
         [TestMethod]
+        public void ABackgroundPictureOnScreenIsKeptToo()
+        {
+            for (int row = 0; row < _rows.Count; row++)
+            {
+                foreach (VisualElement element in _rows[row].ChildElements)
+                {
+                    var cover = (Image)element;
+
+                    cover.Styles.Background = new BackgroundStyleDescriptor { ImageUrl = cover.Source };
+                    cover.Source = null;
+                    cover.Invalidate();
+                }
+            }
+
+            _surface.ImageCacheBudget = 1024 * 1024;
+
+            Settle();
+
+            Assert.AreEqual(COVERS, _store.Asked, "one download per background");
+
+            Frames(10);
+
+            _surface.InvalidateVisual();
+            Frame();
+
+            Assert.AreEqual(COVERS, _store.Asked,
+                "a background is a picture on screen like an <Image>: idle frames paint it not, and "
+                + "the trim must not take that for being off screen");
+        }
+
+        [TestMethod]
         public void ACoverEvictedOffScreenComesBackWithoutBeingFetchedAgain()
         {
             Settle();

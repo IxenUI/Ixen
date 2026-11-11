@@ -898,12 +898,6 @@ namespace Ixen.Core.Visual
                 (host as IxenSurface)?.RecallScroll(this);
             }
 
-            if (this is Image picture)
-            {
-                (previous as IxenSurface)?.ForgetPicture(picture);
-                (host as IxenSurface)?.WatchPicture(picture);
-            }
-
             ListenToCommand(host != null);
             OnHostChanged();
 

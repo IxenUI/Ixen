@@ -186,19 +186,66 @@ namespace Ixen.Core
             : this(mainComponent.Initialize(), initOptions)
         { }
 
-        private readonly HashSet<Image> _pictures = new HashSet<Image>();
+        private readonly List<VisualElement> _showing = new List<VisualElement>();
 
-        internal void WatchPicture(Image picture) => _pictures.Add(picture);
+        private static bool ShowsPicture(VisualElement element)
+        {
+            if (element is Image image && !string.IsNullOrEmpty(image.Source))
+            {
+                return true;
+            }
 
-        internal void ForgetPicture(Image picture) => _pictures.Remove(picture);
+            BackgroundStyleDescriptor background = element.StylesHandlers?.Background.Descriptor;
+
+            if (background == null || !background.HasLayers)
+            {
+                return false;
+            }
+
+            List<BackgroundLayer> layers = background.Layers;
+
+            for (int index = 0; index < layers.Count; index++)
+            {
+                if (!string.IsNullOrEmpty(layers[index].ImageUrl))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         private void KeepPicturesOnScreen()
         {
-            foreach (Image picture in _pictures)
+            for (int index = 0; index < _showing.Count; index++)
             {
-                if (picture.Painted && !string.IsNullOrEmpty(picture.Source) && !picture.IsHiddenInTree)
+                VisualElement element = _showing[index];
+
+                if (element.Host != this || element.IsHiddenInTree)
                 {
-                    _images.Keep(picture.Source);
+                    continue;
+                }
+
+                if (element is Image image && !string.IsNullOrEmpty(image.Source))
+                {
+                    _images.Keep(image.Source);
+                }
+
+                BackgroundStyleDescriptor background = element.StylesHandlers?.Background.Descriptor;
+
+                if (background == null)
+                {
+                    continue;
+                }
+
+                List<BackgroundLayer> layers = background.Layers;
+
+                for (int layer = 0; layer < layers.Count; layer++)
+                {
+                    if (!string.IsNullOrEmpty(layers[layer].ImageUrl))
+                    {
+                        _images.Keep(layers[layer].ImageUrl);
+                    }
                 }
             }
         }
@@ -302,6 +349,7 @@ namespace Ixen.Core
 
             _clippingComputer.Compute(Root, logicalWidth, logicalHeight);
 
+            _showing.Clear();
             DamageLayout(Root, null);
 
             Root.ClearLayoutDirty();
@@ -901,6 +949,11 @@ namespace Ixen.Core
             element.PaintedTop = top;
             element.PaintedRight = right;
             element.PaintedBottom = bottom;
+
+            if (visible && ShowsPicture(element))
+            {
+                _showing.Add(element);
+            }
         }
 
         private void DamagePainted(VisualElement element)
