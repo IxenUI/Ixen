@@ -17,6 +17,21 @@ namespace Ixen.Controls
         public event EventHandler<EventArgs> SelectionChanged;
         public event EventHandler<TreeMoveEventArgs> Moved;
         public event EventHandler<TreeDropEventArgs> DroppedOnto;
+        public event EventHandler<ItemInvokedEventArgs> ItemInvoked;
+
+        private bool Invoke(int index)
+        {
+            TreeNode node = NodeAt(index);
+
+            if (ItemInvoked == null || node == null || node.HasChildren || !IsEnabled)
+            {
+                return false;
+            }
+
+            ItemInvoked(this, new ItemInvokedEventArgs(node.Item, index));
+
+            return true;
+        }
 
         private Func<object, object, bool> _acceptsOnto;
 
@@ -593,6 +608,7 @@ namespace Ixen.Controls
             row.SetContent(_create());
 
             row.PointerClick += OnRowClick;
+            row.PointerDoubleClick += OnRowDoubleClick;
             row.Expander.PointerClick += OnExpanderClick;
 
             return row;
@@ -609,6 +625,32 @@ namespace Ixen.Controls
             row.ToggleState(TreeRow.SELECTED, _selection.Contains(node.Item));
 
             _bind(row.Content, node);
+        }
+
+        private void OnRowDoubleClick(object sender, PointerEventArgs args)
+        {
+            if (args.Source is VisualElement source && sender is TreeRow row && IsExpander(source, row))
+            {
+                return;
+            }
+
+            if (Invoke(IndexOf((sender as TreeRow)?.Item)))
+            {
+                args.Handled = true;
+            }
+        }
+
+        private static bool IsExpander(VisualElement source, TreeRow row)
+        {
+            for (VisualElement element = source; element != null && element != row; element = element.Parent)
+            {
+                if (element == row.Expander)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void OnRowClick(object sender, PointerEventArgs args)
@@ -718,6 +760,12 @@ namespace Ixen.Controls
 
                 case Key.Enter:
                 case Key.Space:
+                    if (args.Key == Key.Enter && args.Modifiers == KeyModifiers.None && Invoke(_selection.Current))
+                    {
+                        args.Handled = true;
+                        break;
+                    }
+
                     if (node != null && node.HasChildren)
                     {
                         args.Handled = true;

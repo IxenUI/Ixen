@@ -105,6 +105,71 @@ namespace Ixen.Controls.UT
             return null;
         }
 
+        private void DoubleClick(TreeRow row)
+        {
+            float x = row.Content.X + 4;
+            float y = row.Content.Y + 4;
+
+            for (int i = 0; i < 2; i++)
+            {
+                _surface.PointerDown(x, y, PointerButton.Left);
+                _surface.PointerUp(x, y, PointerButton.Left);
+            }
+
+            Layout();
+        }
+
+        [TestMethod]
+        public void ADoubleClickOnALeafInvokesIt()
+        {
+            var invoked = new List<ItemInvokedEventArgs>();
+
+            _tree.ItemInvoked += (sender, e) => invoked.Add(e);
+
+            DoubleClick(RowShowing("Pictures"));
+
+            Assert.AreEqual(1, invoked.Count, "a playlist in the sidebar opens on a double-click");
+            Assert.AreEqual("Pictures", ((Folder)invoked[0].Item).Name);
+            Assert.AreEqual(1, invoked[0].Index);
+        }
+
+        [TestMethod]
+        public void ADoubleClickOnAFolderInvokesNothing()
+        {
+            int invoked = 0;
+
+            _tree.ItemInvoked += (sender, e) => invoked++;
+
+            DoubleClick(RowShowing("Documents"));
+
+            Assert.AreEqual(0, invoked, "a folder is opened and closed, not invoked");
+        }
+
+        [TestMethod]
+        public void EnterInvokesALeafAndStillTogglesAFolder()
+        {
+            object invoked = null;
+
+            _tree.ItemInvoked += (sender, e) => invoked = e.Item;
+            _tree.Focus();
+
+            _tree.Select(1);
+            Layout();
+            _surface.KeyDown(Key.Enter, KeyModifiers.None);
+            Layout();
+
+            Assert.AreEqual("Pictures", ((Folder)invoked).Name);
+
+            invoked = null;
+            _tree.Select(0);
+            Layout();
+            _surface.KeyDown(Key.Enter, KeyModifiers.None);
+            Layout();
+
+            Assert.IsNull(invoked);
+            Assert.AreEqual(4, _tree.Count, "Enter on a folder still opens it");
+        }
+
         [TestMethod]
         public void ACollapsedTreeShowsOnlyItsRoots()
         {

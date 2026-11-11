@@ -21,7 +21,7 @@ namespace Ixen.Controls
         public event EventHandler<ReorderEventArgs> Reordered;
         public event EventHandler<ListDropEventArgs> ItemDropped;
         public event EventHandler<ReorderEventArgs> ColumnMoved;
-        public event EventHandler<DataGridItemEventArgs> ItemInvoked;
+        public event EventHandler<ItemInvokedEventArgs> ItemInvoked;
 
         private bool Invoke(object item)
         {
@@ -30,7 +30,7 @@ namespace Ixen.Controls
                 return false;
             }
 
-            ItemInvoked(this, new DataGridItemEventArgs(item, IndexOf(item)));
+            ItemInvoked(this, new ItemInvokedEventArgs(item, IndexOf(item)));
 
             return true;
         }

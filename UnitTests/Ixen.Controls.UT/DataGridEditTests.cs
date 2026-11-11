@@ -206,7 +206,7 @@ namespace Ixen.Controls.UT
         [TestMethod]
         public void WithAListenerADoubleClickInvokesTheRowInsteadOfEditing()
         {
-            var invoked = new List<DataGridItemEventArgs>();
+            var invoked = new List<ItemInvokedEventArgs>();
 
             _grid.ItemInvoked += (sender, e) => invoked.Add(e);
 
