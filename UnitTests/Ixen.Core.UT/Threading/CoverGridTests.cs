@@ -220,6 +220,45 @@ namespace Ixen.Core.UT.Threading
         }
 
         [TestMethod]
+        public void IdleFramesThatPaintNothingDoNotExposeWhatIsOnScreen()
+        {
+            _surface.ImageCacheBudget = 1024 * 1024;
+
+            Settle();
+            Frames(10);
+
+            _surface.InvalidateVisual();
+            Frame();
+
+            Assert.AreEqual(COVERS, _store.Asked,
+                "a frame with nothing to repaint draws nothing, so it touches no picture; the trim of "
+                + "the frames after it must still treat what is on screen as on screen, or the next "
+                + "real repaint fetches every cover again");
+            Assert.IsTrue(Drawn(0) && Drawn(COVERS - 1), State(0) + "; " + State(COVERS - 1));
+        }
+
+        [TestMethod]
+        public void FramesThatRepaintOneCornerDoNotExposeTheRest()
+        {
+            _surface.ImageCacheBudget = 1024 * 1024;
+
+            Settle();
+
+            for (int frame = 0; frame < 10; frame++)
+            {
+                _surface.InvalidateVisual(_rows[0].ChildElements[0]);
+                Frame();
+            }
+
+            _surface.InvalidateVisual();
+            Frame();
+
+            Assert.AreEqual(COVERS, _store.Asked,
+                "a frame clipped to one cover draws only that one; the others are still on screen");
+            Assert.IsTrue(Drawn(0) && Drawn(COVERS - 1), State(0) + "; " + State(COVERS - 1));
+        }
+
+        [TestMethod]
         public void ACoverEvictedOffScreenComesBackWithoutBeingFetchedAgain()
         {
             Settle();

@@ -186,8 +186,26 @@ namespace Ixen.Core
             : this(mainComponent.Initialize(), initOptions)
         { }
 
+        private readonly HashSet<Image> _pictures = new HashSet<Image>();
+
+        internal void WatchPicture(Image picture) => _pictures.Add(picture);
+
+        internal void ForgetPicture(Image picture) => _pictures.Remove(picture);
+
+        private void KeepPicturesOnScreen()
+        {
+            foreach (Image picture in _pictures)
+            {
+                if (picture.Painted && !string.IsNullOrEmpty(picture.Source) && !picture.IsHiddenInTree)
+                {
+                    _images.Keep(picture.Source);
+                }
+            }
+        }
+
         internal void ComputeLayout(int width, int height)
         {
+            KeepPicturesOnScreen();
             _images.Trim();
             DrainPosted();
             RaisePreferencesChanged();

@@ -252,6 +252,14 @@ namespace Ixen.Core.Rendering
             _bytes += entry.Bytes;
         }
 
+        internal void Keep(string name)
+        {
+            if (_entries.TryGetValue(name, out Entry cached))
+            {
+                cached.Stamp = ++_clock;
+            }
+        }
+
         private Entry Touch(string name)
         {
             if (string.IsNullOrEmpty(name))
