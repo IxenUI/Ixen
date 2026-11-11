@@ -1,11 +1,13 @@
 using Ixen.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Ixen.Platform.Windows
 {
-    internal sealed class MessageScheduler : IScheduler
+    internal sealed class MessageScheduler : IFrameScheduler
     {
         private delegate void TimerProc(IntPtr hwnd, uint message, UIntPtr id, uint time);
 
@@ -15,8 +17,18 @@ namespace Ixen.Platform.Windows
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool KillTimer(IntPtr hwnd, UIntPtr id);
 
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmFlush();
+
         private static readonly Dictionary<ulong, Subscription> _subscriptions = new Dictionary<ulong, Subscription>();
         private static readonly TimerProc _proc = OnTimer;
+
+        private readonly Action<Action> _post;
+
+        internal MessageScheduler(Action<Action> post)
+        {
+            _post = post;
+        }
 
         public IDisposable Schedule(int delayMilliseconds, bool repeat, Action callback)
         {
@@ -33,6 +45,15 @@ namespace Ixen.Platform.Windows
             return subscription;
         }
 
+        public IDisposable ScheduleFrames(Action<long> onFrame)
+        {
+            var frames = new Frames(_post, onFrame);
+
+            frames.Start();
+
+            return frames;
+        }
+
         private static void OnTimer(IntPtr hwnd, uint message, UIntPtr id, uint time)
         {
             if (!_subscriptions.TryGetValue(id.ToUInt64(), out Subscription subscription))
@@ -42,6 +63,69 @@ namespace Ixen.Platform.Windows
             }
 
             subscription.Tick();
+        }
+
+        private sealed class Frames : IDisposable
+        {
+            private const int FALLBACK_MILLISECONDS = 16;
+
+            private readonly Action<Action> _post;
+            private readonly Action<long> _onFrame;
+            private readonly Action _deliver;
+
+            private volatile bool _stopped;
+            private long _latest;
+            private int _queued;
+
+            internal Frames(Action<Action> post, Action<long> onFrame)
+            {
+                _post = post;
+                _onFrame = onFrame;
+                _deliver = Deliver;
+            }
+
+            internal void Start()
+            {
+                var thread = new Thread(Run) { IsBackground = true, Name = "Ixen frames" };
+
+                thread.Start();
+            }
+
+            private void Run()
+            {
+                while (!_stopped)
+                {
+                    if (DwmFlush() != 0)
+                    {
+                        Thread.Sleep(FALLBACK_MILLISECONDS);
+                    }
+
+                    if (_stopped)
+                    {
+                        return;
+                    }
+
+                    Interlocked.Exchange(ref _latest,
+                        (long)(Stopwatch.GetTimestamp() * (1_000_000_000.0 / Stopwatch.Frequency)));
+
+                    if (Interlocked.Exchange(ref _queued, 1) == 0)
+                    {
+                        _post(_deliver);
+                    }
+                }
+            }
+
+            private void Deliver()
+            {
+                Interlocked.Exchange(ref _queued, 0);
+
+                if (!_stopped)
+                {
+                    _onFrame(Interlocked.Read(ref _latest));
+                }
+            }
+
+            public void Dispose() => _stopped = true;
         }
 
         private sealed class Subscription : IDisposable

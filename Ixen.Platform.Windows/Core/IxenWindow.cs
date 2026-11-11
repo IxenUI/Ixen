@@ -39,7 +39,7 @@ namespace Ixen.Platform.Windows
         {
             _ixenSurface = ixenSurface;
             ReadPreferences();
-            _host = new IxenHost(ixenSurface, RequestRepaint, new MessageScheduler(), new WindowsClipboard(),
+            _host = new IxenHost(ixenSurface, RequestRepaint, new MessageScheduler(ixenSurface.Post), new WindowsClipboard(),
                 SetCursor, new WindowsImageSource(), null, CanPresent);
 
             IxenSynchronizationContext.Install(ixenSurface);
