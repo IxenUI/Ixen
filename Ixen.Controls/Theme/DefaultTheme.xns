@@ -580,6 +580,25 @@ $control_focus_soft:   #EEF1FE
     content-align: left middle
 }
 
+#DataGridCell:frozen {
+    background: $control_field
+    border: $control_line 0px 1px 0px 0px inner
+}
+
+#DataGridCell:frozen:selected {
+    background: $control_focus
+}
+
+#DataGridHeaderCell:frozen {
+    background: $control_surface
+    border: $control_line 0px 1px 0px 0px inner
+}
+
+#DataGridHeaderCell:frozen:hover,
+#DataGridHeaderCell:frozen:focus {
+    background: $control_surface_over
+}
+
 #DataGridEditor {
     background: $control_field
     color: $control_text

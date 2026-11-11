@@ -11,6 +11,7 @@ namespace Ixen.Controls
         public const string SELECTED = "selected";
 
         private readonly List<VisualElement> _cells = new();
+        private readonly FrozenCells _frozen;
 
         public DataGridRow()
         {
@@ -18,7 +19,14 @@ namespace Ixen.Controls
             Role = AccessibleRole.TableRow;
 
             Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Row };
+
+            _frozen = new FrozenCells(this);
         }
+
+        internal bool IsFrozen(int index) => _frozen.IsPinned(index);
+
+        internal void Freeze(IList<DataColumn> columns, int frozen, float scroll)
+            => _frozen.Sync(_cells, columns, frozen, scroll);
 
         internal object Item { get; set; }
 
@@ -26,7 +34,13 @@ namespace Ixen.Controls
 
         public VisualElement CellAt(int index) => _cells[index];
 
-        internal void Fit(IList<DataColumn> columns)
+        internal void Fit(IList<DataColumn> columns, int frozen, float scroll)
+        {
+            FitCells(columns);
+            _frozen.Sync(_cells, columns, frozen, scroll, true);
+        }
+
+        private void FitCells(IList<DataColumn> columns)
         {
             while (_cells.Count < columns.Count)
             {

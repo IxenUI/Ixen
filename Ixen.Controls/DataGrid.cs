@@ -13,6 +13,7 @@ namespace Ixen.Controls
         public const string HEADER = "DataGridHeader";
         public const string BODY = "DataGridBody";
         public const string EDITOR = "DataGridEditor";
+        public const string FROZEN = "frozen";
 
         private const float EDGE_GRIP = 6;
 
@@ -35,6 +36,8 @@ namespace Ixen.Controls
         private float _resizeFrom;
         private bool _resized;
         private int _movingColumn = -1;
+        private int _frozenColumns;
+        private readonly FrozenCells _headerFrozen;
         private DataGridHeaderCell _armedHeader;
 
         private TextField _editor;
@@ -61,6 +64,7 @@ namespace Ixen.Controls
             };
 
             _header.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Row };
+            _headerFrozen = new FrozenCells(_header);
 
             _body = new VirtualList { TypeName = BODY, Role = AccessibleRole.None, AnnouncesMoves = false };
             _selection = new ItemSelection(() => _view.Count, index => _view[index], OnSelectionMoved);
@@ -166,6 +170,11 @@ namespace Ixen.Controls
             }
 
             _headerShift = shift;
+
+            if (_frozenColumns > 0)
+            {
+                Freeze();
+            }
             _header.Styles.Transform = shift == 0
                 ? new TransformStyleDescriptor()
                 : new TransformStyleDescriptor
@@ -245,6 +254,39 @@ namespace Ixen.Controls
             && !_items.IsReadOnly && !_items.IsFixedSize;
 
         public bool ColumnsReorderable { get; set; }
+
+        public int FrozenColumns
+        {
+            get => _frozenColumns;
+            set
+            {
+                int frozen = value < 0 ? 0 : value;
+
+                if (frozen == _frozenColumns)
+                {
+                    return;
+                }
+
+                _frozenColumns = frozen;
+
+                BuildHeader();
+                Rebuild();
+            }
+        }
+
+        public bool IsFrozen(int column) => _headerFrozen.IsPinned(column);
+
+        private void Freeze()
+        {
+            float scroll = _body.ScrollX;
+
+            _headerFrozen.Sync(_headerCells, _columns, _frozenColumns, scroll);
+
+            foreach (VisualElement row in _body.RealisedRows)
+            {
+                (row as DataGridRow)?.Freeze(_columns, _frozenColumns, scroll);
+            }
+        }
 
         public bool SetColumnHidden(int column, bool hidden)
         {
@@ -863,6 +905,8 @@ namespace Ixen.Controls
                 cell.Focusable = column != null && !column.Hidden && (column.IsSortable || column.Resizable);
             }
 
+            _headerFrozen.Sync(_headerCells, _columns, _frozenColumns, _body.ScrollX, true);
+
             _headerStop = -1;
             Rove(NextHeader(-1, 1));
         }
@@ -1033,13 +1077,20 @@ namespace Ixen.Controls
             object item = _view[index];
 
             row.Item = item;
-            row.Fit(_columns);
+            row.Fit(_columns, _frozenColumns, _body.ScrollX);
 
             if (IsChoosing && ReferenceEquals(item, _choiceItem) && _choiceColumn < row.Cells.Count)
             {
                 _choices.AnchorElement = row.CellAt(_choiceColumn);
             }
-            row.ToggleState(DataGridRow.SELECTED, _selection.Contains(item));
+            bool selected = _selection.Contains(item);
+
+            row.ToggleState(DataGridRow.SELECTED, selected);
+
+            for (int i = 0; i < row.Cells.Count; i++)
+            {
+                row.CellAt(i).ToggleState(DataGridRow.SELECTED, selected && row.IsFrozen(i));
+            }
 
             for (int i = 0; i < _columns.Count; i++)
             {
@@ -1409,6 +1460,7 @@ namespace Ixen.Controls
 
             SizeCell(_headerCells[column], resized);
             _headerCells[column].Invalidate();
+            _headerFrozen.Sync(_headerCells, _columns, _frozenColumns, _body.ScrollX, true);
 
             FitWidth();
             _body.Refresh();
