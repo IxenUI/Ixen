@@ -21,6 +21,19 @@ namespace Ixen.Controls
         public event EventHandler<ReorderEventArgs> Reordered;
         public event EventHandler<ListDropEventArgs> ItemDropped;
         public event EventHandler<ReorderEventArgs> ColumnMoved;
+        public event EventHandler<DataGridItemEventArgs> ItemInvoked;
+
+        private bool Invoke(object item)
+        {
+            if (ItemInvoked == null || item == null || !IsEnabled)
+            {
+                return false;
+            }
+
+            ItemInvoked(this, new DataGridItemEventArgs(item, IndexOf(item)));
+
+            return true;
+        }
 
         private readonly VisualElement _header;
         private readonly VirtualList _body;
@@ -1384,6 +1397,12 @@ namespace Ixen.Controls
                 return;
             }
 
+            if (Invoke(row.Item))
+            {
+                args.Handled = true;
+                return;
+            }
+
             for (VisualElement cell = args.Source; cell != null; cell = cell.Parent)
             {
                 if (cell.Parent != row)
@@ -1632,6 +1651,12 @@ namespace Ixen.Controls
 
                 MoveSelection(args.Key == Key.Down ? 1 : -1);
 
+                return;
+            }
+
+            if (args.Key == Key.Enter && args.Modifiers == KeyModifiers.None && Invoke(ItemAt(_selection.Current)))
+            {
+                args.Handled = true;
                 return;
             }
 

@@ -204,6 +204,41 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
+        public void WithAListenerADoubleClickInvokesTheRowInsteadOfEditing()
+        {
+            var invoked = new List<DataGridItemEventArgs>();
+
+            _grid.ItemInvoked += (sender, e) => invoked.Add(e);
+
+            DoubleClick(RowOf(_people[1]).CellAt(1));
+
+            Assert.AreEqual(1, invoked.Count, "a double-click on a track plays it");
+            Assert.AreSame(_people[1], invoked[0].Item);
+            Assert.AreEqual(1, invoked[0].Index);
+            Assert.IsFalse(_grid.IsEditing, "and does not open the editor on the cell under it");
+        }
+
+        [TestMethod]
+        public void WithAListenerEnterInvokesAndF2StillEdits()
+        {
+            object invoked = null;
+
+            _grid.ItemInvoked += (sender, e) => invoked = e.Item;
+
+            _grid.Select(2);
+            _grid.Focus();
+            Layout();
+            Key(Ixen.Core.Input.Key.Enter);
+
+            Assert.AreSame(_people[2], invoked, "Enter opens what is selected, as in a file manager");
+            Assert.IsFalse(_grid.IsEditing);
+
+            Key(Ixen.Core.Input.Key.F2);
+
+            Assert.IsTrue(_grid.IsEditing, "and F2 is still the way to edit");
+        }
+
+        [TestMethod]
         public void ADoubleClickOnAReadOnlyCellEditsNothing()
         {
             DoubleClick(RowOf(_people[1]).CellAt(2));
