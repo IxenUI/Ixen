@@ -14,5 +14,9 @@ namespace Ixen.Core.UT.Components.Fixtures
         public TwoWayInner Inner { get; set; } = new TwoWayInner();
 
         public string Echo => $"[{Name}]";
+
+        public int Ticks { get; private set; }
+
+        public void Touch() => SetState(() => Ticks++);
     }
 }

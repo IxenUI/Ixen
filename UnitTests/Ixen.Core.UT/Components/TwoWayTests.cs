@@ -75,6 +75,39 @@ namespace Ixen.Core.UT.Components
         }
 
         [TestMethod]
+        public void ABoundFieldKeepsItsUndoAcrossTheWriteBackAndOtherStateChanges()
+        {
+            var component = new TwoWayComponent { Name = "" };
+            IxenSurface surface = Laid(component);
+            TextField field = Field(component, "two_way_field");
+
+            Type(field, "first");
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+            Type(field, " ");
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+            Type(field, "second");
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            component.Touch();
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Assert.IsTrue(field.CanUndo,
+                "the write-back re-renders, and the replay assigns the model back to the field: the same "
+                + "text, which must not wipe the history, or a bound field never undoes anything");
+
+            field.Undo();
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Assert.AreEqual("first ", field.Text);
+            Assert.AreEqual("first ", component.Name, "an undo is a user edit: it is written back too");
+
+            field.Undo();
+            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+
+            Assert.AreEqual("first", field.Text, "and the history reaches back past the first re-render");
+        }
+
+        [TestMethod]
         public void AssigningTheModelBackDoesNotLoop()
         {
             var component = new TwoWayComponent { Name = "" };

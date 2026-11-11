@@ -175,6 +175,11 @@ namespace Ixen.Core.Visual
             get => base.Text;
             set
             {
+                if (string.Equals(value, base.Text, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
                 base.Text = value;
                 ClampCaret();
 

@@ -608,6 +608,21 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void AssigningTheSameTextKeepsTheHistory()
+        {
+            _surface.Focus(_field);
+            Type("typed");
+
+            _field.Text = "typed";
+
+            Assert.IsTrue(_field.CanUndo, "nothing changed, so there is no new baseline");
+
+            Press(Key.Z, KeyModifiers.Control);
+
+            Assert.AreEqual(string.Empty, _field.Text);
+        }
+
+        [TestMethod]
         public void UndoingWithNoHistoryDoesNothing()
         {
             _surface.Focus(_field);
