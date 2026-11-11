@@ -1130,9 +1130,43 @@ namespace Ixen.Core
                 return;
             }
 
-            if (_animationTicker == null)
+            if (_animationTicker != null)
             {
-                _animationTicker = _scheduler.Schedule(ElementAnimations.TICK, true, TickAnimations);
+                return;
+            }
+
+            if (_scheduler is IFrameScheduler frames)
+            {
+                _frameOrigin = -1;
+                _animationTicker = frames.ScheduleFrames(OnDisplayFrame);
+                return;
+            }
+
+            _animationTicker = _scheduler.Schedule(ElementAnimations.TICK, true, TickAnimations);
+        }
+
+        private const long TICK_NANOS = ElementAnimations.TICK * 1_000_000L;
+        private const int MAX_TICKS_PER_FRAME = 4;
+
+        private long _frameOrigin = -1;
+        private long _ticksDone;
+
+        private void OnDisplayFrame(long frameNanos)
+        {
+            long due = _frameOrigin < 0 ? 1 : (frameNanos - _frameOrigin) / TICK_NANOS + 1;
+            long steps = due - _ticksDone;
+
+            if (_frameOrigin < 0 || steps > MAX_TICKS_PER_FRAME || steps < 0)
+            {
+                _frameOrigin = frameNanos;
+                _ticksDone = 0;
+                steps = 1;
+            }
+
+            for (long step = 0; step < steps && _animationTicker != null; step++)
+            {
+                _ticksDone++;
+                TickAnimations();
             }
         }
 

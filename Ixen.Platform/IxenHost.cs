@@ -31,7 +31,11 @@ namespace Ixen.Platform
                 _surface.CursorSetter = setCursor;
             }
 
-            if (scheduler != null)
+            if (scheduler is IFrameScheduler frames)
+            {
+                _surface.Scheduler = new HostFrameScheduler(this, frames);
+            }
+            else if (scheduler != null)
             {
                 _surface.Scheduler = new HostScheduler(this, scheduler);
             }
@@ -47,31 +51,61 @@ namespace Ixen.Platform
             }
         }
 
-        private sealed class HostScheduler : IScheduler
+        private class HostScheduler : IScheduler
         {
-            private readonly IxenHost _host;
+            protected readonly IxenHost Host;
             private readonly IScheduler _inner;
 
             internal HostScheduler(IxenHost host, IScheduler inner)
             {
-                _host = host;
+                Host = host;
                 _inner = inner;
             }
 
             public IDisposable Schedule(int delayMilliseconds, bool repeat, Action callback)
-                => _inner.Schedule(delayMilliseconds, repeat, () =>
+                => _inner.Schedule(delayMilliseconds, repeat, () => Guard(callback));
+
+            protected void Guard(Action callback)
+            {
+                try
+                {
+                    callback();
+                }
+                catch (Exception error)
+                {
+                    Host.Fail(IxenErrorPhase.Timer, error);
+                }
+                finally
+                {
+                    Host.RepaintIfDirty();
+                }
+            }
+        }
+
+        private sealed class HostFrameScheduler : HostScheduler, IFrameScheduler
+        {
+            private readonly IFrameScheduler _frames;
+
+            internal HostFrameScheduler(IxenHost host, IFrameScheduler frames)
+                : base(host, frames)
+            {
+                _frames = frames;
+            }
+
+            public IDisposable ScheduleFrames(Action<long> onFrame)
+                => _frames.ScheduleFrames(nanos =>
                 {
                     try
                     {
-                        callback();
+                        onFrame(nanos);
                     }
                     catch (Exception error)
                     {
-                        _host.Fail(IxenErrorPhase.Timer, error);
+                        Host.Fail(IxenErrorPhase.Timer, error);
                     }
                     finally
                     {
-                        _host.RepaintIfDirty();
+                        Host.RepaintIfDirty();
                     }
                 });
         }

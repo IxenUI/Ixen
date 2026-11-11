@@ -116,6 +116,12 @@ namespace Ixen.View.Android
 
         private void RequestFrame()
         {
+            if (_gpu != null && AndroidScheduler.InFrame)
+            {
+                _gpu.ProduceNow();
+                return;
+            }
+
             if (_gpu != null)
             {
                 _gpu.Schedule();

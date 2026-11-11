@@ -44,6 +44,16 @@ namespace Ixen.View.Android
             Choreographer.Instance?.PostFrameCallback(this);
         }
 
+        internal void ProduceNow()
+        {
+            if (_scheduled)
+            {
+                Choreographer.Instance?.RemoveFrameCallback(this);
+            }
+
+            DoFrame(0);
+        }
+
         public void DoFrame(long frameTimeNanos)
         {
             _scheduled = false;
