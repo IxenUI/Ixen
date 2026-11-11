@@ -291,8 +291,130 @@ namespace Ixen.Core.UT.Text
         public void AnUnknownOrOverlongValueIsRejected()
         {
             Assert.IsTrue(IsRejected("centre"), "misspelled");
-            Assert.IsTrue(IsRejected("justify"), "not supported");
+            Assert.IsTrue(IsRejected("start"), "not supported");
+            Assert.IsTrue(IsRejected("justify center"), "two horizontal values, one of them justify");
             Assert.IsTrue(IsRejected("top center left"), "three values");
+        }
+
+        private const string PROSE = "the quick brown fox jumps over the lazy dog and runs away again";
+
+        private static VisualElement Paragraph(string text, TextAlign align) => Label(text, align);
+
+        private static void LineExtent(SKBitmap bitmap, int line, out int leftmost, out int rightmost)
+        {
+            leftmost = -1;
+            rightmost = -1;
+
+            for (int x = 0; x < bitmap.Width; x++)
+            {
+                for (int y = line * LINE_HEIGHT + 4; y < (line + 1) * LINE_HEIGHT - 4; y++)
+                {
+                    if (bitmap.GetPixel(x, y).Alpha == 0)
+                    {
+                        continue;
+                    }
+
+                    if (leftmost < 0)
+                    {
+                        leftmost = x;
+                    }
+
+                    rightmost = x;
+                    break;
+                }
+            }
+        }
+
+        private static int LinesOf(VisualElement root) => root.TextLines.Count;
+
+        [TestMethod]
+        public void AJustifiedLineReachesBothEdges()
+        {
+            VisualElement left = Paragraph(PROSE, TextAlign.Left);
+            VisualElement justified = Paragraph(PROSE, TextAlign.Justify);
+
+            using (SKBitmap ragged = Render(left))
+            using (SKBitmap even = Render(justified))
+            {
+                Assert.IsTrue(LinesOf(justified) >= 3, "the paragraph wraps");
+                Assert.AreEqual(LinesOf(left), LinesOf(justified), "justifying moves no word to another line");
+
+                LineExtent(ragged, 0, out int raggedLeft, out int raggedRight);
+                LineExtent(even, 0, out int evenLeft, out int evenRight);
+
+                Assert.AreEqual(raggedLeft, evenLeft, "the first word stays where it was");
+                Assert.IsTrue(evenRight > raggedRight, $"the line is stretched: {raggedRight} -> {evenRight}");
+                Assert.IsTrue(evenRight >= SIZE - 1 - BEARING,
+                    $"its last glyph ends at the right edge of the content box: {evenRight}");
+            }
+        }
+
+        [TestMethod]
+        public void TheLastLineOfAParagraphIsNotStretched()
+        {
+            VisualElement left = Paragraph(PROSE + "\nshort line\nend", TextAlign.Left);
+            VisualElement justified = Paragraph(PROSE + "\nshort line\nend", TextAlign.Justify);
+
+            using (SKBitmap ragged = Render(left))
+            using (SKBitmap even = Render(justified))
+            {
+                int count = LinesOf(justified);
+                int beforeBreak = count - 3;
+
+                LineExtent(ragged, beforeBreak, out _, out int raggedRight);
+                LineExtent(even, beforeBreak, out _, out int evenRight);
+
+                Assert.AreEqual(raggedRight, evenRight,
+                    "the line that ends a paragraph keeps its natural width, though it is not the last line");
+
+                LineExtent(ragged, count - 2, out _, out int shortRight);
+                LineExtent(even, count - 2, out _, out int shortEven);
+
+                Assert.AreEqual(shortRight, shortEven, "nor is a one-line paragraph");
+            }
+        }
+
+        [TestMethod]
+        public void TheSameLineDrawnLeftThenJustifiedOnOneSurfaceIsStretched()
+        {
+            VisualElement root = Paragraph(PROSE, TextAlign.Left);
+            var surface = new IxenSurface(root);
+
+            using (var bitmap = new SKBitmap(SIZE, SIZE))
+            using (var canvas = new SKCanvas(bitmap))
+            {
+                surface.ComputeLayout(SIZE, SIZE);
+                surface.Render(canvas);
+
+                LineExtent(bitmap, 0, out _, out int raggedRight);
+
+                root.Styles.TextAlign = new TextAlignStyleDescriptor { Horizontal = TextAlign.Justify };
+                root.Invalidate();
+                surface.InvalidateVisual();
+                canvas.Clear(SKColors.Transparent);
+                surface.ComputeLayout(SIZE, SIZE);
+                surface.Render(canvas);
+
+                LineExtent(bitmap, 0, out _, out int evenRight);
+
+                Assert.IsTrue(evenRight > raggedRight,
+                    "one surface keeps one blob cache: the word gap has to be part of its key, or the "
+                    + "justified line is drawn from the left-aligned blob of the same text");
+            }
+        }
+
+        [TestMethod]
+        public void JustifyIsParsedAndKeepsTheVerticalAxis()
+        {
+            var xnsSource = new XnsSource("label {\r\n    text-align: justify middle\r\n}");
+            ClassesSet set = xnsSource.Compile();
+
+            Assert.IsFalse(xnsSource.HasErrors);
+
+            TextAlignStyleDescriptor align = set.Classes[0].Styles.OfType<TextAlignStyleDescriptor>().Single();
+
+            Assert.AreEqual(TextAlign.Justify, align.Horizontal);
+            Assert.AreEqual(TextVAlign.Middle, align.Vertical);
         }
 
         [TestMethod]

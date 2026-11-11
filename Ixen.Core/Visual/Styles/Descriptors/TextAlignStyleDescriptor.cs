@@ -4,7 +4,8 @@ namespace Ixen.Core.Visual.Styles.Descriptors
     {
         Left,
         Center,
-        Right
+        Right,
+        Justify
     }
 
     public enum TextVAlign

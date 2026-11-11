@@ -10,6 +10,7 @@ namespace Ixen.Core.Visual
         internal readonly bool Italic;
         internal readonly float LineHeight;
         internal readonly float LetterSpacing;
+        internal readonly float WordSpacing;
 
         internal FontSpec(string family, float size, bool bold, bool italic,
             float lineHeight = 0, float letterSpacing = 0)
@@ -19,7 +20,7 @@ namespace Ixen.Core.Visual
         }
 
         internal FontSpec(string family, float size, int weight, bool italic,
-            float lineHeight = 0, float letterSpacing = 0)
+            float lineHeight = 0, float letterSpacing = 0, float wordSpacing = 0)
         {
             Family = family;
             Size = size;
@@ -27,6 +28,25 @@ namespace Ixen.Core.Visual
             Italic = italic;
             LineHeight = lineHeight;
             LetterSpacing = letterSpacing;
+            WordSpacing = wordSpacing;
+        }
+
+        internal FontSpec WithWordSpacing(float wordSpacing)
+            => new FontSpec(Family, Size, Weight, Italic, LineHeight, LetterSpacing, wordSpacing);
+
+        internal static int Spaces(string text)
+        {
+            int count = 0;
+
+            for (int index = 0; index < text.Length; index++)
+            {
+                if (text[index] == ' ')
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         internal bool Bold => Weight >= (int)FontWeight.SemiBold;
@@ -38,13 +58,19 @@ namespace Ixen.Core.Visual
                 && Italic == other.Italic
                 && LineHeight == other.LineHeight
                 && LetterSpacing == other.LetterSpacing
+                && WordSpacing == other.WordSpacing
                 && string.Equals(Family, other.Family);
         }
 
         internal float Advance(string text)
-            => LetterSpacing == 0 || string.IsNullOrEmpty(text)
-                ? 0
-                : LetterSpacing * text.Length;
+        {
+            if (string.IsNullOrEmpty(text) || (LetterSpacing == 0 && WordSpacing == 0))
+            {
+                return 0;
+            }
+
+            return LetterSpacing * text.Length + (WordSpacing == 0 ? 0 : WordSpacing * Spaces(text));
+        }
 
         internal static FontSpec From(VisualElementStylesHandlers handlers, float scale = 1)
         {

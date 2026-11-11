@@ -388,7 +388,8 @@ namespace Ixen.Core.Visual.Computers
 
             List<string> lines = element.EnsureTextLines();
 
-            width = BuildLines(element.Text, fontSpec, availableWidth, wraps, breakWord, ellipsis, lines);
+            width = BuildLines(element.Text, fontSpec, availableWidth, wraps, breakWord, ellipsis, lines,
+                element.EnsureParagraphEnds());
 
             float lineHeight = _textMeasurer.GetLineHeight(fontSpec);
 
@@ -584,13 +585,15 @@ namespace Ixen.Core.Visual.Computers
         }
 
         private float BuildLines(string text, FontSpec fontSpec, float maxWidth, bool wrap, bool breakWord,
-            bool ellipsis, List<string> lines)
+            bool ellipsis, List<string> lines, List<int> paragraphEnds)
         {
             float widest = 0;
 
             if (text.IndexOf('\n') < 0)
             {
                 AppendLine(text, fontSpec, maxWidth, wrap, breakWord, ellipsis, lines, ref widest);
+                paragraphEnds.Add(lines.Count - 1);
+
                 return widest;
             }
 
@@ -598,6 +601,7 @@ namespace Ixen.Core.Visual.Computers
             {
                 AppendLine(hardLine.TrimEnd('\r'), fontSpec, maxWidth, wrap, breakWord, ellipsis, lines,
                     ref widest);
+                paragraphEnds.Add(lines.Count - 1);
             }
 
             return widest;

@@ -16,8 +16,8 @@ namespace Ixen.Core.Rendering
             internal long Stamp;
         }
 
-        private readonly Dictionary<(string, SKFont, float), Entry> _entries
-            = new Dictionary<(string, SKFont, float), Entry>();
+        private readonly Dictionary<(string, SKFont, float, float), Entry> _entries
+            = new Dictionary<(string, SKFont, float, float), Entry>();
 
         private long _bytes;
         private long _clock;
@@ -34,8 +34,11 @@ namespace Ixen.Core.Rendering
         }
 
         internal bool TryGet(string text, SKFont font, float spacing, out SKTextBlob blob)
+            => TryGet(text, font, spacing, 0, out blob);
+
+        internal bool TryGet(string text, SKFont font, float spacing, float words, out SKTextBlob blob)
         {
-            if (_entries.TryGetValue((text, font, spacing), out Entry cached))
+            if (_entries.TryGetValue((text, font, spacing, words), out Entry cached))
             {
                 cached.Stamp = ++_clock;
                 blob = cached.Blob;
@@ -49,6 +52,9 @@ namespace Ixen.Core.Rendering
         }
 
         internal void Add(string text, SKFont font, float spacing, SKTextBlob blob)
+            => Add(text, font, spacing, 0, blob);
+
+        internal void Add(string text, SKFont font, float spacing, float words, SKTextBlob blob)
         {
             if (blob == null)
             {
@@ -62,7 +68,7 @@ namespace Ixen.Core.Rendering
                 Stamp = ++_clock
             };
 
-            _entries[(text, font, spacing)] = entry;
+            _entries[(text, font, spacing, words)] = entry;
             _bytes += entry.Bytes;
 
             Trim();
@@ -72,11 +78,11 @@ namespace Ixen.Core.Rendering
         {
             while (_bytes > Budget && _entries.Count > 1)
             {
-                (string, SKFont, float) oldest = default;
+                (string, SKFont, float, float) oldest = default;
                 long stamp = long.MaxValue;
                 bool found = false;
 
-                foreach (KeyValuePair<(string, SKFont, float), Entry> candidate in _entries)
+                foreach (KeyValuePair<(string, SKFont, float, float), Entry> candidate in _entries)
                 {
                     if (candidate.Value.Stamp < stamp)
                     {
@@ -95,7 +101,7 @@ namespace Ixen.Core.Rendering
             }
         }
 
-        private void Evict((string, SKFont, float) key)
+        private void Evict((string, SKFont, float, float) key)
         {
             if (!_entries.TryGetValue(key, out Entry entry))
             {
@@ -109,7 +115,7 @@ namespace Ixen.Core.Rendering
 
         internal bool Holds(string text)
         {
-            foreach (KeyValuePair<(string, SKFont, float), Entry> entry in _entries)
+            foreach (KeyValuePair<(string, SKFont, float, float), Entry> entry in _entries)
             {
                 if (entry.Key.Item1 == text)
                 {
@@ -122,7 +128,7 @@ namespace Ixen.Core.Rendering
 
         internal void Clear()
         {
-            foreach (KeyValuePair<(string, SKFont, float), Entry> entry in _entries)
+            foreach (KeyValuePair<(string, SKFont, float, float), Entry> entry in _entries)
             {
                 entry.Value.Blob?.Dispose();
             }

@@ -726,6 +726,24 @@ namespace Ixen.Core.Visual
 
         internal List<string> TextLines => _textLines;
 
+        private List<int> _paragraphEnds;
+
+        internal List<int> ParagraphEnds => _paragraphEnds;
+
+        internal List<int> EnsureParagraphEnds()
+        {
+            if (_paragraphEnds == null)
+            {
+                _paragraphEnds = new List<int>();
+            }
+            else
+            {
+                _paragraphEnds.Clear();
+            }
+
+            return _paragraphEnds;
+        }
+
         internal List<string> EnsureTextLines()
         {
             if (_textLines == null)

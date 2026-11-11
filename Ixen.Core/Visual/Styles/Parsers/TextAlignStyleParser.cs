@@ -47,6 +47,12 @@ namespace Ixen.Core.Visual.Styles.Parsers
                         hasHorizontal = true;
                         break;
 
+                    case "justify":
+                        if (hasHorizontal) { return false; }
+                        Descriptor.Horizontal = TextAlign.Justify;
+                        hasHorizontal = true;
+                        break;
+
                     case "top":
                         if (hasVertical) { return false; }
                         Descriptor.Vertical = TextVAlign.Top;

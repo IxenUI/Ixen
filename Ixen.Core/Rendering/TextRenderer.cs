@@ -90,23 +90,51 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            foreach (string line in lines)
-            {
-                float x = contentLeft;
+            List<int> paragraphEnds = element.ParagraphEnds;
 
-                if (align != TextAlign.Left)
+            for (int index = 0; index < lines.Count; index++)
+            {
+                string line = lines[index];
+                float x = contentLeft;
+                FontSpec spec = fontSpec;
+
+                if (align == TextAlign.Justify)
+                {
+                    spec = Justified(line, index, lines.Count, paragraphEnds, contentWidth, fontSpec, context);
+                }
+                else if (align != TextAlign.Left)
                 {
                     float slack = contentWidth - context.MeasureTextWidth(line, fontSpec);
                     x += align == TextAlign.Center ? slack / 2 : slack;
                 }
 
-                context.DrawTextShadow(line, x, top, fontSpec, handlers.TextShadow.Descriptor);
-                context.DrawText(line, x, top, fontSpec, handlers.Color.Brush);
-                context.DrawTextDecoration(line, x, top, fontSpec,
+                context.DrawTextShadow(line, x, top, spec, handlers.TextShadow.Descriptor);
+                context.DrawText(line, x, top, spec, handlers.Color.Brush);
+                context.DrawTextDecoration(line, x, top, spec,
                     handlers.TextDecoration.Descriptor, handlers.Color.Brush);
 
                 top += lineHeight;
             }
+        }
+
+        private static FontSpec Justified(string line, int index, int count, List<int> paragraphEnds,
+            float width, FontSpec fontSpec, RendererContext context)
+        {
+            if (index == count - 1 || (paragraphEnds != null && paragraphEnds.Contains(index)))
+            {
+                return fontSpec;
+            }
+
+            int spaces = FontSpec.Spaces(line);
+
+            if (spaces == 0)
+            {
+                return fontSpec;
+            }
+
+            float slack = width - context.MeasureTextWidth(line, fontSpec);
+
+            return slack > 0 ? fontSpec.WithWordSpacing(slack / spaces) : fontSpec;
         }
 
         private static void RenderMarquee(VisualElement element, string line, RendererContext context,

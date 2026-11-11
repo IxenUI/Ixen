@@ -490,7 +490,10 @@ namespace Ixen.Core.Rendering
 
         private readonly System.Collections.Generic.List<FontRun> _runs = new System.Collections.Generic.List<FontRun>();
 
-        private SKTextBlob Mixed(string text, FontSpec fontSpec, float spacing)
+        private static float Gap(string text, int index, float spacing, float words)
+            => words != 0 && index < text.Length && text[index] == ' ' ? spacing + words : spacing;
+
+        private SKTextBlob Mixed(string text, FontSpec fontSpec, float spacing, float words)
         {
             using (var builder = new SKTextBlobBuilder())
             {
@@ -506,7 +509,7 @@ namespace Ixen.Core.Rendering
                         continue;
                     }
 
-                    if (spacing == 0)
+                    if (spacing == 0 && words == 0)
                     {
                         builder.AddRun(glyphs, run.Font, new SKPoint(x, 0));
                         x += run.Font.MeasureText(span);
@@ -522,7 +525,7 @@ namespace Ixen.Core.Rendering
                     for (int index = 0; index < glyphs.Length; index++)
                     {
                         positions[index] = new SKPoint(x, 0);
-                        x += widths[index] + spacing;
+                        x += widths[index] + Gap(text, run.Start + index, spacing, words);
                     }
 
                     builder.AddPositionedRun(glyphs, run.Font, positions);
@@ -545,8 +548,9 @@ namespace Ixen.Core.Rendering
             SKFont font, SKPaint paint)
         {
             float spacing = fontSpec.LetterSpacing;
+            float words = fontSpec.WordSpacing;
 
-            if (!string.IsNullOrEmpty(text) && _blobs.TryGet(text, font, spacing, out SKTextBlob known))
+            if (!string.IsNullOrEmpty(text) && _blobs.TryGet(text, font, spacing, words, out SKTextBlob known))
             {
                 SKCanvas.DrawText(known, x, baseline, paint);
                 return;
@@ -554,9 +558,9 @@ namespace Ixen.Core.Rendering
 
             if (FontCache.Split(fontSpec, text, Transformed, _runs))
             {
-                SKTextBlob mixed = Mixed(text, fontSpec, spacing);
+                SKTextBlob mixed = Mixed(text, fontSpec, spacing, words);
 
-                _blobs.Add(text, font, spacing, mixed);
+                _blobs.Add(text, font, spacing, words, mixed);
 
                 if (mixed != null)
                 {
@@ -566,22 +570,23 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            bool wanted = spacing != 0 || Transformed;
+            bool spaced = spacing != 0 || words != 0;
+            bool wanted = spaced || Transformed;
             bool mapped = wanted && !string.IsNullOrEmpty(text) && font.CountGlyphs(text) == text.Length;
 
-            if (spacing != 0 && !mapped && !string.IsNullOrEmpty(text))
+            if (spaced && !mapped && !string.IsNullOrEmpty(text))
             {
                 DrawSpacedOneByOne(text, x, baseline, fontSpec, font, paint);
                 return;
             }
 
-            if (!_blobs.TryGet(text, font, spacing, out SKTextBlob blob))
+            if (!_blobs.TryGet(text, font, spacing, words, out SKTextBlob blob))
             {
                 blob = string.IsNullOrEmpty(text) ? null
-                    : wanted && mapped ? Positioned(text, font, Metrics(fontSpec, text, font), spacing)
+                    : wanted && mapped ? Positioned(text, font, Metrics(fontSpec, text, font), spacing, words)
                     : SKTextBlob.Create(text, font, SKPoint.Empty);
 
-                _blobs.Add(text, font, spacing, blob);
+                _blobs.Add(text, font, spacing, words, blob);
             }
 
             if (blob == null)
@@ -598,7 +603,7 @@ namespace Ixen.Core.Rendering
             return Transformed ? FontCache.Get(fontSpec, text, false) : font;
         }
 
-        private SKTextBlob Positioned(string text, SKFont font, SKFont metrics, float spacing)
+        private SKTextBlob Positioned(string text, SKFont font, SKFont metrics, float spacing, float words)
         {
             if (_spacedAdvances.Length < text.Length)
             {
@@ -614,7 +619,7 @@ namespace Ixen.Core.Rendering
             for (int index = 0; index < text.Length; index++)
             {
                 _spacedPositions[index] = new SKPoint(offset, 0);
-                offset += _spacedAdvances[index] + spacing;
+                offset += _spacedAdvances[index] + Gap(text, index, spacing, words);
             }
 
             return SKTextBlob.CreatePositioned(text, font,
@@ -629,7 +634,7 @@ namespace Ixen.Core.Rendering
                 string glyph = text[index].ToString();
 
                 SKCanvas.DrawText(glyph, x, baseline, SKTextAlign.Left, font, paint);
-                x += font.MeasureText(glyph) + fontSpec.LetterSpacing;
+                x += font.MeasureText(glyph) + Gap(text, index, fontSpec.LetterSpacing, fontSpec.WordSpacing);
             }
         }
 

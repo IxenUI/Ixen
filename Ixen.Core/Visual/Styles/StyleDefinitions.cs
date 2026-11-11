@@ -214,7 +214,7 @@ namespace Ixen.Core.Visual.Styles
 
                 Define(StyleIdentifier.TEXT_ALIGN, v => new TextAlignStyleParser(v),
                     p => ((TextAlignStyleParser)p).Descriptor,
-                    new[] { "left", "center", "right", "top", "middle", "bottom" }),
+                    new[] { "left", "center", "right", "justify", "top", "middle", "bottom" }),
 
                 Define(StyleIdentifier.TEXT_DECORATION, v => new TextDecorationStyleParser(v),
                     p => ((TextDecorationStyleParser)p).Descriptor,

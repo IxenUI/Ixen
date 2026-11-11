@@ -100,7 +100,11 @@ namespace Ixen.Core.UT.Perf
             using (var bitmap = new SKBitmap(GRID * 40, GRID * 40))
             using (var canvas = new SKCanvas(bitmap))
             {
-                return Allocations.PerPass(PASSES, () => surface.Render(canvas));
+                return Allocations.PerPass(PASSES, () =>
+                {
+                    surface.InvalidateVisual();
+                    surface.Render(canvas);
+                });
             }
         }
 
@@ -260,6 +264,26 @@ namespace Ixen.Core.UT.Perf
                 + "faster than the string overload - 0.363 ms against 0.351 over thirty labels - "
                 + "so it is the cache rather than the blob that earns this, which is the reason "
                 + "the cache exists at all.");
+        }
+
+        [TestMethod]
+        public void PaintingJustifiedTextAllocatesNothingEither()
+        {
+            IxenSurface surface = Grid("color: #E8ECF5  font-size: 11px  text-align: justify", "ab cd ef gh ij");
+
+            long each = PaintOnce(surface);
+
+            VisualElement cell = surface.Root.ChildElements[0].ChildElements[0];
+
+            Assert.IsTrue(cell.TextLines.Count >= 2,
+                $"the cells have to wrap, or no line is ever justified: {cell.TextLines.Count} line(s), "
+                + $"align {cell.StylesHandlers.TextAlign.Descriptor.Horizontal}");
+
+            Assert.AreEqual(0, each,
+                $"one frame over {CELLS} cells of justified text allocated {each} bytes. Each wrapped "
+                + "line gets its own word gap, carried by a FontSpec copy (a struct) into the blob "
+                + "cache's key, so a line is shaped once and drawn from the cache after that. "
+                + "Drawing it word by word would have cost a substring per word per frame.");
         }
 
         [TestMethod]
