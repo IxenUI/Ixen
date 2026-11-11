@@ -12,6 +12,8 @@ namespace Ixen.Controls
 
         public bool Resizable { get; set; } = true;
 
+        public bool Hidden { get; set; }
+
         public float MinWidth { get; set; } = 32;
 
         public Action<VisualElement, object> Bind { get; set; }
@@ -34,10 +36,10 @@ namespace Ixen.Controls
 
         public bool IsSortable => Compare != null;
 
-        public bool IsEditable => Commit != null && Checked == null;
+        public bool IsEditable => Commit != null && Checked == null && !Hidden;
 
         public bool IsCheck => Checked != null;
 
-        public bool IsToggleable => Checked != null && Toggle != null;
+        public bool IsToggleable => Checked != null && Toggle != null && !Hidden;
     }
 }

@@ -128,7 +128,10 @@ namespace Ixen.Controls
 
                 foreach (DataColumn column in _columns)
                 {
-                    width += column.Width > 0 ? column.Width : column.MinWidth;
+                    if (!column.Hidden)
+                    {
+                        width += column.Width > 0 ? column.Width : column.MinWidth;
+                    }
                 }
 
                 return width;
@@ -242,6 +245,58 @@ namespace Ixen.Controls
             && !_items.IsReadOnly && !_items.IsFixedSize;
 
         public bool ColumnsReorderable { get; set; }
+
+        public bool SetColumnHidden(int column, bool hidden)
+        {
+            if (column < 0 || column >= _columns.Count || _columns[column].Hidden == hidden)
+            {
+                return false;
+            }
+
+            if (hidden && VisibleIndexOf(_columns.Count) <= 1)
+            {
+                return false;
+            }
+
+            if (IsEditing && _editColumn == column)
+            {
+                CommitEdit(false);
+            }
+
+            if (IsChoosing && _choiceColumn == column)
+            {
+                _choices.Close();
+            }
+
+            bool focused = Host?.FocusedElement == _headerCells[column];
+
+            _columns[column].Hidden = hidden;
+
+            BuildHeader();
+            FitWidth();
+
+            if (focused)
+            {
+                Focus();
+            }
+
+            Rebuild();
+
+            return true;
+        }
+
+        private int NextShown(int from, int direction)
+        {
+            for (int i = from + direction; i >= 0 && i < _columns.Count; i += direction)
+            {
+                if (!_columns[i].Hidden)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
 
         public bool IsMovingColumn => _movingColumn >= 0;
 
@@ -452,7 +507,27 @@ namespace Ixen.Controls
 
         int IAccessibleTable.RowCount => _view.Count + 1;
 
-        int IAccessibleTable.ColumnCount => _columns.Count;
+        int IAccessibleTable.ColumnCount => VisibleIndexOf(_columns.Count);
+
+        private int VisibleIndexOf(int column)
+        {
+            if (column < 0 || (column < _columns.Count && _columns[column].Hidden))
+            {
+                return -1;
+            }
+
+            int shown = 0;
+
+            for (int i = 0; i < column && i < _columns.Count; i++)
+            {
+                if (!_columns[i].Hidden)
+                {
+                    shown++;
+                }
+            }
+
+            return shown;
+        }
 
         int IAccessibleTable.RowIndexOf(VisualElement row)
         {
@@ -470,7 +545,7 @@ namespace Ixen.Controls
         {
             if (cell is DataGridHeaderCell header)
             {
-                return _headerCells.IndexOf(header);
+                return VisibleIndexOf(_headerCells.IndexOf(header));
             }
 
             if (cell?.Parent is DataGridRow row)
@@ -479,7 +554,7 @@ namespace Ixen.Controls
                 {
                     if (row.Cells[i] == cell)
                     {
-                        return i;
+                        return VisibleIndexOf(i);
                     }
                 }
             }
@@ -728,7 +803,7 @@ namespace Ixen.Controls
 
         internal static void SizeCell(VisualElement cell, DataColumn column)
         {
-            if (column == null)
+            if (column == null || column.Hidden)
             {
                 cell.Styles.Visibility = new VisibilityStyleDescriptor
                 {
@@ -785,7 +860,7 @@ namespace Ixen.Controls
 
                 cell.SetHeader(column?.Header);
                 cell.SetSort(false, false);
-                cell.Focusable = column != null && (column.IsSortable || column.Resizable);
+                cell.Focusable = column != null && !column.Hidden && (column.IsSortable || column.Resizable);
             }
 
             _headerStop = -1;
@@ -859,9 +934,11 @@ namespace Ixen.Controls
 
                     if ((args.Modifiers & KeyModifiers.Alt) != 0)
                     {
-                        if (ColumnsReorderable)
+                        int beside = NextShown(index, direction);
+
+                        if (ColumnsReorderable && beside >= 0)
                         {
-                            MoveColumn(index, index + direction);
+                            MoveColumn(index, beside);
                         }
 
                         break;
@@ -966,6 +1043,11 @@ namespace Ixen.Controls
 
             for (int i = 0; i < _columns.Count; i++)
             {
+                if (_columns[i].Hidden)
+                {
+                    continue;
+                }
+
                 VisualElement cell = row.CellAt(i);
 
                 FitCheck(cell, _columns[i], item);
