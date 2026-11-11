@@ -536,6 +536,34 @@ namespace Ixen.Core.Visual
 
         public bool PersistScroll { get; set; }
 
+        private string _scrollKey;
+
+        public string ScrollKey
+        {
+            get => _scrollKey;
+            set
+            {
+                if (string.Equals(value, _scrollKey))
+                {
+                    return;
+                }
+
+                IxenSurface surface = PersistScroll ? Host as IxenSurface : null;
+
+                surface?.RememberScroll(this);
+
+                _scrollKey = value;
+
+                surface?.RecallScroll(this, true);
+            }
+        }
+
+        internal string ScrollMemoryPath;
+
+        internal float ScrollToKeep => IsRestoringScroll ? RestoringScrollY : _scrollY;
+
+        internal float ScrollToKeepX => IsRestoringScroll ? RestoringScrollX : _scrollX;
+
         internal float RestoringScrollX = float.NaN;
         internal float RestoringScrollY = float.NaN;
 
@@ -840,7 +868,17 @@ namespace Ixen.Core.Visual
 
             IElementHost previous = Host;
 
+            if (PersistScroll)
+            {
+                (previous as IxenSurface)?.RememberScroll(this);
+            }
+
             Host = host;
+
+            if (PersistScroll)
+            {
+                (host as IxenSurface)?.RecallScroll(this);
+            }
 
             ListenToCommand(host != null);
             OnHostChanged();

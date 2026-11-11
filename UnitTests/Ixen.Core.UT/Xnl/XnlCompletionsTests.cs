@@ -258,7 +258,7 @@ namespace Ixen.Core.UT.Xnl
                     "pointer-click", "pointer-double-click", "pointer-down", "pointer-drag", "pointer-drag-end",
                     "pointer-drag-start", "pointer-enter", "pointer-leave", "pointer-long-press", "pointer-move",
                     "pointer-pinch", "pointer-pinch-end", "pointer-pinch-start",
-                    "pointer-up", "pointer-wheel", "role", "scroll-x", "scroll-y", "scrollable", "selected", "shortcut", "shortcuts-when-hidden", "slot",
+                    "pointer-up", "pointer-wheel", "role", "scroll-key", "scroll-x", "scroll-y", "scrollable", "selected", "shortcut", "shortcuts-when-hidden", "slot",
                     "tab-index", "text", "text-input",
                     "transition-ended", "type-name", "wheel", "window-drag"
                 },

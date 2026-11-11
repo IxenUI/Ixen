@@ -559,6 +559,81 @@ namespace Ixen.Core
             }
         }
 
+        private readonly Dictionary<string, KeptScroll> _scrollMemory = new Dictionary<string, KeptScroll>();
+
+        private struct KeptScroll
+        {
+            internal float X;
+            internal float Y;
+        }
+
+        internal int RememberedScrolls => _scrollMemory.Count;
+
+        internal void RememberScroll(VisualElement element)
+        {
+            string key = MemoryKeyOf(element);
+
+            if (key == null)
+            {
+                return;
+            }
+
+            _scrollMemory[key] = new KeptScroll { X = element.ScrollToKeepX, Y = element.ScrollToKeep };
+        }
+
+        internal void RecallScroll(VisualElement element, bool topWhenUnknown = false)
+        {
+            if (string.IsNullOrEmpty(element.Name))
+            {
+                return;
+            }
+
+            if (element.ScrollMemoryPath == null || !topWhenUnknown)
+            {
+                element.ScrollMemoryPath = PathFromRoot(element);
+            }
+
+            string key = MemoryKeyOf(element);
+
+            if (_scrollMemory.TryGetValue(key, out KeptScroll kept))
+            {
+                element.RestoreScroll(kept.X, kept.Y);
+            }
+            else if (topWhenUnknown)
+            {
+                element.RestoreScroll(0, 0);
+            }
+        }
+
+        private static string MemoryKeyOf(VisualElement element)
+        {
+            if (element.ScrollMemoryPath == null)
+            {
+                return null;
+            }
+
+            return element.ScrollKey == null
+                ? element.ScrollMemoryPath
+                : element.ScrollMemoryPath + "\n" + element.ScrollKey;
+        }
+
+        private static string PathFromRoot(VisualElement element)
+        {
+            string path = null;
+
+            for (VisualElement current = element; current != null; current = current.Parent)
+            {
+                if (string.IsNullOrEmpty(current.Name))
+                {
+                    continue;
+                }
+
+                path = path == null ? current.Name : current.Name + "/" + path;
+            }
+
+            return path;
+        }
+
         private const string SCROLL_STATE = "scroll:";
         private const string SCROLL_X = "x";
         private const string SCROLL_Y = "y";
