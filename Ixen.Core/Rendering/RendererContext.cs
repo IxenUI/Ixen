@@ -107,6 +107,44 @@ namespace Ixen.Core.Rendering
             SKCanvas.Clear(color.SKColor);
         }
 
+        private readonly SKRegion _damageRegion = new SKRegion();
+
+        internal void PushDamageClip(Visual.DamageRegion damage, float pad)
+        {
+            SKCanvas.Save();
+            _clipDepth++;
+
+            if (damage.Count == 1)
+            {
+                damage.RectAt(0, out float left, out float top, out float right, out float bottom);
+                SKCanvas.ClipRect(Outward(left, top, right, bottom, pad), SKClipOperation.Intersect, false);
+
+                return;
+            }
+
+            _damageRegion.SetEmpty();
+
+            SKMatrix toDevice = SKCanvas.TotalMatrix;
+
+            for (int index = 0; index < damage.Count; index++)
+            {
+                damage.RectAt(index, out float left, out float top, out float right, out float bottom);
+
+                SKRect rect = toDevice.MapRect(Outward(left, top, right, bottom, pad));
+
+                _damageRegion.Op(new SKRectI(
+                    (int)Math.Floor(rect.Left), (int)Math.Floor(rect.Top),
+                    (int)Math.Ceiling(rect.Right), (int)Math.Ceiling(rect.Bottom)),
+                    SKRegionOperation.Union);
+            }
+
+            SKCanvas.ClipRegion(_damageRegion, SKClipOperation.Intersect);
+        }
+
+        private static SKRect Outward(float left, float top, float right, float bottom, float pad)
+            => new SKRect((float)Math.Floor(left - pad), (float)Math.Floor(top - pad),
+                (float)Math.Ceiling(right + pad), (float)Math.Ceiling(bottom + pad));
+
         internal void PushClip(float x, float y, float width, float height, CornerRadiusStyleDescriptor radius)
         {
             SKCanvas.Save();

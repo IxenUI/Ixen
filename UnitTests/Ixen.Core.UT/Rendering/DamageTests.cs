@@ -92,6 +92,116 @@ namespace Ixen.Core.UT.Rendering
         }
 
         [TestMethod]
+        public void TwoDistantRepaintsLeaveWhatLiesBetweenThemAlone()
+        {
+            Mark(200, 150);
+            Mark(40, 260);
+
+            _surface.InvalidateVisual(_near);
+            _surface.InvalidateVisual(_far);
+            Frame();
+
+            Assert.IsTrue(Survived(200, 150),
+                "a box in one corner and a box in the other do not repaint everything in between");
+            Assert.IsTrue(Survived(40, 260), "nor the other corners of their bounding box");
+        }
+
+        [TestMethod]
+        public void AFrameWithNothingChangedPaintsNothing()
+        {
+            Mark(30, 30);
+            Mark(200, 150);
+
+            Frame();
+
+            Assert.IsTrue(Survived(30, 30), "the canvas keeps the last frame, and nothing on it is out of date");
+            Assert.IsTrue(Survived(200, 150));
+        }
+
+        [TestMethod]
+        public void ANewCanvasIsPaintedWhole()
+        {
+            using (var fresh = new SKBitmap(WIDTH, HEIGHT))
+            using (var canvas = new SKCanvas(fresh))
+            {
+                fresh.SetPixel(30, 30, Scribble);
+
+                _surface.ComputeLayout(WIDTH, HEIGHT);
+                _surface.Render(canvas);
+
+                Assert.AreNotEqual(Scribble, fresh.GetPixel(30, 30),
+                    "a canvas that never received a frame has nothing to keep");
+            }
+        }
+
+        [TestMethod]
+        public void BothDistantElementsAreRepainted()
+        {
+            Mark(30, 30);
+            Mark(310, 230);
+
+            _surface.InvalidateVisual(_near);
+            _surface.InvalidateVisual(_far);
+            Frame();
+
+            Assert.IsFalse(Survived(30, 30));
+            Assert.IsFalse(Survived(310, 230));
+        }
+
+        [TestMethod]
+        public void AScaledSurfaceClipsDistantRepaintsAtTheRightPixels()
+        {
+            using (var big = new SKBitmap(WIDTH * 2, HEIGHT * 2))
+            using (var canvas = new SKCanvas(big))
+            {
+                _surface.Scale = 2;
+                _surface.ComputeLayout(WIDTH * 2, HEIGHT * 2);
+                _surface.Render(canvas);
+
+                big.SetPixel(400, 300, Scribble);
+                big.SetPixel(60, 60, Scribble);
+                big.SetPixel(620, 460, Scribble);
+
+                _surface.InvalidateVisual(_near);
+                _surface.InvalidateVisual(_far);
+                _surface.ComputeLayout(WIDTH * 2, HEIGHT * 2);
+                _surface.Render(canvas);
+
+                Assert.AreEqual(Scribble, big.GetPixel(400, 300), "the middle stays");
+                Assert.AreNotEqual(Scribble, big.GetPixel(60, 60), "the near box is repainted at twice the size");
+                Assert.AreNotEqual(Scribble, big.GetPixel(620, 460), "and so is the far one");
+            }
+        }
+
+        [TestMethod]
+        public void ManyScatteredRepaintsStillCoverEveryOne()
+        {
+            var boxes = new VisualElement[8];
+
+            for (int i = 0; i < boxes.Length; i++)
+            {
+                boxes[i] = Box("scattered" + i, 10 + i * 45, (i % 2) * 200 + 10, "#2F9E44");
+                _root.AddChild(boxes[i]);
+            }
+
+            Frame();
+
+            for (int i = 0; i < boxes.Length; i++)
+            {
+                Mark(15 + i * 45, (i % 2) * 200 + 15);
+                _surface.InvalidateVisual(boxes[i]);
+            }
+
+            Frame();
+
+            for (int i = 0; i < boxes.Length; i++)
+            {
+                Assert.IsFalse(Survived(15 + i * 45, (i % 2) * 200 + 15),
+                    "more repaints than rectangles merge, and none is left out: box " + i);
+            }
+        }
+
+        [TestMethod]
         public void AndTheElementItselfIsRepainted()
         {
             Mark(30, 30);
@@ -181,7 +291,7 @@ namespace Ixen.Core.UT.Rendering
         }
 
         [TestMethod]
-        public void TwoDamagedElementsGiveTheirUnion()
+        public void TwoDamagedElementsGiveTwoRectanglesNotTheirUnion()
         {
             Mark(200, 150);
             Mark(390, 10);
@@ -190,10 +300,9 @@ namespace Ixen.Core.UT.Rendering
             _surface.InvalidateVisual(_far);
             Frame();
 
-            Assert.IsFalse(Survived(200, 150),
-                "the region is one rectangle covering both, so the space between them is in it");
-            Assert.IsTrue(Survived(390, 10),
-                "but the corner outside that rectangle is still untouched");
+            Assert.IsTrue(Survived(200, 150),
+                "the space between them is not repainted - one rectangle covering both used to repaint it");
+            Assert.IsTrue(Survived(390, 10), "and the corner outside both is untouched");
         }
 
         [TestMethod]

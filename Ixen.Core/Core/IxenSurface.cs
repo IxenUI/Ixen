@@ -634,7 +634,8 @@ namespace Ixen.Core
 
         private const float DAMAGE_PAD = 1f;
 
-        private DamageRegion _damage;
+        private readonly DamageRegion _damage = new DamageRegion();
+        private SKCanvas _lastCanvas;
 
         public void InvalidateVisual()
         {
@@ -1765,18 +1766,20 @@ namespace Ixen.Core
             _visualDirty = false;
             _rendererContext.BeginFrame(canvas, _scale, Styles?.Tokens, _fontScale);
 
+            if (PreservesFrame && _damage.IsEmpty && ReferenceEquals(canvas, _lastCanvas))
+            {
+                _rendererContext.EndFrame();
+
+                return;
+            }
+
+            _lastCanvas = canvas;
+
             bool clipped = PreservesFrame && !_damage.IsWhole && !_damage.IsEmpty;
 
             if (clipped)
             {
-                float pad = DAMAGE_PAD / Math.Min(1f, _scale);
-
-                float left = (float)Math.Floor(_damage.Left - pad);
-                float top = (float)Math.Floor(_damage.Top - pad);
-                float right = (float)Math.Ceiling(_damage.Right + pad);
-                float bottom = (float)Math.Ceiling(_damage.Bottom + pad);
-
-                _rendererContext.PushClip(left, top, right - left, bottom - top, null);
+                _rendererContext.PushDamageClip(_damage, DAMAGE_PAD / Math.Min(1f, _scale));
             }
 
             _rendererContext.Clear(_clearColor);
