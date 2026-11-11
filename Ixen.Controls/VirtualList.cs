@@ -338,7 +338,7 @@ namespace Ixen.Controls
 
         public void ScrollTo(int index)
         {
-            ScrollY = TopOf(index);
+            ScrollTo(ScrollX, TopOf(index));
 
             Reset();
         }
@@ -357,11 +357,11 @@ namespace Ixen.Controls
 
             if (top < ScrollY)
             {
-                ScrollY = top;
+                ScrollTo(ScrollX, top);
             }
             else if (bottom > ScrollY + window)
             {
-                ScrollY = bottom - window;
+                ScrollTo(ScrollX, bottom - window);
             }
         }
 

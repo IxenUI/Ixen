@@ -162,9 +162,17 @@ namespace Ixen.Core.Input
                     continue;
                 }
 
-                target.ScrollY = next;
+                if (target.ScrollsSmoothly)
+                {
+                    target.ScrollTo(target.ScrollX, next);
+                }
+                else
+                {
+                    target.ScrollY = next;
+                    moved = true;
+                }
+
                 y -= applied;
-                moved = true;
             }
 
             return moved;

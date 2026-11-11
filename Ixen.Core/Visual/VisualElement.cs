@@ -559,8 +559,8 @@ namespace Ixen.Core.Visual
             Animations.Sync();
         }
 
-        internal void ScrollTo(float x, float y)
-            => RequestScroll(x - _scrollX, y - _scrollY);
+        public void ScrollTo(float x, float y)
+            => RequestScroll(x - PendingScrollX, y - PendingScrollY);
 
         internal float PendingScrollX
             => IsScrollingSmoothly ? _animations.Scroll.ToX : _scrollX;

@@ -76,6 +76,54 @@ namespace Ixen.Core.UT.Input
 
         private void Wheel(int notches) => _surface.PointerWheel(50, 50, 0, -notches);
 
+        private VisualElement Item(int index) => _viewport.FindByName($"item{index}");
+
+        [TestMethod]
+        public void ScrollIntoViewGlidesInASmoothScroller()
+        {
+            Build(smooth: true);
+
+            Item(6).ScrollIntoView(alignToTop: true);
+            Layout();
+
+            Assert.IsTrue(_viewport.ScrollY < 240, "not there in one jump: " + _viewport.ScrollY);
+
+            Tick(STEPS + 2);
+            Layout();
+
+            Assert.AreEqual(240f, _viewport.ScrollY, 0.01f, "and there in the end");
+        }
+
+        [TestMethod]
+        public void ScrollIntoViewStillJumpsWhereNothingAsksForSmooth()
+        {
+            Build(smooth: false);
+
+            Item(6).ScrollIntoView(alignToTop: true);
+            Layout();
+
+            Assert.AreEqual(240f, _viewport.ScrollY, 0.01f, "the first frame is already there");
+        }
+
+        [TestMethod]
+        public void ASecondScrollToDuringAGlideLandsOnTheSecondTarget()
+        {
+            Build(smooth: true);
+
+            _viewport.ScrollTo(0, 200);
+            Tick(3);
+            Layout();
+
+            Assert.IsTrue(_viewport.ScrollY > 0 && _viewport.ScrollY < 200, "half way: " + _viewport.ScrollY);
+
+            _viewport.ScrollTo(0, 80);
+            Tick(STEPS + 2);
+            Layout();
+
+            Assert.AreEqual(80f, _viewport.ScrollY, 0.01f,
+                "a target, not a step added to where the first glide was heading");
+        }
+
         [TestMethod]
         public void AStylesheetIsHowThisIsActuallyAskedFor()
         {
