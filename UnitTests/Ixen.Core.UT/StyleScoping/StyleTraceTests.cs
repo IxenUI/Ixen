@@ -362,5 +362,62 @@ namespace Ixen.Core.UT.StyleScoping
 
             Assert.AreEqual(style.ToSource(), style.ToSourceWithText());
         }
+
+        [TestMethod]
+        public void AnInheritedPropertyNamesTheAncestorAndTheRuleItComesFrom()
+        {
+            StyleTrace trace = Explain("card { color: #224466  font-size: 18px }\r\nrow { background: #333333 }");
+
+            Assert.IsNull(trace.WinnerOf("color"), "no rule on the row says anything about its colour");
+            Assert.AreSame(_card, trace.InheritedFrom("color"));
+            Assert.AreEqual("card", trace.InheritedRule("color").Selector);
+            Assert.AreEqual("#224466", trace.InheritedRule("color").ValueOf("color"));
+            Assert.AreSame(_card, trace.InheritedFrom("font-size"));
+        }
+
+        [TestMethod]
+        public void TheOriginIsTheAncestorThatDeclaredItNotTheNearestThatPassedItOn()
+        {
+            StyleTrace trace = Explain("root { color: #224466 }\r\nrow { background: #333333 }");
+
+            Assert.AreEqual("root", trace.InheritedFrom("color").Name,
+                "the card in between passed the colour on without declaring it");
+            Assert.AreEqual("root", trace.InheritedRule("color").Selector);
+        }
+
+        [TestMethod]
+        public void APropertyTheElementSetsItselfIsNotInherited()
+        {
+            StyleTrace trace = Explain("card { color: #224466 }\r\nrow { color: #AA0000 }");
+
+            Assert.IsNull(trace.InheritedFrom("color"));
+            Assert.AreEqual("row", trace.WinnerOf("color").Selector);
+        }
+
+        [TestMethod]
+        public void NothingDeclaredAnywhereIsNotReportedAsInheritedFromTheRoot()
+        {
+            StyleTrace trace = Explain("row { background: #333333 }");
+
+            Assert.IsNull(trace.InheritedFrom("color"),
+                "every element with nothing declared shares the default handler, so walking up by "
+                + "handler identity alone would end at the root and name it");
+            Assert.AreEqual(0, trace.InheritedProperties.Count);
+        }
+
+        [TestMethod]
+        public void TheComputedValueIsWhatTheLayoutAndTheCascadeGave()
+        {
+            StyleTrace trace = Explain("card { color: #224466  font-size: 18px }\r\nrow { width: 1*  height: 40px  background: #333333 }");
+
+            Assert.AreEqual("1*", trace.ValueOf("width"), "as written");
+            Assert.AreEqual(_row.ActualWidth.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "px",
+                trace.ComputedValueOf("width"), "as laid out");
+            Assert.AreEqual("40px", trace.ComputedValueOf("height"));
+            Assert.AreEqual("#FF224466", trace.ComputedValueOf("color"), "the inherited colour, alpha first");
+            Assert.AreEqual("18px", trace.ComputedValueOf("font-size"));
+            Assert.AreEqual("#FF333333", trace.ComputedValueOf("background"));
+            Assert.AreEqual("400", trace.ComputedValueOf("font-weight"));
+        }
     }
 }

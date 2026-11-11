@@ -4,6 +4,7 @@ using Ixen.Core.Rendering;
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
 using Ixen.Core.Visual.Computers;
+using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using SkiaSharp;
 using System;
@@ -408,7 +409,66 @@ namespace Ixen.Core
             return moved;
         }
 
+        private static readonly (string Property, Func<VisualElementStylesHandlers, object> Handler, object Default)[] _inheritable =
+        {
+            (StyleIdentifier.COLOR, h => h.Color, VisualElementStylesHandlers.DefaultColor),
+            (StyleIdentifier.FONT_FAMILY, h => h.FontFamily, VisualElementStylesHandlers.DefaultFontFamily),
+            (StyleIdentifier.FONT_SIZE, h => h.FontSize, VisualElementStylesHandlers.DefaultFontSize),
+            (StyleIdentifier.FONT_WEIGHT, h => h.FontWeight, VisualElementStylesHandlers.DefaultFontWeight),
+            (StyleIdentifier.FONT_STYLE, h => h.FontStyle, VisualElementStylesHandlers.DefaultFontStyle),
+            (StyleIdentifier.LINE_HEIGHT, h => h.LineHeight, VisualElementStylesHandlers.DefaultLineHeight),
+            (StyleIdentifier.LETTER_SPACING, h => h.LetterSpacing, VisualElementStylesHandlers.DefaultLetterSpacing),
+            (StyleIdentifier.POINTER_EVENTS, h => h.PointerEvents, VisualElementStylesHandlers.DefaultPointerEvents),
+            (StyleIdentifier.CURSOR, h => h.Cursor, VisualElementStylesHandlers.DefaultCursor),
+            (StyleIdentifier.TEXT_SHADOW, h => h.TextShadow, VisualElementStylesHandlers.DefaultTextShadow),
+            (StyleIdentifier.TEXT_DECORATION, h => h.TextDecoration, VisualElementStylesHandlers.DefaultTextDecoration)
+        };
+
         public StyleTrace ExplainStyles(VisualElement element)
+        {
+            StyleTrace trace = Explain(element);
+
+            if (trace == null || element.StylesHandlers == null)
+            {
+                return trace;
+            }
+
+            foreach ((string property, Func<VisualElementStylesHandlers, object> handlerOf, object unset) in _inheritable)
+            {
+                if (trace.WinnerOf(property) != null)
+                {
+                    continue;
+                }
+
+                object handler = handlerOf(element.StylesHandlers);
+
+                if (ReferenceEquals(handler, unset))
+                {
+                    continue;
+                }
+                VisualElement origin = null;
+
+                for (VisualElement ancestor = element.Parent;
+                    ancestor?.StylesHandlers != null && ReferenceEquals(handlerOf(ancestor.StylesHandlers), handler);
+                    ancestor = ancestor.Parent)
+                {
+                    origin = ancestor;
+                }
+
+                if (origin == null)
+                {
+                    continue;
+                }
+
+                StyleTrace from = Explain(origin);
+
+                trace.Inherit(property, origin, from?.WinnerOf(property));
+            }
+
+            return trace;
+        }
+
+        private StyleTrace Explain(VisualElement element)
         {
             if (element == null || Root == null)
             {

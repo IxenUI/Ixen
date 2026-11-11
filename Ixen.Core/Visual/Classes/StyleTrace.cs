@@ -2,6 +2,7 @@ using Ixen.Core.Visual.Styles;
 using Ixen.Core.Visual.Styles.Descriptors;
 using System.Linq;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 
 namespace Ixen.Core.Visual.Classes
@@ -154,6 +155,75 @@ namespace Ixen.Core.Visual.Classes
         }
 
         internal StyleTokens Tokens { get; set; }
+
+        private readonly Dictionary<string, VisualElement> _inheritedFrom = new();
+        private readonly Dictionary<string, StyleTraceEntry> _inheritedRules = new();
+
+        public IReadOnlyCollection<string> InheritedProperties => _inheritedFrom.Keys;
+
+        public VisualElement InheritedFrom(string property)
+            => property != null && _inheritedFrom.TryGetValue(property, out VisualElement origin) ? origin : null;
+
+        public StyleTraceEntry InheritedRule(string property)
+            => property != null && _inheritedRules.TryGetValue(property, out StyleTraceEntry rule) ? rule : null;
+
+        internal void Inherit(string property, VisualElement origin, StyleTraceEntry rule)
+        {
+            _inheritedFrom[property] = origin;
+            _inheritedRules[property] = rule;
+        }
+
+        public string ComputedValueOf(string property)
+        {
+            VisualElementStylesHandlers handlers = Element.StylesHandlers;
+
+            if (handlers == null)
+            {
+                return null;
+            }
+
+            switch (property)
+            {
+                case StyleIdentifier.WIDTH:
+                    return Pixels(Element.ActualWidth);
+
+                case StyleIdentifier.HEIGHT:
+                    return Pixels(Element.ActualHeight);
+
+                case StyleIdentifier.COLOR:
+                    return Hex(handlers.Color.Brush?.Color);
+
+                case StyleIdentifier.BACKGROUND:
+                    return handlers.Background.Descriptor?.Color == null ? null : Hex(handlers.Background.Color);
+
+                case StyleIdentifier.FONT_SIZE:
+                    return Pixels(FontSpec.From(handlers, Element.Host?.FontScale ?? 1).Size);
+
+                case StyleIdentifier.FONT_WEIGHT:
+                    return FontSpec.From(handlers).Weight.ToString(CultureInfo.InvariantCulture);
+
+                case StyleIdentifier.OPACITY:
+                    return handlers.Opacity.Descriptor.Value.ToString("0.###", CultureInfo.InvariantCulture);
+
+                default:
+                    return null;
+            }
+        }
+
+        private static string Pixels(float value)
+            => value.ToString("0.##", CultureInfo.InvariantCulture) + "px";
+
+        private static string Hex(Color? color)
+        {
+            if (color == null)
+            {
+                return null;
+            }
+
+            SkiaSharp.SKColor sk = color.Value.SKColor;
+
+            return "#" + sk.Alpha.ToString("X2") + sk.Red.ToString("X2") + sk.Green.ToString("X2") + sk.Blue.ToString("X2");
+        }
 
         internal void Record(StyleClass styleClass, bool isDefault)
         {
