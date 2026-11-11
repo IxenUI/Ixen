@@ -361,16 +361,8 @@ $control_focus_soft:   #EEF1FE
 #Spinner {
     width: 16px
     height: 16px
+    color: $control_focus
     animation: ixen_spin 900ms linear infinite
-}
-
-#SpinnerDot {
-    left: 6px
-    top: 0px
-    width: 4px
-    height: 4px
-    background: $control_focus
-    corner-radius: 2px
 }
 
 #TabControl,

@@ -114,10 +114,41 @@ namespace Ixen.Controls.UT
             Assert.AreEqual(AccessibleRole.ProgressBar, node.Role);
             Assert.AreEqual("Busy", node.Name);
             Assert.IsNull(node.Value, "it is indeterminate by nature");
-            Assert.AreEqual(1, spinner.ChildElements.Count,
-                "a spinner is one dot that the theme orbits with a keyframe animation over a "
-                + "rotate - a RING that rotates is indistinguishable from a ring standing still");
-            Assert.AreEqual(0, node.Children.Count, "and the dot is decoration");
+            Assert.AreEqual(0, spinner.ChildElements.Count, "it draws itself: nothing to expose under it");
+        }
+
+        [TestMethod]
+        public void ASpinnerIsAQuarterArcOverAFaintRing()
+        {
+            var root = new VisualElement { Name = "root" };
+            var spinner = new Spinner();
+            spinner.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 32 };
+            spinner.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 32 };
+            spinner.Styles.Color = new ColorStyleDescriptor { Value = "#FF0000" };
+            root.AddChild(spinner);
+
+            var registry = new StyleRegistry();
+            var surface = new IxenSurface(root) { Styles = registry };
+            surface.SetToken("control_line_off", "#0000FF");
+
+            using (var bitmap = new SkiaSharp.SKBitmap(32, 32))
+            using (var canvas = new SkiaSharp.SKCanvas(bitmap))
+            {
+                canvas.Clear(SkiaSharp.SKColors.Transparent);
+                surface.ComputeLayout(32, 32);
+                surface.Render(canvas);
+
+                SkiaSharp.SKColor arc = bitmap.GetPixel(26, 6);
+                SkiaSharp.SKColor track = bitmap.GetPixel(6, 26);
+                SkiaSharp.SKColor middle = bitmap.GetPixel(16, 16);
+
+                Assert.IsTrue(arc.Red > 200 && arc.Blue < 60,
+                    $"from twelve to three o'clock the arc is in the spinner's colour: {arc} - an arc, not a "
+                    + "ring, so the rotation the theme gives it can be seen");
+                Assert.IsTrue(track.Blue > 200 && track.Red < 60,
+                    $"the rest of the circle is the track, in $control_line_off: {track}");
+                Assert.AreEqual(0, middle.Alpha, "and the middle is empty");
+            }
         }
 
         [TestMethod]
