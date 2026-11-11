@@ -4,6 +4,7 @@ using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ixen.Core.Rendering
@@ -29,6 +30,10 @@ namespace Ixen.Core.Rendering
             internal volatile float WantedWidth;
             internal volatile float WantedHeight;
             internal int Needed = NOT_DRAWN;
+            internal long WantedAt;
+            internal int Attempt;
+            internal bool Dormant;
+            internal CancellationTokenSource Cancellation;
         }
 
         private const int NOT_DRAWN = int.MaxValue;
@@ -99,6 +104,8 @@ namespace Ixen.Core.Rendering
             {
                 entry.WantedWidth = width;
                 entry.WantedHeight = height;
+
+                MarkWanted(name, entry);
             }
         }
 
@@ -159,6 +166,8 @@ namespace Ixen.Core.Rendering
             {
                 entry.WantedWidth = width;
                 entry.WantedHeight = height;
+
+                MarkWanted(name, entry);
 
                 return;
             }
@@ -260,6 +269,41 @@ namespace Ixen.Core.Rendering
             }
         }
 
+        internal void Wanted(string name)
+        {
+            if (_pending.Contains(name) && _entries.TryGetValue(name, out Entry waiting))
+            {
+                MarkWanted(name, waiting);
+            }
+        }
+
+        private void MarkWanted(string name, Entry entry)
+        {
+            entry.WantedAt = ++_clock;
+
+            if (entry.Dormant && _source is IAsyncImageSource asynchronous)
+            {
+                entry.Dormant = false;
+                Start(asynchronous, name, entry);
+            }
+        }
+
+        private void PutToSleep(long shown)
+        {
+            foreach (KeyValuePair<string, Entry> candidate in _entries)
+            {
+                Entry entry = candidate.Value;
+
+                if (entry.Dormant || entry.WantedAt > shown || !_pending.Contains(candidate.Key))
+                {
+                    continue;
+                }
+
+                entry.Dormant = true;
+                entry.Cancellation?.Cancel();
+            }
+        }
+
         private Entry Touch(string name)
         {
             if (string.IsNullOrEmpty(name))
@@ -342,6 +386,11 @@ namespace Ixen.Core.Rendering
             long shown = _trimmedAt;
 
             _trimmedAt = _clock;
+
+            if (_pending.Count > 0)
+            {
+                PutToSleep(shown);
+            }
 
             for (int pass = 0; pass < 3 && _bytes > Budget; pass++)
             {
@@ -445,20 +494,24 @@ namespace Ixen.Core.Rendering
         private void Start(IAsyncImageSource source, string name, Entry waiting)
         {
             Task<Stream> opening;
+            int attempt = ++waiting.Attempt;
+            var cancellation = new CancellationTokenSource();
+
+            waiting.Cancellation = cancellation;
 
             try
             {
-                opening = source.OpenAsync(name);
+                opening = source.OpenAsync(name, cancellation.Token);
             }
             catch
             {
-                Settle(name, waiting, null);
+                Settle(name, waiting, attempt, null);
                 return;
             }
 
             if (opening == null)
             {
-                Settle(name, waiting, null);
+                Settle(name, waiting, attempt, null);
                 return;
             }
 
@@ -466,12 +519,17 @@ namespace Ixen.Core.Rendering
             {
                 Arrival arrival = Read(finished, waiting.WantedWidth, waiting.WantedHeight);
 
-                Poster(() => Settle(name, waiting, arrival));
+                Poster(() => Settle(name, waiting, attempt, arrival));
             });
         }
 
         private static Arrival Read(Task<Stream> finished, float wantedWidth, float wantedHeight)
         {
+            if (finished.IsFaulted)
+            {
+                GC.KeepAlive(finished.Exception);
+            }
+
             if (finished.Status != TaskStatus.RanToCompletion || finished.Result == null)
             {
                 return null;
@@ -530,14 +588,23 @@ namespace Ixen.Core.Rendering
             }
         }
 
-        private void Settle(string name, Entry waiting, Arrival arrival)
+        private void Settle(string name, Entry waiting, int attempt, Arrival arrival)
         {
-            if (!_entries.TryGetValue(name, out Entry current) || current != waiting)
+            bool stale = arrival == null && (attempt != waiting.Attempt || waiting.Dormant);
+
+            if (!_entries.TryGetValue(name, out Entry current) || current != waiting || !_pending.Contains(name) || stale)
             {
                 arrival?.Bitmap?.Dispose();
                 return;
             }
 
+            if (attempt != waiting.Attempt)
+            {
+                waiting.Cancellation?.Cancel();
+            }
+
+            waiting.Dormant = false;
+            waiting.Cancellation = null;
             _pending.Remove(name);
 
             if (arrival != null)
@@ -613,6 +680,7 @@ namespace Ixen.Core.Rendering
         {
             foreach (KeyValuePair<string, Entry> entry in _entries)
             {
+                entry.Value.Cancellation?.Cancel();
                 Release(entry.Value);
             }
 

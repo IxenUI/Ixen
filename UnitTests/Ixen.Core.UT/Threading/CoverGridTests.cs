@@ -26,7 +26,7 @@ namespace Ixen.Core.UT.Threading
 
             public Stream Open(string name) => null;
 
-            public Task<Stream> OpenAsync(string name)
+            public Task<Stream> OpenAsync(string name, CancellationToken cancellation)
             {
                 Interlocked.Increment(ref Asked);
 

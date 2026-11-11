@@ -216,11 +216,19 @@ namespace Ixen.Core
             return false;
         }
 
+        private readonly List<VisualElement> _wanting = new List<VisualElement>();
+
         private void KeepPicturesOnScreen()
         {
-            for (int index = 0; index < _showing.Count; index++)
+            Pictures(_wanting, false);
+            Pictures(_showing, true);
+        }
+
+        private void Pictures(List<VisualElement> elements, bool onScreen)
+        {
+            for (int index = 0; index < elements.Count; index++)
             {
-                VisualElement element = _showing[index];
+                VisualElement element = elements[index];
 
                 if (element.Host != this || element.IsHiddenInTree)
                 {
@@ -229,7 +237,7 @@ namespace Ixen.Core
 
                 if (element is Image image && !string.IsNullOrEmpty(image.Source))
                 {
-                    _images.Keep(image.Source);
+                    Picture(image.Source, onScreen);
                 }
 
                 BackgroundStyleDescriptor background = element.StylesHandlers?.Background.Descriptor;
@@ -245,9 +253,21 @@ namespace Ixen.Core
                 {
                     if (!string.IsNullOrEmpty(layers[layer].ImageUrl))
                     {
-                        _images.Keep(layers[layer].ImageUrl);
+                        Picture(layers[layer].ImageUrl, onScreen);
                     }
                 }
+            }
+        }
+
+        private void Picture(string url, bool onScreen)
+        {
+            if (onScreen)
+            {
+                _images.Keep(url);
+            }
+            else
+            {
+                _images.Wanted(url);
             }
         }
 
@@ -351,6 +371,7 @@ namespace Ixen.Core
             _clippingComputer.Compute(Root, logicalWidth, logicalHeight);
 
             _showing.Clear();
+            _wanting.Clear();
             DamageLayout(Root, null);
 
             Root.ClearLayoutDirty();
@@ -1010,9 +1031,14 @@ namespace Ixen.Core
             element.PaintedRight = right;
             element.PaintedBottom = bottom;
 
-            if (visible && ShowsPicture(element))
+            if (ShowsPicture(element))
             {
-                _showing.Add(element);
+                if (visible)
+                {
+                    _showing.Add(element);
+                }
+
+                _wanting.Add(element);
             }
         }
 
