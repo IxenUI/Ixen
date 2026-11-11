@@ -1,4 +1,5 @@
 using Ixen.Core;
+using Ixen.Core.Accessibility;
 using Ixen.Core.Input;
 using Ixen.Core.Visual;
 using Ixen.Core.Visual.Classes;
@@ -236,6 +237,52 @@ namespace Ixen.Controls.UT
             Key(Ixen.Core.Input.Key.F2);
 
             Assert.IsTrue(_grid.IsEditing, "and F2 is still the way to edit");
+        }
+
+        private static AccessibleNode NodeOf(AccessibleNode node, VisualElement element)
+        {
+            if (node.Element == element)
+            {
+                return node;
+            }
+
+            foreach (AccessibleNode child in node.Children)
+            {
+                AccessibleNode found = NodeOf(child, element);
+
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            return null;
+        }
+
+        [TestMethod]
+        public void WithAListenerAScreenReaderCanInvokeARow()
+        {
+            AccessibleNode before = NodeOf(_surface.BuildAccessibilityTree(), RowOf(_people[1]));
+
+            Assert.IsFalse(before.Supports(AccessibleActions.Invoke), "nobody listens, so there is nothing to invoke");
+
+            object invoked = null;
+
+            _grid.ItemInvoked += (sender, e) => invoked = e.Item;
+
+            AccessibleNode row = NodeOf(_surface.BuildAccessibilityTree(), RowOf(_people[1]));
+
+            Assert.IsTrue(row.Supports(AccessibleActions.Invoke),
+                "a double-click or Enter plays a track; a screen reader user needs the same through the bridge");
+            Assert.IsTrue(row.Supports(AccessibleActions.Select), "selecting stays a separate action");
+            Assert.IsTrue(_surface.Perform(row, AccessibleActions.Invoke, null));
+            Assert.AreSame(_people[1], invoked);
+            Assert.IsFalse(_grid.IsEditing);
+
+            AccessibleNode header = NodeOf(_surface.BuildAccessibilityTree(), _grid.Header.ChildElements[0]);
+
+            Assert.IsTrue(_surface.Perform(header, AccessibleActions.Invoke, null));
+            Assert.AreSame(_people[1], invoked, "a header is not a row: invoking it still sorts, it plays nothing");
         }
 
         [TestMethod]

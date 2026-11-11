@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Ixen.Controls
 {
-    public class DataGrid : VisualElement, IAccessibleSelection, IAccessibleTable
+    public class DataGrid : VisualElement, IAccessibleSelection, IAccessibleTable, IAccessibleInvoker
     {
         public const string HEADER = "DataGridHeader";
         public const string BODY = "DataGridBody";
@@ -34,6 +34,12 @@ namespace Ixen.Controls
 
             return true;
         }
+
+        bool IAccessibleInvoker.CanInvoke(VisualElement item)
+            => ItemInvoked != null && item is DataGridRow row && row.Item != null;
+
+        bool IAccessibleInvoker.Invoke(VisualElement item)
+            => item is DataGridRow row && Invoke(row.Item);
 
         private readonly VisualElement _header;
         private readonly VirtualList _body;

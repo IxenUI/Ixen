@@ -134,6 +134,28 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
+        public void WithAListenerAScreenReaderInvokesALeafAndStillSelectsAFolder()
+        {
+            object invoked = null;
+
+            _tree.ItemInvoked += (sender, e) => invoked = e.Item;
+
+            AccessibleNode pictures = Find(_surface.BuildAccessibilityTree(), "Pictures");
+
+            Assert.IsTrue(_surface.Perform(pictures, AccessibleActions.Invoke, null));
+            Assert.AreEqual("Pictures", ((Folder)invoked).Name,
+                "the bridge's invoke is the double-click: it opens the playlist, as Enter does");
+
+            invoked = null;
+
+            AccessibleNode documents = Find(_surface.BuildAccessibilityTree(), "Documents");
+
+            Assert.IsTrue(_surface.Perform(documents, AccessibleActions.Invoke, null));
+            Assert.IsNull(invoked, "a folder is never invoked");
+            Assert.AreEqual(0, _tree.SelectedIndex, "so invoking it is the click it always was");
+        }
+
+        [TestMethod]
         public void ADoubleClickOnAFolderInvokesNothing()
         {
             int invoked = 0;

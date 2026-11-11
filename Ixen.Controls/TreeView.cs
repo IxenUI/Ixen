@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Ixen.Controls
 {
-    public class TreeView : VisualElement, IAccessibleSelection
+    public class TreeView : VisualElement, IAccessibleSelection, IAccessibleInvoker
     {
         public const string ROWS = "TreeRows";
 
@@ -32,6 +32,21 @@ namespace Ixen.Controls
 
             return true;
         }
+
+        bool IAccessibleInvoker.CanInvoke(VisualElement item)
+        {
+            if (ItemInvoked == null || !(item is TreeRow row))
+            {
+                return false;
+            }
+
+            TreeNode node = NodeAt(IndexOf(row.Item));
+
+            return node != null && !node.HasChildren;
+        }
+
+        bool IAccessibleInvoker.Invoke(VisualElement item)
+            => item is TreeRow row && Invoke(IndexOf(row.Item));
 
         private Func<object, object, bool> _acceptsOnto;
 

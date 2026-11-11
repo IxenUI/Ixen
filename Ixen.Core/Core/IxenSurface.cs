@@ -864,6 +864,13 @@ namespace Ixen.Core
             switch (action)
             {
                 case Accessibility.AccessibleActions.Invoke:
+                    Accessibility.IAccessibleInvoker invoker = Accessibility.AccessibilityTree.InvokerOf(node.Element);
+
+                    if (invoker != null)
+                    {
+                        return invoker.Invoke(node.Element);
+                    }
+
                     node.Element.PerformClick();
                     return true;
 

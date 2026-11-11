@@ -401,7 +401,7 @@ namespace Ixen.Core.Accessibility
                 return actions;
             }
 
-            if (IsInvocable(role) || element.Command != null)
+            if (IsInvocable(role) || element.Command != null || InvokerOf(element) != null)
             {
                 actions |= AccessibleActions.Invoke;
             }
@@ -482,6 +482,19 @@ namespace Ixen.Core.Accessibility
             }
 
             return string.IsNullOrEmpty(element.Description) ? null : element.Description;
+        }
+
+        internal static IAccessibleInvoker InvokerOf(VisualElement item)
+        {
+            for (VisualElement container = item.Parent; container != null; container = container.Parent)
+            {
+                if (container is IAccessibleInvoker invoker)
+                {
+                    return invoker.CanInvoke(item) ? invoker : null;
+                }
+            }
+
+            return null;
         }
 
         private static IAccessibleSelection SelectionOf(VisualElement item)
