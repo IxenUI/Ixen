@@ -75,7 +75,7 @@ namespace Ixen.Core.UT.Input
 
             var inside = new VisualElement { Name = "inside", Focusable = true };
             inside.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 20 };
-            other.AddChild(inside);
+            other.InsertChild(0, inside);
 
             _root.AddChild(other);
 
@@ -148,7 +148,7 @@ namespace Ixen.Core.UT.Input
             var field = new TextField { Name = "field", Text = "hello", Multiline = true };
             field.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 40 };
 
-            _list.AddChild(field);
+            _list.InsertChild(0, field);
             _surface.ComputeLayout(VIEWPORT, VIEWPORT);
             _surface.Focus(field);
 
@@ -165,7 +165,7 @@ namespace Ixen.Core.UT.Input
             var field = new TextField { Name = "field", Text = "hello" };
             field.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 40 };
 
-            _list.AddChild(field);
+            _list.InsertChild(0, field);
             _surface.ComputeLayout(VIEWPORT, VIEWPORT);
             _surface.Focus(field);
 

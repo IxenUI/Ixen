@@ -114,65 +114,90 @@ namespace Ixen.Core.Input
                 return false;
             }
 
+            float left = target.X + target.PaddingLeft + target.BorderInsideLeft;
             float top = target.Y + target.PaddingTop + target.BorderInsideTop;
-            float above = element.Y - top;
-            float below = element.Y + element.ActualHeight - (top + target.ContentHeight);
 
-            float offsetY = above < 0 ? above : below > 0 ? below : 0;
+            float offsetX = Nearest(element.X - left,
+                element.X + element.ActualWidth - (left + target.ContentWidth));
+            float offsetY = Nearest(element.Y - top,
+                element.Y + element.ActualHeight - (top + target.ContentHeight));
 
-            if (offsetY == 0)
+            if (offsetX == 0 && offsetY == 0)
             {
                 return false;
             }
 
-            target.RequestScroll(0, offsetY);
+            target.RequestScroll(offsetX, offsetY);
 
             return true;
         }
 
+        private static float Nearest(float before, float after)
+        {
+            if (before < 0)
+            {
+                return before;
+            }
+
+            if (after > 0)
+            {
+                return after < before ? after : before;
+            }
+
+            return 0;
+        }
+
+        private static float Within(float value, float max)
+        {
+            if (value > max)
+            {
+                value = max;
+            }
+
+            return value < 0 ? 0 : value;
+        }
+
         internal static bool Reveal(VisualElement element, bool alignToTop)
         {
+            float x = element.X;
             float y = element.Y;
+            float width = element.ActualWidth;
             float height = element.ActualHeight;
             bool moved = false;
 
             for (VisualElement target = Scrollable(element.Parent); target != null; target = Scrollable(target.Parent))
             {
+                float left = target.X + target.PaddingLeft + target.BorderInsideLeft;
                 float top = target.Y + target.PaddingTop + target.BorderInsideTop;
                 float above = y - top;
-                float below = y + height - (top + target.ContentHeight);
 
-                float wanted = alignToTop ? above : above < 0 ? above : below > 0 ? (below < above ? below : above) : 0;
-                float next = target.ScrollY + wanted;
+                float wantedX = Nearest(x - left, x + width - (left + target.ContentWidth));
+                float wantedY = alignToTop ? above : Nearest(above, y + height - (top + target.ContentHeight));
 
-                if (next > target.MaxScrollY)
-                {
-                    next = target.MaxScrollY;
-                }
+                float nextX = Within(target.ScrollX + wantedX, target.MaxScrollX);
+                float nextY = Within(target.ScrollY + wantedY, target.MaxScrollY);
 
-                if (next < 0)
-                {
-                    next = 0;
-                }
+                float appliedX = nextX - target.ScrollX;
+                float appliedY = nextY - target.ScrollY;
 
-                float applied = next - target.ScrollY;
-
-                if (applied == 0)
+                if (appliedX == 0 && appliedY == 0)
                 {
                     continue;
                 }
 
                 if (target.ScrollsSmoothly)
                 {
-                    target.ScrollTo(target.ScrollX, next);
+                    target.ScrollTo(nextX, nextY);
                 }
                 else
                 {
-                    target.ScrollY = next;
+                    target.ScrollX = nextX;
+                    target.ScrollY = nextY;
                     moved = true;
                 }
 
-                y -= applied;
+                x -= appliedX;
+                y -= appliedY;
             }
 
             return moved;

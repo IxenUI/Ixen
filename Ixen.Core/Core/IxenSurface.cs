@@ -1802,6 +1802,7 @@ namespace Ixen.Core
 
             _keyboardDispatcher.Focus(element, TrackStates);
 
+            RevealFocus(before);
             DamageFocusChange(before);
         }
 
@@ -1811,7 +1812,26 @@ namespace Ixen.Core
 
             _keyboardDispatcher.MoveFocus(Root, backwards, TrackStates);
 
+            RevealFocus(before);
             DamageFocusChange(before);
+        }
+
+        private void RevealFocus(VisualElement before)
+        {
+            VisualElement focused = _keyboardDispatcher.Focused;
+
+            if (focused == null || focused == before)
+            {
+                return;
+            }
+
+            if (Root != null && Root.IsLayoutDirty)
+            {
+                RequestReveal(focused, false);
+                return;
+            }
+
+            ScrollNavigator.Reveal(focused, false);
         }
 
         internal bool KeyDown(Key key, KeyModifiers modifiers, bool? isRepeat = null)
@@ -1826,6 +1846,7 @@ namespace Ixen.Core
             bool handled = _keyboardDispatcher.KeyDown(Root, key, modifiers, TrackStates, isRepeat,
                 AcceleratorModifier);
 
+            RevealFocus(before);
             DamageFocusChange(before);
 
             return handled;

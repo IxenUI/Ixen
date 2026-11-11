@@ -176,6 +176,7 @@ namespace Ixen.Core.UT.Rendering
             Frame();
 
             _surface.Focus(below);
+            list.ScrollY = 0;
             _surface.InvalidateVisual();
             Frame();
 
