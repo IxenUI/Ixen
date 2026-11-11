@@ -228,3 +228,11 @@ generated_tokens {
 generated_marquee {
     text-overflow: marquee
 }
+
+generated_weights {
+    font-weight: 600
+}
+
+generated_weights_named {
+    font-weight: semi-bold
+}

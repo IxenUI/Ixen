@@ -347,6 +347,18 @@ namespace Ixen.Core.UT.Xns
         }
 
         [TestMethod]
+        public void ANumericOrNamedWeightSurvivesGeneration()
+        {
+            foreach (string name in new[] { "generated_weights", "generated_weights_named" })
+            {
+                var weight = (FontWeightStyleDescriptor)StyleRegistry.Default.GetGlobalElementClass(name).Styles
+                    .Single(s => s.GetType() == typeof(FontWeightStyleDescriptor));
+
+                Assert.AreEqual(FontWeight.SemiBold, weight.Value, name);
+            }
+        }
+
+        [TestMethod]
         public void APseudoClassSurvivesGeneration()
         {
             StyleClass stated = StyleRegistry.Default.GetScopedClass(

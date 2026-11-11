@@ -9,9 +9,9 @@ namespace Ixen.Core.Rendering
     {
         private const char MAX_ASCII = (char)0x7F;
 
-        private static readonly Dictionary<(string family, float size, bool bold, bool italic, bool smooth), SKFont> _fonts = new();
+        private static readonly Dictionary<(string family, float size, int weight, bool italic, bool smooth), SKFont> _fonts = new();
 
-        private static readonly Dictionary<(string family, bool bold, bool italic, int codepoint), SKTypeface> _faces = new();
+        private static readonly Dictionary<(string family, int weight, bool italic, int codepoint), SKTypeface> _faces = new();
 
         private static readonly Dictionary<(SKTypeface face, float size, bool smooth), SKFont> _fallbacks = new();
 
@@ -23,8 +23,8 @@ namespace Ixen.Core.Rendering
 
         internal static SKFont Get(FontSpec spec, bool smooth)
         {
-            (string, float, bool, bool, bool) key = (spec.Family ?? string.Empty, spec.Size,
-                spec.Bold, spec.Italic, smooth);
+            (string, float, int, bool, bool) key = (spec.Family ?? string.Empty, spec.Size,
+                spec.Weight, spec.Italic, smooth);
 
             if (_fonts.TryGetValue(key, out SKFont font))
             {
@@ -33,7 +33,7 @@ namespace Ixen.Core.Rendering
 
             SKTypeface typeface = SKTypeface.FromFamilyName(
                 FamilyOf(spec),
-                spec.Bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal,
+                (SKFontStyleWeight)spec.Weight,
                 SKFontStyleWidth.Normal,
                 spec.Italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright)
                 ?? SKTypeface.Default;
@@ -316,7 +316,7 @@ namespace Ixen.Core.Rendering
 
         private static SKTypeface FallbackFace(FontSpec spec, int codepoint)
         {
-            (string, bool, bool, int) key = (spec.Family ?? string.Empty, spec.Bold, spec.Italic, codepoint);
+            (string, int, bool, int) key = (spec.Family ?? string.Empty, spec.Weight, spec.Italic, codepoint);
 
             if (_faces.TryGetValue(key, out SKTypeface face))
             {
@@ -325,7 +325,7 @@ namespace Ixen.Core.Rendering
 
             face = SKFontManager.Default.MatchCharacter(
                 string.IsNullOrWhiteSpace(spec.Family) ? null : spec.Family,
-                spec.Bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal,
+                (SKFontStyleWeight)spec.Weight,
                 SKFontStyleWidth.Normal,
                 spec.Italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright,
                 null,

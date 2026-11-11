@@ -112,7 +112,11 @@ namespace Ixen.Core.Visual.Styles
                     p => ((FontStyleStyleParser)p).Descriptor, new[] { "normal", "italic" }),
 
                 Define(StyleIdentifier.FONT_WEIGHT, v => new FontWeightStyleParser(v),
-                    p => ((FontWeightStyleParser)p).Descriptor, new[] { "normal", "bold" }),
+                    p => ((FontWeightStyleParser)p).Descriptor, new[]
+                    {
+                        "thin", "extra-light", "light", "normal", "medium", "semi-bold", "bold",
+                        "extra-bold", "black"
+                    }),
 
                 Define(StyleIdentifier.CONTENT_ALIGN, v => new ContentAlignStyleParser(v),
                     p => ((ContentAlignStyleParser)p).Descriptor,

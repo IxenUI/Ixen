@@ -198,7 +198,11 @@ namespace Ixen.Core.UT.Text
         [TestMethod]
         public void UnsupportedValuesAreReported()
         {
-            foreach (string bad in new[] { "font-weight: 700", "font-weight: bolder", "font-style: oblique" })
+            foreach (string bad in new[]
+            {
+                "font-weight: 750", "font-weight: 0", "font-weight: 1000", "font-weight: bolder",
+                "font-style: oblique"
+            })
             {
                 var xnsSource = new XnsSource($"label {{\r\n    {bad}\r\n}}");
                 xnsSource.Compile();
@@ -220,8 +224,56 @@ namespace Ixen.Core.UT.Text
 
         private static SKTypeface FaceOf(FontWeight weight, FontStyle style)
         {
-            return FontCache.Get(new FontSpec(null, 24, weight == FontWeight.Bold,
+            return FontCache.Get(new FontSpec(null, 24, (int)weight,
                 style == FontStyle.Italic)).Typeface;
+        }
+
+        [TestMethod]
+        public void EveryHundredFromOneToNineIsAWeight()
+        {
+            string[] values = { "100", "200", "300", "400", "500", "600", "700", "800", "900" };
+            string[] names = { "thin", "extra-light", "light", "normal", "medium", "semi-bold", "bold", "extra-bold", "black" };
+
+            for (int i = 0; i < values.Length; i++)
+            {
+                foreach (string written in new[] { values[i], names[i], names[i].Replace("-", string.Empty) })
+                {
+                    var xnsSource = new XnsSource($"label {{\r\n    font-weight: {written}\r\n}}");
+                    ClassesSet set = xnsSource.Compile();
+
+                    Assert.IsFalse(xnsSource.HasErrors, written);
+                    Assert.AreEqual((i + 1) * 100,
+                        (int)set.Classes[0].Styles.OfType<FontWeightStyleDescriptor>().Single().Value, written);
+                }
+            }
+        }
+
+        [TestMethod]
+        public void ASemiBoldIsTheFaceInBetweenWhereTheFamilyHasOne()
+        {
+            SKTypeface semi = SKTypeface.FromFamilyName(FAMILY, SKFontStyleWeight.SemiBold,
+                SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+
+            if (semi == null || semi.FontStyle.Weight != (int)SKFontStyleWeight.SemiBold)
+            {
+                Assert.Inconclusive($"{FAMILY} has no semi-bold face on this machine; Skia would hand "
+                    + "back the nearest one, which says nothing about Ixen.");
+            }
+
+            Assert.AreEqual((int)SKFontStyleWeight.SemiBold,
+                FaceOf(FontWeight.SemiBold, FontStyle.Normal).FontStyle.Weight,
+                "the cache used to know two weights only, so 600 would have come out as 400 or 700");
+
+            VisualElement regular = Unnamed();
+            VisualElement semiBold = Unnamed(FontWeight.SemiBold);
+            VisualElement bold = Unnamed(FontWeight.Bold);
+
+            Layout(regular);
+            Layout(semiBold);
+            Layout(bold);
+
+            Assert.IsTrue(semiBold.Width > regular.Width && semiBold.Width < bold.Width,
+                $"and the measure sees it: regular={regular.Width} semi={semiBold.Width} bold={bold.Width}");
         }
 
         private static bool Offers(SKFontStyleWeight weight, SKFontStyleSlant slant)
