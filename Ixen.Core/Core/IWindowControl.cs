@@ -11,6 +11,8 @@ namespace Ixen.Core
 
         bool ExtendsIntoTitleBar { get; }
 
+        WindowPlacement Placement { get; }
+
         void Minimize();
 
         void Maximize();

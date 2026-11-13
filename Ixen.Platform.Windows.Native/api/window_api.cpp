@@ -223,6 +223,16 @@ void WA_SetWindowExtended(NativeWindow* window, int value)
     }
 }
 
+int WA_GetWindowPlacement(NativeWindow* window, int* values)
+{
+    return window && window->GetPlacement(values) ? 1 : 0;
+}
+
+int WA_SetWindowPlacement(NativeWindow* window, int left, int top, int width, int height, int maximized)
+{
+    return window && window->SetPlacement(left, top, width, height, maximized != 0) ? 1 : 0;
+}
+
 int WA_CreateGlContext(NativeWindow* window)
 {
     if (!window)

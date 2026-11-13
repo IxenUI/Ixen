@@ -44,6 +44,11 @@ namespace IxenWindowsNative
         bool _trackingMouse = false;
         bool _trackingNonClient = false;
 
+        WINDOWPLACEMENT _placement = {};
+        bool _placed = false;
+        bool _startMaximized = false;
+        bool PlacementOf(WINDOWPLACEMENT* placement);
+
         FileDropTarget* _fileDropTarget = nullptr;
         bool _acceptsFiles = false;
         bool _oleDrop = false;
@@ -117,6 +122,8 @@ namespace IxenWindowsNative
         void SetOnHitTestCallBack(int __stdcall callback(int, int)) { _hitTestCallBack = callback; }
         void SetOnTouchCallBack(void __stdcall callback(int, int, int, int)) { _touchCallBack = callback; }
         void SetExtended(bool value);
+        bool GetPlacement(int* values);
+        bool SetPlacement(int left, int top, int width, int height, bool maximized);
     };
 }
 

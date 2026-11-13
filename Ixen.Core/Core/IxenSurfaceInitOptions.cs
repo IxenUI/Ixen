@@ -6,7 +6,7 @@
         public int Width { get; set; } = 640;
         public int Height { get; set; } = 480;
         public bool Maximized { get; set; } = false;
-        public bool Minimized { get; set; } = false;
+        public WindowPlacement Placement { get; set; }
         public bool PreferGpu { get; set; } = false;
         public string Icon { get; set; }
         public bool ExtendIntoTitleBar { get; set; } = false;

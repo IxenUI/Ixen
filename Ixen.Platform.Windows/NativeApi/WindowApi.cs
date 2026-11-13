@@ -72,7 +72,13 @@ namespace Ixen.Platform.Windows.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterDropCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterDropCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnDropCallBack callback);
 
-        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterDragCallBack", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LIB_NAME, EntryPoint = "WA_GetWindowPlacement", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetWindowPlacement(IntPtr windowPtr, [Out] int[] values);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowPlacement", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int SetWindowPlacement(IntPtr windowPtr, int left, int top, int width, int height, int maximized);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterDragCallBack",CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterDragCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnDragCallBack callback);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowAcceptsFiles",CallingConvention = CallingConvention.Cdecl)]

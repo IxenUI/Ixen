@@ -67,8 +67,9 @@ namespace Ixen.Platform.Windows
 
             _ixenSurface.TitleChanged += OnTitleChanged;
 
-            _window = new WindowsWindowControl(() => WindowApi.GetWindowHandle(_windowPtr),
+            _window = new WindowsWindowControl(() => WindowApi.GetWindowHandle(_windowPtr), ReadPlacement,
                 _ixenSurface.InitOptions.ExtendIntoTitleBar);
+            ApplyPlacement(_ixenSurface.InitOptions);
             _ixenSurface.Window = _window;
 
             if (_ixenSurface.InitOptions.ExtendIntoTitleBar)
@@ -477,12 +478,47 @@ namespace Ixen.Platform.Windows
 
         internal string Backend => _renderer.Backend;
 
+        private WindowPlacement _closedPlacement;
+        private bool _disposed;
+
+        private void ApplyPlacement(IxenSurfaceInitOptions options)
+        {
+            WindowPlacement placement = options.Placement;
+            bool maximized = options.Maximized || (placement != null && placement.Maximized);
+
+            if (placement != null
+                && WindowApi.SetWindowPlacement(_windowPtr, placement.X, placement.Y, placement.Width, placement.Height,
+                    maximized ? 1 : 0) != 0)
+            {
+                return;
+            }
+
+            WindowApi.SetWindowPlacement(_windowPtr, 0, 0, 0, 0, maximized ? 1 : 0);
+        }
+
+        private WindowPlacement ReadPlacement()
+        {
+            if (_disposed)
+            {
+                return _closedPlacement;
+            }
+
+            var values = new int[5];
+
+            return WindowApi.GetWindowPlacement(_windowPtr, values) == 0
+                ? null
+                : new WindowPlacement(values[0], values[1], values[2], values[3], values[4] != 0);
+        }
+
         private void OnTitleChanged() => _ixenSurface.Post(ApplyTitle);
 
         private void ApplyTitle() => WindowApi.SetWindowTitle(_windowPtr, _ixenSurface.Title ?? string.Empty);
 
         public void Dispose()
         {
+            _closedPlacement = ReadPlacement();
+            _disposed = true;
+
             _ixenSurface.TitleChanged -= OnTitleChanged;
             _renderer.Dispose();
             _cursors.Dispose();

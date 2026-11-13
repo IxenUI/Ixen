@@ -629,8 +629,84 @@ NativeWindow* NativeWindow::GetFromHandle(HWND handle)
 
 LRESULT NativeWindow::Show()
 {
-    ShowWindow(_handle, SW_SHOWNORMAL);
+    ShowWindow(_handle, _startMaximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
     return StartEventLoop();
+}
+
+bool NativeWindow::PlacementOf(WINDOWPLACEMENT* placement)
+{
+    if (_handle != nullptr && IsWindow(_handle))
+    {
+        placement->length = sizeof(WINDOWPLACEMENT);
+
+        return GetWindowPlacement(_handle, placement) != FALSE;
+    }
+
+    if (!_placed)
+    {
+        return false;
+    }
+
+    *placement = _placement;
+
+    return true;
+}
+
+bool NativeWindow::GetPlacement(int* values)
+{
+    WINDOWPLACEMENT placement = {};
+
+    if (values == nullptr || !PlacementOf(&placement))
+    {
+        return false;
+    }
+
+    RECT normal = placement.rcNormalPosition;
+    bool maximized = placement.showCmd == SW_SHOWMAXIMIZED
+        || (placement.showCmd == SW_SHOWMINIMIZED && (placement.flags & WPF_RESTORETOMAXIMIZED) != 0);
+
+    values[0] = normal.left;
+    values[1] = normal.top;
+    values[2] = normal.right - normal.left;
+    values[3] = normal.bottom - normal.top;
+    values[4] = maximized ? 1 : 0;
+
+    return true;
+}
+
+bool NativeWindow::SetPlacement(int left, int top, int width, int height, bool maximized)
+{
+    if (_handle == nullptr)
+    {
+        return false;
+    }
+
+    if (width <= 0 || height <= 0)
+    {
+        _startMaximized = maximized;
+        return true;
+    }
+
+    RECT normal = { left, top, left + width, top + height };
+
+    if (MonitorFromRect(&normal, MONITOR_DEFAULTTONULL) == nullptr)
+    {
+        return false;
+    }
+
+    WINDOWPLACEMENT placement = {};
+    placement.length = sizeof(WINDOWPLACEMENT);
+    placement.showCmd = SW_HIDE;
+    placement.rcNormalPosition = normal;
+
+    if (!SetWindowPlacement(_handle, &placement))
+    {
+        return false;
+    }
+
+    _startMaximized = maximized;
+
+    return true;
 }
 
 LPWSTR NativeWindow::GetTitle()
@@ -758,6 +834,9 @@ void NativeWindow::DestroyGlContext()
 
 LRESULT NativeWindow::HandleDestroy()
 {
+    _placement.length = sizeof(WINDOWPLACEMENT);
+    _placed = GetWindowPlacement(_handle, &_placement) != FALSE;
+
     DestroyGlContext();
 
     if (_oleDrop)

@@ -12,13 +12,17 @@ namespace Ixen.Platform.Windows
         private const uint WM_CLOSE = 0x0010;
 
         private readonly Func<IntPtr> _handle;
+        private readonly Func<WindowPlacement> _placement;
         private bool _maximized;
 
-        internal WindowsWindowControl(Func<IntPtr> handle, bool extends)
+        internal WindowsWindowControl(Func<IntPtr> handle, Func<WindowPlacement> placement, bool extends)
         {
             _handle = handle;
+            _placement = placement;
             ExtendsIntoTitleBar = extends;
         }
+
+        public WindowPlacement Placement => _placement();
 
         public event EventHandler Changed;
 
