@@ -207,6 +207,46 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
+        public void EscapeClosesAMenuThatDoesNotHoldTheFocus()
+        {
+            _page.Focusable = true;
+
+            _menu.OpenAt(10, 10);
+            Layout();
+
+            _surface.KeyDown(Key.Escape, KeyModifiers.None);
+
+            Assert.IsFalse(_menu.Open,
+                "a context menu opened by a right click never takes the focus, so its own key "
+                + "handler never sees the key - found on Android, where the store's cover menu "
+                + "stayed open under Escape");
+
+            _menu.OpenAt(10, 10);
+            Layout();
+            _surface.Focus(_page);
+
+            _surface.KeyDown(Key.Escape, KeyModifiers.None);
+
+            Assert.IsFalse(_menu.Open, "nor when the focus is on the page behind it");
+        }
+
+        [TestMethod]
+        public void AnEscapeTheApplicationHandledLeavesTheMenuOpen()
+        {
+            _root.KeyDown += (sender, e) => e.Handled = e.Key == Key.Escape;
+
+            _menu.OpenAt(10, 10);
+            Layout();
+
+            _surface.KeyDown(Key.Escape, KeyModifiers.None);
+
+            Assert.IsTrue(_menu.Open,
+                "the menu listens on the root, where the application may have answered the key "
+                + "already with a handler subscribed before the menu opened - the bubble does not "
+                + "stop between two handlers of the same element, so the menu has to look");
+        }
+
+        [TestMethod]
         public void ClickingOutsideCloses()
         {
             _menu.Open = true;

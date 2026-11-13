@@ -10,6 +10,7 @@ using Ixen.Core;
 using Ixen.Core.Components;
 using Ixen.Core.Input;
 using Ixen.Core.Visual;
+using Ixen.Core.Visual.Styles.Descriptors;
 using Ixen.Platform;
 using SkiaSharp;
 using SkiaSharp.Views.Android;
@@ -62,7 +63,7 @@ namespace Ixen.View.Android
             _skCanvasView = new SKCanvasView(Context);
 
             _host = new IxenHost(new IxenSurface(), RequestFrame,
-                new AndroidScheduler(), new AndroidClipboard(Context), null,
+                new AndroidScheduler(), new AndroidClipboard(Context), SetCursor,
                 new AssetImageSource(Context?.Assets), WakeFrame,
                 () => IsShown);
 
@@ -70,6 +71,7 @@ namespace Ixen.View.Android
 
             _skCanvasView.PaintSurface += OnPaintSurface;
             _skCanvasView.Touch += OnTouch;
+            _skCanvasView.Hover += OnHover;
 
             AddView(_skCanvasView);
         }
@@ -92,6 +94,7 @@ namespace Ixen.View.Android
 
                     _gpu = new GpuPresenter(Context, Produce) { Presented = OnPresented };
                     _gpu.View.Touch += OnTouch;
+                    _gpu.View.Hover += OnHover;
                     _host.Surface.PreservesFrame = false;
 
                     AddView(_gpu.View);
@@ -104,6 +107,7 @@ namespace Ixen.View.Android
 
                 _gpu = null;
                 gpu.View.Touch -= OnTouch;
+                gpu.View.Hover -= OnHover;
                 gpu.Release();
                 RemoveView(gpu.View);
 
@@ -280,32 +284,45 @@ namespace Ixen.View.Android
             }
 
             int index = motion.ActionIndex;
+            PointerKind kind = KindOf(motion, index);
 
             switch (motion.ActionMasked)
             {
                 case MotionEventActions.Down:
                 case MotionEventActions.PointerDown:
-                    _host.PointerDown(motion.GetX(index), motion.GetY(index), PointerButton.Left,
-                        PointerKind.Touch, motion.GetPointerId(index), AndroidKeys.ToModifiers(motion.MetaState));
+                    PointerButton pressed = kind == PointerKind.Mouse ? ButtonOf(motion.ButtonState) : PointerButton.Left;
+
+                    if (kind == PointerKind.Mouse)
+                    {
+                        _mouseButton = pressed;
+                    }
+
+                    _host.PointerDown(motion.GetX(index), motion.GetY(index), pressed,
+                        kind, motion.GetPointerId(index), AndroidKeys.ToModifiers(motion.MetaState));
                     break;
 
                 case MotionEventActions.Move:
                     for (int moved = 0; moved < motion.PointerCount; moved++)
                     {
-                        _host.PointerMove(motion.GetX(moved), motion.GetY(moved), PointerKind.Touch,
+                        _host.PointerMove(motion.GetX(moved), motion.GetY(moved), KindOf(motion, moved),
                             motion.GetPointerId(moved));
                     }
                     break;
 
                 case MotionEventActions.PointerUp:
-                    _host.PointerUp(motion.GetX(index), motion.GetY(index), PointerButton.Left,
-                        PointerKind.Touch, motion.GetPointerId(index), AndroidKeys.ToModifiers(motion.MetaState));
+                    _host.PointerUp(motion.GetX(index), motion.GetY(index), Released(kind),
+                        kind, motion.GetPointerId(index), AndroidKeys.ToModifiers(motion.MetaState));
                     break;
 
                 case MotionEventActions.Up:
-                    _host.PointerUp(motion.GetX(index), motion.GetY(index), PointerButton.Left,
-                        PointerKind.Touch, motion.GetPointerId(index), AndroidKeys.ToModifiers(motion.MetaState));
-                    _host.PointerLeave();
+                    _host.PointerUp(motion.GetX(index), motion.GetY(index), Released(kind),
+                        kind, motion.GetPointerId(index), AndroidKeys.ToModifiers(motion.MetaState));
+
+                    if (kind != PointerKind.Mouse)
+                    {
+                        _host.PointerLeave();
+                    }
+
                     SyncSoftKeyboard();
                     break;
 
@@ -318,6 +335,70 @@ namespace Ixen.View.Android
             }
 
             e.Handled = true;
+        }
+
+        private PointerButton _mouseButton = PointerButton.Left;
+        private AndroidCursors _cursors;
+
+        private static PointerKind KindOf(MotionEvent motion, int index)
+            => motion.GetToolType(index) == MotionEventToolType.Mouse ? PointerKind.Mouse : PointerKind.Touch;
+
+        private static PointerButton ButtonOf(MotionEventButtonState state)
+        {
+            if ((state & MotionEventButtonState.Secondary) != 0)
+            {
+                return PointerButton.Right;
+            }
+
+            if ((state & MotionEventButtonState.Tertiary) != 0)
+            {
+                return PointerButton.Middle;
+            }
+
+            return PointerButton.Left;
+        }
+
+        private PointerButton Released(PointerKind kind)
+            => kind == PointerKind.Mouse ? _mouseButton : PointerButton.Left;
+
+        private void OnHover(object sender, HoverEventArgs e)
+        {
+            MotionEvent motion = e.Event;
+
+            if (motion == null || motion.GetToolType(0) != MotionEventToolType.Mouse)
+            {
+                e.Handled = false;
+                return;
+            }
+
+            switch (motion.ActionMasked)
+            {
+                case MotionEventActions.HoverEnter:
+                case MotionEventActions.HoverMove:
+                    _host.PointerMove(motion.GetX(), motion.GetY());
+                    break;
+
+                case MotionEventActions.HoverExit:
+                    _host.PointerLeave();
+                    break;
+
+                default:
+                    e.Handled = false;
+                    return;
+            }
+
+            e.Handled = true;
+        }
+
+        private void SetCursor(CursorKind kind, CursorImage image)
+        {
+            if (!System.OperatingSystem.IsAndroidVersionAtLeast(24))
+            {
+                return;
+            }
+
+            _cursors ??= new AndroidCursors();
+            PointerIcon = _cursors.Get(Context, kind, image);
         }
 
         public override bool OnGenericMotionEvent(MotionEvent e)

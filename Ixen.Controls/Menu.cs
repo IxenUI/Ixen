@@ -209,6 +209,7 @@ namespace Ixen.Controls
             if (_watched != null)
             {
                 _watched.PointerDown -= OnRootPointerDown;
+                _watched.KeyDown -= OnRootKeyDown;
                 _watched = null;
             }
 
@@ -226,6 +227,18 @@ namespace Ixen.Controls
 
             _watched = root;
             _watched.PointerDown += OnRootPointerDown;
+            _watched.KeyDown += OnRootKeyDown;
+        }
+
+        private void OnRootKeyDown(object sender, KeyEventArgs args)
+        {
+            if (args.Handled || args.Key != Key.Escape || args.Modifiers != KeyModifiers.None)
+            {
+                return;
+            }
+
+            args.Handled = true;
+            Close();
         }
 
         private void OnRootPointerDown(object sender, PointerEventArgs args)
