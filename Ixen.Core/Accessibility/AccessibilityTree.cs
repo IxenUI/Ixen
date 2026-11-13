@@ -281,7 +281,7 @@ namespace Ixen.Core.Accessibility
             return builder.Length == 0 ? null : builder.ToString();
         }
 
-        private static bool ClicksLikeAButton(VisualElement element)
+        internal static bool ClicksLikeAButton(VisualElement element)
             => element.Role == AccessibleRole.None
                 && element.HandlesClick
                 && !element.Scrollable
@@ -406,7 +406,7 @@ namespace Ixen.Core.Accessibility
                 actions |= AccessibleActions.Invoke;
             }
 
-            if (element.Focusable)
+            if (element.TakesFocus)
             {
                 actions |= AccessibleActions.Focus;
             }
@@ -571,7 +571,7 @@ namespace Ixen.Core.Accessibility
                 states |= AccessibleStates.MultiSelectable;
             }
 
-            if (element.Focusable)
+            if (element.TakesFocus)
             {
                 states |= AccessibleStates.Focusable;
             }

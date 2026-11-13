@@ -26,7 +26,7 @@ namespace Ixen.Core.Input
         {
             _trackStates = trackStates;
 
-            if (element != null && (!element.Focusable || !element.IsEnabled))
+            if (element != null && (!element.TakesFocus || !element.IsEnabled))
             {
                 return;
             }
@@ -70,7 +70,7 @@ namespace Ixen.Core.Input
 
         internal static bool CanHoldFocus(VisualElement element)
             => element != null
-                && element.Focusable
+                && element.TakesFocus
                 && element.IsEnabled
                 && !element.IsHiddenInTree;
 
@@ -114,7 +114,7 @@ namespace Ixen.Core.Input
         {
             for (VisualElement candidate = hit; candidate != null; candidate = candidate.Parent)
             {
-                if (candidate.Focusable)
+                if (candidate.TakesFocus)
                 {
                     Focus(candidate, trackStates);
                     return;
@@ -516,7 +516,7 @@ namespace Ixen.Core.Input
                 return false;
             }
 
-            if (element.Focusable && element.IsEnabled && element.TabIndex >= 0)
+            if (element.TakesFocus && element.IsEnabled && element.TabIndex >= 0)
             {
                 before++;
             }
@@ -573,7 +573,7 @@ namespace Ixen.Core.Input
                 return;
             }
 
-            if (element.Focusable && element.IsEnabled && element.TabIndex >= 0)
+            if (element.TakesFocus && element.IsEnabled && element.TabIndex >= 0)
             {
                 result.Add(element);
             }

@@ -108,6 +108,7 @@ namespace Ixen.Controls
             DragOver += OnDragOver;
             DragLeave += OnDragLeave;
             Drop += OnDrop;
+            KeyDown += OnRowKey;
         }
 
         public bool Reorderable
@@ -642,6 +643,9 @@ namespace Ixen.Controls
             return columns < 1 ? 1 : columns;
         }
 
+        private int _focusItem;
+        private int _pendingFocus = -1;
+
         protected override void OnPrepass(float viewportWidth, float viewportHeight)
         {
             if (_count == null || _create == null || _bind == null)
@@ -649,6 +653,181 @@ namespace Ixen.Controls
                 return;
             }
 
+            int focused = FocusedRowIndex();
+
+            BuildWindow();
+            FollowFocus(focused);
+        }
+
+        private int FocusedRowIndex()
+        {
+            VisualElement focused = Host?.FocusedElement;
+
+            return focused == null || focused.Parent != this ? -1 : IndexOfRow(focused);
+        }
+
+        private VisualElement RealisedRow(int index)
+        {
+            int slot = index - _first;
+
+            return _first < 0 || slot < 0 || slot >= _realised ? null : _rows[slot];
+        }
+
+        private void FollowFocus(int focused)
+        {
+            int count = Count;
+
+            if (_pendingFocus >= count)
+            {
+                _pendingFocus = count - 1;
+            }
+
+            int wanted = _pendingFocus >= 0 ? _pendingFocus : focused;
+
+            if (wanted >= 0)
+            {
+                _focusItem = wanted;
+
+                VisualElement row = RealisedRow(wanted);
+
+                if (row != null)
+                {
+                    _pendingFocus = -1;
+
+                    if (Host?.FocusedElement != row)
+                    {
+                        row.Focus();
+                    }
+                }
+                else if (_pendingFocus < 0 && Host?.FocusedElement?.Parent == this)
+                {
+                    Host.Focus(null);
+                }
+            }
+
+            SyncStop();
+        }
+
+        private void SyncStop()
+        {
+            if (_realised == 0)
+            {
+                return;
+            }
+
+            int stop =Math.Max(_first, Math.Min(_focusItem, _first + _realised - 1));
+
+            for (int slot = 0; slot < _realised; slot++)
+            {
+                _rows[slot].TabIndex = _first + slot == stop ? 0 : -1;
+            }
+        }
+
+        private void OnRowKey(object sender, KeyEventArgs args)
+        {
+            if (args.Handled || args.Modifiers != KeyModifiers.None)
+            {
+                return;
+            }
+
+            int from = FocusedRowIndex();
+
+            if (from < 0)
+            {
+                return;
+            }
+
+            int count = Count;
+            int across = _columns;
+            int page = Math.Max(1, (int)(ContentHeight / Math.Max(1, _itemHeight))) * across;
+            int to;
+
+            switch (args.Key)
+            {
+                case Key.Left:
+                    if (across <= 1)
+                    {
+                        return;
+                    }
+
+                    to = from - 1;
+                    break;
+
+                case Key.Right:
+                    if (across <= 1)
+                    {
+                        return;
+                    }
+
+                    to = from + 1;
+                    break;
+
+                case Key.Up:
+                    to = from - across;
+                    break;
+
+                case Key.Down:
+                    to = from + across;
+                    break;
+
+                case Key.Home:
+                    to = 0;
+                    break;
+
+                case Key.End:
+                    to = count - 1;
+                    break;
+
+                case Key.PageUp:
+                    to = Math.Max(0, from - page);
+                    break;
+
+                case Key.PageDown:
+                    to = Math.Min(count - 1, from + page);
+                    break;
+
+                default:
+                    return;
+            }
+
+            args.Handled = true;
+
+            if (to < 0 || to >= count || to == from)
+            {
+                return;
+            }
+
+            MoveFocusTo(to);
+        }
+
+        public void MoveFocusTo(int index)
+        {
+            int count = Count;
+
+            if (index < 0 || index >= count)
+            {
+                return;
+            }
+
+            _focusItem = index;
+            _pendingFocus = index;
+
+            ScrollIntoView(index);
+
+            VisualElement row = RealisedRow(index);
+
+            if (row != null)
+            {
+                _pendingFocus = -1;
+                row.Focus();
+            }
+
+            SyncStop();
+            InvalidateLayout();
+        }
+
+        private void BuildWindow()
+        {
             int count = Count;
             int columns = ColumnsFor(ContentWidth);
             bool reflowed = columns != _columns;

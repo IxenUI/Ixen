@@ -116,6 +116,68 @@ namespace Ixen.Core.UT.Accessibility
             Assert.AreEqual(0, _clicks);
         }
 
+        [TestMethod]
+        public void WhatIsReadAsAButtonIsReachedLikeOne()
+        {
+            VisualElement tile = Tile(Label("Album number 1"));
+
+            _surface.KeyDown(Key.Tab, KeyModifiers.None);
+
+            Assert.AreSame(tile, _surface.FocusedElement,
+                "a screen reader calls it a button, so Tab reaches it with no focusable of the app's "
+                + "own - an audit flags a role of button that the keyboard cannot reach");
+
+            _surface.KeyDown(Key.Enter, KeyModifiers.None);
+
+            Assert.AreEqual(1, _clicks, "and Enter presses it there");
+
+            AccessibleNode node = Only();
+
+            Assert.IsTrue(node.States.HasFlag(AccessibleStates.Focusable));
+            Assert.IsTrue(node.Supports(AccessibleActions.Focus));
+        }
+
+        [TestMethod]
+        public void APointerPressFocusesIt()
+        {
+            VisualElement tile = Tile(Label("Album number 1"));
+
+            _surface.PointerDown(tile.X + 4, tile.Y + 4, PointerButton.Left);
+            _surface.PointerUp(tile.X + 4, tile.Y + 4, PointerButton.Left);
+
+            Assert.AreSame(tile, _surface.FocusedElement, "as a button does, so the keyboard carries on from there");
+        }
+
+        [TestMethod]
+        public void AContainerAroundAButtonIsNotAStopOfItsOwn()
+        {
+            var save = new VisualElement { Text = "Save", Focusable = true };
+
+            VisualElement tile = Tile(Label("Draft"), save);
+
+            _surface.KeyDown(Key.Tab, KeyModifiers.None);
+
+            Assert.AreSame(save, _surface.FocusedElement,
+                "a container that only catches clicks as they bubble is not a button, so the first Tab "
+                + "goes to the one inside rather than to the container that comes before it");
+            Assert.AreNotSame(tile, _surface.FocusedElement);
+        }
+
+        [TestMethod]
+        public void TabIndexMinusOneTakesItOutOfTheTabOrder()
+        {
+            VisualElement tile = Tile(Label("Album number 1"));
+            tile.TabIndex = -1;
+
+            _surface.KeyDown(Key.Tab, KeyModifiers.None);
+
+            Assert.IsNull(_surface.FocusedElement, "the app's way to keep a clickable element out of the Tab order");
+
+            _surface.Focus(tile);
+
+            Assert.AreSame(tile, _surface.FocusedElement, "while it can still be focused by code or a click");
+        }
+
         private static bool Contains(AccessibleNode node, string name)
         {
             if (node.Name == name)

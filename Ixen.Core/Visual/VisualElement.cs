@@ -12,6 +12,9 @@ namespace Ixen.Core.Visual
         public event EventHandler<PointerEventArgs> PointerClick;
 
         internal bool HandlesClick => PointerClick != null;
+
+        internal bool TakesFocus
+            => Focusable || (HandlesClick && Accessibility.AccessibilityTree.ClicksLikeAButton(this));
         public event EventHandler<PointerEventArgs> PointerEnter;
         public event EventHandler<PointerEventArgs> PointerLeave;
         public event EventHandler<WheelEventArgs> PointerWheel;
@@ -124,7 +127,7 @@ namespace Ixen.Core.Visual
 
             try
             {
-                if (target.Focusable)
+                if (target.TakesFocus)
                 {
                     Host?.Focus(target);
                 }
