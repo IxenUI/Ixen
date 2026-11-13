@@ -596,6 +596,8 @@ namespace Ixen.View.Android
             return null;
         }
 
+        public IxenHost Host => _host;
+
         public VisualElement Root
         {
             get => _host.Root;
@@ -605,6 +607,12 @@ namespace Ixen.View.Android
         public Component RootComponent
         {
             set => _host.Root = value?.Initialize();
+        }
+
+        public IImageSource ImageSource
+        {
+            get => _host.Surface.ImageSource;
+            set => _host.Surface.ImageSource = value;
         }
     }
 }

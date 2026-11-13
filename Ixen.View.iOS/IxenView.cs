@@ -392,5 +392,11 @@ namespace Ixen.View.iOS
         {
             set => _host.Root = value?.Initialize();
         }
+
+        public IImageSource ImageSource
+        {
+            get => _host.Surface.ImageSource;
+            set => _host.Surface.ImageSource = value;
+        }
     }
 }
