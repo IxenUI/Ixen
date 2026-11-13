@@ -16,16 +16,6 @@ namespace Ixen.Core.UT.Components.Fixtures
 
         public string Stamp { get; private set; } = "before";
 
-        public string Restored { get; private set; }
-
-        public string RestoredWhenAttached { get; private set; }
-
-        protected override void OnSaveState(ComponentState state)
-            => state.Set("mark", "kept");
-
-        protected override void OnRestoreState(ComponentState state)
-            => Restored = state.Get("mark");
-
         public LifecycleInnerComponent Inner
             => View.FindByName("inner")?.Owner as LifecycleInnerComponent;
 
@@ -35,7 +25,6 @@ namespace Ixen.Core.UT.Components.Fixtures
         {
             Attachments++;
             Stamp = "after";
-            RestoredWhenAttached = Restored;
             HadHostWhenAttached = View.Host != null;
             Trace.Add("attached");
         }

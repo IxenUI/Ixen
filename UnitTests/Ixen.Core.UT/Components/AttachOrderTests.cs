@@ -191,28 +191,6 @@ namespace Ixen.Core.UT.Components
         }
 
         [TestMethod]
-        public void TheAttachIsRaisedBeforeTheStateIsRestored()
-        {
-            var saver = new LifecycleComponent();
-            var written = new IxenSurface(saver) { Styles = new StyleRegistry() };
-
-            written.ComputeLayout(VIEWPORT, VIEWPORT);
-
-            string state = written.SaveState();
-
-            var tracked = new LifecycleComponent();
-            var surface = new IxenSurface(tracked) { Styles = new StyleRegistry() };
-
-            surface.RestoreState(state);
-            surface.ComputeLayout(VIEWPORT, VIEWPORT);
-
-            Assert.AreEqual("kept", tracked.Restored, "the state did arrive");
-            Assert.IsNull(tracked.RestoredWhenAttached,
-                "and the attach comes first, which is the order the surface had "
-                    + "when it raised the attach from its own constructor");
-        }
-
-        [TestMethod]
         public void ADetachAfterAnAttachThatNeverRanRaisesNothing()
         {
             VisualElement root = Root();

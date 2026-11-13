@@ -36,7 +36,6 @@ namespace Ixen.Core
         private float _scale = 1;
         private float _fontScale = 1;
         private bool _visualDirty;
-        private Dictionary<string, Dictionary<string, string>> _pendingState;
 
         private readonly ConcurrentQueue<Action> _posted = new ConcurrentQueue<Action>();
         private readonly int _thread = Thread.CurrentThread.ManagedThreadId;
@@ -324,7 +323,7 @@ namespace Ixen.Core
             {
                 _sized.Clear();
 
-                RenderComponents(Root, string.Empty, logicalWidth, logicalHeight);
+                RenderComponents(Root, logicalWidth, logicalHeight);
                 _styleComputer.Compute(Root, styles, logicalWidth, logicalHeight);
                 _measureComputer.Measure(Root, logicalWidth, logicalHeight, true, true);
 
@@ -610,14 +609,9 @@ namespace Ixen.Core
             return changed;
         }
 
-        private void RenderComponents(VisualElement element, string prefix, float width, float height)
+        private void RenderComponents(VisualElement element, float width, float height)
         {
-            string path = PendingStateCount > 0 ? PathOf(element, prefix) : null;
-
             element.Owner?.AttachIfPending();
-
-            RestoreIfPending(element, path);
-
             element.Owner?.RenderIfDirty();
             element.OnPrepass(width, height);
 
@@ -631,78 +625,7 @@ namespace Ixen.Core
 
             foreach (VisualElement child in element.Children)
             {
-                RenderComponents(child, path, width, height);
-            }
-        }
-
-        public string SaveState()
-        {
-            var states = new Dictionary<string, ComponentState>();
-
-            if (Root != null)
-            {
-                CollectState(Root, string.Empty, states);
-            }
-
-            return StateFormat.Write(states);
-        }
-
-        public void RestoreState(string state)
-        {
-            _pendingState = StateFormat.Read(state);
-
-            if (_pendingState.Count > 0)
-            {
-                Root?.InvalidateLayout();
-            }
-        }
-
-        internal int PendingStateCount => _pendingState == null ? 0 : _pendingState.Count;
-
-        private static void CollectState(VisualElement element, string prefix,
-            Dictionary<string, ComponentState> states)
-        {
-            string path = PathOf(element, prefix);
-
-            if (element.Owner != null)
-            {
-                ComponentState state = element.Owner.SaveState();
-
-                if (state.Count > 0)
-                {
-                    if (states.ContainsKey(path))
-                    {
-                        throw new InvalidOperationException(
-                            $"Two components resolve to the state path '{path}', so neither could be "
-                            + "restored without the other. Give one of their elements a different name.");
-                    }
-
-                    states[path] = state;
-                }
-            }
-
-            if (element.PersistScroll && !string.IsNullOrEmpty(element.Name))
-            {
-                string key = SCROLL_STATE + path;
-
-                if (states.ContainsKey(key))
-                {
-                    throw new InvalidOperationException(
-                        $"Two elements keeping their scroll resolve to the state path '{path}', so neither "
-                        + "could be restored without the other. Give one of them a different name.");
-                }
-
-                var scroll = new ComponentState();
-
-                scroll.Set(SCROLL_X, element.IsRestoringScroll ? element.RestoringScrollX : element.ScrollX);
-                scroll.Set(SCROLL_Y, element.IsRestoringScroll ? element.RestoringScrollY : element.ScrollY);
-
-                states[key] = scroll;
-            }
-
-            foreach (VisualElement child in element.Children)
-            {
-                CollectState(child, path, states);
+                RenderComponents(child, width, height);
             }
         }
 
@@ -779,52 +702,6 @@ namespace Ixen.Core
             }
 
             return path;
-        }
-
-        private const string SCROLL_STATE = "scroll:";
-        private const string SCROLL_X = "x";
-        private const string SCROLL_Y = "y";
-
-        private static string PathOf(VisualElement element, string prefix)
-        {
-            if (string.IsNullOrEmpty(element.Name))
-            {
-                return prefix;
-            }
-
-            return prefix.Length == 0 ? element.Name : prefix + "/" + element.Name;
-        }
-
-        private void RestoreIfPending(VisualElement element, string path)
-        {
-            if (_pendingState == null || path == null)
-            {
-                return;
-            }
-
-            if (element.PersistScroll && !string.IsNullOrEmpty(element.Name)
-                && _pendingState.TryGetValue(SCROLL_STATE + path, out Dictionary<string, string> scroll))
-            {
-                _pendingState.Remove(SCROLL_STATE + path);
-
-                var saved = new ComponentState(scroll);
-
-                element.RestoreScroll(saved.Get(SCROLL_X, 0f), saved.Get(SCROLL_Y, 0f));
-            }
-
-            if (element.Owner == null)
-            {
-                return;
-            }
-
-            if (!_pendingState.TryGetValue(path, out Dictionary<string, string> values))
-            {
-                return;
-            }
-
-            _pendingState.Remove(path);
-
-            element.Owner.RestoreState(new ComponentState(values));
         }
 
         internal VisualElement HitTest(float x, float y)

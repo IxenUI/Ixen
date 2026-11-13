@@ -536,7 +536,26 @@ namespace Ixen.Core.Visual
         internal bool ScrollsSmoothly
             => StylesHandlers != null && StylesHandlers.ScrollBehavior.Descriptor.IsDeclared;
 
-        public bool PersistScroll { get; set; }
+        private bool _persistScroll;
+
+        public bool PersistScroll
+        {
+            get => _persistScroll;
+            set
+            {
+                if (_persistScroll == value)
+                {
+                    return;
+                }
+
+                _persistScroll = value;
+
+                if (value)
+                {
+                    (Host as IxenSurface)?.RecallScroll(this);
+                }
+            }
+        }
 
         private string _scrollKey;
 

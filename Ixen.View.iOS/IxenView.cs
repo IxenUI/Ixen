@@ -392,9 +392,5 @@ namespace Ixen.View.iOS
         {
             set => _host.Root = value?.Initialize();
         }
-
-        public string SaveState() => _host.Surface.SaveState();
-
-        public void RestoreState(string state) => _host.Surface.RestoreState(state);
     }
 }

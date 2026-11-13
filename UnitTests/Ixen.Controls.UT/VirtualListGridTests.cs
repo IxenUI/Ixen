@@ -92,35 +92,24 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
-        public void ARestoredGridStaysWhereItWasSaved()
+        public void AGridThatComesBackStaysWhereItWasLeft()
         {
             _list.PersistScroll = true;
             _list.ScrollY = 10 * ITEM;
             Layout();
 
-            string saved = _surface.SaveState();
-
-            var root = new VisualElement { Name = "root" };
-            root.Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Column };
-
-            var holder = new VisualElement { Name = "holder" };
-            holder.Styles.Width = new WidthStyleDescriptor { Unit = SizeUnit.Pixels, Value = 214 };
-            holder.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 200 };
+            _holder.RemoveChild(_list);
+            Layout();
 
             var again = new VirtualList { Name = "albums", ItemHeight = ITEM, ItemWidth = 60, PersistScroll = true };
             again.SetItems(_albums, () => new VisualElement(), (cell, index) => cell.Text = _albums[index]);
 
-            holder.AddChild(again);
-            root.AddChild(holder);
-
-            var surface = new IxenSurface(root) { Styles = new StyleRegistry(), Scheduler = new FakeScheduler() };
-
-            surface.RestoreState(saved);
-            surface.ComputeLayout(VIEWPORT, VIEWPORT);
+            _holder.AddChild(again);
+            Layout();
 
             Assert.AreEqual(10 * ITEM, again.ScrollY, 0.01f,
                 "its first pass has no width, so one column; going to three is not a reflow anyone saw, "
-                + "and keeping the top item across it would have undone the restore");
+                + "and keeping the top item across it would have undone the recall");
         }
 
         [TestMethod]

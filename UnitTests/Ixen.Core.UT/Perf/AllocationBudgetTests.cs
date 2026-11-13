@@ -26,7 +26,6 @@ namespace Ixen.Core.UT.Perf
 
         private const long ONE_EVENT = 128;
         private const long RELAYOUT = 70 * 1024;
-        private const long PER_ROW_PATH = 16;
         private const long PER_TOKEN = 100;
         private const long STYLE_SLACK = 1024;
 
@@ -157,56 +156,6 @@ namespace Ixen.Core.UT.Perf
                 + "bytes, because MeasureCharacters fills a reused buffer either way. Ignoring the "
                 + "cache costs six times the wall clock and no allocation at all, so no budget here "
                 + "can pin it.");
-        }
-
-        [TestMethod]
-        public void ARelayoutBuildsNoStatePathOnceThereIsNothingLeftToRestore()
-        {
-            IxenSurface surface = Rows(ROWS, out VisualElement root);
-
-            long settled = Allocations.PerPass(PASSES,
-                () => { root.InvalidateLayout(); surface.ComputeLayout(WIDTH, HEIGHT); });
-
-            var pending = new ComponentState();
-
-            pending.Set("where", "nowhere");
-
-            surface.RestoreState(StateFormat.Write(
-                new Dictionary<string, ComponentState> { { "a/path/nothing/matches", pending } }));
-
-            long restoring = Allocations.PerPass(PASSES,
-                () => { root.InvalidateLayout(); surface.ComputeLayout(WIDTH, HEIGHT); });
-
-            Assert.IsTrue(restoring - settled >= ROWS * PER_ROW_PATH,
-                $"a relayout allocated {settled} bytes with nothing left to restore and {restoring} "
-                + "while an entry was still pending, so the two agree to within "
-                + $"{restoring - settled} bytes. They must not: RenderComponents builds one state "
-                + $"path per named element, which for these {ROWS} rows is a string a row a pass, "
-                + "and it is worth building only while RestoreState has left something unconsumed. "
-                + "This test is the pin for that gate, in the one currency that can see it - the "
-                + "behaviour is identical either way, and the paths cost 40 KB a pass here.");
-        }
-
-        [TestMethod]
-        public void AnEmptiedStateStopsCostingPathsAsWell()
-        {
-            IxenSurface surface = Rows(ROWS, out VisualElement root);
-
-            long settled = Allocations.PerPass(PASSES,
-                () => { root.InvalidateLayout(); surface.ComputeLayout(WIDTH, HEIGHT); });
-
-            surface.RestoreState(StateFormat.Write(new Dictionary<string, ComponentState>()));
-
-            long emptied = Allocations.PerPass(PASSES,
-                () => { root.InvalidateLayout(); surface.ComputeLayout(WIDTH, HEIGHT); });
-
-            Assert.IsTrue(emptied - settled < ROWS * PER_ROW_PATH,
-                $"a relayout allocated {settled} bytes before a state was restored and {emptied} "
-                + "after one that held nothing, so the paths came back. RestoreState leaves a "
-                + "dictionary that is empty rather than null, and it stays that way once every "
-                + "entry has been consumed - so the gate has to read the count and not the "
-                + "reference, or an application pays a string per element per pass for ever after "
-                + "its first restore.");
         }
 
         [TestMethod]
