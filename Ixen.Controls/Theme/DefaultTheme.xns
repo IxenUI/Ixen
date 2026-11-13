@@ -356,6 +356,53 @@ $control_focus_soft:   #EEF1FE
     transition: border 120ms ease-out
 }
 
+#Expander {
+    height: ?
+}
+
+#ExpanderHeader {
+    height: ?
+    padding: 6px 6px
+    gap: 8px
+    content-align: left middle
+    corner-radius: 4px
+    color: $control_text
+    font-size: 13px
+    font-weight: semi-bold
+    cursor: hand
+    transition: background 100ms ease-out
+}
+
+#ExpanderHeader:hover {
+    background: $control_surface_over
+}
+
+#ExpanderHeader:focus {
+    border: $control_focus 1px inner
+}
+
+#ExpanderMark {
+    width: 10px
+    height: 10px
+    object-fit: contain
+    opacity: 0.6
+    transform: rotate(-90deg)
+    transition: transform 120ms ease-out
+}
+
+#ExpanderMark:expanded {
+    transform: rotate(0deg)
+}
+
+#ExpanderTitle {
+    width: 1*
+    height: ?
+}
+
+#ExpanderContent {
+    padding: 4px 6px 8px 24px
+}
+
 #Splitter:horizontal {
     width: 7px
     cursor: ew-resize

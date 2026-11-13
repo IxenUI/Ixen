@@ -109,6 +109,7 @@ namespace Ixen.Controls.UT
                     "ComboBox.SelectedIndex",
                     "DatePicker.Value",
                     "Dialog.Open",
+                    "Expander.Expanded",
                     "Menu.Open",
                     "RadioButton.Checked",
                     "RangeSlider.Lower",
