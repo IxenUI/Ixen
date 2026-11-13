@@ -162,6 +162,14 @@ void WA_RegisterDropCallBack(NativeWindow* window, void __stdcall callBack(int, 
     }
 }
 
+void WA_RegisterDragCallBack(NativeWindow* window, int __stdcall callBack(int, int, int, const wchar_t*))
+{
+    if (window)
+    {
+        window->SetOnDragCallBack(callBack);
+    }
+}
+
 void WA_SetWindowAcceptsFiles(NativeWindow* window, int value)
 {
     if (window)

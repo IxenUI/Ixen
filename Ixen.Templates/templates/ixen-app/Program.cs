@@ -1,10 +1,12 @@
 using Ixen.Core;
 using Ixen.Platform.Desktop;
+using System;
 
 namespace IxenApp
 {
     public static class Program
     {
+        [STAThread]
         public static int Main()
         {
             var options = new IxenSurfaceInitOptions

@@ -23,6 +23,7 @@ namespace Ixen.Platform.Windows
         private readonly WindowApi.OnWheelCallBack _onWheel;
         private readonly WindowApi.OnAccessibilityCallBack _onAccessibility;
         private readonly WindowApi.OnDropCallBack _onDrop;
+        private readonly WindowApi.OnDragCallBack _onDrag;
         private readonly WindowApi.OnSuspendCallBack _onSuspend;
         private readonly WindowApi.OnSystemCallBack _onSystem;
         private readonly WindowApi.OnHitTestCallBack _onHitTest;
@@ -52,6 +53,7 @@ namespace Ixen.Platform.Windows
             _onWheel = OnWheel;
             _onAccessibility = OnAccessibility;
             _onDrop = OnDrop;
+            _onDrag = OnDrag;
             _onSuspend = OnSuspend;
             _onSystem = OnSystem;
             _onHitTest = OnHitTest;
@@ -95,6 +97,7 @@ namespace Ixen.Platform.Windows
             WindowApi.RegisterWheelCallBack(_windowPtr, _onWheel);
             WindowApi.RegisterAccessibilityCallBack(_windowPtr, _onAccessibility);
             WindowApi.RegisterDropCallBack(_windowPtr, _onDrop);
+            WindowApi.RegisterDragCallBack(_windowPtr, _onDrag);
             WindowApi.RegisterSuspendCallBack(_windowPtr, _onSuspend);
             WindowApi.RegisterSystemCallBack(_windowPtr, _onSystem);
             WindowApi.RegisterTouchCallBack(_windowPtr, _onTouch);
@@ -358,6 +361,22 @@ namespace Ixen.Platform.Windows
             }
 
             _host.PointerDrop(x, y, paths.Split(_dropSeparator));
+        }
+
+        private int OnDrag(int kind, int x, int y, string paths)
+        {
+            if ((NativeDragKind)kind == NativeDragKind.Leave)
+            {
+                _host.PointerDragLeave();
+                return 0;
+            }
+
+            if (string.IsNullOrEmpty(paths))
+            {
+                return 0;
+            }
+
+            return _host.PointerDragOver(x, y, paths.Split(_dropSeparator)) ? 1 : 0;
         }
 
         private void OnSuspend() => _host.ReleaseCaches();

@@ -32,6 +32,9 @@ namespace Ixen.Core.UT.Native
             { "IXEN_CHANGE_PREFERENCES", "Preferences" },
             { "IXEN_CHANGE_DPI", "Dpi" },
 
+            { "IXEN_DRAG_OVER", "Over" },
+            { "IXEN_DRAG_LEAVE", "Leave" },
+
             { "IXEN_IME_UPDATE", "Update" },
             { "IXEN_IME_COMMIT", "Commit" },
             { "IXEN_IME_CANCEL", "Cancel" },
@@ -79,6 +82,7 @@ namespace Ixen.Core.UT.Native
             { "_wheelCallBack", "OnWheelCallBack" },
             { "_accessibilityCallBack", "OnAccessibilityCallBack" },
             { "_dropCallBack", "OnDropCallBack" },
+            { "_dragCallBack", "OnDragCallBack" },
             { "_suspendCallBack", "OnSuspendCallBack" },
             { "_systemCallBack", "OnSystemCallBack" },
             { "_hitTestCallBack", "OnHitTestCallBack" },
@@ -253,6 +257,7 @@ namespace Ixen.Core.UT.Native
             ReadEnum(kinds, "NativePointerButton", found);
             ReadEnum(kinds, "NativeGlStatus", found);
             ReadEnum(kinds, "NativeSystemChange", found);
+            ReadEnum(kinds, "NativeDragKind", found);
             ReadEnum(keys, "NativeKeyKind", found);
             ReadEnum(keys, "NativeImeKind", found);
             ReadEnum(keys, "NativeWindowArea", found);
@@ -296,6 +301,11 @@ namespace Ixen.Core.UT.Native
             if (define.StartsWith("IXEN_CHANGE_", StringComparison.Ordinal))
             {
                 return "NativeSystemChange." + suffix;
+            }
+
+            if (define.StartsWith("IXEN_DRAG_", StringComparison.Ordinal))
+            {
+                return "NativeDragKind." + suffix;
             }
 
             if (define.StartsWith("IXEN_AREA_", StringComparison.Ordinal))

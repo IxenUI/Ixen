@@ -22,6 +22,12 @@ namespace Ixen.Platform.Windows.NativeApi
         Dpi = 2
     }
 
+    internal enum NativeDragKind
+    {
+        Over = 0,
+        Leave = 1
+    }
+
     internal enum NativePointerButton
     {
         None = 0,

@@ -8,6 +8,8 @@ using namespace std;
 
 namespace IxenWindowsNative
 {
+    class FileDropTarget;
+
     class NativeWindow
     {
     private:
@@ -26,6 +28,7 @@ namespace IxenWindowsNative
         void (*_wheelCallBack)(int, int, int, int, int) = nullptr;
         __int64 (*_accessibilityCallBack)(__int64, __int64) = nullptr;
         void (*_dropCallBack)(int, int, const wchar_t*) = nullptr;
+        int (*_dragCallBack)(int, int, int, const wchar_t*) = nullptr;
         void (*_suspendCallBack)() = nullptr;
         void (*_systemCallBack)(int) = nullptr;
         int (*_hitTestCallBack)(int, int) = nullptr;
@@ -40,6 +43,10 @@ namespace IxenWindowsNative
 
         bool _trackingMouse = false;
         bool _trackingNonClient = false;
+
+        FileDropTarget* _fileDropTarget = nullptr;
+        bool _acceptsFiles = false;
+        bool _oleDrop = false;
 
         RECT _clientRect = {};
         BITMAPINFOHEADER _bitmapInfoHeader = {};
@@ -100,6 +107,10 @@ namespace IxenWindowsNative
         void SetOnWheelCallBack(void __stdcall callback(int, int, int, int, int)) { _wheelCallBack = callback; }
         void SetOnAccessibilityCallBack(__int64 __stdcall callback(__int64, __int64)) { _accessibilityCallBack = callback; }
         void SetOnDropCallBack(void __stdcall callback(int, int, const wchar_t*)) { _dropCallBack = callback; }
+        void SetOnDragCallBack(int __stdcall callback(int, int, int, const wchar_t*)) { _dragCallBack = callback; }
+        bool DragFilesAt(POINTL screen, const wchar_t* paths);
+        void LeaveFiles();
+        void DropFilesAt(POINTL screen, const wchar_t* paths);
         void SetOnSuspendCallBack(void __stdcall callback()) { _suspendCallBack = callback; }
         void SetOnSystemCallBack(void __stdcall callback(int)) { _systemCallBack = callback; }
         void SetAcceptsFiles(bool value);

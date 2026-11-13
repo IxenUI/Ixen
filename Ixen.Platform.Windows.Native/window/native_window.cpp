@@ -8,6 +8,8 @@
 #include <GL/gl.h>
 #include <imm.h>
 #include <shellapi.h>
+#include <ole2.h>
+#include <shlobj.h>
 
 #define IXEN_POINTER_MOVE 0
 #define IXEN_POINTER_DOWN 1
@@ -61,8 +63,218 @@
 #define IXEN_CHANGE_PREFERENCES 1
 #define IXEN_CHANGE_DPI 2
 
+#define IXEN_DRAG_OVER 0
+#define IXEN_DRAG_LEAVE 1
+
 using namespace std;
 using namespace IxenWindowsNative;
+
+namespace IxenWindowsNative
+{
+    class FileDropTarget : public IDropTarget
+    {
+    private:
+        LONG _references = 1;
+        NativeWindow* _window;
+        IDropTargetHelper* _helper = nullptr;
+        wstring _paths;
+        bool _accepted = false;
+
+        static wstring PathsOf(IDataObject* data)
+        {
+            wstring paths;
+
+            if (data == nullptr)
+            {
+                return paths;
+            }
+
+            FORMATETC format = { CF_HDROP, nullptr, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+            STGMEDIUM medium = {};
+
+            if (FAILED(data->GetData(&format, &medium)))
+            {
+                return paths;
+            }
+
+            HDROP drop = (HDROP)GlobalLock(medium.hGlobal);
+
+            if (drop != nullptr)
+            {
+                UINT count = DragQueryFileW(drop, 0xFFFFFFFF, nullptr, 0);
+
+                for (UINT index = 0; index < count; index++)
+                {
+                    UINT length = DragQueryFileW(drop, index, nullptr, 0);
+
+                    if (length == 0)
+                    {
+                        continue;
+                    }
+
+                    wstring path(length, L'\0');
+                    DragQueryFileW(drop, index, &path[0], length + 1);
+
+                    if (!paths.empty())
+                    {
+                        paths += L'\n';
+                    }
+
+                    paths += path;
+                }
+
+                GlobalUnlock(medium.hGlobal);
+            }
+
+            ReleaseStgMedium(&medium);
+
+            return paths;
+        }
+
+        DWORD EffectFor(DWORD allowed) const
+        {
+            if (!_accepted)
+            {
+                return DROPEFFECT_NONE;
+            }
+
+            if (allowed & DROPEFFECT_COPY)
+            {
+                return DROPEFFECT_COPY;
+            }
+
+            if (allowed & DROPEFFECT_LINK)
+            {
+                return DROPEFFECT_LINK;
+            }
+
+            return allowed & DROPEFFECT_MOVE;
+        }
+
+        void Track(POINTL point, DWORD* effect)
+        {
+            _accepted = !_paths.empty() && _window->DragFilesAt(point, _paths.c_str());
+            *effect = EffectFor(*effect);
+        }
+
+    public:
+        FileDropTarget(NativeWindow* window)
+            : _window(window)
+        {
+            if (FAILED(CoCreateInstance(CLSID_DragDropHelper, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&_helper))))
+            {
+                _helper = nullptr;
+            }
+        }
+
+        virtual ~FileDropTarget()
+        {
+            if (_helper != nullptr)
+            {
+                _helper->Release();
+            }
+        }
+
+        HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** object) override
+        {
+            if (object == nullptr)
+            {
+                return E_POINTER;
+            }
+
+            if (riid == IID_IUnknown || riid == IID_IDropTarget)
+            {
+                *object = static_cast<IDropTarget*>(this);
+                AddRef();
+                return S_OK;
+            }
+
+            *object = nullptr;
+            return E_NOINTERFACE;
+        }
+
+        ULONG STDMETHODCALLTYPE AddRef() override
+        {
+            return InterlockedIncrement(&_references);
+        }
+
+        ULONG STDMETHODCALLTYPE Release() override
+        {
+            LONG left = InterlockedDecrement(&_references);
+
+            if (left == 0)
+            {
+                delete this;
+            }
+
+            return left;
+        }
+
+        HRESULT STDMETHODCALLTYPE DragEnter(IDataObject* data, DWORD keys, POINTL point, DWORD* effect) override
+        {
+            _paths = PathsOf(data);
+            Track(point, effect);
+
+            if (_helper != nullptr)
+            {
+                POINT at = { point.x, point.y };
+                _helper->DragEnter(_window->GetHandle(), data, &at, *effect);
+            }
+
+            return S_OK;
+        }
+
+        HRESULT STDMETHODCALLTYPE DragOver(DWORD keys, POINTL point, DWORD* effect) override
+        {
+            Track(point, effect);
+
+            if (_helper != nullptr)
+            {
+                POINT at = { point.x, point.y };
+                _helper->DragOver(&at, *effect);
+            }
+
+            return S_OK;
+        }
+
+        HRESULT STDMETHODCALLTYPE DragLeave() override
+        {
+            _paths.clear();
+            _accepted = false;
+            _window->LeaveFiles();
+
+            if (_helper != nullptr)
+            {
+                _helper->DragLeave();
+            }
+
+            return S_OK;
+        }
+
+        HRESULT STDMETHODCALLTYPE Drop(IDataObject* data, DWORD keys, POINTL point, DWORD* effect) override
+        {
+            wstring paths = _paths.empty() ? PathsOf(data) : _paths;
+
+            *effect = EffectFor(*effect);
+
+            if (_helper != nullptr)
+            {
+                POINT at = { point.x, point.y };
+                _helper->Drop(data, &at, *effect);
+            }
+
+            _paths.clear();
+            _accepted = false;
+
+            if (!paths.empty())
+            {
+                _window->DropFilesAt(point, paths.c_str());
+            }
+
+            return S_OK;
+        }
+    };
+}
 
 int NativeWindow::_windowNum = 0;
 bool NativeWindow::_dpiAwarenessSet = false;
@@ -548,6 +760,19 @@ LRESULT NativeWindow::HandleDestroy()
 {
     DestroyGlContext();
 
+    if (_oleDrop)
+    {
+        RevokeDragDrop(_handle);
+        _oleDrop = false;
+    }
+
+    if (_fileDropTarget != nullptr)
+    {
+        _fileDropTarget->Release();
+        _fileDropTarget = nullptr;
+        OleUninitialize();
+    }
+
     PostQuitMessage(0);
     return 0;
 }
@@ -789,10 +1014,76 @@ LRESULT NativeWindow::HandleDropFiles(WPARAM wParam)
 
 void NativeWindow::SetAcceptsFiles(bool value)
 {
-    if (_handle)
+    if (!_handle || value == _acceptsFiles)
     {
-        DragAcceptFiles(_handle, value ? TRUE : FALSE);
+        return;
     }
+
+    _acceptsFiles = value;
+
+    if (!value)
+    {
+        if (_oleDrop)
+        {
+            RevokeDragDrop(_handle);
+            _oleDrop = false;
+        }
+
+        DragAcceptFiles(_handle, FALSE);
+        return;
+    }
+
+    if (_fileDropTarget == nullptr && SUCCEEDED(OleInitialize(nullptr)))
+    {
+        _fileDropTarget = new FileDropTarget(this);
+    }
+
+    _oleDrop = _fileDropTarget != nullptr && SUCCEEDED(RegisterDragDrop(_handle, _fileDropTarget));
+
+    if (!_oleDrop)
+    {
+        DragAcceptFiles(_handle, TRUE);
+    }
+}
+
+static POINT ClientPoint(HWND handle, POINTL screen)
+{
+    POINT point = { screen.x, screen.y };
+    ScreenToClient(handle, &point);
+
+    return point;
+}
+
+bool NativeWindow::DragFilesAt(POINTL screen, const wchar_t* paths)
+{
+    if (_dragCallBack == nullptr)
+    {
+        return _dropCallBack != nullptr;
+    }
+
+    POINT point = ClientPoint(_handle, screen);
+
+    return _dragCallBack(IXEN_DRAG_OVER, point.x, point.y, paths) != 0;
+}
+
+void NativeWindow::LeaveFiles()
+{
+    if (_dragCallBack != nullptr)
+    {
+        _dragCallBack(IXEN_DRAG_LEAVE, 0, 0, L"");
+    }
+}
+
+void NativeWindow::DropFilesAt(POINTL screen, const wchar_t* paths)
+{
+    if (_dropCallBack == nullptr)
+    {
+        return;
+    }
+
+    POINT point = ClientPoint(_handle, screen);
+
+    _dropCallBack(point.x, point.y, paths);
 }
 
 LRESULT NativeWindow::HandleComposition(LPARAM lParam)
