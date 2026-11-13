@@ -297,5 +297,34 @@ namespace Ixen.Controls.UT
 
             Assert.AreEqual("mine", other.Description);
         }
+
+        [TestMethod]
+        public void ACaptionThatChangesChangesTheDescriptionToo()
+        {
+            _tip.Caption = "Pause (Space)";
+            Layout();
+
+            Assert.AreEqual("Pause (Space)", _button.Description,
+                "a bound caption follows the model; a screen reader read the first one for ever while "
+                + "the panel showed the new one");
+        }
+
+        [TestMethod]
+        public void ButNotOverADescriptionTheApplicationWroteSince()
+        {
+            _button.Description = "mine";
+            _tip.Caption = "Pause (Space)";
+
+            Assert.AreEqual("mine", _button.Description);
+        }
+
+        [TestMethod]
+        public void ATooltipThatLeavesTakesItsDescriptionWithIt()
+        {
+            _button.RemoveChild(_tip);
+            Layout();
+
+            Assert.IsNull(_button.Description, "the button no longer has that tooltip, so it is not described by it");
+        }
     }
 }

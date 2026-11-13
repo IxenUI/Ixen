@@ -16,6 +16,7 @@ namespace Ixen.Controls
         private readonly VisualElement _panel;
 
         private VisualElement _target;
+        private string _lent;
         private IDisposable _pending;
         private bool _shown;
         private bool _suppressed;
@@ -51,7 +52,24 @@ namespace Ixen.Controls
         public string Caption
         {
             get => _panel.Text;
-            set => _panel.Text = value;
+            set
+            {
+                _panel.Text = value;
+
+                if (_target != null && OwnsDescription(_target))
+                {
+                    Lend(_target);
+                }
+            }
+        }
+
+        private bool OwnsDescription(VisualElement target)
+            => string.IsNullOrEmpty(target.Description) || (_lent != null && target.Description == _lent);
+
+        private void Lend(VisualElement target)
+        {
+            _lent = Caption;
+            target.Description = _lent;
         }
 
         public int Delay { get; set; } = DEFAULT_DELAY;
@@ -87,9 +105,9 @@ namespace Ixen.Controls
 
             AnchorElement = target;
 
-            if (string.IsNullOrEmpty(target.Description))
+            if (OwnsDescription(target))
             {
-                target.Description = Caption;
+                Lend(target);
             }
 
             target.PointerEnter += OnEnter;
@@ -114,6 +132,12 @@ namespace Ixen.Controls
             _target.GotFocus -= OnGotFocus;
             _target.LostFocus -= OnLostFocus;
 
+            if (_lent != null && _target.Description == _lent)
+            {
+                _target.Description = null;
+            }
+
+            _lent = null;
             _target = null;
         }
 
