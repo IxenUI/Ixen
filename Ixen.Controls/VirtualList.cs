@@ -338,7 +338,14 @@ namespace Ixen.Controls
             Reset();
         }
 
-        public void Refresh() => Reset();
+        private bool _refit;
+
+        public void Refresh()
+        {
+            _refit = true;
+
+            Reset();
+        }
 
         public void ScrollTo(int index)
         {
@@ -624,9 +631,7 @@ namespace Ixen.Controls
             _offsetsStale = true;
 
             _spacer.Styles.Height.Value = ExtentOf(Count);
-            _spacer.Invalidate();
-
-            InvalidateLayout();
+            _spacer.InvalidateLayout();
         }
 
         protected override bool PrepassFollowsSize => true;
@@ -656,6 +661,12 @@ namespace Ixen.Controls
             int focused = FocusedRowIndex();
 
             BuildWindow();
+
+            if (_realised > 0)
+            {
+                _refit = false;
+            }
+
             FollowFocus(focused);
         }
 
@@ -928,20 +939,57 @@ namespace Ixen.Controls
                 VisualElement row = _rows[i];
                 int index = first + i;
 
-                row.Styles.Top.Value = (index / columns) * _itemHeight;
-                row.Styles.Height.Value = _itemHeight;
+                bool moved = Rebound(i, index) | reflowed | _refit;
+
+                moved |= Assign(row.Styles.Top, (index / columns) * _itemHeight);
+                moved |= Assign(row.Styles.Height, _itemHeight);
 
                 if (columns > 1)
                 {
-                    row.Styles.Left.Value = (index % columns) * 100f / columns;
+                    moved |= Assign(row.Styles.Left, (index % columns) * 100f / columns);
                 }
 
                 _bind(_owners[i], index);
 
                 row.ToggleState(DRAGGING, IsDragged(index));
                 row.ToggleState(DROP_TARGET, index == _onto);
-                row.Invalidate();
+
+                if (moved)
+                {
+                    row.Invalidate();
+                }
             }
+        }
+
+        private readonly List<int> _slotIndex = new();
+
+        private bool Rebound(int slot, int index)
+        {
+            while (_slotIndex.Count <= slot)
+            {
+                _slotIndex.Add(-1);
+            }
+
+            if (_slotIndex[slot] == index)
+            {
+                return false;
+            }
+
+            _slotIndex[slot] = index;
+
+            return true;
+        }
+
+        private static bool Assign(SizeStyleDescriptor descriptor, float value)
+        {
+            if (descriptor.Value == value)
+            {
+                return false;
+            }
+
+            descriptor.Value = value;
+
+            return true;
         }
 
         private void Window(int count, float window, bool reflowed)
@@ -980,18 +1028,24 @@ namespace Ixen.Controls
                 VisualElement row = _rows[i];
                 int index = first + i;
 
-                row.Styles.Top.Value = _offsets[index];
+                bool moved = Rebound(i, index) | reflowed | _refit;
+
+                moved |= Assign(row.Styles.Top, _offsets[index]);
 
                 if (!Measuring)
                 {
-                    row.Styles.Height.Value = _offsets[index + 1] - _offsets[index];
+                    moved |= Assign(row.Styles.Height, _offsets[index + 1] - _offsets[index]);
                 }
 
                 _bind(_owners[i], index);
 
                 row.ToggleState(DRAGGING, IsDragged(index));
                 row.ToggleState(DROP_TARGET, index == _onto);
-                row.Invalidate();
+
+                if (moved)
+                {
+                    row.Invalidate();
+                }
             }
         }
 

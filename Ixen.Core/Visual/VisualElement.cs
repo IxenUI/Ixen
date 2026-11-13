@@ -1533,8 +1533,14 @@ namespace Ixen.Core.Visual
 
         public void InvalidateLayout()
         {
-            IsLayoutDirty = true;
             NeedsRepaint = true;
+
+            RequestLayout();
+        }
+
+        internal void RequestLayout()
+        {
+            IsLayoutDirty = true;
 
             for (VisualElement parent = Parent; parent != null && !parent.IsLayoutDirty; parent = parent.Parent)
             {

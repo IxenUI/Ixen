@@ -309,7 +309,7 @@ namespace Ixen.Core.Components
             EnsureNotRendering();
 
             _isStateDirty = true;
-            GetVisualElement()?.InvalidateLayout();
+            GetVisualElement()?.RequestLayout();
         }
 
         protected bool ScrollTo(string name, bool alignToTop = true)

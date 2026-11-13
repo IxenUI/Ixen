@@ -268,6 +268,15 @@ namespace Ixen.Controls
             float percent = Fraction * 100;
             float buffered = FractionOf(_buffered) * 100;
 
+            bool placed = _vertical
+                ? _fill.Styles.Height.Value == percent && _buffer.Styles.Height.Value == buffered && _thumb.Styles.Top.Value == 100 - percent
+                : _fill.Styles.Width.Value == percent && _buffer.Styles.Width.Value == buffered && _thumb.Styles.Left.Value == percent;
+
+            if (placed)
+            {
+                return;
+            }
+
             if (_vertical)
             {
                 _fill.Styles.Height.Value = percent;
