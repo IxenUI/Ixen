@@ -65,13 +65,15 @@ namespace Ixen.Platform.Mac
             _onPreferences = OnPreferences;
             _onDrag = OnDrag;
 
-            _windowPtr = MacApi.CreateWindow(_ixenSurface.InitOptions.Title,
+            _windowPtr = MacApi.CreateWindow(_ixenSurface.Title ?? string.Empty,
                 _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
             {
                 throw new Exception("Could not initialize the macOS window");
             }
+
+            _ixenSurface.TitleChanged += OnTitleChanged;
 
             SetIcon(_ixenSurface.InitOptions.Icon);
 
@@ -524,8 +526,13 @@ namespace Ixen.Platform.Mac
             MacApi.SetWindowCursor(_windowPtr, MacCursors.ToNative(kind));
         }
 
+        private void OnTitleChanged() => _ixenSurface.Post(ApplyTitle);
+
+        private void ApplyTitle() => MacApi.SetWindowTitle(_windowPtr, _ixenSurface.Title ?? string.Empty);
+
         public void Dispose()
         {
+            _ixenSurface.TitleChanged -= OnTitleChanged;
             _metal?.Dispose();
             _metal = null;
             _cursorImages.Clear();

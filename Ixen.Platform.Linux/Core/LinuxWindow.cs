@@ -57,13 +57,15 @@ namespace Ixen.Platform.Linux
             _onWheel = OnWheel;
             _onPreferences = OnPreferences;
 
-            _windowPtr = LinuxApi.CreateWindow(_ixenSurface.InitOptions.Title,
+            _windowPtr = LinuxApi.CreateWindow(_ixenSurface.Title ?? string.Empty,
                 _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
             {
                 throw new Exception("Could not initialize the Linux window");
             }
+
+            _ixenSurface.TitleChanged += OnTitleChanged;
 
             Backend = Marshal.PtrToStringUTF8(LinuxApi.GetWindowBackend(_windowPtr));
 
@@ -311,8 +313,13 @@ namespace Ixen.Platform.Linux
             LinuxApi.SetWindowCursor(_windowPtr, LinuxCursors.ToNative(kind));
         }
 
+        private void OnTitleChanged() => _ixenSurface.Post(ApplyTitle);
+
+        private void ApplyTitle() => LinuxApi.SetWindowTitle(_windowPtr, _ixenSurface.Title ?? string.Empty);
+
         public void Dispose()
         {
+            _ixenSurface.TitleChanged -= OnTitleChanged;
             _cursorImages.Clear();
             _surface?.Dispose();
             _surface = null;

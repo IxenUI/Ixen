@@ -116,7 +116,26 @@ namespace Ixen.Core
         }
 
         public IxenSurfaceInitOptions InitOptions { get; private set; }
-        public string Title { get; set; }
+
+        private string _title;
+
+        internal event Action TitleChanged;
+
+        public string Title
+        {
+            get => _title;
+            set
+            {
+                if (string.Equals(_title, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                _title = value;
+
+                TitleChanged?.Invoke();
+            }
+        }
         private StyleRegistry _styles;
 
         public StyleRegistry Styles

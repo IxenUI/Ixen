@@ -58,12 +58,14 @@ namespace Ixen.Platform.Windows
             _onSystem = OnSystem;
             _onHitTest = OnHitTest;
             _onTouch = OnTouch;
-            _windowPtr = WindowApi.CreateWindow(_ixenSurface.InitOptions.Title, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
+            _windowPtr = WindowApi.CreateWindow(_ixenSurface.Title ?? string.Empty, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
             {
                 throw new Exception("Could not initialize WIN32 Window");
             }
+
+            _ixenSurface.TitleChanged += OnTitleChanged;
 
             _window = new WindowsWindowControl(() => WindowApi.GetWindowHandle(_windowPtr),
                 _ixenSurface.InitOptions.ExtendIntoTitleBar);
@@ -475,8 +477,13 @@ namespace Ixen.Platform.Windows
 
         internal string Backend => _renderer.Backend;
 
+        private void OnTitleChanged() => _ixenSurface.Post(ApplyTitle);
+
+        private void ApplyTitle() => WindowApi.SetWindowTitle(_windowPtr, _ixenSurface.Title ?? string.Empty);
+
         public void Dispose()
         {
+            _ixenSurface.TitleChanged -= OnTitleChanged;
             _renderer.Dispose();
             _cursors.Dispose();
             _icons.Dispose();
