@@ -72,7 +72,13 @@ namespace Ixen.Platform.Windows.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_RegisterDropCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RegisterDropCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnDropCallBack callback);
 
-        [DllImport(LIB_NAME, EntryPoint = "WA_GetWindowPlacement", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LIB_NAME, EntryPoint = "WA_PickFiles", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        public static extern int PickFiles(IntPtr windowPtr, int kind,
+            [MarshalAs(UnmanagedType.LPWStr)] string title, [MarshalAs(UnmanagedType.LPWStr)] string filters,
+            [MarshalAs(UnmanagedType.LPWStr)] string folder, [MarshalAs(UnmanagedType.LPWStr)] string name,
+            out IntPtr result);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_GetWindowPlacement",CallingConvention = CallingConvention.Cdecl)]
         public static extern int GetWindowPlacement(IntPtr windowPtr, [Out] int[] values);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowPlacement", CallingConvention = CallingConvention.Cdecl)]

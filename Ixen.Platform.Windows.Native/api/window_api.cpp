@@ -223,6 +223,12 @@ void WA_SetWindowExtended(NativeWindow* window, int value)
     }
 }
 
+int WA_PickFiles(NativeWindow* window, int kind, const wchar_t* title, const wchar_t* filters,
+    const wchar_t* folder, const wchar_t* name, wchar_t** result)
+{
+    return window ? window->PickFiles(kind, title, filters, folder, name, result) : -1;
+}
+
 int WA_GetWindowPlacement(NativeWindow* window, int* values)
 {
     return window && window->GetPlacement(values) ? 1 : 0;

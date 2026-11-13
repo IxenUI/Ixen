@@ -10,6 +10,8 @@
 #include <shellapi.h>
 #include <ole2.h>
 #include <shlobj.h>
+#include <shobjidl.h>
+#include <vector>
 
 #define IXEN_POINTER_MOVE 0
 #define IXEN_POINTER_DOWN 1
@@ -65,6 +67,11 @@
 
 #define IXEN_DRAG_OVER 0
 #define IXEN_DRAG_LEAVE 1
+
+#define IXEN_PICK_FILE 0
+#define IXEN_PICK_FILES 1
+#define IXEN_PICK_FOLDER 2
+#define IXEN_PICK_SAVE 3
 
 using namespace std;
 using namespace IxenWindowsNative;
@@ -631,6 +638,246 @@ LRESULT NativeWindow::Show()
 {
     ShowWindow(_handle, _startMaximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
     return StartEventLoop();
+}
+
+static wstring PathOf(IShellItem* item)
+{
+    wstring path;
+    PWSTR text = nullptr;
+
+    if (item != nullptr && SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH, &text)) && text != nullptr)
+    {
+        path = text;
+        CoTaskMemFree(text);
+    }
+
+    return path;
+}
+
+static void Append(wstring& paths, const wstring& path)
+{
+    if (path.empty())
+    {
+        return;
+    }
+
+    if (!paths.empty())
+    {
+        paths += L'\n';
+    }
+
+    paths += path;
+}
+
+static void ApplyFilters(IFileDialog* dialog, const wchar_t* filters, bool save)
+{
+    if (filters == nullptr || *filters == L'\0')
+    {
+        return;
+    }
+
+    vector<wstring> names;
+    vector<wstring> specs;
+    wstring all(filters);
+    size_t start = 0;
+
+    while (start <= all.size())
+    {
+        size_t end = all.find(L'\n', start);
+        wstring line = all.substr(start, end == wstring::npos ? wstring::npos : end - start);
+        size_t bar = line.find(L'|');
+
+        if (bar != wstring::npos && bar + 1 < line.size())
+        {
+            names.push_back(line.substr(0, bar));
+            specs.push_back(line.substr(bar + 1));
+        }
+
+        if (end == wstring::npos)
+        {
+            break;
+        }
+
+        start = end + 1;
+    }
+
+    if (specs.empty())
+    {
+        return;
+    }
+
+    vector<COMDLG_FILTERSPEC> types(specs.size());
+
+    for (size_t index = 0; index < specs.size(); index++)
+    {
+        types[index].pszName = names[index].c_str();
+        types[index].pszSpec = specs[index].c_str();
+    }
+
+    dialog->SetFileTypes((UINT)types.size(), types.data());
+
+    if (save)
+    {
+        wstring first = specs[0];
+        size_t dot = first.find(L"*.");
+
+        if (dot != wstring::npos)
+        {
+            wstring extension = first.substr(dot + 2);
+            size_t stop = extension.find(L';');
+
+            if (stop != wstring::npos)
+            {
+                extension = extension.substr(0, stop);
+            }
+
+            if (!extension.empty() && extension != L"*")
+            {
+                dialog->SetDefaultExtension(extension.c_str());
+            }
+        }
+    }
+}
+
+int NativeWindow::PickFiles(int kind, const wchar_t* title, const wchar_t* filters, const wchar_t* folder,
+    const wchar_t* name, wchar_t** result)
+{
+    if (result == nullptr)
+    {
+        return -1;
+    }
+
+    *result = nullptr;
+
+    HRESULT initialized = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+    bool save = kind == IXEN_PICK_SAVE;
+    int outcome = -1;
+    IFileDialog* dialog = nullptr;
+
+    HRESULT created = save
+        ? CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS((IFileSaveDialog**)&dialog))
+        : CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS((IFileOpenDialog**)&dialog));
+
+    if (SUCCEEDED(created) && dialog != nullptr)
+    {
+        DWORD options = 0;
+        dialog->GetOptions(&options);
+
+        options |= FOS_FORCEFILESYSTEM;
+
+        if (kind == IXEN_PICK_FILES)
+        {
+            options |= FOS_ALLOWMULTISELECT;
+        }
+
+        if (kind == IXEN_PICK_FOLDER)
+        {
+            options |= FOS_PICKFOLDERS;
+        }
+
+        if (save)
+        {
+            options |= FOS_OVERWRITEPROMPT;
+        }
+
+        dialog->SetOptions(options);
+
+        if (title != nullptr && *title != L'\0')
+        {
+            dialog->SetTitle(title);
+        }
+
+        if (name != nullptr && *name != L'\0')
+        {
+            dialog->SetFileName(name);
+        }
+
+        if (folder != nullptr && *folder != L'\0')
+        {
+            IShellItem* start = nullptr;
+
+            if (SUCCEEDED(SHCreateItemFromParsingName(folder, nullptr, IID_PPV_ARGS(&start))))
+            {
+                dialog->SetFolder(start);
+                start->Release();
+            }
+        }
+
+        if (kind != IXEN_PICK_FOLDER)
+        {
+            ApplyFilters(dialog, filters, save);
+        }
+
+        HRESULT shown = dialog->Show(_handle);
+
+        if (shown == HRESULT_FROM_WIN32(ERROR_CANCELLED))
+        {
+            outcome = 0;
+        }
+        else if (SUCCEEDED(shown))
+        {
+            wstring paths;
+
+            if (kind == IXEN_PICK_FILES)
+            {
+                IShellItemArray* items = nullptr;
+
+                if (SUCCEEDED(((IFileOpenDialog*)dialog)->GetResults(&items)) && items != nullptr)
+                {
+                    DWORD count = 0;
+                    items->GetCount(&count);
+
+                    for (DWORD index = 0; index < count; index++)
+                    {
+                        IShellItem* item = nullptr;
+
+                        if (SUCCEEDED(items->GetItemAt(index, &item)))
+                        {
+                            Append(paths, PathOf(item));
+                            item->Release();
+                        }
+                    }
+
+                    items->Release();
+                }
+            }
+            else
+            {
+                IShellItem* item = nullptr;
+
+                if (SUCCEEDED(dialog->GetResult(&item)))
+                {
+                    Append(paths, PathOf(item));
+                    item->Release();
+                }
+            }
+
+            if (!paths.empty())
+            {
+                size_t bytes = (paths.size() + 1) * sizeof(wchar_t);
+                *result = (wchar_t*)CoTaskMemAlloc(bytes);
+
+                if (*result != nullptr)
+                {
+                    memcpy(*result, paths.c_str(), bytes);
+                    outcome = 1;
+                }
+            }
+            else
+            {
+                outcome = 0;
+            }
+        }
+
+        dialog->Release();
+    }
+
+    if (SUCCEEDED(initialized))
+    {
+        CoUninitialize();
+    }
+
+    return outcome;
 }
 
 bool NativeWindow::PlacementOf(WINDOWPLACEMENT* placement)

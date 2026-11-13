@@ -4,6 +4,7 @@ namespace Ixen.Core
     {
         IScheduler Scheduler { get; }
         IClipboard Clipboard { get; }
+        IFilePicker Files { get; }
         IWindowControl Window { get; }
         string Title { get; set; }
         Connectivity Connectivity { get; }

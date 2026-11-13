@@ -28,6 +28,14 @@ namespace Ixen.Platform.Windows.NativeApi
         Leave = 1
     }
 
+    internal enum NativePickKind
+    {
+        File = 0,
+        Files = 1,
+        Folder = 2,
+        Save = 3
+    }
+
     internal enum NativePointerButton
     {
         None = 0,

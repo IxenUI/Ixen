@@ -123,6 +123,8 @@ namespace IxenWindowsNative
         void SetOnTouchCallBack(void __stdcall callback(int, int, int, int)) { _touchCallBack = callback; }
         void SetExtended(bool value);
         bool GetPlacement(int* values);
+        int PickFiles(int kind, const wchar_t* title, const wchar_t* filters, const wchar_t* folder,
+            const wchar_t* name, wchar_t** result);
         bool SetPlacement(int left, int top, int width, int height, bool maximized);
     };
 }

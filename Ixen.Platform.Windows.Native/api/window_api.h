@@ -31,6 +31,8 @@ IXEN_API_ENTRY void WA_RegisterSystemCallBack(NativeWindow* window, void __stdca
 IXEN_API_ENTRY void WA_RegisterHitTestCallBack(NativeWindow* window, int __stdcall callBack(int, int));
 IXEN_API_ENTRY void WA_RegisterTouchCallBack(NativeWindow* window, void __stdcall callBack(int, int, int, int));
 IXEN_API_ENTRY void WA_SetWindowExtended(NativeWindow* window, int value);
+IXEN_API_ENTRY int WA_PickFiles(NativeWindow* window, int kind, const wchar_t* title, const wchar_t* filters,
+    const wchar_t* folder, const wchar_t* name, wchar_t** result);
 IXEN_API_ENTRY int WA_GetWindowPlacement(NativeWindow* window, int* values);
 IXEN_API_ENTRY int WA_SetWindowPlacement(NativeWindow* window, int left, int top, int width, int height, int maximized);
 IXEN_API_ENTRY int WA_CreateGlContext(NativeWindow* window);

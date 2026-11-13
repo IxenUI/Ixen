@@ -67,6 +67,11 @@ namespace Ixen.Platform.Windows
 
             _ixenSurface.TitleChanged += OnTitleChanged;
 
+            if (_ixenSurface.Files == null)
+            {
+                _ixenSurface.Files = new WindowsFilePicker(() => _windowPtr);
+            }
+
             _window = new WindowsWindowControl(() => WindowApi.GetWindowHandle(_windowPtr), ReadPlacement,
                 _ixenSurface.InitOptions.ExtendIntoTitleBar);
             ApplyPlacement(_ixenSurface.InitOptions);

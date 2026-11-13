@@ -35,6 +35,11 @@ namespace Ixen.Core.UT.Native
             { "IXEN_DRAG_OVER", "Over" },
             { "IXEN_DRAG_LEAVE", "Leave" },
 
+            { "IXEN_PICK_FILE", "File" },
+            { "IXEN_PICK_FILES", "Files" },
+            { "IXEN_PICK_FOLDER", "Folder" },
+            { "IXEN_PICK_SAVE", "Save" },
+
             { "IXEN_IME_UPDATE", "Update" },
             { "IXEN_IME_COMMIT", "Commit" },
             { "IXEN_IME_CANCEL", "Cancel" },
@@ -258,6 +263,7 @@ namespace Ixen.Core.UT.Native
             ReadEnum(kinds, "NativeGlStatus", found);
             ReadEnum(kinds, "NativeSystemChange", found);
             ReadEnum(kinds, "NativeDragKind", found);
+            ReadEnum(kinds, "NativePickKind", found);
             ReadEnum(keys, "NativeKeyKind", found);
             ReadEnum(keys, "NativeImeKind", found);
             ReadEnum(keys, "NativeWindowArea", found);
@@ -301,6 +307,11 @@ namespace Ixen.Core.UT.Native
             if (define.StartsWith("IXEN_CHANGE_", StringComparison.Ordinal))
             {
                 return "NativeSystemChange." + suffix;
+            }
+
+            if (define.StartsWith("IXEN_PICK_", StringComparison.Ordinal))
+            {
+                return "NativePickKind." + suffix;
             }
 
             if (define.StartsWith("IXEN_DRAG_", StringComparison.Ordinal))

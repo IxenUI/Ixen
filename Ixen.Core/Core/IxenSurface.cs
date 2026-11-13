@@ -1534,6 +1534,8 @@ namespace Ixen.Core
         private IScheduler _scheduler;
         private IClipboard _clipboard;
 
+        public IFilePicker Files { get; set; }
+
         public IClipboard Clipboard
         {
             get => _clipboard;
