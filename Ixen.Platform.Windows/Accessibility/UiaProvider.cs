@@ -80,7 +80,9 @@ namespace Ixen.Platform.Windows.Accessibility
         }
 
         internal static bool IsToggle(AccessibleNode node)
-            => node.Role == AccessibleRole.CheckBox || node.Role == AccessibleRole.Switch;
+            => node.Role == AccessibleRole.CheckBox
+                || node.Role == AccessibleRole.Switch
+                || node.HasState(AccessibleStates.Checkable);
 
         internal static bool IsExpandCollapse(AccessibleNode node)
             => node.Role == AccessibleRole.TreeItem

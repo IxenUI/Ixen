@@ -83,6 +83,25 @@ namespace Ixen.Core.UT.Native
         }
 
         [TestMethod]
+        public void ACheckableButtonIsACheckBoxWithAToggle()
+        {
+            AccessibleNode node = Node();
+
+            Assert.AreEqual("AXButton", MacRoles.RoleOf(node));
+
+            node.States |= AccessibleStates.Checkable;
+
+            Assert.AreEqual("AXCheckBox", MacRoles.RoleOf(node),
+                "AppKit presents a toggle button as a check box, which is how VoiceOver says on "
+                    + "and off");
+            Assert.AreEqual(0, MacRoles.ToggleOf(node));
+
+            node.States |= AccessibleStates.Checked;
+
+            Assert.AreEqual(1, MacRoles.ToggleOf(node));
+        }
+
+        [TestMethod]
         public void EverythingElseCarriesNoToggleAtAll()
         {
             AccessibleNode node = Node();

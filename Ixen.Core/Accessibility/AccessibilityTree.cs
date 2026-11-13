@@ -604,6 +604,11 @@ namespace Ixen.Core.Accessibility
                 states |= AccessibleStates.Checked;
             }
 
+            if (element is ICheckable checkable && checkable.CanCheck)
+            {
+                states |= AccessibleStates.Checkable;
+            }
+
             if (element.HasState(Visual.Styles.StyleStates.SELECTED))
             {
                 states |= AccessibleStates.Selected;

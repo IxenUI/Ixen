@@ -119,7 +119,8 @@ namespace Ixen.Controls.UT
                     "Switch.Checked",
                     "TabControl.SelectedIndex",
                     "TextArea.Text",
-                    "TextField.Text"
+                    "TextField.Text",
+                    "ToggleButton.Checked"
                 },
                 names,
                 "a two-way binding needs a settable property and a {Property}Changed event on the "

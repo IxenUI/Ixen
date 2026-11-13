@@ -45,8 +45,19 @@ namespace Ixen.Platform.Mac.NativeApi
             }
         }
 
+        internal static string RoleOf(AccessibleNode node)
+            => IsToggleButton(node) ? "AXCheckBox" : ToNative(node.Role);
+
+        private static bool IsToggleButton(AccessibleNode node)
+            => node.Role == AccessibleRole.Button && node.HasState(AccessibleStates.Checkable);
+
         internal static int ToggleOf(AccessibleNode node)
         {
+            if (IsToggleButton(node))
+            {
+                return node.HasState(AccessibleStates.Checked) ? 1 : 0;
+            }
+
             switch (node.Role)
             {
                 case AccessibleRole.CheckBox:

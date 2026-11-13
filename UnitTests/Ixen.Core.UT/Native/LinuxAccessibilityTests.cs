@@ -82,6 +82,28 @@ namespace Ixen.Core.UT.Native
         }
 
         [TestMethod]
+        public void ACheckableButtonIsAToggleButtonThatSaysItIsPressed()
+        {
+            AccessibleNode node = Node();
+
+            node.States |= AccessibleStates.Checkable;
+
+            Assert.AreEqual(62, LinuxRoles.RoleOf(node, false), "ATSPI_ROLE_TOGGLE_BUTTON");
+
+            long off = LinuxRoles.StatesOf(node);
+
+            Assert.IsTrue(Has(off, 41), "CHECKABLE, so Orca says it can be pressed while it is not");
+            Assert.IsFalse(Has(off, 20) || Has(off, STATE_CHECKED));
+
+            node.States |= AccessibleStates.Checked;
+
+            long on = LinuxRoles.StatesOf(node);
+
+            Assert.IsTrue(Has(on, 20) && Has(on, STATE_CHECKED),
+                "PRESSED as well as CHECKED, the pair GTK gives a toggle button");
+        }
+
+        [TestMethod]
         public void ARoleWithNothingToSayIsUnknownRatherThanInvalid()
         {
             Assert.AreEqual(ROLE_UNKNOWN, LinuxRoles.ToNative(AccessibleRole.None),

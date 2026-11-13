@@ -8,6 +8,7 @@ namespace Ixen.Platform.Linux.NativeApi
 
         private const int UNKNOWN = 67;
         private const int PASSWORD_TEXT = 40;
+        private const int TOGGLE_BUTTON = 62;
 
         private const int STATE_ACTIVE = 1;
         private const int STATE_CHECKED = 4;
@@ -26,6 +27,8 @@ namespace Ixen.Platform.Linux.NativeApi
         private const int STATE_SINGLE_LINE = 26;
         private const int STATE_VISIBLE = 30;
         private const int STATE_INVALID_ENTRY = 36;
+        private const int STATE_PRESSED = 20;
+        private const int STATE_CHECKABLE = 41;
 
         internal static int ToNative(AccessibleRole role)
         {
@@ -76,6 +79,11 @@ namespace Ixen.Platform.Linux.NativeApi
                 return PASSWORD_TEXT;
             }
 
+            if (node.Role == AccessibleRole.Button && (node.States & AccessibleStates.Checkable) != 0)
+            {
+                return TOGGLE_BUTTON;
+            }
+
             return ToNative(node.Role);
         }
 
@@ -107,6 +115,16 @@ namespace Ixen.Platform.Linux.NativeApi
             if ((states & AccessibleStates.Checked) != 0)
             {
                 mask |= Bit(STATE_CHECKED);
+            }
+
+            if ((states & AccessibleStates.Checkable) != 0)
+            {
+                mask |= Bit(STATE_CHECKABLE);
+
+                if ((states & AccessibleStates.Checked) != 0 && node.Role == AccessibleRole.Button)
+                {
+                    mask |= Bit(STATE_PRESSED);
+                }
             }
 
             if ((states & AccessibleStates.Selected) != 0)

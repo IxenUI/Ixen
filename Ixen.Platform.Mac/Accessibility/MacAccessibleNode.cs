@@ -9,7 +9,7 @@ namespace Ixen.Platform.Mac.Accessibility
         internal MacAccessibleNode(int parent, AccessibleNode node, float scale)
         {
             Parent = parent;
-            Role = MacRoles.ToNative(node.Role);
+            Role = MacRoles.RoleOf(node);
             States = (int)node.States;
             Actions = (int)node.Actions;
             Toggle = MacRoles.ToggleOf(node);

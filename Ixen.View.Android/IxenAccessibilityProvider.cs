@@ -210,7 +210,9 @@ namespace Ixen.View.Android
             AccessibilityNodeInfo info = Fresh(id);
 
             info.PackageName = _view.Context?.PackageName;
-            info.ClassName = ClassNameOf(node.Role);
+            info.ClassName = node.Role == AccessibleRole.Button && node.HasState(AccessibleStates.Checkable)
+                ? "android.widget.ToggleButton"
+                : ClassNameOf(node.Role);
             info.ContentDescription = node.Name;
 
             if (node.Value != null)
@@ -232,7 +234,7 @@ namespace Ixen.View.Android
             info.Password = node.HasState(AccessibleStates.Protected);
             info.VisibleToUser = !node.HasState(AccessibleStates.Offscreen);
             info.Focused = node.HasState(AccessibleStates.Focused);
-            info.Checkable = Checkable(node.Role);
+            info.Checkable = Checkable(node.Role) || node.HasState(AccessibleStates.Checkable);
 
             if (info.Checkable)
             {

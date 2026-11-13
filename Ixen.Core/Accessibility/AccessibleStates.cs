@@ -18,6 +18,7 @@ namespace Ixen.Core.Accessibility
         Expanded = 512,
         Invalid = 1024,
         Expandable = 2048,
-        MultiSelectable = 4096
+        MultiSelectable = 4096,
+        Checkable = 8192
     }
 }

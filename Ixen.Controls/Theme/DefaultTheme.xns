@@ -13,7 +13,8 @@ $control_inverse_text: #FFFFFF
 $control_focus:        #4C6EF5
 $control_focus_soft:   #EEF1FE
 
-#Button {
+#Button,
+#ToggleButton {
     width: ?
     height: ?
     background: $control_surface
@@ -28,6 +29,7 @@ $control_focus_soft:   #EEF1FE
 }
 
 #Button:hover,
+#ToggleButton:hover,
 #MenuItem:hover,
 #TabHeader:focus,
 #TreeRow:hover,
@@ -40,11 +42,24 @@ $control_focus_soft:   #EEF1FE
     background: $control_surface_over
 }
 
-#Button:pressed {
+#Button:pressed,
+#ToggleButton:pressed {
+    background: $control_surface_down
+}
+
+#ToggleButton:checked,
+#ToggleButton:checked:hover {
+    background: $control_focus_soft
+    border: $control_focus 1px inner
+    color: $control_focus
+}
+
+#ToggleButton:checked:pressed {
     background: $control_surface_down
 }
 
 #Button:focus,
+#ToggleButton:focus,
 #CheckBox:hover,
 #CheckBox:focus,
 #RadioButton:hover,
@@ -62,6 +77,7 @@ $control_focus_soft:   #EEF1FE
 }
 
 #Button:disabled,
+#ToggleButton:disabled,
 #CheckBox:disabled,
 #RadioButton:disabled,
 #ComboBox:disabled,
