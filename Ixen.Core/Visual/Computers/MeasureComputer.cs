@@ -300,8 +300,10 @@ namespace Ixen.Core.Visual.Computers
         private bool ReserveGutters(VisualElement element, float aggregateWidth, float aggregateHeight,
             float intrinsicWidth, float intrinsicHeight, float contentWidth, float contentHeight)
         {
-            float vertical = Math.Max(aggregateHeight, intrinsicHeight) > contentHeight ? Scrollbar.THICKNESS : 0;
-            float horizontal = Math.Max(aggregateWidth, intrinsicWidth) > contentWidth ? Scrollbar.THICKNESS : 0;
+            float vertical = VisualElement.Overflows(Math.Max(aggregateHeight, intrinsicHeight), contentHeight)
+                ? Scrollbar.THICKNESS : 0;
+            float horizontal = VisualElement.Overflows(Math.Max(aggregateWidth, intrinsicWidth), contentWidth)
+                ? Scrollbar.THICKNESS : 0;
 
             if (element.ScrollbarGutterWidth == vertical && element.ScrollbarGutterHeight == horizontal)
             {

@@ -510,23 +510,15 @@ namespace Ixen.Core.Visual
 
         internal Components.Component Owner { get; set; }
 
+        internal const float OVERFLOW_SLACK = 0.01f;
+
+        internal static bool Overflows(float extent, float viewport) => extent - viewport > OVERFLOW_SLACK;
+
         internal float MaxScrollX
-        {
-            get
-            {
-                float value = ScrollExtentWidth - ContentWidth;
-                return value < 0 ? 0 : value;
-            }
-        }
+            => Overflows(ScrollExtentWidth, ContentWidth) ? ScrollExtentWidth - ContentWidth : 0;
 
         internal float MaxScrollY
-        {
-            get
-            {
-                float value = ScrollExtentHeight - ContentHeight;
-                return value < 0 ? 0 : value;
-            }
-        }
+            => Overflows(ScrollExtentHeight, ContentHeight) ? ScrollExtentHeight - ContentHeight : 0;
 
         internal const int SMOOTH_SCROLL_DURATION = 240;
 

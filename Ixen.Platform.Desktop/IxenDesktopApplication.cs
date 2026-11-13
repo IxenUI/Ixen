@@ -32,6 +32,26 @@ namespace Ixen.Platform.Desktop
             }
         }
 
+        public static IImageSource DefaultImageSource()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return new WindowsImageSource();
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return new MacImageSource();
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return new LinuxImageSource();
+            }
+
+            throw Unsupported();
+        }
+
         public static int CreateWindow(IxenSurface surface)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

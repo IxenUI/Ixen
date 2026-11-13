@@ -51,6 +51,36 @@ namespace Ixen.Core.UT.Input
             }
         }
 
+        private sealed class NamedSource : IImageSource
+        {
+            public System.IO.Stream Open(string name) => null;
+        }
+
+        [TestMethod]
+        public void AnImageSourceTheApplicationGaveIsKeptByTheHost()
+        {
+            var covers = new NamedSource();
+            var surface = new IxenSurface { ImageSource = covers };
+
+            new IxenHost(surface, () => { }, images: new NamedSource());
+
+            Assert.AreSame(covers, surface.ImageSource,
+                "a desktop window builds its host inside CreateWindow, after the application set "
+                + "its own source - and CreateWindow runs the message loop, so there was no later "
+                + "moment to set it again: the host replaced it with the files beside the executable");
+        }
+
+        [TestMethod]
+        public void WithNoneOfItsOwnTheSurfaceTakesTheHostsSource()
+        {
+            var files = new NamedSource();
+            var surface = new IxenSurface();
+
+            new IxenHost(surface, () => { }, images: files);
+
+            Assert.AreSame(files, surface.ImageSource);
+        }
+
         [TestMethod]
         public void PaintingLaysOutAndClearsTheDirtyFlag()
         {

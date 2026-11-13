@@ -67,6 +67,29 @@ namespace Ixen.Controls.UT
         }
 
         [TestMethod]
+        public void AGridNeverScrollsSideways()
+        {
+            var wide = new List<string>();
+
+            for (int width = 214; width <= 1400; width += 37)
+            {
+                _holder.Styles.Width.Value = width;
+                _holder.Invalidate();
+                Layout();
+
+                if (_list.MaxScrollX > 0 || _list.ScrollbarGutterHeight > 0)
+                {
+                    wide.Add($"{width}: {_list.Columns} columns overflow by {_list.ScrollExtentWidth - _list.ContentWidth}, gutter {_list.ScrollbarGutterHeight}");
+                }
+            }
+
+            Assert.AreEqual(0, wide.Count,
+                "the columns share the width exactly, so nothing is to the side - found as a "
+                + "horizontal scrollbar under the store's covers in a real window: "
+                + string.Join("; ", wide));
+        }
+
+        [TestMethod]
         public void OnlyTheRowsInViewExist()
         {
             Assert.AreEqual(4 * 3 + 2 * 3, _list.RealisedCount,

@@ -45,7 +45,7 @@ namespace Ixen.Platform
                 _surface.Clipboard = clipboard;
             }
 
-            if (images != null)
+            if (images != null && _surface.ImageSource == null)
             {
                 _surface.ImageSource = images;
             }
