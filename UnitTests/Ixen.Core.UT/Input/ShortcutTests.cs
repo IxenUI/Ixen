@@ -75,6 +75,63 @@ namespace Ixen.Core.UT.Input
             Assert.AreSame(other, _surface.FocusedElement, "and it does not move the focus");
         }
 
+        private TextField Field()
+        {
+            var field = new TextField { Name = "search" };
+            field.Styles.Height = new HeightStyleDescriptor { Unit = SizeUnit.Pixels, Value = 24 };
+            _root.AddChild(field);
+            Layout();
+            _surface.Focus(field);
+
+            return field;
+        }
+
+        [TestMethod]
+        public void AKeyThatTypesIntoTheFocusedFieldIsNotAShortcut()
+        {
+            Save("Space");
+            Save("K");
+            Save("Shift+Digit1");
+
+            TextField field = Field();
+
+            Press(Key.Space);
+            _surface.TextInput(" ");
+            Press(Key.K);
+            Press(Key.Digit1, KeyModifiers.Shift);
+
+            Assert.AreEqual(0, _hits,
+                "a space typed in a search box is a space, not the player's play/pause; a letter and a "
+                + "shifted digit are text too");
+            Assert.AreEqual(" ", field.Text);
+        }
+
+        [TestMethod]
+        public void TheSameKeysStillWorkElsewhere()
+        {
+            Save("Space");
+
+            Press(Key.Space);
+
+            Assert.AreEqual(1, _hits, "with nothing that takes text focused, Space is the shortcut");
+        }
+
+        [TestMethod]
+        public void AModifiedShortcutStillReachesAppsFromInsideAField()
+        {
+            Save("Ctrl+S");
+            Save("Alt+K");
+            Save("F5");
+
+            Field();
+
+            Press(Key.S, KeyModifiers.Control);
+            Press(Key.K, KeyModifiers.Alt);
+            Press(Key.F5);
+
+            Assert.AreEqual(3, _hits, "Ctrl+S saves from inside a field; Alt and the function keys type nothing");
+        }
+
         [TestMethod]
         public void TheModifiersHaveToMatchExactly()
         {

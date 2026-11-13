@@ -186,7 +186,7 @@ namespace Ixen.Core.Input
                 return true;
             }
 
-            if (TryShortcut(root, key, modifiers, accelerator))
+            if (!TypesInto(_focused, key, modifiers) && TryShortcut(root, key, modifiers, accelerator))
             {
                 return true;
             }
@@ -208,6 +208,16 @@ namespace Ixen.Core.Input
             }
 
             return focused.IsEnabled && (focused.HandlesClick || focused.Command != null);
+        }
+
+        private static bool TypesInto(VisualElement focused, Key key, KeyModifiers modifiers)
+        {
+            if (!(focused is TextField) || !focused.IsEnabled || (modifiers & ~KeyModifiers.Shift) != KeyModifiers.None)
+            {
+                return false;
+            }
+
+            return (key >= Key.A && key <= Key.Z) || (key >= Key.Digit0 && key <= Key.Digit9) || key == Key.Space;
         }
 
         private static bool TryShortcut(VisualElement root, Key key, KeyModifiers modifiers,

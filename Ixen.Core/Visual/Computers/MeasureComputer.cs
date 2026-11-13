@@ -835,6 +835,7 @@ namespace Ixen.Core.Visual.Computers
             bool isRow = IsRow(element);
 
             bool crossIsDefinite = isRow ? heightIsDefinite : widthIsDefinite;
+            bool mainIsDefinite = isRow ? widthIsDefinite : heightIsDefinite;
 
             foreach (VisualElement child in element.Children)
             {
@@ -852,7 +853,7 @@ namespace Ixen.Core.Visual.Computers
                     ? SizeStyleDescriptorType.Width
                     : SizeStyleDescriptorType.Height);
 
-                if (IsFilling(mainStyle))
+                if (IsFilling(mainStyle) && mainIsDefinite)
                 {
                     totalWeight += mainStyle.Value;
                     pool -= isRow
@@ -861,7 +862,7 @@ namespace Ixen.Core.Visual.Computers
                     continue;
                 }
 
-                MeasureChild(child, contentWidth, contentHeight, isRow, 0, false, crossIsDefinite);
+                MeasureChild(child, contentWidth, contentHeight, isRow, 0, false, crossIsDefinite, mainIsDefinite);
                 pool -= isRow ? child.BoxWidth : child.BoxHeight;
             }
 
@@ -968,17 +969,17 @@ namespace Ixen.Core.Visual.Computers
         }
 
         private void MeasureChild(VisualElement child, float contentWidth, float contentHeight, bool isRow,
-            float mainShare, bool useMainShare, bool crossIsDefinite)
+            float mainShare, bool useMainShare, bool crossIsDefinite, bool mainIsDefinite = true)
         {
             SizeStyleDescriptor widthStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Width);
             SizeStyleDescriptor heightStyle = GetSizeStyleDescriptor(child, SizeStyleDescriptorType.Height);
 
             ResolveAxis(widthStyle, contentWidth, child.HorizontalMargin + child.HorizontalBorderOutside,
-                useMainShare && isRow, mainShare, !isRow && !crossIsDefinite,
+                useMainShare && isRow, mainShare, isRow ? !mainIsDefinite : !crossIsDefinite,
                 out float availableWidth, out bool widthIsDefinite);
 
             ResolveAxis(heightStyle, contentHeight, child.VerticalMargin + child.VerticalBorderOutside,
-                useMainShare && !isRow, mainShare, isRow && !crossIsDefinite,
+                useMainShare && !isRow, mainShare, isRow ? !crossIsDefinite : !mainIsDefinite,
                 out float availableHeight, out bool heightIsDefinite);
 
             Measure(child, availableWidth, availableHeight, widthIsDefinite, heightIsDefinite);

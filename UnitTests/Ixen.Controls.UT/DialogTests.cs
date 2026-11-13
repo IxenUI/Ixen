@@ -232,6 +232,46 @@ namespace Ixen.Controls.UT
             Assert.AreEqual("Delete the file?", node.Name, "the title names it");
         }
 
+        [TestMethod]
+        public void TheTitleIsDrawnAboveTheContentAndReadOnceOnly()
+        {
+            _dialog.Show();
+            Layout();
+
+            Assert.AreSame(_dialog.TitleElement, _dialog.Sheet.ChildElements[0], "the title is the sheet's first line");
+            Assert.AreEqual("Delete the file?", _dialog.TitleElement.Text);
+            Assert.IsTrue(_dialog.TitleElement.ContentY < _ok.ContentY, "above the content");
+
+            AccessibleNode node = FindDialog(_surface.BuildAccessibilityTree());
+
+            Assert.AreEqual(2, node.Children.Count,
+                "the two buttons and nothing else: the title already names the dialog, so a screen "
+                + "reader would say it twice");
+
+            _dialog.Title = null;
+            Layout();
+
+            Assert.IsNull(_dialog.TitleElement.Parent, "no title, no empty line taking a gap");
+            Assert.AreSame(_ok, _dialog.Sheet.ChildElements[0]);
+        }
+
+        [TestMethod]
+        public void TheSheetIsAsTallAsWhatItHolds()
+        {
+            _dialog.Show();
+            Layout();
+
+            var message = new VisualElement { Name = "message", Text = "This cannot be undone." };
+
+            _dialog.AddChild(message);
+            Layout();
+
+            Assert.IsTrue(_dialog.Sheet.ActualHeight < VIEWPORT / 2,
+                $"a message with no declared height filled the {VIEWPORT}-unit viewport, so the sheet did "
+                + $"too: {_dialog.Sheet.ActualHeight} - a weight in a container sized to its content shares "
+                + "nothing");
+        }
+
         private static AccessibleNode FindDialog(AccessibleNode node)
         {
             if (node.Role == AccessibleRole.Dialog)

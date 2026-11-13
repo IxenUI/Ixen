@@ -10,12 +10,14 @@ namespace Ixen.Controls
     {
         public const string SCRIM = "DialogScrim";
         public const string SHEET = "DialogSheet";
+        public const string TITLE = "DialogTitle";
 
         public event EventHandler<EventArgs> Closed;
         public event EventHandler<EventArgs> OpenChanged;
 
         private readonly VisualElement _scrim;
         private readonly VisualElement _sheet;
+        private readonly VisualElement _title = new VisualElement { TypeName = TITLE, Role = AccessibleRole.Presentation };
 
         private VisualElement _restore;
         private bool _open;
@@ -62,10 +64,27 @@ namespace Ixen.Controls
 
         public VisualElement Sheet => _sheet;
 
+        public VisualElement TitleElement => _title;
+
         public string Title
         {
             get => _sheet.Label;
-            set => _sheet.Label = value;
+            set
+            {
+                _sheet.Label = value;
+                _title.Text = value;
+
+                bool shown = !string.IsNullOrEmpty(value);
+
+                if (shown && _title.Parent == null)
+                {
+                    _sheet.InsertChild(0, _title);
+                }
+                else if (!shown && _title.Parent != null)
+                {
+                    _sheet.RemoveChild(_title);
+                }
+            }
         }
 
         public string Result { get; private set; }
