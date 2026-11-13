@@ -54,7 +54,12 @@ namespace Ixen.Core.Rendering
         private readonly SKPaint _ringPaint = new SKPaint { IsStroke = false, IsAntialias = true };
 
         private readonly SKSamplingOptions _sampling =
+            new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None);
+
+        private readonly SKSamplingOptions _shrinking =
             new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
+
+        private const float MIPMAP_RATIO = 2;
 
         internal float Scale { get; private set; } = 1;
 
@@ -365,7 +370,9 @@ namespace Ixen.Core.Rendering
                 return;
             }
 
-            SKCanvas.DrawBitmap(bitmap, new SKRect(x, y, x + width, y + height), _sampling, _imagePaint);
+            bool shrinking = bitmap.Width > width * Scale * MIPMAP_RATIO || bitmap.Height > height * Scale * MIPMAP_RATIO;
+
+            SKCanvas.DrawBitmap(bitmap, new SKRect(x, y, x + width, y + height), shrinking ? _shrinking : _sampling, _imagePaint);
         }
 
         internal void TileImage(SKPaint tile, float x, float y, float width, float height,
