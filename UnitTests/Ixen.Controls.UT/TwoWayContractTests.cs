@@ -115,6 +115,7 @@ namespace Ixen.Controls.UT
                     "RangeSlider.Upper",
                     "SearchBox.Query",
                     "Slider.Value",
+                    "Splitter.Size",
                     "Switch.Checked",
                     "TabControl.SelectedIndex",
                     "TextArea.Text",

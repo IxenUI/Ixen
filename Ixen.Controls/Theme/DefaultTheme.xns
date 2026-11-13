@@ -340,6 +340,29 @@ $control_focus_soft:   #EEF1FE
     transition: border 120ms ease-out
 }
 
+#Splitter:horizontal {
+    width: 7px
+    cursor: ew-resize
+}
+
+#Splitter:vertical {
+    height: 7px
+    cursor: ns-resize
+}
+
+#Splitter:hover,
+#Splitter:dragging {
+    background: $control_focus_soft
+}
+
+#SplitterLine {
+    background: $control_line
+}
+
+#SplitterLine:dragging {
+    background: $control_focus
+}
+
 #ProgressBar {
     width: 160px
     height: 6px
