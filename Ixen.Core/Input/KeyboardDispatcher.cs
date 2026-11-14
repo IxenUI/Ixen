@@ -584,6 +584,32 @@ namespace Ixen.Core.Input
             }
         }
 
+        private bool _keyboardModality = true;
+
+        internal bool FocusVisible => _focused != null && ShowsFocus(_focused);
+
+        private bool ShowsFocus(VisualElement element) => _keyboardModality || element is TextField;
+
+        internal void Pointed()
+        {
+            _keyboardModality = false;
+        }
+
+        internal void Typed(Key key, bool trackStates)
+        {
+            if (_keyboardModality || key == Key.Shift || key == Key.Control || key == Key.Alt || key == Key.Meta)
+            {
+                return;
+            }
+
+            _keyboardModality = true;
+
+            if (trackStates && _focused != null)
+            {
+                _focused.ToggleState(StyleStates.FOCUS_VISIBLE, true);
+            }
+        }
+
         private void SetState(VisualElement element, bool present)
         {
             if (!_trackStates || element == null)
@@ -592,6 +618,7 @@ namespace Ixen.Core.Input
             }
 
             element.ToggleState(StyleStates.FOCUS, present);
+            element.ToggleState(StyleStates.FOCUS_VISIBLE, present && ShowsFocus(element));
         }
     }
 }

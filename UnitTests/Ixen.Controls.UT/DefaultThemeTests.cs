@@ -161,8 +161,15 @@ namespace Ixen.Controls.UT
             _button.AddState("focus");
             Layout();
 
+            Assert.AreNotEqual("#4C6EF5", _button.StylesHandlers.Border.Color.ToRGBHexColor(),
+                "focus alone - a button clicked with the mouse - draws no ring");
+
+            _button.AddState("focus-visible");
+            Layout();
+
             Assert.AreEqual("#4C6EF5", _button.StylesHandlers.Border.Color.ToRGBHexColor(),
-                "focus moves the border rather than the fill, so it reads on any background");
+                "focus reached from the keyboard moves the border rather than the fill, so it reads "
+                + "on any background");
         }
 
         [TestMethod]

@@ -31,10 +31,10 @@ $control_focus_soft:   #EEF1FE
 #Button:hover,
 #ToggleButton:hover,
 #MenuItem:hover,
-#TabHeader:focus,
+#TabHeader:focus-visible,
 #TreeRow:hover,
 #DataGridHeaderCell:hover,
-#DataGridHeaderCell:focus,
+#DataGridHeaderCell:focus-visible,
 #DataGridRow:hover,
 #DatePickerPrevious:hover,
 #DatePickerNext:hover,
@@ -58,20 +58,20 @@ $control_focus_soft:   #EEF1FE
     background: $control_surface_down
 }
 
-#Button:focus,
-#ToggleButton:focus,
+#Button:focus-visible,
+#ToggleButton:focus-visible,
 #CheckBox:hover,
-#CheckBox:focus,
+#CheckBox:focus-visible,
 #RadioButton:hover,
 #RadioButton:checked,
-#RadioButton:focus,
+#RadioButton:focus-visible,
 #Switch:hover,
-#Switch:focus,
+#Switch:focus-visible,
 #ComboBox:hover,
-#ComboBox:focus,
-#TreeView:focus,
-#DataGrid:focus,
-#DatePicker:focus,
+#ComboBox:focus-visible,
+#TreeView:focus-visible,
+#DataGrid:focus-visible,
+#DatePicker:focus-visible,
 #DatePickerDay:today {
     border: $control_focus 1px inner
 }
@@ -196,7 +196,7 @@ $control_focus_soft:   #EEF1FE
     width: ?
 }
 
-#MenuItem:focus {
+#MenuItem:focus-visible {
     background: $control_focus_soft
 }
 
@@ -377,7 +377,7 @@ $control_focus_soft:   #EEF1FE
     background: $control_surface_over
 }
 
-#ExpanderHeader:focus {
+#ExpanderHeader:focus-visible {
     border: $control_focus 1px inner
 }
 
@@ -679,7 +679,7 @@ $control_focus_soft:   #EEF1FE
 }
 
 #DataGridHeaderCell:frozen:hover,
-#DataGridHeaderCell:frozen:focus {
+#DataGridHeaderCell:frozen:focus-visible {
     background: $control_surface_over
 }
 

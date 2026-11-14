@@ -1786,6 +1786,7 @@ namespace Ixen.Core
             VisualElement focused = _keyboardDispatcher.Focused;
 
             if (focused == null
+                || !_keyboardDispatcher.FocusVisible
                 || (Styles ?? StyleRegistry.Default).HasFocusClasses
                 || focused.StylesHandlers == null
                 || focused.Clip == null
@@ -1979,6 +1980,15 @@ namespace Ixen.Core
             }
 
             VisualElement before = _keyboardDispatcher.Focused;
+            bool wasVisible = _keyboardDispatcher.FocusVisible;
+
+            _keyboardDispatcher.Typed(key, TrackStates);
+
+            if (!wasVisible && _keyboardDispatcher.FocusVisible && before != null)
+            {
+                _visualDirty = true;
+                AddDamage(before, FOCUS_RING * 2);
+            }
 
             bool handled = _keyboardDispatcher.KeyDown(Root, key, modifiers, TrackStates, isRepeat,
                 AcceleratorModifier);
@@ -2067,6 +2077,8 @@ namespace Ixen.Core
 
                 return;
             }
+
+            _keyboardDispatcher.Pointed();
 
             VisualElement focusedBefore = FocusedElement;
 

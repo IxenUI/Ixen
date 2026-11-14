@@ -5,6 +5,7 @@ namespace Ixen.Core.Visual.Styles
         internal const string HOVER = "hover";
         internal const string PRESSED = "pressed";
         internal const string FOCUS = "focus";
+        internal const string FOCUS_VISIBLE = "focus-visible";
         internal const string DISABLED = "disabled";
         internal const string CHECKED = "checked";
         internal const string SELECTED = "selected";
@@ -15,7 +16,7 @@ namespace Ixen.Core.Visual.Styles
 
         internal static readonly string[] All =
         {
-            HOVER, PRESSED, FOCUS, DISABLED, CHECKED, SELECTED, EXPANDED, INVALID, DRAG_OVER,
+            HOVER, PRESSED, FOCUS, FOCUS_VISIBLE, DISABLED, CHECKED, SELECTED, EXPANDED, INVALID, DRAG_OVER,
             StyleStructural.FIRST_CHILD, StyleStructural.LAST_CHILD,
             StyleStructural.ONLY_CHILD, StyleStructural.NTH_CHILD, StyleStructural.NTH_LAST_CHILD, NOT
         };
