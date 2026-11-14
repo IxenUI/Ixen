@@ -13,7 +13,6 @@ namespace Ixen.Platform.Windows.Accessibility
         private const long UIA_ROOT_OBJECT_ID = -25;
 
         private readonly IxenSurface _surface;
-        private readonly Action _invalidate;
         private readonly Func<IntPtr> _handle;
 
         private readonly AccessibilityIds _ids = new AccessibilityIds();
@@ -23,17 +22,13 @@ namespace Ixen.Platform.Windows.Accessibility
         private readonly ConcurrentDictionary<int, UiaProvider> _providers
             = new ConcurrentDictionary<int, UiaProvider>();
 
-        private readonly ConcurrentQueue<(int Id, AccessibleActions Action, string Value)> _pending
-            = new ConcurrentQueue<(int, AccessibleActions, string)>();
-
         private AccessibilitySnapshot _snapshot = AccessibilitySnapshot.Empty;
         private nint _host;
 
-        internal UiaBridge(IxenSurface surface, Func<IntPtr> handle, Action invalidate)
+        internal UiaBridge(IxenSurface surface, Func<IntPtr> handle)
         {
             _surface = surface;
             _handle = handle;
-            _invalidate = invalidate;
         }
 
         internal IRawElementProviderFragmentRoot Root
@@ -87,8 +82,6 @@ namespace Ixen.Platform.Windows.Accessibility
 
         internal void Sync()
         {
-            Drain();
-
             if (!UiaNative.UiaClientsAreListening())
             {
                 return;
@@ -495,23 +488,15 @@ namespace Ixen.Platform.Windows.Accessibility
         }
 
         internal void Post(int id, AccessibleActions action, string value)
-        {
-            _pending.Enqueue((id, action, value));
-            _invalidate();
-        }
+            => _surface.Post(() => Perform(id, action, value));
 
-        private void Drain()
+        private void Perform(int id, AccessibleActions action, string value)
         {
-            while (_pending.TryDequeue(out (int Id, AccessibleActions Action, string Value) work))
+            AccessibleNode node = NodeOf(id);
+
+            if (node != null)
             {
-                AccessibleNode node = NodeOf(work.Id);
-
-                if (node == null)
-                {
-                    continue;
-                }
-
-                _surface.Perform(node, work.Action, work.Value);
+                _surface.Perform(node, action, value);
             }
         }
     }

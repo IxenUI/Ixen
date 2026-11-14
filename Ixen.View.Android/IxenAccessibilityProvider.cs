@@ -484,6 +484,18 @@ namespace Ixen.View.Android
 
         public override bool PerformAction(int virtualViewId, Action action, Bundle arguments)
         {
+            bool done = Act(virtualViewId, action, arguments);
+
+            if (done && virtualViewId != HOST)
+            {
+                _view.AccessibilityActed();
+            }
+
+            return done;
+        }
+
+        private bool Act(int virtualViewId, Action action, Bundle arguments)
+        {
             if (virtualViewId == HOST)
             {
                 return base.PerformAction(virtualViewId, action, arguments);

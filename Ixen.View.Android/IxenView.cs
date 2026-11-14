@@ -135,6 +135,8 @@ namespace Ixen.View.Android
             _skCanvasView.Invalidate();
         }
 
+        internal void AccessibilityActed() => RequestFrame();
+
         private void WakeFrame()
         {
             if (_gpu != null)

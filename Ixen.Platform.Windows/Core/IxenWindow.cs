@@ -92,8 +92,7 @@ namespace Ixen.Platform.Windows
             _ixenSurface.PreservesFrame = _renderer.PreservesFrame;
 
             _accessibility = new UiaBridge(_ixenSurface,
-                () => WindowApi.GetWindowHandle(_windowPtr),
-                RequestRepaint);
+                () => WindowApi.GetWindowHandle(_windowPtr));
         }
 
         public int Show()
