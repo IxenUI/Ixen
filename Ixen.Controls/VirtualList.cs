@@ -109,6 +109,7 @@ namespace Ixen.Controls
             DragLeave += OnDragLeave;
             Drop += OnDrop;
             KeyDown += OnRowKey;
+            TextInput += OnTypeAhead;
         }
 
         public bool Reorderable
@@ -741,6 +742,12 @@ namespace Ixen.Controls
                 return;
             }
 
+            if (_typeAhead.Continues(args))
+            {
+                args.Handled = true;
+                return;
+            }
+
             int from = FocusedRowIndex();
 
             if (from < 0)
@@ -809,6 +816,34 @@ namespace Ixen.Controls
             }
 
             MoveFocusTo(to);
+        }
+
+        private readonly TypeAhead _typeAhead = new TypeAhead();
+
+        public Func<int, string> SearchText { get; set; }
+
+        private void OnTypeAhead(object sender, TextInputEventArgs args)
+        {
+            int from = FocusedRowIndex();
+
+            if (args.Handled || SearchText == null || from < 0)
+            {
+                return;
+            }
+
+            int to = _typeAhead.Next(args.Text, from, Count, SearchText, Host?.Scheduler);
+
+            if (to < 0)
+            {
+                return;
+            }
+
+            args.Handled = true;
+
+            if (to != from)
+            {
+                MoveFocusTo(to);
+            }
         }
 
         public void MoveFocusTo(int index)

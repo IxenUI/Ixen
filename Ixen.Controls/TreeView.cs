@@ -79,6 +79,7 @@ namespace Ixen.Controls
             _list.ReorderGroup = GroupOf;
 
             KeyDown += OnKeyDown;
+            TextInput += OnTypeAhead;
         }
 
         public VirtualList Rows => _list;
@@ -699,8 +700,37 @@ namespace Ixen.Controls
             Focus();
         }
 
+        private readonly TypeAhead _typeAhead = new TypeAhead();
+
+        public Func<object, string> SearchText { get; set; }
+
+        private void OnTypeAhead(object sender, TextInputEventArgs args)
+        {
+            if (args.Handled || SearchText == null || _flat.Count == 0)
+            {
+                return;
+            }
+
+            int to = _typeAhead.Next(args.Text, _selection.Current, _flat.Count,
+                index => SearchText(_flat[index].Item), Host?.Scheduler);
+
+            if (to < 0)
+            {
+                return;
+            }
+
+            args.Handled = true;
+            _selection.Walk(to, KeyModifiers.None);
+        }
+
         private void OnKeyDown(object sender, KeyEventArgs args)
         {
+            if (!args.Handled && _typeAhead.Continues(args))
+            {
+                args.Handled = true;
+                return;
+            }
+
             TreeNode node = SelectedNode;
 
             if ((args.Key == Key.Up || args.Key == Key.Down) && (args.Modifiers & KeyModifiers.Alt) != 0)

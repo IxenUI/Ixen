@@ -95,6 +95,7 @@ namespace Ixen.Controls
             _body.ItemDropped += OnBodyDropped;
             _body.ReorderGroup = GroupOf;
             KeyDown += OnKeyDown;
+            TextInput += OnTypeAhead;
         }
 
         public VisualElement Header => _header;
@@ -1644,10 +1645,59 @@ namespace Ixen.Controls
             _resizing = -1;
         }
 
+        private readonly TypeAhead _typeAhead = new TypeAhead();
+
+        public Func<object, string> SearchText { get; set; }
+
+        private Func<object, string> Searched()
+        {
+            if (SearchText != null)
+            {
+                return SearchText;
+            }
+
+            foreach (DataColumn column in _columns)
+            {
+                if (!column.Hidden && column.Value != null)
+                {
+                    return column.Value;
+                }
+            }
+
+            return null;
+        }
+
+        private void OnTypeAhead(object sender, TextInputEventArgs args)
+        {
+            Func<object, string> searched = Searched();
+
+            if (args.Handled || searched == null || _view.Count == 0 || IsEditing || IsChoosing)
+            {
+                return;
+            }
+
+            int to = _typeAhead.Next(args.Text, _selection.Current, _view.Count,
+                index => searched(_view[index]), Host?.Scheduler);
+
+            if (to < 0)
+            {
+                return;
+            }
+
+            args.Handled = true;
+            _selection.Walk(to, KeyModifiers.None);
+        }
+
         private void OnKeyDown(object sender, KeyEventArgs args)
         {
             if (IsEditing || IsChoosing)
             {
+                return;
+            }
+
+            if (_typeAhead.Continues(args))
+            {
+                args.Handled = true;
                 return;
             }
 
