@@ -625,6 +625,7 @@ namespace Ixen.Controls
 
             row.PointerClick += OnRowClick;
             row.PointerDoubleClick += OnRowDoubleClick;
+            row.ContextRequested += OnRowContext;
             row.Expander.PointerClick += OnExpanderClick;
 
             return row;
@@ -669,6 +670,24 @@ namespace Ixen.Controls
             return false;
         }
 
+        private void OnRowContext(object sender, ContextEventArgs args)
+        {
+            object item = (sender as TreeRow)?.Item;
+            int index = IndexOf(item);
+
+            if (index < 0)
+            {
+                return;
+            }
+
+            if (!_selection.Contains(item))
+            {
+                _selection.Click(index, KeyModifiers.None, Host?.AcceleratorModifier ?? KeyModifiers.Control);
+            }
+
+            Focus();
+        }
+
         private void OnRowClick(object sender, PointerEventArgs args)
         {
             int index = IndexOf((sender as TreeRow)?.Item);
@@ -703,6 +722,29 @@ namespace Ixen.Controls
         private readonly TypeAhead _typeAhead = new TypeAhead();
 
         public Func<object, string> SearchText { get; set; }
+
+        protected override VisualElement ContextAnchor
+        {
+            get
+            {
+                TreeNode current = SelectedNode;
+
+                if (current == null)
+                {
+                    return null;
+                }
+
+                foreach (VisualElement element in _list.RealisedRows)
+                {
+                    if (element is TreeRow row && ReferenceEquals(row.Item, current.Item))
+                    {
+                        return row;
+                    }
+                }
+
+                return null;
+            }
+        }
 
         private void OnTypeAhead(object sender, TextInputEventArgs args)
         {

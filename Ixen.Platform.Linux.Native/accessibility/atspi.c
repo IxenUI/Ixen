@@ -576,9 +576,10 @@ static dbus_int32_t HasState(AtspiBridge* bridge, int identifier, int state)
     return node != NULL && ((node->states >> state) & 1ull) != 0 ? 1 : 0;
 }
 
-static const int ACTION_KINDS[] = { IXEN_AXA_INVOKE, IXEN_AXA_EXPAND, IXEN_AXA_COLLAPSE, IXEN_AXA_SELECT };
+static const int ACTION_KINDS[] = { IXEN_AXA_INVOKE, IXEN_AXA_EXPAND, IXEN_AXA_COLLAPSE, IXEN_AXA_SELECT,
+    IXEN_AXA_SHOW_MENU };
 
-#define ACTION_KIND_COUNT 4
+#define ACTION_KIND_COUNT 5
 
 static int ActionsOf(AtspiNode* node, int* kinds)
 {
@@ -619,6 +620,9 @@ static const char* ActionName(int kind)
 
         case IXEN_AXA_SELECT:
             return "select";
+
+        case IXEN_AXA_SHOW_MENU:
+            return "showmenu";
 
         default:
             return "click";

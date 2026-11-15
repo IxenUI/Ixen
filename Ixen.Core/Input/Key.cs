@@ -42,6 +42,8 @@ namespace Ixen.Core.Input
         MediaPause,
         MediaStop,
         MediaNext,
-        MediaPrevious
+        MediaPrevious,
+
+        ContextMenu
     }
 }

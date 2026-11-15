@@ -11,6 +11,7 @@ namespace Ixen.Core.Language.Xnl
                 { "click", "PointerClick" },
                 { "double-click", "PointerDoubleClick" },
                 { "long-press", "PointerLongPress" },
+                { "context", "ContextRequested" },
                 { "wheel", "PointerWheel" },
                 { "drag", "PointerDrag" },
                 { "drag-start", "PointerDragStart" },

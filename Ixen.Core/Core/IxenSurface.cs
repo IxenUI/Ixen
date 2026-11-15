@@ -818,6 +818,9 @@ namespace Ixen.Core
                     range.SetValue(wanted);
                     return true;
 
+                case Accessibility.AccessibleActions.ShowMenu:
+                    return ContextEventArgs.RequestAtCentre(node.Element);
+
                 default:
                     return false;
             }

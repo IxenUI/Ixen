@@ -124,6 +124,7 @@ namespace Ixen.Platform.Windows.NativeApi
                 case 0x12: return Key.Alt;
                 case 0x5B: return Key.Meta;
                 case 0x5C: return Key.Meta;
+                case 0x5D: return Key.ContextMenu;
 
                 case 0xB3: return Key.MediaPlayPause;
                 case 0xFA: return Key.MediaPlay;

@@ -203,6 +203,7 @@ namespace Ixen.Core.Accessibility
             return element.Role != AccessibleRole.None
                 || element.Command != null
                 || ClicksLikeAButton(element)
+                || element.HandlesContext
                 || element.HasShortcut
                 || element.LiveRegion != LiveRegionKind.None
                 || element.Focusable
@@ -440,6 +441,11 @@ namespace Ixen.Core.Accessibility
             if (element is IAccessibleRange range && range.HasRange && range.CanSetValue)
             {
                 actions |= AccessibleActions.SetRangeValue;
+            }
+
+            if (element.HandlesContext)
+            {
+                actions |= AccessibleActions.ShowMenu;
             }
 
             if (Input.ScrollNavigator.Find(element.Parent, 0, 1) != null

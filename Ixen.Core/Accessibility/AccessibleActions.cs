@@ -15,6 +15,7 @@ namespace Ixen.Core.Accessibility
         Select = 64,
         SetRangeValue = 128,
         AddToSelection = 256,
-        RemoveFromSelection = 512
+        RemoveFromSelection = 512,
+        ShowMenu = 1024
     }
 }

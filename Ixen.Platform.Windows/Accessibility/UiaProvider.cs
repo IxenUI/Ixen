@@ -6,7 +6,7 @@ using System.Runtime.InteropServices.Marshalling;
 namespace Ixen.Platform.Windows.Accessibility
 {
     [GeneratedComClass]
-    internal partial class UiaProvider : IRawElementProviderSimple, IRawElementProviderFragment, IInvokeProvider, IValueProvider,
+    internal partial class UiaProvider : IRawElementProviderSimple2, IRawElementProviderFragment, IInvokeProvider, IValueProvider,
         IScrollItemProvider, IToggleProvider, IExpandCollapseProvider, ISelectionItemProvider, ISelectionProvider,
         IRangeValueProvider, IGridProvider, IGridItemProvider, ITableProvider, ITableItemProvider
     {
@@ -28,6 +28,16 @@ namespace Ixen.Platform.Windows.Accessibility
         public virtual nint get_HostRawElementProvider() => 0;
 
         public nint GetPatternProvider(int patternId) => UiaNative.UnknownOf(PatternOf(patternId));
+
+        public void ShowContextMenu()
+        {
+            AccessibleNode node = Node;
+
+            if (node != null && node.Supports(AccessibleActions.ShowMenu))
+            {
+                _bridge.Post(_id, AccessibleActions.ShowMenu, null);
+            }
+        }
 
         private object PatternOf(int patternId)
         {

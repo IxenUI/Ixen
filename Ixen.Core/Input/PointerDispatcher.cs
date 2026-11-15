@@ -787,6 +787,7 @@ namespace Ixen.Core.Input
             }
 
             VisualElement pressed = _pressed;
+            PointerKind kind = _kind;
 
             _longPress = Scheduler.Schedule(LONG_PRESS_DELAY, false, () =>
             {
@@ -800,6 +801,11 @@ namespace Ixen.Core.Input
                 var args = Args(x, y, button, pressed);
                 Bubble(pressed, args, PointerEventKind.LongPress);
                 _longPressHandled = args.Handled;
+
+                if (!_longPressHandled && kind == PointerKind.Touch && !_dragging && _panning == null)
+                {
+                    _longPressHandled = ContextEventArgs.Request(pressed, x, y, button, kind, _modifiers, false);
+                }
             });
         }
 
@@ -1493,8 +1499,15 @@ namespace Ixen.Core.Input
             EndDrag(x, y);
 
             bool isClick = hit != null && hit == _pressed && !_longPressHandled && button == PointerButton.Left;
+            bool isContext = hit != null && hit == _pressed && button == PointerButton.Right;
 
             _pressed = null;
+
+            if (isContext)
+            {
+                ContextEventArgs.Request(hit, x, y, button, _kind, _modifiers, false);
+                return;
+            }
 
             if (!isClick)
             {

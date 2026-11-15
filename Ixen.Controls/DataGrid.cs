@@ -776,6 +776,8 @@ namespace Ixen.Controls
             _editor.Parent.RemoveChild(_editor);
         }
 
+        protected override VisualElement ContextAnchor => RealisedRow(_selection.Current);
+
         private DataGridRow RealisedRow(int index)
         {
             object item = ItemAt(index);
@@ -1087,6 +1089,7 @@ namespace Ixen.Controls
 
             row.PointerClick += OnRowClick;
             row.PointerDoubleClick += OnRowDoubleClick;
+            row.ContextRequested += OnRowContext;
 
             return row;
         }
@@ -1435,6 +1438,24 @@ namespace Ixen.Controls
 
                 return;
             }
+        }
+
+        private void OnRowContext(object sender, ContextEventArgs args)
+        {
+            object item = (sender as DataGridRow)?.Item;
+            int index = IndexOf(item);
+
+            if (index < 0)
+            {
+                return;
+            }
+
+            if (!_selection.Contains(item))
+            {
+                _selection.Click(index, KeyModifiers.None, Host?.AcceleratorModifier ?? KeyModifiers.Control);
+            }
+
+            Focus();
         }
 
         private void OnRowClick(object sender, PointerEventArgs args)

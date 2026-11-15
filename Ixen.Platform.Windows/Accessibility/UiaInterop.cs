@@ -48,6 +48,13 @@ namespace Ixen.Platform.Windows.Accessibility
     }
 
     [GeneratedComInterface]
+    [Guid("a0a839a9-8da1-4a82-806a-8e0d44e79f56")]
+    internal unsafe partial interface IRawElementProviderSimple2 : IRawElementProviderSimple
+    {
+        void ShowContextMenu();
+    }
+
+    [GeneratedComInterface]
     [Guid("f7063da8-8359-439c-9297-bbc5299a7d87")]
     internal partial interface IRawElementProviderFragment
     {

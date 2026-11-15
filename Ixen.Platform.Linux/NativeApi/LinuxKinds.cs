@@ -36,7 +36,8 @@ namespace Ixen.Platform.Linux.NativeApi
         Select = 64,
         SetRangeValue = 128,
         AddToSelection = 256,
-        RemoveFromSelection = 512
+        RemoveFromSelection = 512,
+        ShowMenu = 1024
     }
 
     internal enum LinuxAccessibilityNotice

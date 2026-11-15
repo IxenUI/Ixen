@@ -186,6 +186,11 @@ namespace Ixen.Core.Input
                 return true;
             }
 
+            if (AsksForContext(key, modifiers) && ContextEventArgs.RequestAtCentre(target))
+            {
+                return true;
+            }
+
             if (!TypesInto(_focused, key, modifiers) && TryShortcut(root, key, modifiers, accelerator))
             {
                 return true;
@@ -208,6 +213,12 @@ namespace Ixen.Core.Input
             }
 
             return focused.IsEnabled && (focused.HandlesClick || focused.Command != null);
+        }
+
+        private static bool AsksForContext(Key key, KeyModifiers modifiers)
+        {
+            return (key == Key.ContextMenu && modifiers == KeyModifiers.None)
+                || (key == Key.F10 && modifiers == KeyModifiers.Shift);
         }
 
         private static bool TypesInto(VisualElement focused, Key key, KeyModifiers modifiers)

@@ -291,6 +291,12 @@ namespace Ixen.View.Android
                 info.AddAction(AccessibilityNodeInfo.AccessibilityAction.ActionClearSelection);
             }
 
+            if (node.Supports(AccessibleActions.ShowMenu))
+            {
+                info.AddAction(AccessibilityNodeInfo.AccessibilityAction.ActionLongClick);
+                info.LongClickable = true;
+            }
+
             SetExpanded(info, node);
             SetRange(info, node);
             SetCollection(info, node);
@@ -553,6 +559,9 @@ namespace Ixen.View.Android
 
                 case Action.ClearSelection:
                     return _surface.Perform(node, AccessibleActions.RemoveFromSelection);
+
+                case Action.LongClick:
+                    return _surface.Perform(node, AccessibleActions.ShowMenu);
 
                 case Action.Focus:
                     if (!_surface.Perform(node, AccessibleActions.Focus))

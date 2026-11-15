@@ -30,6 +30,7 @@ namespace Ixen.Platform.Linux.NativeApi
         internal const int XK_PAGE_DOWN = 0xFF56;
         internal const int XK_END = 0xFF57;
         internal const int XK_INSERT = 0xFF63;
+        internal const int XK_MENU = 0xFF67;
         internal const int XK_KP_ENTER = 0xFF8D;
         internal const int XK_KP_HOME = 0xFF95;
         internal const int XK_KP_LEFT = 0xFF96;
@@ -158,6 +159,8 @@ namespace Ixen.Platform.Linux.NativeApi
                 case XK_META_R: return Key.Meta;
                 case XK_SUPER_L: return Key.Meta;
                 case XK_SUPER_R: return Key.Meta;
+
+                case XK_MENU: return Key.ContextMenu;
 
                 case XF86_AUDIO_PLAY: return Key.MediaPlayPause;
                 case XF86_AUDIO_PAUSE: return Key.MediaPause;

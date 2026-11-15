@@ -20,6 +20,7 @@ namespace Ixen.Core.Visual
         public event EventHandler<WheelEventArgs> PointerWheel;
         public event EventHandler<PointerEventArgs> PointerDoubleClick;
         public event EventHandler<PointerEventArgs> PointerLongPress;
+        public event EventHandler<ContextEventArgs> ContextRequested;
         public event EventHandler<DragEventArgs> PointerDragStart;
         public event EventHandler<DragEventArgs> PointerDrag;
         public event EventHandler<DragEventArgs> PointerDragEnd;
@@ -38,7 +39,12 @@ namespace Ixen.Core.Visual
         internal bool TakesPointer
             => Focusable || _command != null || LabelFor != null
                 || PointerDown != null || PointerUp != null || PointerClick != null
-                || PointerDoubleClick != null || PointerLongPress != null || PointerDragStart != null;
+                || PointerDoubleClick != null || PointerLongPress != null || PointerDragStart != null
+                || ContextRequested != null;
+
+        internal bool HandlesContext => ContextRequested != null;
+
+        protected internal virtual VisualElement ContextAnchor => null;
 
         internal void RaisePointerDown(PointerEventArgs args) => PointerDown?.Invoke(this, args);
         internal void RaisePointerUp(PointerEventArgs args) => PointerUp?.Invoke(this, args);
@@ -144,6 +150,7 @@ namespace Ixen.Core.Visual
         internal void RaisePointerWheel(WheelEventArgs args) => PointerWheel?.Invoke(this, args);
         internal void RaisePointerDoubleClick(PointerEventArgs args) => PointerDoubleClick?.Invoke(this, args);
         internal void RaisePointerLongPress(PointerEventArgs args) => PointerLongPress?.Invoke(this, args);
+        internal void RaiseContextRequested(ContextEventArgs args) => ContextRequested?.Invoke(this, args);
         internal void RaisePointerDragStart(DragEventArgs args) => PointerDragStart?.Invoke(this, args);
         internal void RaisePointerDrag(DragEventArgs args) => PointerDrag?.Invoke(this, args);
         internal void RaisePointerDragEnd(DragEventArgs args) => PointerDragEnd?.Invoke(this, args);

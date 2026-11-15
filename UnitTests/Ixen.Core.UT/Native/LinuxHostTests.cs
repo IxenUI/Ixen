@@ -112,7 +112,13 @@ namespace Ixen.Core.UT.Native
         {
             Assert.AreEqual(Key.None, LinuxKeys.ToKey(0));
             Assert.AreEqual(Key.None, LinuxKeys.ToKey(0x002C));
-            Assert.AreEqual(Key.None, LinuxKeys.ToKey(0xFF67));
+            Assert.AreEqual(Key.None, LinuxKeys.ToKey(0xFF6A));
+        }
+
+        [TestMethod]
+        public void TheMenuKeyIsTheContextMenuKey()
+        {
+            Assert.AreEqual(Key.ContextMenu, LinuxKeys.ToKey(0xFF67));
         }
 
         [TestMethod]
