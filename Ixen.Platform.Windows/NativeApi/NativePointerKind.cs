@@ -20,7 +20,8 @@ namespace Ixen.Platform.Windows.NativeApi
     {
         Preferences = 1,
         Dpi = 2,
-        Taskbar = 3
+        Taskbar = 3,
+        Wake = 4
     }
 
     internal enum NativeProgressState

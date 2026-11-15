@@ -65,6 +65,9 @@
 #define IXEN_CHANGE_PREFERENCES 1
 #define IXEN_CHANGE_DPI 2
 #define IXEN_CHANGE_TASKBAR 3
+#define IXEN_CHANGE_WAKE 4
+
+#define WAKE_MESSAGE (WM_APP + 2)
 
 #define IXEN_PROGRESS_NONE 0
 #define IXEN_PROGRESS_INDETERMINATE 1
@@ -1275,6 +1278,21 @@ void NativeWindow::Invalidate()
     }
 }
 
+void NativeWindow::Wake()
+{
+    if (!_handle)
+    {
+        return;
+    }
+
+    InvalidateRect(_handle, nullptr, FALSE);
+
+    if (!IsWindowVisible(_handle) || IsIconic(_handle))
+    {
+        PostMessageW(_handle, WAKE_MESSAGE, 0, 0);
+    }
+}
+
 typedef BOOL(WINAPI* PFN_wglSwapInterval)(int);
 
 bool NativeWindow::CreateGlContext()
@@ -1900,6 +1918,9 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
         return 1;
     case TRAY_MESSAGE:
         return HandleTray(wParam, lParam);
+    case WAKE_MESSAGE:
+        NotifySystemChange(IXEN_CHANGE_WAKE);
+        return 0;
     case WM_COMMAND:
         if (HIWORD(wParam) == THBN_CLICKED)
         {

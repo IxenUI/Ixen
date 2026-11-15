@@ -56,6 +56,14 @@ namespace Ixen.Core
             Wake?.Invoke();
         }
 
+        internal void RunPosted()
+        {
+            if (IsOwnThread)
+            {
+                DrainPosted();
+            }
+        }
+
         private void DrainPosted()
         {
             int pending = _posted.Count;

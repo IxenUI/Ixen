@@ -23,6 +23,7 @@ IXEN_API_ENTRY void WA_RegisterDragCallBack(NativeWindow* window, int __stdcall 
 IXEN_API_ENTRY void WA_SetWindowAcceptsFiles(NativeWindow* window, int value);
 IXEN_API_ENTRY void* WA_GetWindowHandle(NativeWindow* window);
 IXEN_API_ENTRY void WA_InvalidateWindow(NativeWindow* window);
+IXEN_API_ENTRY void WA_WakeWindow(NativeWindow* window);
 IXEN_API_ENTRY void WA_SetWindowCursor(NativeWindow* window, int kind);
 IXEN_API_ENTRY void WA_SetWindowCursorHandle(NativeWindow* window, void* cursor);
 IXEN_API_ENTRY unsigned int WA_GetWindowDpi(NativeWindow* window);

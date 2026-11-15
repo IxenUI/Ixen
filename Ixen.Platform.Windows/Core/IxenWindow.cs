@@ -47,7 +47,7 @@ namespace Ixen.Platform.Windows
             _ixenSurface = ixenSurface;
             ReadPreferences();
             _host = new IxenHost(ixenSurface, RequestRepaint, new MessageScheduler(ixenSurface.Post), new WindowsClipboard(),
-                SetCursor, new WindowsImageSource(), null, CanPresent);
+                SetCursor, new WindowsImageSource(), WakeWindow, CanPresent);
 
             IxenSynchronizationContext.Install(ixenSurface);
 
@@ -210,6 +210,9 @@ namespace Ixen.Platform.Windows
         private void RequestRepaint()
             => WindowApi.InvalidateWindow(_windowPtr);
 
+        private void WakeWindow()
+            => WindowApi.WakeWindow(_windowPtr);
+
         private void SetCursor(Ixen.Core.Visual.Styles.Descriptors.CursorKind kind, CursorImage image)
         {
             IntPtr handle = _cursors.Get(image);
@@ -249,6 +252,10 @@ namespace Ixen.Platform.Windows
 
                 case NativeSystemChange.Taskbar:
                     _taskbar.Ready();
+                    break;
+
+                case NativeSystemChange.Wake:
+                    _host.RunPosted();
                     break;
             }
         }

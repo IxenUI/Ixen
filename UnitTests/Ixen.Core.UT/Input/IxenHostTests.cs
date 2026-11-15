@@ -6,6 +6,7 @@ using Ixen.Platform;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SkiaSharp;
 using System;
+using System.Collections.Generic;
 
 namespace Ixen.Core.UT.Input
 {
@@ -307,6 +308,44 @@ namespace Ixen.Core.UT.Input
 
             Assert.AreEqual(1, _repaints,
                 "nothing else asks for the frame that shows what was dropped");
+        }
+
+        [TestMethod]
+        public void PostedWorkRunsWithoutAFrameWhenTheHostAsks()
+        {
+            var surface = new IxenSurface { Styles = new StyleRegistry() };
+            int woken = 0;
+            var host = new IxenHost(surface, () => { }, wake: () => woken++);
+            var ran = new List<string>();
+
+            surface.Post(() => ran.Add("shown"));
+
+            Assert.AreEqual(1, woken, "a post wakes the host through its own callback");
+            Assert.AreEqual(0, ran.Count);
+
+            host.RunPosted();
+
+            Assert.AreEqual("shown", string.Join(",", ran),
+                "a hidden window gets no paint, so the host drains the queue itself");
+        }
+
+        [TestMethod]
+        public void AFaultInWorkRunWithoutAFrameIsReportedAsPosted()
+        {
+            var surface = new IxenSurface { Styles = new StyleRegistry() };
+            var host = new IxenHost(surface, () => { });
+            IxenErrorPhase phase = IxenErrorPhase.Frame;
+
+            host.UnhandledError += (s, e) =>
+            {
+                phase = e.Phase;
+                e.Handled = true;
+            };
+
+            surface.Post(() => throw new InvalidOperationException("no"));
+            host.RunPosted();
+
+            Assert.AreEqual(IxenErrorPhase.Posted, phase);
         }
 
         [TestMethod]

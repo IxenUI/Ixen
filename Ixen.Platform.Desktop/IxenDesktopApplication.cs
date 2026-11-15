@@ -52,6 +52,9 @@ namespace Ixen.Platform.Desktop
             throw Unsupported();
         }
 
+        public static SingleInstance ClaimInstance(string name, string[] args, Action<string[]> received)
+            => SingleInstance.Claim(name, args, received);
+
         public static int CreateWindow(IxenSurface surface)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

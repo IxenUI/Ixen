@@ -106,6 +106,14 @@ void WA_RegisterWheelCallBack(NativeWindow* window, void __stdcall callBack(int,
     window->SetOnWheelCallBack(callBack);
 }
 
+void WA_WakeWindow(NativeWindow* window)
+{
+    if (window)
+    {
+        window->Wake();
+    }
+}
+
 void WA_InvalidateWindow(NativeWindow* window)
 {
     if (!window)

@@ -51,6 +51,8 @@ namespace Ixen.Platform
             }
         }
 
+        public void RunPosted() => _surface.RunPosted();
+
         private class HostScheduler : IScheduler
         {
             protected readonly IxenHost Host;

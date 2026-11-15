@@ -118,6 +118,7 @@ namespace IxenWindowsNative
         LPWSTR GetTitle();
         void SetTitle(LPCWSTR value);
         void Invalidate();
+        void Wake();
         void SetCursorKind(int kind);
         void SetCursorHandle(void* cursor);
         UINT GetDpi();

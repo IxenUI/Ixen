@@ -32,6 +32,7 @@ namespace Ixen.Core.UT.Native
             { "IXEN_CHANGE_PREFERENCES", "Preferences" },
             { "IXEN_CHANGE_DPI", "Dpi" },
             { "IXEN_CHANGE_TASKBAR", "Taskbar" },
+            { "IXEN_CHANGE_WAKE", "Wake" },
 
             { "IXEN_PROGRESS_NONE", "None" },
             { "IXEN_PROGRESS_INDETERMINATE", "Indeterminate" },

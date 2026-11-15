@@ -62,6 +62,9 @@ namespace Ixen.Platform.Windows.NativeApi
         [DllImport(LIB_NAME, EntryPoint = "WA_InvalidateWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern void InvalidateWindow(IntPtr windowPtr);
 
+        [DllImport(LIB_NAME, EntryPoint = "WA_WakeWindow", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void WakeWindow(IntPtr windowPtr);
+
         [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowCursor", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetWindowCursor(IntPtr windowPtr, int kind);
 
