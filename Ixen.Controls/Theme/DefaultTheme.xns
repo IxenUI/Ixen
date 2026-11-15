@@ -180,6 +180,16 @@ $control_focus_soft:   #EEF1FE
     box-shadow: 0px 6px 18px #30000000
 }
 
+#PopupPanel {
+    background: $control_panel
+    border: $control_line 1px inner
+    corner-radius: 8px
+    padding: 12px
+    gap: 8px
+    color: $control_text
+    box-shadow: 0px 8px 24px #38000000
+}
+
 #MenuItem {
     layout: row
     height: ?

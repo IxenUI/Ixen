@@ -426,6 +426,7 @@ namespace Ixen.Controls.UT
                 "DatePickerDay:selected #FFFFFF",
                 "DragGhostBadge #FFFFFF",
                 "MenuPanel #30000000",
+                "PopupPanel #38000000",
                 "DragGhost #30000000",
                 "Toast #30000000",
                 "SearchSuggestions #30000000",

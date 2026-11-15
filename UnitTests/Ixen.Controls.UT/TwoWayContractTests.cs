@@ -111,6 +111,7 @@ namespace Ixen.Controls.UT
                     "Dialog.Open",
                     "Expander.Expanded",
                     "Menu.Open",
+                    "Popup.Open",
                     "RadioButton.Checked",
                     "RangeSlider.Lower",
                     "RangeSlider.Upper",
