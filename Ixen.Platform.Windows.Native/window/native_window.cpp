@@ -75,6 +75,12 @@
 #define IXEN_THUMB_DISABLED 1
 #define IXEN_THUMB_HIDDEN 2
 
+#define IXEN_TRAY_SELECT 0
+#define IXEN_TRAY_MENU 1
+
+#define TRAY_MESSAGE (WM_APP + 1)
+#define TRAY_ID 1
+
 #ifndef THBN_CLICKED
 #define THBN_CLICKED 0x1800
 #endif
@@ -632,6 +638,119 @@ int NativeWindow::SetThumbButtons(int count, void** icons, const int* flags, con
     }
 
     return SUCCEEDED(result) ? 1 : 0;
+}
+
+UINT NativeWindow::ShellCreatedMessage()
+{
+    static UINT message = RegisterWindowMessageW(L"TaskbarCreated");
+
+    return message;
+}
+
+void NativeWindow::FillTray(NOTIFYICONDATAW& data)
+{
+    data = {};
+    data.cbSize = sizeof(NOTIFYICONDATAW);
+    data.hWnd = _handle;
+    data.uID = TRAY_ID;
+}
+
+bool NativeWindow::AddTray()
+{
+    NOTIFYICONDATAW data;
+    FillTray(data);
+
+    data.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_SHOWTIP;
+    data.uCallbackMessage = TRAY_MESSAGE;
+    data.hIcon = _trayIcon;
+    wcsncpy_s(data.szTip, ARRAYSIZE(data.szTip), _trayTip.c_str(), _TRUNCATE);
+
+    if (!Shell_NotifyIconW(NIM_ADD, &data))
+    {
+        return false;
+    }
+
+    data.uVersion = NOTIFYICON_VERSION_4;
+
+    return Shell_NotifyIconW(NIM_SETVERSION, &data) != FALSE;
+}
+
+int NativeWindow::SetTray(int visible, void* icon, const wchar_t* tip)
+{
+    if (visible == 0)
+    {
+        if (_trayShown)
+        {
+            NOTIFYICONDATAW data;
+            FillTray(data);
+            Shell_NotifyIconW(NIM_DELETE, &data);
+            _trayShown = false;
+        }
+
+        return 1;
+    }
+
+    _trayIcon = static_cast<HICON>(icon);
+    _trayTip = tip != nullptr ? tip : L"";
+
+    if (!_trayShown)
+    {
+        _trayShown = AddTray();
+
+        return _trayShown ? 1 : 0;
+    }
+
+    NOTIFYICONDATAW data;
+    FillTray(data);
+
+    data.uFlags = NIF_ICON | NIF_TIP | NIF_SHOWTIP;
+    data.hIcon = _trayIcon;
+    wcsncpy_s(data.szTip, ARRAYSIZE(data.szTip), _trayTip.c_str(), _TRUNCATE);
+
+    return Shell_NotifyIconW(NIM_MODIFY, &data) ? 1 : 0;
+}
+
+int NativeWindow::NotifyTray(const wchar_t* title, const wchar_t* text)
+{
+    if (!_trayShown)
+    {
+        return 0;
+    }
+
+    NOTIFYICONDATAW data;
+    FillTray(data);
+
+    data.uFlags = NIF_INFO;
+    data.dwInfoFlags = NIIF_NONE;
+    wcsncpy_s(data.szInfoTitle, ARRAYSIZE(data.szInfoTitle), title != nullptr ? title : L"", _TRUNCATE);
+    wcsncpy_s(data.szInfo, ARRAYSIZE(data.szInfo), text != nullptr ? text : L"", _TRUNCATE);
+
+    return Shell_NotifyIconW(NIM_MODIFY, &data) ? 1 : 0;
+}
+
+LRESULT NativeWindow::HandleTray(WPARAM wParam, LPARAM lParam)
+{
+    int kind;
+
+    switch (LOWORD(lParam))
+    {
+    case NIN_SELECT:
+    case NIN_KEYSELECT:
+        kind = IXEN_TRAY_SELECT;
+        break;
+    case WM_CONTEXTMENU:
+        kind = IXEN_TRAY_MENU;
+        break;
+    default:
+        return 0;
+    }
+
+    if (_trayCallBack != nullptr)
+    {
+        _trayCallBack(kind, GET_X_LPARAM(wParam), GET_Y_LPARAM(wParam));
+    }
+
+    return 0;
 }
 
 int NativeWindow::SetTaskbarProgress(int state, int completed, int total)
@@ -1280,6 +1399,8 @@ LRESULT NativeWindow::HandleDestroy()
     ReleaseTaskbar();
     _taskbarReady = false;
 
+    SetTray(0, nullptr, nullptr);
+
     if (_comInitialized)
     {
         CoUninitialize();
@@ -1763,10 +1884,22 @@ LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
         return HandleTaskbarCreated();
     }
 
+    if (msg != 0 && msg == ShellCreatedMessage())
+    {
+        if (_trayShown)
+        {
+            _trayShown = AddTray();
+        }
+
+        return 0;
+    }
+
     switch (msg)
     {
     case WM_ERASEBKGND:
         return 1;
+    case TRAY_MESSAGE:
+        return HandleTray(wParam, lParam);
     case WM_COMMAND:
         if (HIWORD(wParam) == THBN_CLICKED)
         {

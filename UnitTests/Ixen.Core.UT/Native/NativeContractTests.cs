@@ -42,6 +42,9 @@ namespace Ixen.Core.UT.Native
             { "IXEN_THUMB_DISABLED", "Disabled" },
             { "IXEN_THUMB_HIDDEN", "Hidden" },
 
+            { "IXEN_TRAY_SELECT", "Select" },
+            { "IXEN_TRAY_MENU", "Menu" },
+
             { "IXEN_DRAG_OVER", "Over" },
             { "IXEN_DRAG_LEAVE", "Leave" },
 
@@ -102,7 +105,8 @@ namespace Ixen.Core.UT.Native
             { "_systemCallBack", "OnSystemCallBack" },
             { "_hitTestCallBack", "OnHitTestCallBack" },
             { "_touchCallBack", "OnTouchCallBack" },
-            { "_thumbButtonCallBack", "OnThumbButtonCallBack" }
+            { "_thumbButtonCallBack", "OnThumbButtonCallBack" },
+            { "_trayCallBack", "OnTrayCallBack" }
         };
 
         private static readonly Dictionary<string, string> _returns
@@ -277,6 +281,7 @@ namespace Ixen.Core.UT.Native
             ReadEnum(kinds, "NativePickKind", found);
             ReadEnum(kinds, "NativeProgressState", found);
             ReadEnum(kinds, "NativeThumbFlag", found);
+            ReadEnum(kinds, "NativeTrayKind", found);
             ReadEnum(keys, "NativeKeyKind", found);
             ReadEnum(keys, "NativeImeKind", found);
             ReadEnum(keys, "NativeWindowArea", found);
@@ -335,6 +340,11 @@ namespace Ixen.Core.UT.Native
             if (define.StartsWith("IXEN_THUMB_", StringComparison.Ordinal))
             {
                 return "NativeThumbFlag." + suffix;
+            }
+
+            if (define.StartsWith("IXEN_TRAY_", StringComparison.Ordinal))
+            {
+                return "NativeTrayKind." + suffix;
             }
 
             if (define.StartsWith("IXEN_DRAG_", StringComparison.Ordinal))

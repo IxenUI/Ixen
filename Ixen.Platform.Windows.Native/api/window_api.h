@@ -39,6 +39,9 @@ IXEN_API_ENTRY void WA_RegisterThumbButtonCallBack(NativeWindow* window, void __
 IXEN_API_ENTRY int WA_SetThumbButtons(NativeWindow* window, int count, void** icons, const int* flags,
     const wchar_t* tips);
 IXEN_API_ENTRY int WA_SetTaskbarProgress(NativeWindow* window, int state, int completed, int total);
+IXEN_API_ENTRY void WA_RegisterTrayCallBack(NativeWindow* window, void __stdcall callBack(int, int, int));
+IXEN_API_ENTRY int WA_SetTray(NativeWindow* window, int visible, void* icon, const wchar_t* tip);
+IXEN_API_ENTRY int WA_NotifyTray(NativeWindow* window, const wchar_t* title, const wchar_t* text);
 IXEN_API_ENTRY int WA_CreateGlContext(NativeWindow* window);
 IXEN_API_ENTRY int WA_EnsureGlContext(NativeWindow* window);
 IXEN_API_ENTRY void WA_SwapGlBuffers(NativeWindow* window);

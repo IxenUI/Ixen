@@ -23,6 +23,7 @@ namespace Ixen.Platform.Windows.NativeApi
         public delegate int OnHitTestCallBack(int x, int y);
         public delegate void OnTouchCallBack(int kind, int x, int y, int id);
         public delegate void OnThumbButtonCallBack(int id);
+        public delegate void OnTrayCallBack(int kind, int x, int y);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr CreateWindow([MarshalAs(UnmanagedType.LPWStr)] string title, int width, int height);
@@ -121,6 +122,16 @@ namespace Ixen.Platform.Windows.NativeApi
 
         [DllImport(LIB_NAME, EntryPoint = "WA_SetTaskbarProgress", CallingConvention = CallingConvention.Cdecl)]
         public static extern int SetTaskbarProgress(IntPtr windowPtr, int state, int completed, int total);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterTrayCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterTrayCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnTrayCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_SetTray", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        public static extern int SetTray(IntPtr windowPtr, int visible, IntPtr icon, [MarshalAs(UnmanagedType.LPWStr)] string tip);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_NotifyTray", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        public static extern int NotifyTray(IntPtr windowPtr, [MarshalAs(UnmanagedType.LPWStr)] string title,
+            [MarshalAs(UnmanagedType.LPWStr)] string text);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateGlContext", CallingConvention = CallingConvention.Cdecl)]
         public static extern int CreateGlContext(IntPtr windowPtr);

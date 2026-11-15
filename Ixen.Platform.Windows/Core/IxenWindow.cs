@@ -31,6 +31,9 @@ namespace Ixen.Platform.Windows
         private readonly WindowApi.OnThumbButtonCallBack _onThumbButton;
         private readonly WindowsWindowControl _window;
         private readonly WindowsTaskbar _taskbar;
+        private readonly WindowsTray _tray;
+        private readonly WindowsIconCache _iconCache;
+        private readonly WindowApi.OnTrayCallBack _onTray;
 
         private readonly UiaBridge _accessibility;
         private readonly NativeCursorImages _cursors = new();
@@ -61,6 +64,7 @@ namespace Ixen.Platform.Windows
             _onHitTest = OnHitTest;
             _onTouch = OnTouch;
             _onThumbButton = OnThumbButton;
+            _onTray = OnTray;
             _windowPtr = WindowApi.CreateWindow(_ixenSurface.Title ?? string.Empty, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
@@ -75,10 +79,12 @@ namespace Ixen.Platform.Windows
                 _ixenSurface.Files = new WindowsFilePicker(() => _windowPtr);
             }
 
-            _taskbar = new WindowsTaskbar(_windowPtr, () => _ixenSurface.ImageSource ?? new WindowsImageSource(),
-                _ixenSurface.Post);
+            _iconCache = new WindowsIconCache(() => _ixenSurface.ImageSource ?? new WindowsImageSource());
+            _taskbar = new WindowsTaskbar(_windowPtr, _iconCache, _ixenSurface.Post);
+            _tray = new WindowsTray(_windowPtr, _iconCache, () => _window.Show());
             _window = new WindowsWindowControl(() => WindowApi.GetWindowHandle(_windowPtr), ReadPlacement,
-                _ixenSurface.InitOptions.ExtendIntoTitleBar, _taskbar);
+                _ixenSurface.InitOptions.ExtendIntoTitleBar, _taskbar, _tray,
+                visible => _ixenSurface.Presentable = visible && CanPresent());
             ApplyPlacement(_ixenSurface.InitOptions);
             _ixenSurface.Window = _window;
 
@@ -119,11 +125,14 @@ namespace Ixen.Platform.Windows
             WindowApi.RegisterSystemCallBack(_windowPtr, _onSystem);
             WindowApi.RegisterTouchCallBack(_windowPtr, _onTouch);
             WindowApi.RegisterThumbButtonCallBack(_windowPtr, _onThumbButton);
+            WindowApi.RegisterTrayCallBack(_windowPtr, _onTray);
 
             return WindowApi.ShowWindow(_windowPtr);
         }
 
         private void OnThumbButton(int id) => _taskbar.Clicked(id);
+
+        private void OnTray(int kind, int x, int y) => _tray.Raised(kind, x, y);
 
         private int OnHitTest(int x, int y)
         {
@@ -235,6 +244,7 @@ namespace Ixen.Platform.Windows
                 case NativeSystemChange.Dpi:
                     SetIcon(_ixenSurface.InitOptions.Icon);
                     _taskbar.DpiChanged();
+                    _tray.DpiChanged();
                     break;
 
                 case NativeSystemChange.Taskbar:
@@ -333,7 +343,14 @@ namespace Ixen.Platform.Windows
         private const float DEFAULT_DPI = 96f;
 
         private bool CanPresent()
-            => !IsIconic(WindowApi.GetWindowHandle(_windowPtr));
+        {
+            IntPtr window = WindowApi.GetWindowHandle(_windowPtr);
+
+            return !IsIconic(window) && IsWindowVisible(window);
+        }
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindowVisible(IntPtr window);
 
         [DllImport("user32.dll")]
         private static extern bool IsIconic(IntPtr window);
@@ -546,6 +563,8 @@ namespace Ixen.Platform.Windows
             _cursors.Dispose();
             _icons.Dispose();
             _taskbar.Dispose();
+            _tray.Dispose();
+            _iconCache.Dispose();
 
             WindowApi.DestroyWindow(_windowPtr);
         }

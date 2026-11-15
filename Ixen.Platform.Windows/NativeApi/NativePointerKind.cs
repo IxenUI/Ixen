@@ -32,6 +32,12 @@ namespace Ixen.Platform.Windows.NativeApi
         Paused = 4
     }
 
+    internal enum NativeTrayKind
+    {
+        Select = 0,
+        Menu = 1
+    }
+
     internal enum NativeThumbFlag
     {
         Disabled = 1,

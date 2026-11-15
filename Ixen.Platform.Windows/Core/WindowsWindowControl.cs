@@ -16,16 +16,48 @@ namespace Ixen.Platform.Windows
         private readonly Func<IntPtr> _handle;
         private readonly Func<WindowPlacement> _placement;
         private readonly WindowsTaskbar _taskbar;
+        private readonly WindowsTray _tray;
+        private readonly Action<bool> _visibility;
         private bool _maximized;
         private bool _topmost;
+        private bool _visible = true;
 
         internal WindowsWindowControl(Func<IntPtr> handle, Func<WindowPlacement> placement, bool extends,
-            WindowsTaskbar taskbar)
+            WindowsTaskbar taskbar, WindowsTray tray, Action<bool> visibility)
         {
             _handle = handle;
             _placement = placement;
             _taskbar = taskbar;
+            _tray = tray;
+            _visibility = visibility;
             ExtendsIntoTitleBar = extends;
+        }
+
+        public TrayIcon Tray
+        {
+            get => _tray.Icon;
+            set => _tray.Icon = value;
+        }
+
+        public bool Notify(string title, string message) => _tray.Notify(title, message);
+
+        public bool IsVisible => IsWindowVisible(_handle());
+
+        public void Hide()
+        {
+            ShowWindow(_handle(), SW_HIDE);
+            _visibility(false);
+            Sync();
+        }
+
+        public void Show()
+        {
+            IntPtr window = _handle();
+
+            ShowWindow(window, IsIconic(window) ? SW_RESTORE : SW_SHOW);
+            SetForegroundWindow(window);
+            _visibility(true);
+            Sync();
         }
 
         public WindowPlacement Placement => _placement();
@@ -75,19 +107,35 @@ namespace Ixen.Platform.Windows
         {
             bool maximized = IsMaximized;
             bool topmost = Topmost;
+            bool visible = IsVisible;
 
-            if (maximized == _maximized && topmost == _topmost)
+            if (maximized == _maximized && topmost == _topmost && visible == _visible)
             {
                 return;
             }
 
             _maximized = maximized;
             _topmost = topmost;
+            _visible = visible;
 
             Changed?.Invoke(this, EventArgs.Empty);
         }
 
+        private const int SW_HIDE = 0;
+        private const int SW_SHOW = 5;
         private const int GWL_EXSTYLE = -20;
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool IsWindowVisible(IntPtr window);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool IsIconic(IntPtr window);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool SetForegroundWindow(IntPtr window);
         private const long WS_EX_TOPMOST = 0x00000008;
         private const uint SWP_NOSIZE = 0x0001;
         private const uint SWP_NOMOVE = 0x0002;

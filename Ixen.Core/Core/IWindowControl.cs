@@ -20,6 +20,16 @@ namespace Ixen.Core
 
         void SetTaskbarProgress(TaskbarProgress state, double value);
 
+        TrayIcon Tray { get; set; }
+
+        bool Notify(string title, string message);
+
+        bool IsVisible { get; }
+
+        void Hide();
+
+        void Show();
+
         void Minimize();
 
         void Maximize();

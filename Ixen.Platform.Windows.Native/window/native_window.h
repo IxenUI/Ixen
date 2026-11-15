@@ -3,7 +3,9 @@
 
 #include <windows.h>
 #include <shobjidl.h>
+#include <shellapi.h>
 #include <map>
+#include <string>
 
 using namespace std;
 
@@ -35,6 +37,7 @@ namespace IxenWindowsNative
         int (*_hitTestCallBack)(int, int) = nullptr;
         void (*_touchCallBack)(int, int, int, int) = nullptr;
         void (*_thumbButtonCallBack)(int) = nullptr;
+        void (*_trayCallBack)(int, int, int) = nullptr;
         void* _pixelsBuffer = nullptr;
         bool _extended = false;
         int _logicalWidth = 0;
@@ -64,6 +67,14 @@ namespace IxenWindowsNative
         LRESULT HandleTaskbarCreated();
         void ReleaseTaskbar();
         ITaskbarList3* Taskbar();
+
+        bool _trayShown = false;
+        HICON _trayIcon = nullptr;
+        wstring _trayTip;
+        static UINT ShellCreatedMessage();
+        void FillTray(NOTIFYICONDATAW& data);
+        bool AddTray();
+        LRESULT HandleTray(WPARAM wParam, LPARAM lParam);
 
         RECT _clientRect = {};
         BITMAPINFOHEADER _bitmapInfoHeader = {};
@@ -141,6 +152,9 @@ namespace IxenWindowsNative
         void SetOnThumbButtonCallBack(void __stdcall callback(int)) { _thumbButtonCallBack = callback; }
         int SetThumbButtons(int count, void** icons, const int* flags, const wchar_t* tips);
         int SetTaskbarProgress(int state, int completed, int total);
+        void SetOnTrayCallBack(void __stdcall callback(int, int, int)) { _trayCallBack = callback; }
+        int SetTray(int visible, void* icon, const wchar_t* tip);
+        int NotifyTray(const wchar_t* title, const wchar_t* text);
     };
 }
 

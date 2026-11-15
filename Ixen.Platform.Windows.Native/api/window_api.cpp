@@ -247,6 +247,24 @@ int WA_SetTaskbarProgress(NativeWindow* window, int state, int completed, int to
     return window ? window->SetTaskbarProgress(state, completed, total) : 0;
 }
 
+void WA_RegisterTrayCallBack(NativeWindow* window, void __stdcall callBack(int, int, int))
+{
+    if (window)
+    {
+        window->SetOnTrayCallBack(callBack);
+    }
+}
+
+int WA_SetTray(NativeWindow* window, int visible, void* icon, const wchar_t* tip)
+{
+    return window ? window->SetTray(visible, icon, tip) : 0;
+}
+
+int WA_NotifyTray(NativeWindow* window, const wchar_t* title, const wchar_t* text)
+{
+    return window ? window->NotifyTray(title, text) : 0;
+}
+
 int WA_GetWindowPlacement(NativeWindow* window, int* values)
 {
     return window && window->GetPlacement(values) ? 1 : 0;
