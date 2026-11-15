@@ -28,7 +28,9 @@ namespace Ixen.Platform.Windows
         private readonly WindowApi.OnSystemCallBack _onSystem;
         private readonly WindowApi.OnHitTestCallBack _onHitTest;
         private readonly WindowApi.OnTouchCallBack _onTouch;
+        private readonly WindowApi.OnThumbButtonCallBack _onThumbButton;
         private readonly WindowsWindowControl _window;
+        private readonly WindowsTaskbar _taskbar;
 
         private readonly UiaBridge _accessibility;
         private readonly NativeCursorImages _cursors = new();
@@ -58,6 +60,7 @@ namespace Ixen.Platform.Windows
             _onSystem = OnSystem;
             _onHitTest = OnHitTest;
             _onTouch = OnTouch;
+            _onThumbButton = OnThumbButton;
             _windowPtr = WindowApi.CreateWindow(_ixenSurface.Title ?? string.Empty, _ixenSurface.InitOptions.Width, _ixenSurface.InitOptions.Height);
 
             if (_windowPtr == IntPtr.Zero)
@@ -72,8 +75,10 @@ namespace Ixen.Platform.Windows
                 _ixenSurface.Files = new WindowsFilePicker(() => _windowPtr);
             }
 
+            _taskbar = new WindowsTaskbar(_windowPtr, () => _ixenSurface.ImageSource ?? new WindowsImageSource(),
+                _ixenSurface.Post);
             _window = new WindowsWindowControl(() => WindowApi.GetWindowHandle(_windowPtr), ReadPlacement,
-                _ixenSurface.InitOptions.ExtendIntoTitleBar);
+                _ixenSurface.InitOptions.ExtendIntoTitleBar, _taskbar);
             ApplyPlacement(_ixenSurface.InitOptions);
             _ixenSurface.Window = _window;
 
@@ -108,9 +113,12 @@ namespace Ixen.Platform.Windows
             WindowApi.RegisterSuspendCallBack(_windowPtr, _onSuspend);
             WindowApi.RegisterSystemCallBack(_windowPtr, _onSystem);
             WindowApi.RegisterTouchCallBack(_windowPtr, _onTouch);
+            WindowApi.RegisterThumbButtonCallBack(_windowPtr, _onThumbButton);
 
             return WindowApi.ShowWindow(_windowPtr);
         }
+
+        private void OnThumbButton(int id) => _taskbar.Clicked(id);
 
         private int OnHitTest(int x, int y)
         {
@@ -221,6 +229,11 @@ namespace Ixen.Platform.Windows
 
                 case NativeSystemChange.Dpi:
                     SetIcon(_ixenSurface.InitOptions.Icon);
+                    _taskbar.DpiChanged();
+                    break;
+
+                case NativeSystemChange.Taskbar:
+                    _taskbar.Ready();
                     break;
             }
         }
@@ -527,6 +540,7 @@ namespace Ixen.Platform.Windows
             _renderer.Dispose();
             _cursors.Dispose();
             _icons.Dispose();
+            _taskbar.Dispose();
 
             WindowApi.DestroyWindow(_windowPtr);
         }

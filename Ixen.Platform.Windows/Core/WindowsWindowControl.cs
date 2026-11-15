@@ -1,5 +1,7 @@
 using Ixen.Core;
+using Ixen.Core.Components;
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Ixen.Platform.Windows
@@ -13,16 +15,27 @@ namespace Ixen.Platform.Windows
 
         private readonly Func<IntPtr> _handle;
         private readonly Func<WindowPlacement> _placement;
+        private readonly WindowsTaskbar _taskbar;
         private bool _maximized;
 
-        internal WindowsWindowControl(Func<IntPtr> handle, Func<WindowPlacement> placement, bool extends)
+        internal WindowsWindowControl(Func<IntPtr> handle, Func<WindowPlacement> placement, bool extends,
+            WindowsTaskbar taskbar)
         {
             _handle = handle;
             _placement = placement;
+            _taskbar = taskbar;
             ExtendsIntoTitleBar = extends;
         }
 
         public WindowPlacement Placement => _placement();
+
+        public IReadOnlyList<Command> TaskbarButtons
+        {
+            get => _taskbar.Buttons;
+            set => _taskbar.Buttons = value;
+        }
+
+        public void SetTaskbarProgress(TaskbarProgress state, double value) => _taskbar.SetProgress(state, value);
 
         public event EventHandler Changed;
 

@@ -19,7 +19,23 @@ namespace Ixen.Platform.Windows.NativeApi
     internal enum NativeSystemChange
     {
         Preferences = 1,
-        Dpi = 2
+        Dpi = 2,
+        Taskbar = 3
+    }
+
+    internal enum NativeProgressState
+    {
+        None = 0,
+        Indeterminate = 1,
+        Normal = 2,
+        Error = 3,
+        Paused = 4
+    }
+
+    internal enum NativeThumbFlag
+    {
+        Disabled = 1,
+        Hidden = 2
     }
 
     internal enum NativeDragKind

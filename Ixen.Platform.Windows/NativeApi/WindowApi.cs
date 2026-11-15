@@ -22,6 +22,7 @@ namespace Ixen.Platform.Windows.NativeApi
         public delegate void OnSystemCallBack(int kind);
         public delegate int OnHitTestCallBack(int x, int y);
         public delegate void OnTouchCallBack(int kind, int x, int y, int id);
+        public delegate void OnThumbButtonCallBack(int id);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateWindow", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr CreateWindow([MarshalAs(UnmanagedType.LPWStr)] string title, int width, int height);
@@ -110,6 +111,16 @@ namespace Ixen.Platform.Windows.NativeApi
 
         [DllImport(LIB_NAME, EntryPoint = "WA_SetWindowExtended", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetWindowExtended(IntPtr windowPtr, int value);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_RegisterThumbButtonCallBack", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RegisterThumbButtonCallBack(IntPtr windowPtr, [MarshalAs(UnmanagedType.FunctionPtr)] OnThumbButtonCallBack callback);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_SetThumbButtons", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        public static extern int SetThumbButtons(IntPtr windowPtr, int count, IntPtr[] icons, int[] flags,
+            [MarshalAs(UnmanagedType.LPWStr)] string tips);
+
+        [DllImport(LIB_NAME, EntryPoint = "WA_SetTaskbarProgress", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int SetTaskbarProgress(IntPtr windowPtr, int state, int completed, int total);
 
         [DllImport(LIB_NAME, EntryPoint = "WA_CreateGlContext", CallingConvention = CallingConvention.Cdecl)]
         public static extern int CreateGlContext(IntPtr windowPtr);

@@ -64,6 +64,20 @@
 
 #define IXEN_CHANGE_PREFERENCES 1
 #define IXEN_CHANGE_DPI 2
+#define IXEN_CHANGE_TASKBAR 3
+
+#define IXEN_PROGRESS_NONE 0
+#define IXEN_PROGRESS_INDETERMINATE 1
+#define IXEN_PROGRESS_NORMAL 2
+#define IXEN_PROGRESS_ERROR 3
+#define IXEN_PROGRESS_PAUSED 4
+
+#define IXEN_THUMB_DISABLED 1
+#define IXEN_THUMB_HIDDEN 2
+
+#ifndef THBN_CLICKED
+#define THBN_CLICKED 0x1800
+#endif
 
 #define IXEN_DRAG_OVER 0
 #define IXEN_DRAG_LEAVE 1
@@ -492,6 +506,170 @@ void NativeWindow::NotifySystemChange(int kind)
     {
         _systemCallBack(kind);
     }
+}
+
+UINT NativeWindow::TaskbarCreatedMessage()
+{
+    static UINT message = RegisterWindowMessageW(L"TaskbarButtonCreated");
+
+    return message;
+}
+
+LRESULT NativeWindow::HandleTaskbarCreated()
+{
+    ReleaseTaskbar();
+
+    _taskbarReady = true;
+
+    NotifySystemChange(IXEN_CHANGE_TASKBAR);
+
+    return 0;
+}
+
+void NativeWindow::ReleaseTaskbar()
+{
+    if (_taskbar != nullptr)
+    {
+        _taskbar->Release();
+        _taskbar = nullptr;
+    }
+
+    _thumbsAdded = false;
+}
+
+ITaskbarList3* NativeWindow::Taskbar()
+{
+    if (!_taskbarReady)
+    {
+        return nullptr;
+    }
+
+    if (_taskbar != nullptr)
+    {
+        return _taskbar;
+    }
+
+    if (!_comInitialized)
+    {
+        HRESULT initialized = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+        _comInitialized = SUCCEEDED(initialized);
+    }
+
+    ITaskbarList3* taskbar = nullptr;
+
+    if (FAILED(CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&taskbar))))
+    {
+        return nullptr;
+    }
+
+    if (FAILED(taskbar->HrInit()))
+    {
+        taskbar->Release();
+        return nullptr;
+    }
+
+    _taskbar = taskbar;
+
+    return _taskbar;
+}
+
+int NativeWindow::SetThumbButtons(int count, void** icons, const int* flags, const wchar_t* tips)
+{
+    ITaskbarList3* taskbar = Taskbar();
+
+    if (taskbar == nullptr)
+    {
+        return 0;
+    }
+
+    if (count <= 0 && !_thumbsAdded)
+    {
+        return 1;
+    }
+
+    THUMBBUTTON buttons[THUMB_BUTTON_COUNT] = {};
+    const wchar_t* tip = tips;
+
+    for (int index = 0; index < THUMB_BUTTON_COUNT; index++)
+    {
+        THUMBBUTTON& button = buttons[index];
+
+        button.dwMask = THB_ICON | THB_TOOLTIP | THB_FLAGS;
+        button.iId = index;
+
+        if (index >= count)
+        {
+            button.dwFlags = THBF_HIDDEN;
+            continue;
+        }
+
+        button.hIcon = static_cast<HICON>(icons[index]);
+        button.dwFlags = (flags[index] & IXEN_THUMB_DISABLED) != 0 ? THBF_DISABLED : THBF_ENABLED;
+
+        if ((flags[index] & IXEN_THUMB_HIDDEN) != 0)
+        {
+            button.dwFlags = static_cast<THUMBBUTTONFLAGS>(button.dwFlags | THBF_HIDDEN);
+        }
+
+        if (tip != nullptr)
+        {
+            const wchar_t* end = wcschr(tip, L'\n');
+            size_t length = end != nullptr ? static_cast<size_t>(end - tip) : wcslen(tip);
+
+            wcsncpy_s(button.szTip, ARRAYSIZE(button.szTip), tip, length < ARRAYSIZE(button.szTip) ? length : _TRUNCATE);
+
+            tip = end != nullptr ? end + 1 : nullptr;
+        }
+    }
+
+    HRESULT result = _thumbsAdded
+        ? taskbar->ThumbBarUpdateButtons(_handle, THUMB_BUTTON_COUNT, buttons)
+        : taskbar->ThumbBarAddButtons(_handle, THUMB_BUTTON_COUNT, buttons);
+
+    if (SUCCEEDED(result))
+    {
+        _thumbsAdded = true;
+    }
+
+    return SUCCEEDED(result) ? 1 : 0;
+}
+
+int NativeWindow::SetTaskbarProgress(int state, int completed, int total)
+{
+    ITaskbarList3* taskbar = Taskbar();
+
+    if (taskbar == nullptr)
+    {
+        return 0;
+    }
+
+    TBPFLAG flag = TBPF_NOPROGRESS;
+
+    switch (state)
+    {
+    case IXEN_PROGRESS_INDETERMINATE:
+        flag = TBPF_INDETERMINATE;
+        break;
+    case IXEN_PROGRESS_NORMAL:
+        flag = TBPF_NORMAL;
+        break;
+    case IXEN_PROGRESS_ERROR:
+        flag = TBPF_ERROR;
+        break;
+    case IXEN_PROGRESS_PAUSED:
+        flag = TBPF_PAUSED;
+        break;
+    }
+
+    HRESULT result = taskbar->SetProgressState(_handle, flag);
+
+    if (SUCCEEDED(result) && total > 0
+        && (state == IXEN_PROGRESS_NORMAL || state == IXEN_PROGRESS_ERROR || state == IXEN_PROGRESS_PAUSED))
+    {
+        result = taskbar->SetProgressValue(_handle, static_cast<ULONGLONG>(completed), static_cast<ULONGLONG>(total));
+    }
+
+    return SUCCEEDED(result) ? 1 : 0;
 }
 
 LRESULT NativeWindow::HandleDisplayChange()
@@ -1099,6 +1277,15 @@ LRESULT NativeWindow::HandleDestroy()
         OleUninitialize();
     }
 
+    ReleaseTaskbar();
+    _taskbarReady = false;
+
+    if (_comInitialized)
+    {
+        CoUninitialize();
+        _comInitialized = false;
+    }
+
     PostQuitMessage(0);
     return 0;
 }
@@ -1571,10 +1758,27 @@ LRESULT NativeWindow::HandleMouseLeave()
 
 LRESULT CALLBACK NativeWindow::Proc(UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    if (msg != 0 && msg == TaskbarCreatedMessage())
+    {
+        return HandleTaskbarCreated();
+    }
+
     switch (msg)
     {
     case WM_ERASEBKGND:
         return 1;
+    case WM_COMMAND:
+        if (HIWORD(wParam) == THBN_CLICKED)
+        {
+            if (_thumbButtonCallBack != nullptr)
+            {
+                _thumbButtonCallBack(LOWORD(wParam));
+            }
+
+            return 0;
+        }
+
+        break;
     case WM_NCCALCSIZE:
         return HandleNcCalcSize(wParam, lParam);
     case WM_NCHITTEST:

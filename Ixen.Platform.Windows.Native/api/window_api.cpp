@@ -229,6 +229,24 @@ int WA_PickFiles(NativeWindow* window, int kind, const wchar_t* title, const wch
     return window ? window->PickFiles(kind, title, filters, folder, name, result) : -1;
 }
 
+void WA_RegisterThumbButtonCallBack(NativeWindow* window, void __stdcall callBack(int))
+{
+    if (window)
+    {
+        window->SetOnThumbButtonCallBack(callBack);
+    }
+}
+
+int WA_SetThumbButtons(NativeWindow* window, int count, void** icons, const int* flags, const wchar_t* tips)
+{
+    return window ? window->SetThumbButtons(count, icons, flags, tips) : 0;
+}
+
+int WA_SetTaskbarProgress(NativeWindow* window, int state, int completed, int total)
+{
+    return window ? window->SetTaskbarProgress(state, completed, total) : 0;
+}
+
 int WA_GetWindowPlacement(NativeWindow* window, int* values)
 {
     return window && window->GetPlacement(values) ? 1 : 0;

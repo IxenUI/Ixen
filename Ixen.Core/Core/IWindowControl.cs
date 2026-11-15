@@ -1,5 +1,6 @@
 using Ixen.Core.Components;
 using System;
+using System.Collections.Generic;
 
 namespace Ixen.Core
 {
@@ -12,6 +13,10 @@ namespace Ixen.Core
         bool ExtendsIntoTitleBar { get; }
 
         WindowPlacement Placement { get; }
+
+        IReadOnlyList<Command> TaskbarButtons { get; set; }
+
+        void SetTaskbarProgress(TaskbarProgress state, double value);
 
         void Minimize();
 

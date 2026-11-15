@@ -2,6 +2,7 @@
 #define _NATIVE_WINDOW_H_
 
 #include <windows.h>
+#include <shobjidl.h>
 #include <map>
 
 using namespace std;
@@ -33,6 +34,7 @@ namespace IxenWindowsNative
         void (*_systemCallBack)(int) = nullptr;
         int (*_hitTestCallBack)(int, int) = nullptr;
         void (*_touchCallBack)(int, int, int, int) = nullptr;
+        void (*_thumbButtonCallBack)(int) = nullptr;
         void* _pixelsBuffer = nullptr;
         bool _extended = false;
         int _logicalWidth = 0;
@@ -52,6 +54,16 @@ namespace IxenWindowsNative
         FileDropTarget* _fileDropTarget = nullptr;
         bool _acceptsFiles = false;
         bool _oleDrop = false;
+
+        static const int THUMB_BUTTON_COUNT = 7;
+        ITaskbarList3* _taskbar = nullptr;
+        bool _taskbarReady = false;
+        bool _thumbsAdded = false;
+        bool _comInitialized = false;
+        static UINT TaskbarCreatedMessage();
+        LRESULT HandleTaskbarCreated();
+        void ReleaseTaskbar();
+        ITaskbarList3* Taskbar();
 
         RECT _clientRect = {};
         BITMAPINFOHEADER _bitmapInfoHeader = {};
@@ -126,6 +138,9 @@ namespace IxenWindowsNative
         int PickFiles(int kind, const wchar_t* title, const wchar_t* filters, const wchar_t* folder,
             const wchar_t* name, wchar_t** result);
         bool SetPlacement(int left, int top, int width, int height, bool maximized);
+        void SetOnThumbButtonCallBack(void __stdcall callback(int)) { _thumbButtonCallBack = callback; }
+        int SetThumbButtons(int count, void** icons, const int* flags, const wchar_t* tips);
+        int SetTaskbarProgress(int state, int completed, int total);
     };
 }
 

@@ -61,7 +61,7 @@ namespace Ixen.Platform.Windows.NativeApi
             }
         }
 
-        private static SKBitmap Fit(SKBitmap source, int width, int height)
+        internal static SKBitmap Fit(SKBitmap source, int width, int height)
         {
             SKBitmap current = source;
             bool owned = false;

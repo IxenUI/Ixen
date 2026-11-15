@@ -31,6 +31,16 @@ namespace Ixen.Core.UT.Native
 
             { "IXEN_CHANGE_PREFERENCES", "Preferences" },
             { "IXEN_CHANGE_DPI", "Dpi" },
+            { "IXEN_CHANGE_TASKBAR", "Taskbar" },
+
+            { "IXEN_PROGRESS_NONE", "None" },
+            { "IXEN_PROGRESS_INDETERMINATE", "Indeterminate" },
+            { "IXEN_PROGRESS_NORMAL", "Normal" },
+            { "IXEN_PROGRESS_ERROR", "Error" },
+            { "IXEN_PROGRESS_PAUSED", "Paused" },
+
+            { "IXEN_THUMB_DISABLED", "Disabled" },
+            { "IXEN_THUMB_HIDDEN", "Hidden" },
 
             { "IXEN_DRAG_OVER", "Over" },
             { "IXEN_DRAG_LEAVE", "Leave" },
@@ -91,7 +101,8 @@ namespace Ixen.Core.UT.Native
             { "_suspendCallBack", "OnSuspendCallBack" },
             { "_systemCallBack", "OnSystemCallBack" },
             { "_hitTestCallBack", "OnHitTestCallBack" },
-            { "_touchCallBack", "OnTouchCallBack" }
+            { "_touchCallBack", "OnTouchCallBack" },
+            { "_thumbButtonCallBack", "OnThumbButtonCallBack" }
         };
 
         private static readonly Dictionary<string, string> _returns
@@ -264,6 +275,8 @@ namespace Ixen.Core.UT.Native
             ReadEnum(kinds, "NativeSystemChange", found);
             ReadEnum(kinds, "NativeDragKind", found);
             ReadEnum(kinds, "NativePickKind", found);
+            ReadEnum(kinds, "NativeProgressState", found);
+            ReadEnum(kinds, "NativeThumbFlag", found);
             ReadEnum(keys, "NativeKeyKind", found);
             ReadEnum(keys, "NativeImeKind", found);
             ReadEnum(keys, "NativeWindowArea", found);
@@ -312,6 +325,16 @@ namespace Ixen.Core.UT.Native
             if (define.StartsWith("IXEN_PICK_", StringComparison.Ordinal))
             {
                 return "NativePickKind." + suffix;
+            }
+
+            if (define.StartsWith("IXEN_PROGRESS_", StringComparison.Ordinal))
+            {
+                return "NativeProgressState." + suffix;
+            }
+
+            if (define.StartsWith("IXEN_THUMB_", StringComparison.Ordinal))
+            {
+                return "NativeThumbFlag." + suffix;
             }
 
             if (define.StartsWith("IXEN_DRAG_", StringComparison.Ordinal))

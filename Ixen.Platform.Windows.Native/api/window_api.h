@@ -35,6 +35,10 @@ IXEN_API_ENTRY int WA_PickFiles(NativeWindow* window, int kind, const wchar_t* t
     const wchar_t* folder, const wchar_t* name, wchar_t** result);
 IXEN_API_ENTRY int WA_GetWindowPlacement(NativeWindow* window, int* values);
 IXEN_API_ENTRY int WA_SetWindowPlacement(NativeWindow* window, int left, int top, int width, int height, int maximized);
+IXEN_API_ENTRY void WA_RegisterThumbButtonCallBack(NativeWindow* window, void __stdcall callBack(int));
+IXEN_API_ENTRY int WA_SetThumbButtons(NativeWindow* window, int count, void** icons, const int* flags,
+    const wchar_t* tips);
+IXEN_API_ENTRY int WA_SetTaskbarProgress(NativeWindow* window, int state, int completed, int total);
 IXEN_API_ENTRY int WA_CreateGlContext(NativeWindow* window);
 IXEN_API_ENTRY int WA_EnsureGlContext(NativeWindow* window);
 IXEN_API_ENTRY void WA_SwapGlBuffers(NativeWindow* window);
