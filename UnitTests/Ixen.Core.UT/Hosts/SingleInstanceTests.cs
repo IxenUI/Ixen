@@ -39,6 +39,20 @@ namespace Ixen.Core.UT.Hosts
         }
 
         [TestMethod]
+        public void AVeryLongNameStillHandsOver()
+        {
+            string name = "com.example.a-music-player-with-a-name-that-goes-on-" + new string('x', 120) + Name();
+            var received = new BlockingCollection<string[]>();
+
+            using (SingleInstance first = SingleInstance.Claim(name, Array.Empty<string>(), received.Add))
+            {
+                Assert.IsNull(ClaimElsewhere(name, "long"));
+                Assert.AreEqual("long", Next(received)[0],
+                    "on Unix the pipe is a socket file whose path the system caps (104 bytes on macOS), so the name cannot go into it whole");
+            }
+        }
+
+        [TestMethod]
         public void ItKeepsListeningAfterTheFirstHandOver()
         {
             string name = Name();

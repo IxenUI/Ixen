@@ -61,21 +61,14 @@ namespace Ixen.Platform
 
         internal static string KeyOf(string name)
         {
-            var builder = new StringBuilder("ixen-");
+            ulong hash = 14695981039346656037;
 
-            foreach (char c in name)
+            foreach (char c in name + "\n" + (Environment.UserName ?? string.Empty))
             {
-                builder.Append(char.IsLetterOrDigit(c) || c == '-' || c == '_' ? c : '_');
+                hash = (hash ^ c) * 1099511628211;
             }
 
-            uint hash = 2166136261;
-
-            foreach (char c in Environment.UserName ?? string.Empty)
-            {
-                hash = (hash ^ c) * 16777619;
-            }
-
-            return builder.Append('-').Append(hash.ToString("x8")).ToString();
+            return "ixen-" + hash.ToString("x16");
         }
 
         private static void Forward(string key, string[] args)
