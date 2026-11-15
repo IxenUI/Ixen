@@ -703,6 +703,13 @@ namespace Ixen.Core.Visual
             InvalidateLayout();
         }
 
+        internal void AnchorScroll(float y)
+        {
+            _scrollY = y;
+        }
+
+        public bool ScrollAnchoring { get; set; } = true;
+
         internal void ClampScroll()
         {
             _scrollX = Clamp(_scrollX, MaxScrollX);

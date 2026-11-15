@@ -70,6 +70,7 @@ namespace Ixen.Controls
             TypeName = nameof(VirtualList);
             Role = AccessibleRole.List;
             Scrollable = true;
+            ScrollAnchoring = false;
 
             Styles.Layout = new LayoutStyleDescriptor { Type = LayoutType.Absolute };
 

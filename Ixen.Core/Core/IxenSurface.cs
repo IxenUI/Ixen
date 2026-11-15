@@ -381,7 +381,9 @@ namespace Ixen.Core
 
             _arrangeComputer.Arrange(Root, 0, 0, logicalWidth, logicalHeight);
 
-            if (RevealPending())
+            bool anchored = KeepAnchors();
+
+            if (RevealPending() || anchored)
             {
                 _arrangeComputer.Arrange(Root, 0, 0, logicalWidth, logicalHeight);
             }
@@ -390,7 +392,9 @@ namespace Ixen.Core
 
             _showing.Clear();
             _wanting.Clear();
+            _scrollers.Clear();
             DamageLayout(Root, null);
+            TakeAnchors();
 
             Root.ClearLayoutDirty();
 
@@ -946,6 +950,56 @@ namespace Ixen.Core
 
                 _wanting.Add(element);
             }
+
+            if (ScrollAnchor.Wants(element) && !element.IsHiddenInTree)
+            {
+                _scrollers.Add(element);
+            }
+        }
+
+        private readonly List<VisualElement> _scrollers = new List<VisualElement>();
+        private readonly List<ScrollAnchor> _anchors = new List<ScrollAnchor>();
+
+        private bool KeepAnchors()
+        {
+            bool moved = false;
+
+            for (int i = 0; i < _anchors.Count; i++)
+            {
+                ScrollAnchor anchor = _anchors[i];
+                float drift = anchor.Drift();
+
+                if (drift == 0)
+                {
+                    continue;
+                }
+
+                VisualElement scroller = anchor.Scroller;
+                float wanted = Math.Max(0, Math.Min(scroller.MaxScrollY, scroller.ScrollY + drift));
+
+                if (wanted == scroller.ScrollY)
+                {
+                    continue;
+                }
+
+                scroller.AnchorScroll(wanted);
+                _measureComputer.MeasureScrollbars(scroller, true);
+                moved = true;
+            }
+
+            return moved;
+        }
+
+        private void TakeAnchors()
+        {
+            _anchors.Clear();
+
+            for (int i = 0; i < _scrollers.Count; i++)
+            {
+                _anchors.Add(ScrollAnchor.Take(_scrollers[i]));
+            }
+
+            _scrollers.Clear();
         }
 
         private void DamagePainted(VisualElement element)

@@ -316,7 +316,7 @@ namespace Ixen.Core.Visual.Computers
             return true;
         }
 
-        private void MeasureScrollbars(VisualElement element, bool scrollable)
+        internal void MeasureScrollbars(VisualElement element, bool scrollable)
         {
             bool vertical = scrollable && element.MaxScrollY > 0;
             bool horizontal = scrollable && element.MaxScrollX > 0;
