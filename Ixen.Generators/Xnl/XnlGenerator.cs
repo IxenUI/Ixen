@@ -1802,7 +1802,7 @@ namespace Ixen.Generators.Xnl
 
                     diagnostics.Add(new LanguageError(
                         LanguageErrorCode.INVALID_PROPERTY,
-                        $"'{param.Name}' does not map to a usable property or event on '{elementSymbol.Name}': {reason}",
+                        $"'{param.Name}' does not map to a usable property or event on '{elementSymbol.Name}': {XnlStyleHint.For(param.Name) ?? reason}",
                         param.NameIndex,
                         param.Name.Length));
 
