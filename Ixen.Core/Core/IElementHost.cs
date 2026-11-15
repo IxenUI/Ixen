@@ -23,6 +23,7 @@ namespace Ixen.Core
 
         Input.KeyModifiers AcceleratorModifier { get; }
 
+        bool Presentable { get; }
         bool ReducedMotion { get; }
         bool HighContrast { get; }
         float FontScale { get; }

@@ -133,11 +133,26 @@ namespace Ixen.Core.Visual
             IsFocused = true;
             ShowCaret();
 
-            _blink = Host?.Scheduler?.Schedule(BLINK_DELAY, true, () =>
+            _blink = Host?.Scheduler?.Schedule(BLINK_DELAY, true, Blink);
+        }
+
+        private void Blink()
+        {
+            IElementHost host = Host;
+
+            if (host == null)
             {
-                CaretVisible = !CaretVisible;
-                Host?.InvalidateVisual(this);
-            });
+                return;
+            }
+
+            if (!host.Presentable)
+            {
+                CaretVisible = true;
+                return;
+            }
+
+            CaretVisible = !CaretVisible;
+            host.InvalidateVisual(this);
         }
 
         private void StopBlink()

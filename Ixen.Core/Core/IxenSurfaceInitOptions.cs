@@ -10,5 +10,6 @@
         public bool PreferGpu { get; set; } = false;
         public string Icon { get; set; }
         public bool ExtendIntoTitleBar { get; set; } = false;
+        public bool Topmost { get; set; } = false;
     }
 }

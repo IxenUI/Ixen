@@ -12,6 +12,8 @@ namespace Ixen.Core
 
         bool ExtendsIntoTitleBar { get; }
 
+        bool Topmost { get; set; }
+
         WindowPlacement Placement { get; }
 
         IReadOnlyList<Command> TaskbarButtons { get; set; }

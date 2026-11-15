@@ -82,6 +82,11 @@ namespace Ixen.Platform.Windows
             ApplyPlacement(_ixenSurface.InitOptions);
             _ixenSurface.Window = _window;
 
+            if (_ixenSurface.InitOptions.Topmost)
+            {
+                _ixenSurface.Post(() => _window.Topmost = true);
+            }
+
             if (_ixenSurface.InitOptions.ExtendIntoTitleBar)
             {
                 WindowApi.RegisterHitTestCallBack(_windowPtr, _onHitTest);

@@ -293,6 +293,29 @@ namespace Ixen.Core.UT.Input
         }
 
         [TestMethod]
+        public void AWindowNobodyCanSeeDoesNotRepaintForTheCaret()
+        {
+            _surface.Focus(_field);
+            _scheduler.FireAll();
+            Paint();
+
+            _surface.Presentable = false;
+            Paint();
+
+            _scheduler.FireAll();
+
+            Assert.IsFalse(_surface.IsDirty, "a minimised window asked for a frame twice a second for a caret no one sees");
+            Assert.IsTrue(_field.CaretVisible, "it waits shown, so the window comes back with its caret");
+
+            _surface.Presentable = true;
+            Paint();
+            _scheduler.FireAll();
+
+            Assert.IsFalse(_field.CaretVisible);
+            Assert.IsTrue(_surface.IsDirty, "and blinks again once it can be seen");
+        }
+
+        [TestMethod]
         public void TypingBringsTheCaretBackImmediately()
         {
             _surface.Focus(_field);
