@@ -328,16 +328,117 @@ namespace Ixen.Controls
             SetRegion(
                 () => items == null ? 0 : items.Count,
                 create == null ? null : new Func<IRegionRow>(() => new ElementRow(create())),
-                bind == null ? null : new Action<IRegionRow, int>((row, index) => bind(row.ElementAt(0), index)));
+                bind == null ? null : new Action<IRegionRow, int>((row, index) => bind(row.ElementAt(0), index)),
+                items == null ? null : new Func<int, object>(index => items[index]));
         }
 
-        public void SetRegion(Func<int> count, Func<IRegionRow> create, Action<IRegionRow, int> bind)
+        public void SetRegion(Func<int> count, Func<IRegionRow> create, Action<IRegionRow, int> bind,
+            Func<int, object> keyOf = null)
         {
             _count = count;
             _create = create;
             _bind = bind;
+            _keyOf = keyOf;
 
             Reset();
+        }
+
+        private Func<int, object> _keyOf;
+        private object _topKey;
+        private object _nextKey;
+        private int _topIndex;
+        private float _topWithin;
+        private float _topScroll = -1;
+        private object _focusKey;
+
+        private object KeyAt(int index, int count)
+            => _keyOf == null || index < 0 || index >= count ? null : _keyOf(index);
+
+        private int FindKey(object key, int near, int count)
+        {
+            for (int distance = 0; distance < count; distance++)
+            {
+                int below = near + distance;
+                int above = near - distance;
+
+                if (below >= 0 && below < count && Equals(_keyOf(below), key))
+                {
+                    return below;
+                }
+
+                if (distance > 0 && above >= 0 && above < count && Equals(_keyOf(above), key))
+                {
+                    return above;
+                }
+
+                if (below >= count && above < 0)
+                {
+                    break;
+                }
+            }
+
+            return -1;
+        }
+
+        private void KeepTopKey(int count)
+        {
+            if (_topKey == null || _keyOf == null || count == 0 || ScrollY <= 0 || ScrollY != _topScroll)
+            {
+                return;
+            }
+
+            if (Equals(KeyAt(_topIndex, count), _topKey))
+            {
+                return;
+            }
+
+            int found = FindKey(_topKey, _topIndex, count);
+
+            if (found < 0 || (_nextKey != null && !Equals(KeyAt(found + 1, count), _nextKey)))
+            {
+                return;
+            }
+
+            ScrollY = Math.Max(0, TopOf(found) + _topWithin);
+        }
+
+        private void NoteTop(int count)
+        {
+            _topScroll = ScrollY;
+            _topKey = null;
+
+            if (_keyOf == null || count == 0 || ScrollY <= 0)
+            {
+                return;
+            }
+
+            int index = Varies ? IndexAt(ScrollY) : (_itemHeight <= 0 ? 0 : (int)(ScrollY / _itemHeight) * _columns);
+
+            index = Clamp(index, 0, count - 1);
+
+            _topIndex = index;
+            _topKey = _keyOf(index);
+            _nextKey = KeyAt(index + 1, count);
+            _topWithin = ScrollY - TopOf(index);
+        }
+
+        private int Refocus(int focused, int count)
+        {
+            if (focused < 0 || _focusKey == null || _keyOf == null || Equals(KeyAt(focused, count), _focusKey))
+            {
+                return focused;
+            }
+
+            int found = FindKey(_focusKey, focused, count);
+
+            if (found < 0)
+            {
+                return focused;
+            }
+
+            _pendingFocus = found;
+
+            return found;
         }
 
         private bool _refit;
@@ -660,8 +761,10 @@ namespace Ixen.Controls
                 return;
             }
 
-            int focused = FocusedRowIndex();
+            int count = Count;
+            int focused = Refocus(FocusedRowIndex(), count);
 
+            KeepTopKey(count);
             BuildWindow();
 
             if (_realised > 0)
@@ -670,6 +773,7 @@ namespace Ixen.Controls
             }
 
             FollowFocus(focused);
+            NoteTop(count);
         }
 
         private int FocusedRowIndex()
@@ -700,6 +804,7 @@ namespace Ixen.Controls
             if (wanted >= 0)
             {
                 _focusItem = wanted;
+                _focusKey = KeyAt(wanted, count);
 
                 VisualElement row = RealisedRow(wanted);
 
@@ -857,6 +962,7 @@ namespace Ixen.Controls
             }
 
             _focusItem = index;
+            _focusKey = KeyAt(index, count);
             _pendingFocus = index;
 
             ScrollIntoView(index);

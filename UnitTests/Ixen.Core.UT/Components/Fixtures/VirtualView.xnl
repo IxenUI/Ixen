@@ -35,6 +35,11 @@ virtual_root {} [
 			]
 		@}
 	]
+	keyed<RecordingHost> {} [
+		@foreach (var word in Words) key (word.ToUpperInvariant()) {
+			keyed_row { text: "{word}" }
+		@}
+	]
 	gate<RecordingHost> {} [
 		@if (Flag) {
 			gate_row { text: "on" }

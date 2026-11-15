@@ -47,6 +47,21 @@ namespace Ixen.Core.UT.Components
         }
 
         [TestMethod]
+        public void EachRowHasAKeyTheItemItselfUnlessTheRegionNamesOne()
+        {
+            VirtualComponent component = Three();
+            RecordingHost host = HostOf(component);
+            var keyed = (RecordingHost)Named(component, "keyed");
+
+            Assert.AreEqual("two", host.Keys(1), "with no key clause the item is its own key");
+            Assert.AreEqual("TWO", keyed.Keys(1), "a key clause is evaluated for the item at that index");
+
+            component.Words.Insert(0, "zero");
+
+            Assert.AreEqual("ONE", keyed.Keys(1), "read from the source when asked, so it follows the list");
+        }
+
+        [TestMethod]
         public void AFactoryBuildsOneElementPerRow()
         {
             RecordingHost host = HostOf(Three());

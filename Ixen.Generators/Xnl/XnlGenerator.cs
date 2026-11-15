@@ -378,6 +378,20 @@ namespace Ixen.Generators.Xnl
                 sb.Append(block);
             }
 
+            sb.AppendLine($"{inner}}},");
+
+            string key = $"{region.Prefix}_key";
+
+            if (region.Key == null)
+            {
+                sb.AppendLine($"{inner}{key} => {source}[{key}]);");
+                return;
+            }
+
+            sb.AppendLine($"{inner}{key} =>");
+            sb.AppendLine($"{inner}{{");
+            sb.AppendLine($"{body}{region.Declaration} = {source}[{key}];");
+            sb.AppendLine($"{body}return {XnlBindings.Qualify(region.Key, file.ModelMembers)};");
             sb.AppendLine($"{inner}}});");
         }
 
@@ -975,18 +989,6 @@ namespace Ixen.Generators.Xnl
                     node.Code.Length + 1));
 
                 region.Virtual = false;
-            }
-
-            if (region.Virtual && region.Key != null)
-            {
-                file.Diagnostics.Add(new LanguageError(
-                    LanguageErrorCode.INVALID_PROPERTY_VALUE,
-                    "a virtualised region reconciles by slot rather than by identity, so a key clause has "
-                        + "nothing to do here.",
-                    node.CodeIndex,
-                    node.Code.Length + 1));
-
-                region.Key = null;
             }
 
             file.Regions.Add(region);

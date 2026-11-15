@@ -4,6 +4,6 @@ namespace Ixen.Core.Visual
 {
     public interface IRegionHost
     {
-        void SetRegion(Func<int> count, Func<IRegionRow> create, Action<IRegionRow, int> bind);
+        void SetRegion(Func<int> count, Func<IRegionRow> create, Action<IRegionRow, int> bind, Func<int, object> keyOf);
     }
 }

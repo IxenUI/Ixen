@@ -8,13 +8,16 @@ namespace Ixen.Core.UT.Components.Fixtures
         internal Func<int> Counter;
         internal Func<IRegionRow> Factory;
         internal Action<IRegionRow, int> Binder;
+        internal Func<int, object> Keys;
         internal int Handovers;
 
-        public void SetRegion(Func<int> count, Func<IRegionRow> create, Action<IRegionRow, int> bind)
+        public void SetRegion(Func<int> count, Func<IRegionRow> create, Action<IRegionRow, int> bind,
+            Func<int, object> keyOf)
         {
             Counter = count;
             Factory = create;
             Binder = bind;
+            Keys = keyOf;
             Handovers++;
         }
 
